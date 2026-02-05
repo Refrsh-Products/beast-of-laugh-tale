@@ -1,0 +1,13 @@
+site_name: FRESHR DOCS
+nav:
+  - Home: index.md
+  - About: about.md
+  - Project Requirements: project-requirements.md
+  - Software Design: software-design.md
+  - Project Management: project-management.md
+  - Team: team.md
+  - Deployment Instruction: deployemnt-instruction.md
+  - Job Description: job-description.md
+  - User Manual: user-manual.md
+  - Static Code Analysis: static-code-analysis.md
+theme: readthedocs
