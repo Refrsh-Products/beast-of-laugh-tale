@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     
     # OUR APPS
     'accounts',
-    'rest_framework'
+    'rest_framework',
+    "notebooks"
 ]
 
 MIDDLEWARE = [
