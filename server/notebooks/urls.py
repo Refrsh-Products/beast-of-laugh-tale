@@ -9,5 +9,5 @@ urlpatterns = [
     path("delete/<int:pk>/", NotebookDeleteAPIView.as_view(), name="notebook-delete"),
 
     path("file/create", NotebookFileCreateAPIView.as_view(), name="notebook-file-create"),
-    path("file/delete/<int:pk>", NotebookFileDeleteAPIView.as_view(), name="notebook-file-delete"),
+    path("file/delete/<int:pk>/", NotebookFileDeleteAPIView.as_view(), name="notebook-file-delete"),
 ]

@@ -1,6 +1,6 @@
 import requests
 
-url = "http://127.0.0.1:8000/notebooks/delete/1/"
+url = "http://127.0.0.1:8000/notebooks/file/delete/2/"
 
 response = requests.delete(url)
 
