@@ -1,7 +1,9 @@
 from rest_framework import generics
 from rest_framework import status
 from .models import Notebook
+from .models import NotebookFile
 from .serializers import NotebookSerializer
+from .serializers import NotebookFileSerializer
 from .serializers import NotebookFileInputSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -55,3 +57,6 @@ class NotebookFileCreateAPIView(APIView):
 
         return response
 
+class NotebookFileDeleteAPIView(generics.DestroyAPIView):
+    queryset = NotebookFile.objects.all()
+    serializer_class = NotebookFileSerializer
