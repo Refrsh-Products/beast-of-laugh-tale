@@ -7,6 +7,16 @@ class NotebookFileInline(admin.TabularInline):
     model = NotebookFile
     extra = 1
 
+    fields = (
+            "name", 
+            "file", 
+            "content", 
+            "file_type",
+            "updated_at"
+            )
+
+    readonly_fields = ("uploaded_at", "updated_at")
+
 
 @admin.register(Notebook)
 class NotebookAdmin(admin.ModelAdmin):
