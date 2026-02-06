@@ -20,3 +20,10 @@ class NotebookSerializer(serializers.ModelSerializer):
         model = Notebook
         fields = ["id", "title", "created_at"]
         read_only_fields = ["id", "created_at"]
+
+
+
+class NotebookFileInputSerializer(serializers.Serializer):
+    notebook_id = serializers.IntegerField()
+    file = serializers.FileField()
+

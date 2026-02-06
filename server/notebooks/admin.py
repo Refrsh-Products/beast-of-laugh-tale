@@ -6,6 +6,7 @@ from .models import NotebookFile
 class NotebookFileInline(admin.TabularInline):
     model = NotebookFile
     extra = 1
+    can_delete = True
 
     fields = (
             "name", 
