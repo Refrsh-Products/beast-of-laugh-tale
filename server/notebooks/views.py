@@ -7,5 +7,6 @@ class NotebookCreateAPIView(generics.CreateAPIView):
     serializer_class = NotebookSerializer
 
 
-
-
+class NotebookDeleteAPIView(generics.DestroyAPIView):
+    queryset = Notebook.objects.all()
+    serializer_class = NotebookSerializer
