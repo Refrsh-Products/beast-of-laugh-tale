@@ -3,11 +3,13 @@ from .views import NotebookCreateAPIView
 from .views import NotebookDeleteAPIView 
 from .views import NotebookFileCreateAPIView 
 from .views import NotebookFileDeleteAPIView
+from .views import GenerateQuizView
 
 urlpatterns = [
-    path("create/", NotebookCreateAPIView.as_view(), name="notebook-create"),
-    path("delete/<int:pk>/", NotebookDeleteAPIView.as_view(), name="notebook-delete"),
+    path("create/", NotebookCreateAPIView.as_view(), name="create"),
+    path("delete/<int:pk>/", NotebookDeleteAPIView.as_view(), name="delete"),
 
-    path("file/create", NotebookFileCreateAPIView.as_view(), name="notebook-file-create"),
-    path("file/delete/<int:pk>/", NotebookFileDeleteAPIView.as_view(), name="notebook-file-delete"),
+    path("file/create", NotebookFileCreateAPIView.as_view(), name="file-create"),
+    path("file/delete/<int:pk>/", NotebookFileDeleteAPIView.as_view(), name="file-delete"),
+    path("generate_quiz/", GenerateQuizView.as_view(), name="generate-quiz"),
 ]

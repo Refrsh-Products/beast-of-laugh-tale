@@ -37,3 +37,7 @@ class NotebookFileCreateResponseSerializer(serializers.Serializer):
                default=dict
             )
     status = serializers.IntegerField()
+
+
+class GenerateQuizInputSerialize(serializers.Serializer):
+    notebook_id = serializers.IntegerField()

@@ -6,6 +6,7 @@ from .serializers import NotebookSerializer
 from .serializers import NotebookFileSerializer
 from .serializers import NotebookFileInputSerializer
 from .serializers import NotebookFileCreateResponseSerializer
+from .serializers import GenerateQuizInputSerialize
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -70,3 +71,46 @@ class NotebookFileCreateAPIView(APIView):
 class NotebookFileDeleteAPIView(generics.DestroyAPIView):
     queryset = NotebookFile.objects.all()
     serializer_class = NotebookFileSerializer
+
+
+class GenerateQuizView(APIView):
+    def post(self, request):
+        serializer = GenerateQuizInputSerialize(data=request.data)
+
+        if serializer.is_valid() == False:
+            return Response(
+                        {
+                            "success": False,
+                            "errors": serializer.errors
+                        }
+                    )
+
+        return Response(
+                    {
+                        "success": True,
+                        "errors": []
+                    }
+                )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

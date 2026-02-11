@@ -5,7 +5,7 @@ url = "http://127.0.0.1:8000/notebooks/file/create"
 
 # Example file to upload
 files = {
-    "file": open("create_notebook_file.py", "rb")  # replace with your file path
+    "file": open("/home/musa/Downloads/mid1_stuff.pdf", "rb")  # replace with your file path
 }
 
 # Notebook ID
