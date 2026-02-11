@@ -59,6 +59,8 @@ class ContentReaderService:
                 path = notebook_file.file.path
                 file_type = notebook_file.file_type
                 content = reader_map[file_type](path=path)
+                notebook_file.content = content
+                notebook_file.save()
 
             content_map[name] = content
 
