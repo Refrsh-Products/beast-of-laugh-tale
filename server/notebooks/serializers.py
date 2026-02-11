@@ -27,3 +27,13 @@ class NotebookFileInputSerializer(serializers.Serializer):
     notebook_id = serializers.IntegerField()
     file = serializers.FileField()
 
+
+class NotebookFileCreateResponseSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    errors = serializers.DictField(
+               child=serializers.ListField(
+                   child=serializers.CharField()
+                   ),
+               default=dict
+            )
+    status = serializers.IntegerField()

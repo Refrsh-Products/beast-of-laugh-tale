@@ -5,11 +5,14 @@ from .models import NotebookFile
 from .serializers import NotebookSerializer
 from .serializers import NotebookFileSerializer
 from .serializers import NotebookFileInputSerializer
+from .serializers import NotebookFileCreateResponseSerializer
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from pathlib import Path
 from .services.notebook_file import NotebookFileService
+from drf_spectacular.utils import extend_schema
 
 class NotebookCreateAPIView(generics.CreateAPIView):
     queryset = Notebook.objects.all()
@@ -22,6 +25,13 @@ class NotebookDeleteAPIView(generics.DestroyAPIView):
 
 
 class NotebookFileCreateAPIView(APIView):
+    @extend_schema(
+            request=NotebookFileSerializer,
+            responses={
+                  201: NotebookFileCreateResponseSerializer,
+                  400: NotebookFileCreateResponseSerializer
+                }
+            )
     def post(self, request):
         serializer = NotebookFileInputSerializer(data=request.data)
 
@@ -46,12 +56,12 @@ class NotebookFileCreateAPIView(APIView):
 
         if created_flag:
             response = Response(
-                    {"success": True},
+                    {"success": True, "errors": []},
                     status=status.HTTP_201_CREATED
                     )
         else:
             response = Response(
-                    {"success": False},
+                    {"success": False, "errors": []},
                     status=status.HTTP_400_BAD_REQUEST
                     )
 
