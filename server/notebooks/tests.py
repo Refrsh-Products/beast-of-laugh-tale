@@ -23,7 +23,7 @@ class NotebookAPITestCase(TestCase):
 
 class NotebookFileCreateAPITestCase(TestCase):
     def setUp(self):
-        self.url = reverse("notebooks:notebook-file-create")
+        self.url = reverse("notebooks:file-create")
         self.notebook = Notebook.objects.create(title="Test Notebook")
 
     def test_create_notebook_file(self):
