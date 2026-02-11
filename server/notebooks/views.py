@@ -14,6 +14,8 @@ from django.shortcuts import get_object_or_404
 from pathlib import Path
 from .services.notebook_file import NotebookFileService
 from drf_spectacular.utils import extend_schema
+from .services.notebook_file import ContentReaderService
+
 
 class NotebookCreateAPIView(generics.CreateAPIView):
     queryset = Notebook.objects.all()
@@ -85,10 +87,18 @@ class GenerateQuizView(APIView):
                         }
                     )
 
+        notebook_id = serializer.validated_data["notebook_id"]
+        reader = ContentReaderService()
+        content_map = reader.read_content_of(notebook_id=notebook_id)
+
+
+
+
         return Response(
                     {
                         "success": True,
-                        "errors": []
+                        "errors": [],
+                        "map": content_map
                     }
                 )
 
