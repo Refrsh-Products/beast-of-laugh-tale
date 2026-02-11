@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     # OUR APPS
     'accounts',
     'rest_framework',
-    "notebooks"
+    "notebooks",
+    "drf_spectacular"
 ]
 
 MIDDLEWARE = [
@@ -122,3 +123,14 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 MEDIA_ROOT = BASE_DIR / "media"
+
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema"
+
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Notebook API",
+    "DESCRIPTION": "API for notebooks and notebook files",
+    "VERSION": "1.0.0"
+}
