@@ -238,3 +238,5 @@ dist/
 .env.*.local
 
 .claude
+
+*/dump.rdb

@@ -10,16 +10,16 @@ class NotebookFileService:
         try:
             file_name = Path(uploaded_file.name).name
             file_type = file_name.split(".")[-1]
-            NotebookFile.objects.create(
+            notebook_file = NotebookFile.objects.create(
                     notebook=notebook,
                     name=file_name,
                     file=uploaded_file,
                     content="",
                     file_type=file_type
                     )
-            return True
+            return notebook_file
         except Exception:
-            return False
+            return None
 
 
 
@@ -40,7 +40,7 @@ class ContentReaderService:
 
     def read_content_of(self, notebook_id):
         notebook = get_object_or_404(Notebook, id=notebook_id)
-        notebook_files = notebook.files.all()
+        notebook_files = NotebookFile.objects.filter(notebook=notebook)
 
         reader_map = {
                 "pdf": self._read_pdf

@@ -24,13 +24,12 @@ class NotebookSerializer(serializers.ModelSerializer):
 
 
 class NotebookFileInputSerializer(serializers.Serializer):
-    notebook_id = serializers.IntegerField()
     file = serializers.FileField()
 
 
 class NotebookFileCreateResponseSerializer(serializers.Serializer):
     success = serializers.BooleanField()
-    errors = serializers.DictField(
+    error_messages = serializers.DictField(
                child=serializers.ListField(
                    child=serializers.CharField()
                    ),

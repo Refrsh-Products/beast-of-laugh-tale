@@ -1,6 +1,8 @@
 from django.db import models
+from django.conf import settings
 
 class Notebook(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notebooks")
     title = models.CharField(max_length=255)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -18,7 +20,7 @@ class NotebookFile(models.Model):
     name = models.CharField(max_length=20, default="Untitled")
     content = models.TextField(blank=True)
     file_type = models.CharField(max_length=20)
-
+    is_indexed = models.BooleanField(default=False)
 
 
     file = models.FileField(upload_to="notebooks/")

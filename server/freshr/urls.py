@@ -24,12 +24,13 @@ from rest_framework_simplejwt import views as jwt_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('accounts.urls')),
-    path('auth/', include('users.urls')),
     path('notebooks/', include(("notebooks.urls", "notebooks"), namespace="notebooks")),
+    path('rag/', include(("rag.urls", "rag"), namespace="rag")),
 
-    # jwt endpoints
-    path('api/token/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
+    # authentication endpoints
+    path('auth/', include('users.urls')),
+    path('auth/token/', jwt_views.TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
 
     # swagger stuffs
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),

@@ -9,7 +9,7 @@ urlpatterns = [
     path("create/", NotebookCreateAPIView.as_view(), name="create"),
     path("delete/<int:pk>/", NotebookDeleteAPIView.as_view(), name="delete"),
 
-    path("file/create", NotebookFileCreateAPIView.as_view(), name="file-create"),
+    path("<int:notebook_id>/file/create", NotebookFileCreateAPIView.as_view(), name="file-create"),
     path("file/delete/<int:pk>/", NotebookFileDeleteAPIView.as_view(), name="file-delete"),
     path("generate_quiz/", GenerateQuizView.as_view(), name="generate-quiz"),
 ]

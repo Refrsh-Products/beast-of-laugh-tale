@@ -1,5 +1,6 @@
 from rest_framework import generics
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Notebook
 from .models import NotebookFile
 from .serializers import NotebookSerializer
@@ -15,29 +16,41 @@ from pathlib import Path
 from .services.notebook_file import NotebookFileService
 from drf_spectacular.utils import extend_schema
 from .services.notebook_file import ContentReaderService
+from rag.tasks import ingest_note_task
+from rest_framework.permissions import IsAuthenticated
 
 
 class NotebookCreateAPIView(generics.CreateAPIView):
+    permission_classes = (IsAuthenticated,)
     queryset = Notebook.objects.all()
     serializer_class = NotebookSerializer
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 class NotebookDeleteAPIView(generics.DestroyAPIView):
+    permission_classes = (IsAuthenticated,)
     queryset = Notebook.objects.all()
     serializer_class = NotebookSerializer
 
 
 class NotebookFileCreateAPIView(APIView):
-    @extend_schema(
-            request=NotebookFileSerializer,
-            responses={
-                  201: NotebookFileCreateResponseSerializer,
-                  400: NotebookFileCreateResponseSerializer
-                }
-            )
-    def post(self, request):
-        serializer = NotebookFileInputSerializer(data=request.data)
+    permission_classes = (IsAuthenticated,)
+    parser_classes = (MultiPartParser, FormParser)
 
+    @extend_schema(
+        request={
+            'multipart/form-data': NotebookFileInputSerializer
+        },
+        responses={
+            201: NotebookFileCreateResponseSerializer,
+            400: NotebookFileCreateResponseSerializer
+        }
+    )
+    def post(self, request, notebook_id):
+        notebook = get_object_or_404(Notebook, id=notebook_id, user=request.user)
+        
+        serializer = NotebookFileInputSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
                     {
@@ -47,17 +60,14 @@ class NotebookFileCreateAPIView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-        notebook = get_object_or_404(
-                Notebook,
-                id=serializer.validated_data["notebook_id"]
-                )
         uploaded_file = serializer.validated_data["file"]
-        created_flag = NotebookFileService.add_notebook_file(
+        notebook_file = NotebookFileService.add_notebook_file(
                 notebook=notebook,
                 uploaded_file=uploaded_file
                 )
 
-        if created_flag:
+        if notebook_file:
+            ingest_note_task.delay(notebook_file.pk)  # type: ignore[attr-defined]
             response = Response(
                     {"success": True, "errors": []},
                     status=status.HTTP_201_CREATED
@@ -71,11 +81,13 @@ class NotebookFileCreateAPIView(APIView):
         return response
 
 class NotebookFileDeleteAPIView(generics.DestroyAPIView):
+    permission_classes = (IsAuthenticated,)
     queryset = NotebookFile.objects.all()
     serializer_class = NotebookFileSerializer
 
 
 class GenerateQuizView(APIView):
+    permission_classes = (IsAuthenticated,)
     def post(self, request):
         serializer = GenerateQuizInputSerialize(data=request.data)
 
