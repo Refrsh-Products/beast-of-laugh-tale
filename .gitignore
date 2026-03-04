@@ -238,5 +238,9 @@ dist/
 .env.*.local
 
 .claude
+CLAUDE.md
 
 */dump.rdb
+
+# Personal files
+IMG_1271.jpg
