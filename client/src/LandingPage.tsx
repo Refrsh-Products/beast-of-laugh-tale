@@ -190,10 +190,12 @@ export default function LandingPage() {
     >
       {/* ── NAV ── */}
       <nav
+        id="nav"
         className="sticky top-0 z-50 flex items-center justify-between px-6 md:px-16 py-4 bg-white"
         style={{ borderBottom: `3px solid ${B}` }}
       >
         <span
+          id="nav-logo"
           style={{
             fontFamily: "'Syne', sans-serif",
             fontWeight: 800,
@@ -204,11 +206,12 @@ export default function LandingPage() {
           FRESHR
         </span>
 
-        <Btn variant="green">Get started →</Btn>
+        <span id="nav-cta"><Btn variant="green">Get started →</Btn></span>
       </nav>
 
       {/* ── HERO ── */}
       <section
+        id="hero"
         className="px-6 md:px-16 pt-16 pb-20"
         style={{ borderBottom: `3px solid ${B}` }}
       >
@@ -216,6 +219,7 @@ export default function LandingPage() {
           {/* Copy */}
           <div style={fadeIn(0)}>
             <div
+              id="hero-badge"
               style={{
                 display: 'inline-block',
                 background: G,
@@ -232,6 +236,7 @@ export default function LandingPage() {
             </div>
 
             <h1
+              id="hero-heading"
               style={{
                 fontFamily: "'Syne', sans-serif",
                 fontWeight: 800,
@@ -257,6 +262,7 @@ export default function LandingPage() {
             </h1>
 
             <p
+              id="hero-text"
               style={{
                 fontSize: '0.85rem',
                 lineHeight: 1.9,
@@ -274,6 +280,7 @@ export default function LandingPage() {
 
           {/* Product visual */}
           <div
+            id="hero-card"
             style={{
               ...fadeIn(0.2),
               position: 'relative',
@@ -431,6 +438,7 @@ export default function LandingPage() {
 
       {/* ── TICKER ── */}
       <div
+        id="ticker"
         style={{
           background: B,
           borderBottom: `3px solid ${B}`,
@@ -463,6 +471,7 @@ export default function LandingPage() {
 
       {/* ── STATS ── */}
       <section
+        id="stats"
         className="py-12 px-6 md:px-16"
         style={{ background: B, borderBottom: `3px solid ${B}` }}
       >
@@ -511,6 +520,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div style={{ marginBottom: 52 }}>
             <div
+              id="features-badge"
               style={{
                 display: 'inline-block',
                 background: G,
@@ -526,6 +536,7 @@ export default function LandingPage() {
               Features
             </div>
             <h2
+              id="features-heading"
               style={{
                 fontFamily: "'Syne', sans-serif",
                 fontWeight: 800,
@@ -540,7 +551,7 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div id="features-grid" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {FEATURES.map((f, i) => (
               <FeatureCard key={i} {...f} />
             ))}
@@ -556,6 +567,7 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto">
           <h2
+            id="how-it-works-heading"
             style={{
               fontFamily: "'Syne', sans-serif",
               fontWeight: 800,
@@ -570,7 +582,7 @@ export default function LandingPage() {
             Zero complexity.
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div id="how-it-works-grid" className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {STEPS.map((s) => (
               <div
                 key={s.n}
@@ -616,11 +628,13 @@ export default function LandingPage() {
 
       {/* ── CTA ── */}
       <section
+        id="cta"
         className="py-24 px-6 md:px-16"
         style={{ background: B }}
       >
         <div className="max-w-3xl mx-auto text-center">
           <h2
+            id="cta-heading"
             style={{
               fontFamily: "'Syne', sans-serif",
               fontWeight: 800,
@@ -636,6 +650,7 @@ export default function LandingPage() {
             <span style={{ color: G }}>waiting to teach you.</span>
           </h2>
           <p
+            id="cta-text"
             style={{
               color: '#666',
               fontSize: '0.85rem',
@@ -647,18 +662,20 @@ export default function LandingPage() {
             Stop rereading the same pages. Start asking questions. FRESHR turns
             passive notes into an active learning engine.
           </p>
-          <Btn variant="green" lg>
+          <span id="cta-button"><Btn variant="green" lg>
             Create your first notebook →
-          </Btn>
+          </Btn></span>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
       <footer
+        id="footer"
         className="px-6 md:px-16 py-7 flex flex-wrap items-center justify-between gap-4"
         style={{ borderTop: `3px solid ${B}` }}
       >
         <span
+          id="footer-logo"
           style={{
             fontFamily: "'Syne', sans-serif",
             fontWeight: 800,
@@ -668,7 +685,7 @@ export default function LandingPage() {
           FRESHR
         </span>
 
-        <div className="flex gap-7" style={{ fontSize: '0.7rem' }}>
+        <div id="footer-links" className="flex gap-7" style={{ fontSize: '0.7rem' }}>
           {['Privacy', 'Terms', 'Contact'].map((l) => (
             <a
               key={l}
@@ -688,7 +705,7 @@ export default function LandingPage() {
           ))}
         </div>
 
-        <span style={{ fontSize: '0.7rem', color: '#888' }}>© 2025 FRESHR</span>
+        <span id="footer-copyright" style={{ fontSize: '0.7rem', color: '#888' }}>© 2025 FRESHR</span>
       </footer>
     </div>
   )
