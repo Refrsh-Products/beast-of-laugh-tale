@@ -602,7 +602,7 @@ export default function LandingPage() {
                     fontSize: '5rem',
                     lineHeight: 1,
                     color: B,
-                    opacity: 0.07,
+                    opacity: 1,
                     marginBottom: 2,
                   }}
                 >
