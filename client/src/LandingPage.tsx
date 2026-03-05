@@ -12,16 +12,18 @@ function Btn({
   variant = 'green',
   children,
   lg,
+  onDark,
 }: {
   variant?: Variant
   children: React.ReactNode
   lg?: boolean
+  onDark?: boolean
 }) {
   const [down, setDown] = useState(false)
 
   const bg = variant === 'black' ? B : variant === 'green' ? G : W
   const txt = variant === 'black' ? W : B
-  const shadowClr = variant === 'black' ? G : B
+  const shadowClr = onDark ? W : variant === 'black' ? G : B
 
   return (
     <button
@@ -662,7 +664,7 @@ export default function LandingPage() {
             Stop rereading the same pages. Start asking questions. FRESHR turns
             passive notes into an active learning engine.
           </p>
-          <span id="cta-button"><Btn variant="green" lg>
+          <span id="cta-button"><Btn variant="green" lg onDark>
             Create your first notebook →
           </Btn></span>
         </div>
