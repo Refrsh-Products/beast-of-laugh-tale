@@ -107,37 +107,37 @@ function FeatureCard({
 const FEATURES = [
   {
     icon: '📁',
-    title: 'UPLOAD ANYTHING',
-    desc: 'PDFs, notes, slides, research papers — drop them into a notebook and let Freshr handle the extraction.',
+    title: 'Upload anything',
+    desc: 'PDFs, notes, slides, research papers — drop them into a notebook and let FRESHR handle the extraction.',
     accent: true,
   },
   {
     icon: '⚡',
-    title: 'INSTANT INDEXING',
+    title: 'Instant indexing',
     desc: 'Documents are parsed, chunked, and embedded into your personal PGVector database automatically.',
     accent: false,
   },
   {
     icon: '🧠',
-    title: 'PLAIN ENGLISH QUERIES',
+    title: 'Plain English queries',
     desc: 'No query syntax needed. Ask questions naturally and get answers cited from your own materials.',
     accent: false,
   },
   {
     icon: '🔒',
-    title: 'PRIVATE BY DEFAULT',
+    title: 'Private by default',
     desc: 'Notebooks are scoped to your account only. Cross-user data leakage is architecturally impossible.',
     accent: false,
   },
   {
     icon: '📓',
-    title: 'ORGANIZED NOTEBOOKS',
+    title: 'Organized notebooks',
     desc: 'Group documents by subject, course, or project. Each notebook is its own isolated knowledge base.',
     accent: false,
   },
   {
     icon: '✦',
-    title: 'AI SUMMARIES',
+    title: 'AI summaries',
     desc: 'Tables and images are summarized by Claude before indexing so nothing in your notes gets lost.',
     accent: true,
   },
@@ -146,23 +146,23 @@ const FEATURES = [
 const STEPS = [
   {
     n: '01',
-    title: 'CREATE A NOTEBOOK',
+    title: 'Create a notebook',
     desc: 'Organize your study materials by subject, course, or project. Each notebook is a self-contained knowledge base.',
   },
   {
     n: '02',
-    title: 'UPLOAD YOUR DOCS',
-    desc: 'Add PDFs, notes, and research papers. Freshr extracts, chunks, and indexes every word using OCR and AI.',
+    title: 'Upload your docs',
+    desc: 'Add PDFs, notes, and research papers. FRESHR extracts, chunks, and indexes every word using OCR and AI.',
   },
   {
     n: '03',
-    title: 'ASK ANYTHING',
+    title: 'Ask anything',
     desc: 'Type a question in plain English. Get AI answers with citations that point back to your exact source material.',
   },
 ]
 
 const TICKER_TEXT =
-  'POWERED BY RAG \u00a0·\u00a0 VECTOR SEARCH \u00a0·\u00a0 CLAUDE AI \u00a0·\u00a0 GEMINI EMBEDDINGS \u00a0·\u00a0 PGVECTOR \u00a0·\u00a0 PRIVATE DATA \u00a0·\u00a0 AI STUDY TOOL \u00a0·\u00a0 SMART INDEXING \u00a0·\u00a0 \u00a0\u00a0\u00a0\u00a0'
+  'Powered by RAG \u00a0·\u00a0 Vector search \u00a0·\u00a0 Claude AI \u00a0·\u00a0 Gemini embeddings \u00a0·\u00a0 PGVector \u00a0·\u00a0 Private data \u00a0·\u00a0 AI study tool \u00a0·\u00a0 Smart indexing \u00a0·\u00a0 \u00a0\u00a0\u00a0\u00a0'
 
 /* ─── Main page ───────────────────────────────────────────── */
 export default function LandingPage() {
@@ -206,9 +206,9 @@ export default function LandingPage() {
 
         <div
           className="hidden md:flex items-center gap-8"
-          style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.12em' }}
+          style={{ fontSize: '0.9rem', fontWeight: 600, letterSpacing: '0.08em' }}
         >
-          {['FEATURES', 'HOW IT WORKS', 'PRICING'].map((l) => (
+          {['Features', 'How it works', 'Pricing'].map((l) => (
             <a
               key={l}
               href={`#${l.toLowerCase().replace(' ', '-')}`}
@@ -221,7 +221,7 @@ export default function LandingPage() {
           ))}
         </div>
 
-        <Btn variant="green">GET STARTED →</Btn>
+        <Btn variant="green">Get started →</Btn>
       </nav>
 
       {/* ── HERO ── */}
@@ -245,7 +245,7 @@ export default function LandingPage() {
                 marginBottom: 28,
               }}
             >
-              ◆ AI-POWERED LEARNING PLATFORM
+              ◆ AI-powered learning platform
             </div>
 
             <h1
@@ -258,9 +258,9 @@ export default function LandingPage() {
                 marginBottom: 24,
               }}
             >
-              YOUR NOTES.
+              Your notes.
               <br />
-              YOUR AI.
+              Your AI.
               <br />
               <span
                 style={{
@@ -269,7 +269,7 @@ export default function LandingPage() {
                   border: `2px solid ${B}`,
                 }}
               >
-                YOUR EDGE.
+                Your edge.
               </span>
             </h1>
 
@@ -282,17 +282,17 @@ export default function LandingPage() {
                 marginBottom: 40,
               }}
             >
-              Upload your study materials into notebooks. Freshr indexes everything
+              Upload your study materials into notebooks. FRESHR indexes everything
               with AI — then lets you query your own knowledge base like a tutor
               who's read every page you have.
             </p>
 
             <div className="flex flex-wrap gap-4">
               <Btn variant="black" lg>
-                START FOR FREE →
+                Start for free →
               </Btn>
               <Btn variant="outline" lg>
-                SEE HOW IT WORKS
+                See how it works
               </Btn>
             </div>
           </div>
@@ -474,10 +474,10 @@ export default function LandingPage() {
             <span
               key={i}
               style={{
-                color: G,
-                fontSize: '0.72rem',
+                color: W,
+                fontSize: '0.9rem',
                 fontWeight: 700,
-                letterSpacing: '0.15em',
+                letterSpacing: '0.12em',
               }}
             >
               {TICKER_TEXT}
@@ -494,10 +494,10 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {(
             [
-              ['10×', 'FASTER RECALL'],
-              ['∞', 'DOCUMENTS'],
-              ['RAG', 'POWERED'],
-              ['100%', 'YOUR DATA'],
+              ['10×', 'Faster recall'],
+              ['∞', 'Documents'],
+              ['RAG', 'Powered'],
+              ['100%', 'Your data'],
             ] as [string, string][]
           ).map(([n, l]) => (
             <div key={l}>
@@ -514,9 +514,9 @@ export default function LandingPage() {
               </div>
               <div
                 style={{
-                  color: '#666',
-                  fontSize: '0.62rem',
-                  letterSpacing: '0.2em',
+                  color: W,
+                  fontSize: '0.82rem',
+                  letterSpacing: '0.15em',
                   marginTop: 10,
                 }}
               >
@@ -548,7 +548,7 @@ export default function LandingPage() {
                 marginBottom: 18,
               }}
             >
-              FEATURES
+              Features
             </div>
             <h2
               style={{
@@ -559,9 +559,9 @@ export default function LandingPage() {
                 letterSpacing: '-0.02em',
               }}
             >
-              EVERYTHING YOUR
+              Everything your
               <br />
-              NOTES DESERVE.
+              notes deserve.
             </h2>
           </div>
 
@@ -590,9 +590,9 @@ export default function LandingPage() {
               marginBottom: 52,
             }}
           >
-            THREE STEPS.
+            Three steps.
             <br />
-            ZERO COMPLEXITY.
+            Zero complexity.
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -657,7 +657,7 @@ export default function LandingPage() {
               marginBottom: 32,
             }}
           >
-            ◆ FREE TO START
+            ◆ Free to start
           </div>
           <h2
             style={{
@@ -670,9 +670,9 @@ export default function LandingPage() {
               marginBottom: 24,
             }}
           >
-            YOUR NOTES ARE
+            Your notes are
             <br />
-            <span style={{ color: G }}>WAITING TO TEACH YOU.</span>
+            <span style={{ color: G }}>waiting to teach you.</span>
           </h2>
           <p
             style={{
@@ -683,11 +683,11 @@ export default function LandingPage() {
               margin: '0 auto 48px',
             }}
           >
-            Stop rereading the same pages. Start asking questions. Freshr turns
+            Stop rereading the same pages. Start asking questions. FRESHR turns
             passive notes into an active learning engine.
           </p>
           <Btn variant="green" lg>
-            CREATE YOUR FIRST NOTEBOOK →
+            Create your first notebook →
           </Btn>
         </div>
       </section>
@@ -708,7 +708,7 @@ export default function LandingPage() {
         </span>
 
         <div className="flex gap-7" style={{ fontSize: '0.7rem' }}>
-          {['PRIVACY', 'TERMS', 'CONTACT'].map((l) => (
+          {['Privacy', 'Terms', 'Contact'].map((l) => (
             <a
               key={l}
               href="#"
