@@ -204,23 +204,6 @@ export default function LandingPage() {
           FRESHR
         </span>
 
-        <div
-          className="hidden md:flex items-center gap-8"
-          style={{ fontSize: '0.9rem', fontWeight: 600, letterSpacing: '0.08em' }}
-        >
-          {['Features', 'How it works', 'Pricing'].map((l) => (
-            <a
-              key={l}
-              href={`#${l.toLowerCase().replace(' ', '-')}`}
-              style={{ color: B, textDecoration: 'none' }}
-              onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
-              onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
-            >
-              {l}
-            </a>
-          ))}
-        </div>
-
         <Btn variant="green">Get started →</Btn>
       </nav>
 
@@ -289,10 +272,7 @@ export default function LandingPage() {
 
             <div className="flex flex-wrap gap-4">
               <Btn variant="black" lg>
-                Start for free →
-              </Btn>
-              <Btn variant="outline" lg>
-                See how it works
+                Get started →
               </Btn>
             </div>
           </div>
@@ -645,20 +625,6 @@ export default function LandingPage() {
         style={{ background: B }}
       >
         <div className="max-w-3xl mx-auto text-center">
-          <div
-            style={{
-              display: 'inline-block',
-              background: G,
-              border: `2px solid ${B}`,
-              padding: '6px 14px',
-              fontSize: '0.65rem',
-              fontWeight: 700,
-              letterSpacing: '0.15em',
-              marginBottom: 32,
-            }}
-          >
-            ◆ Free to start
-          </div>
           <h2
             style={{
               fontFamily: "'Syne', sans-serif",
