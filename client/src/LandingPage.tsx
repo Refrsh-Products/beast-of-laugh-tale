@@ -270,11 +270,6 @@ export default function LandingPage() {
               who's read every page you have.
             </p>
 
-            <div className="flex flex-wrap gap-4">
-              <Btn variant="black" lg>
-                Get started →
-              </Btn>
-            </div>
           </div>
 
           {/* Product visual */}
