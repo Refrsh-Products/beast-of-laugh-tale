@@ -98,6 +98,20 @@ export function updateNotebook(id: number, changes: Partial<Notebook>): void {
   }
 }
 
+export function createNotebook(title: string): Notebook {
+  const existing = getNotebooks()
+  const maxId = existing.reduce((m, n) => Math.max(m, n.id), 0)
+  const nb: Notebook = {
+    id: maxId + 1,
+    title,
+    created_at: new Date().toISOString(),
+    pinned: false,
+    file_count: 0,
+  }
+  saveNotebooks([...existing, nb])
+  return nb
+}
+
 export function deleteNotebook(id: number): void {
   saveNotebooks(getNotebooks().filter((n) => n.id !== id))
 }

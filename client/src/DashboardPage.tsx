@@ -10,6 +10,7 @@ import {
   endSession,
   getNotebooks,
   seedNotebooks,
+  createNotebook,
   updateNotebook,
   deleteNotebook,
   getArchivedNotebooks,
@@ -257,11 +258,11 @@ function NotebookCard({
 }
 
 // ── Create Card (grid) ─────────────────────────────────────────────
-function CreateCard() {
+function CreateCard({ onCreate }: { onCreate: () => void }) {
   const [hovered, setHovered] = useState(false)
   return (
     <div
-      onClick={() => console.log('Create new notebook clicked')}
+      onClick={onCreate}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -442,11 +443,11 @@ function NotebookRow({
 }
 
 // ── Create Row (list) ──────────────────────────────────────────────
-function CreateRow() {
+function CreateRow({ onCreate }: { onCreate: () => void }) {
   const [hovered, setHovered] = useState(false)
   return (
     <div
-      onClick={() => console.log('Create new notebook clicked')}
+      onClick={onCreate}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -487,6 +488,9 @@ export default function DashboardPage() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editValue, setEditValue] = useState('')
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createTitle, setCreateTitle] = useState('')
+  const [createError, setCreateError] = useState('')
   const [archivedNotebooks, setArchivedNotebooks] = useState<Notebook[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const contentRef = useRef<HTMLDivElement>(null)
@@ -527,6 +531,16 @@ export default function DashboardPage() {
     unarchiveNotebook(id)
     refreshNotebooks()
     setArchivedNotebooks(getArchivedNotebooks())
+  }
+
+  function handleCreateSubmit() {
+    const trimmed = createTitle.trim()
+    if (!trimmed) { setCreateError('Please enter a title.'); return }
+    createNotebook(trimmed)
+    setCreateTitle('')
+    setCreateError('')
+    setShowCreateModal(false)
+    refreshNotebooks()
   }
 
   function handleDeleteRequest(id: number) {
@@ -725,7 +739,7 @@ export default function DashboardPage() {
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
               style={{ gap: 20 }}
             >
-              <CreateCard />
+              <CreateCard onCreate={() => setShowCreateModal(true)} />
               {sorted.map((nb) => (
                 <NotebookCard
                   key={nb.id}
@@ -742,7 +756,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <CreateRow />
+              <CreateRow onCreate={() => setShowCreateModal(true)} />
               {sorted.map((nb) => (
                 <NotebookRow
                   key={nb.id}
@@ -831,6 +845,123 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* Create notebook modal */}
+      {showCreateModal && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}
+          onMouseDown={() => { setShowCreateModal(false); setCreateTitle(''); setCreateError('') }}
+        >
+          <div
+            style={{
+              background: W,
+              border: `2px solid ${B}`,
+              boxShadow: `8px 8px 0 ${B}`,
+              padding: '32px',
+              maxWidth: 420,
+              width: '90%',
+            }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <h2
+              style={{
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: 800,
+                fontSize: '1.2rem',
+                margin: '0 0 20px',
+              }}
+            >
+              New notebook
+            </h2>
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleCreateSubmit() }}
+              style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+            >
+              <div>
+                <label
+                  style={{
+                    display: 'block',
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: '0.68rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.12em',
+                    marginBottom: 6,
+                  }}
+                >
+                  TITLE
+                </label>
+                <input
+                  autoFocus
+                  type="text"
+                  value={createTitle}
+                  onChange={(e) => { setCreateTitle(e.target.value); if (createError) setCreateError('') }}
+                  placeholder="e.g. Physics — Semester 2"
+                  style={{
+                    width: '100%',
+                    border: createError ? '3px solid #cc0000' : `3px solid ${B}`,
+                    borderRadius: 0,
+                    padding: '10px 12px',
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: '0.82rem',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+                {createError && (
+                  <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.72rem', color: '#cc0000', margin: '6px 0 0' }}>
+                    {createError}
+                  </p>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowCreateModal(false); setCreateTitle(''); setCreateError('') }}
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    padding: '10px 20px',
+                    background: W,
+                    border: `2px solid ${B}`,
+                    boxShadow: `3px 3px 0 ${B}`,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    padding: '10px 20px',
+                    background: G,
+                    color: B,
+                    border: `2px solid ${B}`,
+                    boxShadow: `3px 3px 0 ${B}`,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Create →
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Delete confirmation modal */}
       {confirmDeleteId !== null && (() => {
