@@ -26,3 +26,7 @@ html, body {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
 }
+
+.freshr-scroll::-webkit-scrollbar { width: 6px; }
+.freshr-scroll::-webkit-scrollbar-track { background: transparent; }
+.freshr-scroll::-webkit-scrollbar-thumb { background: #ccc; }

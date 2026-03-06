@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { saveUser, savePassword, startSession } from './storage'
 
 const G = '#84e487'
 const B = '#000000'
@@ -60,6 +61,35 @@ export default function SignupPage() {
   const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [error, setError] = useState('')
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError('')
+    if (!email || !password || !confirm) {
+      setError('Please fill in all fields.')
+      return
+    }
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.')
+      return
+    }
+    if (password !== confirm) {
+      setError('Passwords do not match.')
+      return
+    }
+    const user = {
+      id: crypto.randomUUID(),
+      email,
+      tier_plan: 'FREE' as const,
+      is_active: true,
+      created_at: new Date().toISOString(),
+    }
+    saveUser(user)
+    savePassword(password)
+    startSession()
+    navigate('/dashboard')
+  }
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -229,8 +259,22 @@ export default function SignupPage() {
             <div style={{ flex: 1, height: 2, background: B }} />
           </div>
 
+          {/* Error message */}
+          {error && (
+            <p
+              style={{
+                color: '#cc0000',
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: '0.72rem',
+                margin: '0 0 16px',
+              }}
+            >
+              {error}
+            </p>
+          )}
+
           {/* Fields */}
-          <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div>
               <label style={labelStyle}>EMAIL</label>
               <input
