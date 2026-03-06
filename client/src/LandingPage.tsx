@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 /* ─── Design tokens ───────────────────────────────────────── */
 const G = '#84e487'   // green accent
@@ -168,6 +169,7 @@ const TICKER_TEXT =
 
 /* ─── Main page ───────────────────────────────────────────── */
 export default function LandingPage() {
+  const navigate = useNavigate()
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
@@ -208,7 +210,7 @@ export default function LandingPage() {
           FRESHR
         </span>
 
-        <span id="nav-cta"><Btn variant="green">Get started →</Btn></span>
+        <span id="nav-cta" onClick={() => navigate('/signup')} style={{ cursor: 'pointer' }}><Btn variant="green">Get started →</Btn></span>
       </nav>
 
       {/* ── HERO ── */}
@@ -664,7 +666,7 @@ export default function LandingPage() {
             Stop rereading the same pages. Start asking questions. FRESHR turns
             passive notes into an active learning engine.
           </p>
-          <span id="cta-button"><Btn variant="green" lg onDark>
+          <span id="cta-button" onClick={() => navigate('/signup')} style={{ cursor: 'pointer' }}><Btn variant="green" lg onDark>
             Create your first notebook →
           </Btn></span>
         </div>
