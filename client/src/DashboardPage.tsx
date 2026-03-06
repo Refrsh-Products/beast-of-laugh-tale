@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate, Navigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import {
@@ -23,12 +24,16 @@ function formatDate(iso: string): string {
 // ── Three-dot dropdown ─────────────────────────────────────────────
 function NotebookMenu({
   notebook,
+  top,
+  right,
   onPin,
   onRename,
   onArchive,
   onDelete,
 }: {
   notebook: Notebook
+  top: number
+  right: number
   onPin: () => void
   onRename: () => void
   onArchive: () => void
@@ -37,10 +42,10 @@ function NotebookMenu({
   return (
     <div
       style={{
-        position: 'absolute',
-        top: 32,
-        right: 8,
-        zIndex: 100,
+        position: 'fixed',
+        top,
+        right,
+        zIndex: 1000,
         background: W,
         border: `2px solid ${B}`,
         boxShadow: `4px 4px 0 ${B}`,
@@ -104,13 +109,11 @@ function MenuRow({
 function NotebookCard({
   notebook,
   openMenuId,
-  setOpenMenuId,
-  onUpdate,
+  onMenuOpen,
 }: {
   notebook: Notebook
   openMenuId: number | null
-  setOpenMenuId: (id: number | null) => void
-  onUpdate: () => void
+  onMenuOpen: (id: number | null, anchor?: { top: number; right: number }) => void
 }) {
   const [hovered, setHovered] = useState(false)
   const menuOpen = openMenuId === notebook.id
@@ -147,7 +150,9 @@ function NotebookCard({
         <button
           onClick={(e) => {
             e.stopPropagation()
-            setOpenMenuId(menuOpen ? null : notebook.id)
+            if (menuOpen) { onMenuOpen(null); return }
+            const rect = e.currentTarget.getBoundingClientRect()
+            onMenuOpen(notebook.id, { top: rect.bottom + 4, right: window.innerWidth - rect.right })
           }}
           style={{
             background: 'none',
@@ -163,15 +168,6 @@ function NotebookCard({
         >
           ⋮
         </button>
-        {menuOpen && (
-          <NotebookMenu
-            notebook={notebook}
-            onPin={() => { updateNotebook(notebook.id, { pinned: !notebook.pinned }); onUpdate(); setOpenMenuId(null); console.log('Pin/Unpin', notebook.id) }}
-            onRename={() => { setOpenMenuId(null); console.log('Rename', notebook.id) }}
-            onArchive={() => { setOpenMenuId(null); console.log('Archive', notebook.id) }}
-            onDelete={() => { setOpenMenuId(null); console.log('Delete', notebook.id) }}
-          />
-        )}
       </div>
 
       {/* Title */}
@@ -249,13 +245,11 @@ function CreateCard() {
 function NotebookRow({
   notebook,
   openMenuId,
-  setOpenMenuId,
-  onUpdate,
+  onMenuOpen,
 }: {
   notebook: Notebook
   openMenuId: number | null
-  setOpenMenuId: (id: number | null) => void
-  onUpdate: () => void
+  onMenuOpen: (id: number | null, anchor?: { top: number; right: number }) => void
 }) {
   const [hovered, setHovered] = useState(false)
   const menuOpen = openMenuId === notebook.id
@@ -331,7 +325,9 @@ function NotebookRow({
       <button
         onClick={(e) => {
           e.stopPropagation()
-          setOpenMenuId(menuOpen ? null : notebook.id)
+          if (menuOpen) { onMenuOpen(null); return }
+          const rect = e.currentTarget.getBoundingClientRect()
+          onMenuOpen(notebook.id, { top: rect.bottom + 4, right: window.innerWidth - rect.right })
         }}
         style={{
           background: 'none',
@@ -348,16 +344,6 @@ function NotebookRow({
       >
         ⋮
       </button>
-
-      {menuOpen && (
-        <NotebookMenu
-          notebook={notebook}
-          onPin={() => { updateNotebook(notebook.id, { pinned: !notebook.pinned }); onUpdate(); setOpenMenuId(null); console.log('Pin/Unpin', notebook.id) }}
-          onRename={() => { setOpenMenuId(null); console.log('Rename', notebook.id) }}
-          onArchive={() => { setOpenMenuId(null); console.log('Archive', notebook.id) }}
-          onDelete={() => { setOpenMenuId(null); console.log('Delete', notebook.id) }}
-        />
-      )}
     </div>
   )
 }
@@ -403,8 +389,14 @@ export default function DashboardPage() {
   const [notebooks, setNotebooks] = useState<Notebook[]>([])
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
+  const [menuAnchor, setMenuAnchor] = useState<{ top: number; right: number } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const contentRef = useRef<HTMLDivElement>(null)
+
+  function handleMenuOpen(id: number | null, anchor?: { top: number; right: number }) {
+    setOpenMenuId(id)
+    setMenuAnchor(anchor ?? null)
+  }
 
   useEffect(() => {
     seedNotebooks()
@@ -416,6 +408,7 @@ export default function DashboardPage() {
     function handleMouseDown(e: MouseEvent) {
       if (openMenuId !== null) {
         setOpenMenuId(null)
+        setMenuAnchor(null)
       }
     }
     document.addEventListener('mousedown', handleMouseDown)
@@ -593,8 +586,7 @@ export default function DashboardPage() {
                   key={nb.id}
                   notebook={nb}
                   openMenuId={openMenuId}
-                  setOpenMenuId={setOpenMenuId}
-                  onUpdate={refreshNotebooks}
+                  onMenuOpen={handleMenuOpen}
                 />
               ))}
             </div>
@@ -606,14 +598,31 @@ export default function DashboardPage() {
                   key={nb.id}
                   notebook={nb}
                   openMenuId={openMenuId}
-                  setOpenMenuId={setOpenMenuId}
-                  onUpdate={refreshNotebooks}
+                  onMenuOpen={handleMenuOpen}
                 />
               ))}
             </div>
           )}
         </div>
       </div>
+
+      {/* Portal menu — renders outside overflow-clipped containers */}
+      {openMenuId !== null && menuAnchor !== null && (() => {
+        const nb = notebooks.find((n) => n.id === openMenuId)
+        if (!nb) return null
+        return createPortal(
+          <NotebookMenu
+            notebook={nb}
+            top={menuAnchor.top}
+            right={menuAnchor.right}
+            onPin={() => { updateNotebook(nb.id, { pinned: !nb.pinned }); refreshNotebooks(); handleMenuOpen(null); console.log('Pin/Unpin', nb.id) }}
+            onRename={() => { handleMenuOpen(null); console.log('Rename', nb.id) }}
+            onArchive={() => { handleMenuOpen(null); console.log('Archive', nb.id) }}
+            onDelete={() => { handleMenuOpen(null); console.log('Delete', nb.id) }}
+          />,
+          document.body
+        )
+      })()}
     </div>
   )
 }
