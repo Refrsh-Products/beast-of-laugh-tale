@@ -53,13 +53,11 @@ function Btn({
   )
 }
 
-export default function SignupPage() {
+export default function LoginPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [showConfirm, setShowConfirm] = useState(false)
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
@@ -90,38 +88,7 @@ export default function SignupPage() {
         fontFamily: "'IBM Plex Mono', monospace",
       }}
     >
-      {/* ── LEFT HALF ── */}
-      <div
-        style={{
-          flex: '0 0 50%',
-          boxSizing: 'border-box',
-          background: B,
-          display: 'none',
-          position: 'relative',
-          borderRight: `3px solid ${B}`,
-        }}
-        className="signup-left"
-      >
-        {/* Logo */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 32,
-            left: 36,
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: '1.5rem',
-            letterSpacing: '-0.02em',
-            color: W,
-            cursor: 'pointer',
-          }}
-          onClick={() => navigate('/')}
-        >
-          FRESHR
-        </div>
-      </div>
-
-      {/* ── RIGHT HALF ── */}
+      {/* ── LEFT HALF (form) ── */}
       <div
         style={{
           flex: '0 0 50%',
@@ -135,20 +102,19 @@ export default function SignupPage() {
           boxSizing: 'border-box',
         }}
       >
-        {/* Mobile logo */}
+        {/* Logo */}
         <div
           style={{
             position: 'absolute',
-            top: 28,
-            left: 28,
+            top: 32,
+            left: 36,
             fontFamily: "'Syne', sans-serif",
             fontWeight: 800,
-            fontSize: '1.35rem',
+            fontSize: '1.5rem',
             letterSpacing: '-0.02em',
             color: B,
             cursor: 'pointer',
           }}
-          className="signup-mobile-logo"
           onClick={() => navigate('/')}
         >
           FRESHR
@@ -166,7 +132,7 @@ export default function SignupPage() {
               lineHeight: 1.1,
             }}
           >
-            Create your account
+            Welcome back
           </h1>
 
           {/* Google button */}
@@ -276,43 +242,9 @@ export default function SignupPage() {
               </div>
             </div>
 
-            <div>
-              <label style={labelStyle}>CONFIRM PASSWORD</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showConfirm ? 'text' : 'password'}
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="••••••••"
-                  style={{ ...inputStyle, paddingRight: 48 }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm((v) => !v)}
-                  style={{
-                    position: 'absolute',
-                    right: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: 0,
-                    color: '#888',
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: '0.65rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  {showConfirm ? 'HIDE' : 'SHOW'}
-                </button>
-              </div>
-            </div>
-
             <div style={{ marginTop: 8 }}>
               <Btn variant="green" fullWidth type="submit">
-                Sign up →
+                Log in →
               </Btn>
             </div>
           </form>
@@ -326,9 +258,9 @@ export default function SignupPage() {
               textAlign: 'center',
             }}
           >
-            Already have an account?{' '}
+            Don't have an account?{' '}
             <Link
-              to="/login"
+              to="/signup"
               style={{
                 color: B,
                 fontWeight: 700,
@@ -336,16 +268,28 @@ export default function SignupPage() {
                 textUnderlineOffset: 3,
               }}
             >
-              Log in
+              Sign up
             </Link>
           </p>
         </div>
       </div>
 
+      {/* ── RIGHT HALF (black) ── */}
+      <div
+        style={{
+          flex: '0 0 50%',
+          boxSizing: 'border-box',
+          background: B,
+          display: 'none',
+          position: 'relative',
+        }}
+        className="login-right"
+      >
+      </div>
+
       <style>{`
         @media (min-width: 768px) {
-          .signup-left { display: block !important; }
-          .signup-mobile-logo { display: none !important; }
+          .login-right { display: block !important; }
         }
       `}</style>
     </div>
