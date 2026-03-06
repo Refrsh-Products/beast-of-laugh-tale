@@ -11,6 +11,10 @@ import {
   getNotebooks,
   seedNotebooks,
   updateNotebook,
+  deleteNotebook,
+  getArchivedNotebooks,
+  archiveNotebook,
+  unarchiveNotebook,
   type Notebook,
 } from './storage'
 
@@ -112,13 +116,25 @@ function NotebookCard({
   notebook,
   openMenuId,
   onMenuOpen,
+  editingId,
+  editValue,
+  onEditChange,
+  onEditConfirm,
+  onEditCancel,
 }: {
   notebook: Notebook
   openMenuId: number | null
   onMenuOpen: (id: number | null, anchor?: { top: number; right: number }) => void
+  editingId: number | null
+  editValue: string
+  onEditChange: (val: string) => void
+  onEditConfirm: () => void
+  onEditCancel: () => void
 }) {
   const [hovered, setHovered] = useState(false)
   const menuOpen = openMenuId === notebook.id
+  const isEditing = editingId === notebook.id
+  const escapeRef = useRef(false)
 
   return (
     <div
@@ -127,11 +143,11 @@ function NotebookCard({
         position: 'relative',
         padding: 16,
         background: W,
-        border: hovered || menuOpen ? `2px solid ${G}` : `2px solid ${B}`,
-        boxShadow: hovered || menuOpen ? `6px 6px 0 ${B}` : `3px 3px 0 ${B}`,
-        transform: hovered || menuOpen ? 'translate(-2px, -2px)' : 'none',
+        border: hovered || menuOpen || isEditing ? `2px solid ${G}` : `2px solid ${B}`,
+        boxShadow: hovered || menuOpen || isEditing ? `6px 6px 0 ${B}` : `3px 3px 0 ${B}`,
+        transform: hovered || menuOpen || isEditing ? 'translate(-2px, -2px)' : 'none',
         transition: 'transform 0.1s, box-shadow 0.1s, border-color 0.1s',
-        cursor: 'pointer',
+        cursor: isEditing ? 'default' : 'pointer',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -148,47 +164,79 @@ function NotebookCard({
             </svg>
           )}
         </div>
-        {/* Three-dot button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            if (menuOpen) { onMenuOpen(null); return }
-            const rect = e.currentTarget.getBoundingClientRect()
-            onMenuOpen(notebook.id, { top: rect.bottom + 4, right: window.innerWidth - rect.right })
-          }}
-          style={{
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            padding: '0 2px',
-            fontSize: '1rem',
-            lineHeight: 1,
-            color: '#888',
-            opacity: hovered || menuOpen ? 1 : 0,
-            transition: 'opacity 0.1s',
-          }}
-        >
-          ⋮
-        </button>
+        {!isEditing && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (menuOpen) { onMenuOpen(null); return }
+              const rect = e.currentTarget.getBoundingClientRect()
+              onMenuOpen(notebook.id, { top: rect.bottom + 4, right: window.innerWidth - rect.right })
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '0 2px',
+              fontSize: '1rem',
+              lineHeight: 1,
+              color: '#888',
+              opacity: hovered || menuOpen ? 1 : 0,
+              transition: 'opacity 0.1s',
+            }}
+          >
+            ⋮
+          </button>
+        )}
       </div>
 
-      {/* Title */}
-      <div
-        style={{
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 700,
-          fontSize: '0.95rem',
-          lineHeight: 1.3,
-          flex: 1,
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical',
-          overflow: 'hidden',
-          marginTop: 4,
-        }}
-      >
-        {notebook.title}
-      </div>
+      {/* Title or rename input */}
+      {isEditing ? (
+        <input
+          autoFocus
+          value={editValue}
+          onChange={(e) => onEditChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') { e.preventDefault(); onEditConfirm() }
+            else if (e.key === 'Escape') { escapeRef.current = true; e.currentTarget.blur() }
+          }}
+          onBlur={() => {
+            if (escapeRef.current) { escapeRef.current = false; onEditCancel() }
+            else { onEditConfirm() }
+          }}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            fontFamily: "'Syne', sans-serif",
+            fontWeight: 700,
+            fontSize: '0.95rem',
+            lineHeight: 1.3,
+            flex: 1,
+            width: '100%',
+            border: 'none',
+            borderBottom: `2px solid ${G}`,
+            outline: 'none',
+            background: 'transparent',
+            padding: '2px 0',
+            marginTop: 4,
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            fontFamily: "'Syne', sans-serif",
+            fontWeight: 700,
+            fontSize: '0.95rem',
+            lineHeight: 1.3,
+            flex: 1,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+            marginTop: 4,
+          }}
+        >
+          {notebook.title}
+        </div>
+      )}
 
       {/* Bottom row */}
       <div
@@ -248,13 +296,25 @@ function NotebookRow({
   notebook,
   openMenuId,
   onMenuOpen,
+  editingId,
+  editValue,
+  onEditChange,
+  onEditConfirm,
+  onEditCancel,
 }: {
   notebook: Notebook
   openMenuId: number | null
   onMenuOpen: (id: number | null, anchor?: { top: number; right: number }) => void
+  editingId: number | null
+  editValue: string
+  onEditChange: (val: string) => void
+  onEditConfirm: () => void
+  onEditCancel: () => void
 }) {
   const [hovered, setHovered] = useState(false)
   const menuOpen = openMenuId === notebook.id
+  const isEditing = editingId === notebook.id
+  const escapeRef = useRef(false)
 
   return (
     <div
@@ -262,11 +322,11 @@ function NotebookRow({
         position: 'relative',
         padding: '14px 20px',
         background: W,
-        border: hovered || menuOpen ? `2px solid ${G}` : `2px solid ${B}`,
-        boxShadow: hovered || menuOpen ? `6px 6px 0 ${B}` : `3px 3px 0 ${B}`,
-        transform: hovered || menuOpen ? 'translate(-2px, -2px)' : 'none',
+        border: hovered || menuOpen || isEditing ? `2px solid ${G}` : `2px solid ${B}`,
+        boxShadow: hovered || menuOpen || isEditing ? `6px 6px 0 ${B}` : `3px 3px 0 ${B}`,
+        transform: hovered || menuOpen || isEditing ? 'translate(-2px, -2px)' : 'none',
         transition: 'transform 0.1s, box-shadow 0.1s, border-color 0.1s',
-        cursor: 'pointer',
+        cursor: isEditing ? 'default' : 'pointer',
         display: 'flex',
         alignItems: 'center',
         gap: 12,
@@ -283,21 +343,50 @@ function NotebookRow({
         )}
       </div>
 
-      {/* Title */}
-      <div
-        style={{
-          flex: 1,
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 700,
-          fontSize: '0.9rem',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          minWidth: 0,
-        }}
-      >
-        {notebook.title}
-      </div>
+      {/* Title or rename input */}
+      {isEditing ? (
+        <input
+          autoFocus
+          value={editValue}
+          onChange={(e) => onEditChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') { e.preventDefault(); onEditConfirm() }
+            else if (e.key === 'Escape') { escapeRef.current = true; e.currentTarget.blur() }
+          }}
+          onBlur={() => {
+            if (escapeRef.current) { escapeRef.current = false; onEditCancel() }
+            else { onEditConfirm() }
+          }}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            flex: 1,
+            fontFamily: "'Syne', sans-serif",
+            fontWeight: 700,
+            fontSize: '0.9rem',
+            border: 'none',
+            borderBottom: `2px solid ${G}`,
+            outline: 'none',
+            background: 'transparent',
+            padding: '2px 0',
+            minWidth: 0,
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            flex: 1,
+            fontFamily: "'Syne', sans-serif",
+            fontWeight: 700,
+            fontSize: '0.9rem',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            minWidth: 0,
+          }}
+        >
+          {notebook.title}
+        </div>
+      )}
 
       {/* File count */}
       <span
@@ -324,28 +413,30 @@ function NotebookRow({
       </span>
 
       {/* Three-dot */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          if (menuOpen) { onMenuOpen(null); return }
-          const rect = e.currentTarget.getBoundingClientRect()
-          onMenuOpen(notebook.id, { top: rect.bottom + 4, right: window.innerWidth - rect.right })
-        }}
-        style={{
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          padding: '0 2px',
-          fontSize: '1rem',
-          lineHeight: 1,
-          color: '#888',
-          opacity: hovered || menuOpen ? 1 : 0,
-          transition: 'opacity 0.1s',
-          flexShrink: 0,
-        }}
-      >
-        ⋮
-      </button>
+      {!isEditing && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            if (menuOpen) { onMenuOpen(null); return }
+            const rect = e.currentTarget.getBoundingClientRect()
+            onMenuOpen(notebook.id, { top: rect.bottom + 4, right: window.innerWidth - rect.right })
+          }}
+          style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '0 2px',
+            fontSize: '1rem',
+            lineHeight: 1,
+            color: '#888',
+            opacity: hovered || menuOpen ? 1 : 0,
+            transition: 'opacity 0.1s',
+            flexShrink: 0,
+          }}
+        >
+          ⋮
+        </button>
+      )}
     </div>
   )
 }
@@ -393,6 +484,10 @@ export default function DashboardPage() {
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [menuAnchor, setMenuAnchor] = useState<{ top: number; right: number } | null>(null)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editValue, setEditValue] = useState('')
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null)
+  const [archivedNotebooks, setArchivedNotebooks] = useState<Notebook[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -401,9 +496,55 @@ export default function DashboardPage() {
     setMenuAnchor(anchor ?? null)
   }
 
+  function handleRenameStart(id: number, title: string) {
+    handleMenuOpen(null)
+    setEditingId(id)
+    setEditValue(title)
+  }
+
+  function handleRenameConfirm() {
+    if (editingId === null) return
+    const trimmed = editValue.trim()
+    if (trimmed) updateNotebook(editingId, { title: trimmed })
+    setEditingId(null)
+    setEditValue('')
+    refreshNotebooks()
+  }
+
+  function handleRenameCancel() {
+    setEditingId(null)
+    setEditValue('')
+  }
+
+  function handleArchive(id: number) {
+    handleMenuOpen(null)
+    archiveNotebook(id)
+    refreshNotebooks()
+    setArchivedNotebooks(getArchivedNotebooks())
+  }
+
+  function handleUnarchive(id: number) {
+    unarchiveNotebook(id)
+    refreshNotebooks()
+    setArchivedNotebooks(getArchivedNotebooks())
+  }
+
+  function handleDeleteRequest(id: number) {
+    handleMenuOpen(null)
+    setConfirmDeleteId(id)
+  }
+
+  function handleDeleteConfirm() {
+    if (confirmDeleteId === null) return
+    deleteNotebook(confirmDeleteId)
+    setConfirmDeleteId(null)
+    refreshNotebooks()
+  }
+
   useEffect(() => {
     seedNotebooks()
     setNotebooks(getNotebooks())
+    setArchivedNotebooks(getArchivedNotebooks())
   }, [])
 
   // Click-outside handler to close menu
@@ -591,6 +732,11 @@ export default function DashboardPage() {
                   notebook={nb}
                   openMenuId={openMenuId}
                   onMenuOpen={handleMenuOpen}
+                  editingId={editingId}
+                  editValue={editValue}
+                  onEditChange={setEditValue}
+                  onEditConfirm={handleRenameConfirm}
+                  onEditCancel={handleRenameCancel}
                 />
               ))}
             </div>
@@ -603,12 +749,178 @@ export default function DashboardPage() {
                   notebook={nb}
                   openMenuId={openMenuId}
                   onMenuOpen={handleMenuOpen}
+                  editingId={editingId}
+                  editValue={editValue}
+                  onEditChange={setEditValue}
+                  onEditConfirm={handleRenameConfirm}
+                  onEditCancel={handleRenameCancel}
                 />
               ))}
             </div>
           )}
+
+          {/* Archived section */}
+          {archivedNotebooks.length > 0 && (
+            <div style={{ marginTop: 40 }}>
+              <div
+                style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: '0.6rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.14em',
+                  color: '#aaa',
+                  marginBottom: 12,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                }}
+              >
+                ARCHIVED
+                <span style={{ fontWeight: 400 }}>({archivedNotebooks.length})</span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {archivedNotebooks.map((nb) => (
+                  <div
+                    key={nb.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                      padding: '10px 16px',
+                      background: W,
+                      border: `2px solid #ccc`,
+                      boxShadow: `2px 2px 0 #ccc`,
+                    }}
+                  >
+                    <span
+                      style={{
+                        flex: 1,
+                        fontFamily: "'Syne', sans-serif",
+                        fontWeight: 700,
+                        fontSize: '0.88rem',
+                        color: '#888',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        minWidth: 0,
+                      }}
+                    >
+                      {nb.title}
+                    </span>
+                    <button
+                      onClick={() => handleUnarchive(nb.id)}
+                      style={{
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: '0.62rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.06em',
+                        background: 'none',
+                        border: `2px solid ${B}`,
+                        padding: '4px 10px',
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        color: B,
+                      }}
+                    >
+                      Unarchive
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Delete confirmation modal */}
+      {confirmDeleteId !== null && (() => {
+        const nb = notebooks.find((n) => n.id === confirmDeleteId)
+        if (!nb) return null
+        return createPortal(
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 2000,
+            }}
+            onMouseDown={() => setConfirmDeleteId(null)}
+          >
+            <div
+              style={{
+                background: W,
+                border: `2px solid ${B}`,
+                boxShadow: `8px 8px 0 ${B}`,
+                padding: '32px',
+                maxWidth: 400,
+                width: '90%',
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+            >
+              <h2
+                style={{
+                  fontFamily: "'Syne', sans-serif",
+                  fontWeight: 800,
+                  fontSize: '1.2rem',
+                  margin: '0 0 8px',
+                }}
+              >
+                Delete notebook?
+              </h2>
+              <p
+                style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: '0.72rem',
+                  color: '#555',
+                  margin: '0 0 24px',
+                  lineHeight: 1.6,
+                }}
+              >
+                "{nb.title}" will be permanently deleted. This cannot be undone.
+              </p>
+              <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setConfirmDeleteId(null)}
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    padding: '10px 20px',
+                    background: W,
+                    border: `2px solid ${B}`,
+                    boxShadow: `3px 3px 0 ${B}`,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.06em',
+                    padding: '10px 20px',
+                    background: '#cc0000',
+                    color: W,
+                    border: `2px solid #cc0000`,
+                    boxShadow: `3px 3px 0 ${B}`,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )
+      })()}
 
       {/* Portal menu — renders outside overflow-clipped containers */}
       {openMenuId !== null && menuAnchor !== null && (() => {
@@ -619,10 +931,10 @@ export default function DashboardPage() {
             notebook={nb}
             top={menuAnchor.top}
             right={menuAnchor.right}
-            onPin={() => { updateNotebook(nb.id, { pinned: !nb.pinned }); refreshNotebooks(); handleMenuOpen(null); console.log('Pin/Unpin', nb.id) }}
-            onRename={() => { handleMenuOpen(null); console.log('Rename', nb.id) }}
-            onArchive={() => { handleMenuOpen(null); console.log('Archive', nb.id) }}
-            onDelete={() => { handleMenuOpen(null); console.log('Delete', nb.id) }}
+            onPin={() => { updateNotebook(nb.id, { pinned: !nb.pinned }); refreshNotebooks(); handleMenuOpen(null) }}
+            onRename={() => handleRenameStart(nb.id, nb.title)}
+            onArchive={() => handleArchive(nb.id)}
+            onDelete={() => handleDeleteRequest(nb.id)}
           />,
           document.body
         )

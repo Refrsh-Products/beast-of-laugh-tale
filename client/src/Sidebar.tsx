@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 
 const G = '#84e487'
@@ -16,7 +17,28 @@ export default function Sidebar({ onLogout, userEmail, userName }: SidebarProps)
   const avatarLetter = (userName || userEmail || '?')[0].toUpperCase()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
-  const [logoutHovered, setLogoutHovered] = useState(false)
+  const [profileMenuAnchor, setProfileMenuAnchor] = useState<{ bottom: number; left: number; width: number } | null>(null)
+  const profileRowRef = useRef<HTMLDivElement>(null)
+
+  // Close profile dropdown on outside click
+  useEffect(() => {
+    if (!profileMenuAnchor) return
+    function handler(e: MouseEvent) {
+      if (profileRowRef.current && !profileRowRef.current.contains(e.target as Node)) {
+        setProfileMenuAnchor(null)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [profileMenuAnchor])
+
+  function toggleProfileMenu() {
+    if (profileMenuAnchor) { setProfileMenuAnchor(null); return }
+    const el = profileRowRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    setProfileMenuAnchor({ bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width })
+  }
 
   return (
     <div
@@ -138,65 +160,29 @@ export default function Sidebar({ onLogout, userEmail, userName }: SidebarProps)
           flexShrink: 0,
         }}
       >
-        {/* Settings row */}
+        {/* Profile row — click to open dropdown */}
         <div
-          onClick={() => console.log('Settings clicked')}
+          ref={profileRowRef}
+          onClick={toggleProfileMenu}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 10,
             padding: collapsed ? '14px 0' : '14px 16px',
-            cursor: 'pointer',
             justifyContent: collapsed ? 'center' : 'flex-start',
-            borderBottom: '1px solid #222',
+            cursor: 'pointer',
+            userSelect: 'none',
           }}
           onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = '#111' }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-            <path
-              d="M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"
-              stroke="#888"
-              strokeWidth="1.4"
-              fill="none"
-            />
-            <path
-              d="M13.3 8c0-.2 0-.4-.02-.6l1.3-1a.5.5 0 0 0 .1-.6l-1.22-2.1a.5.5 0 0 0-.6-.22l-1.53.62a4.6 4.6 0 0 0-1.04-.6L10.08 2a.5.5 0 0 0-.5-.42H7.42A.5.5 0 0 0 6.92 2l-.22 1.54c-.38.16-.72.37-1.04.6L4.14 3.52a.5.5 0 0 0-.6.22L2.32 5.84a.5.5 0 0 0 .1.6l1.3 1A4.6 4.6 0 0 0 3.7 8c0 .2 0 .4.02.6l-1.3 1a.5.5 0 0 0-.1.6l1.22 2.1c.12.22.38.3.6.22l1.53-.62c.32.23.66.44 1.04.6l.22 1.54c.06.24.27.42.5.42h2.16c.23 0 .44-.18.5-.42l.22-1.54c.38-.16.72-.37 1.04-.6l1.53.62c.22.08.48 0 .6-.22l1.22-2.1a.5.5 0 0 0-.1-.6l-1.3-1c.02-.2.02-.4.02-.6Z"
-              stroke="#888"
-              strokeWidth="1.4"
-              fill="none"
-            />
-          </svg>
-          {!collapsed && (
-            <span
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: '0.72rem',
-                color: '#888',
-              }}
-            >
-              Settings
-            </span>
-          )}
-        </div>
-
-        {/* Profile row */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-            padding: collapsed ? '14px 0' : '14px 16px',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-          }}
         >
           {/* Avatar */}
           <div
             style={{
               width: 28,
               height: 28,
-              background: G,
-              color: B,
+              background: profileMenuAnchor ? W : G,
+              color: profileMenuAnchor ? B : B,
               borderRadius: '50%',
               display: 'flex',
               alignItems: 'center',
@@ -205,51 +191,91 @@ export default function Sidebar({ onLogout, userEmail, userName }: SidebarProps)
               fontWeight: 800,
               fontSize: '0.7rem',
               flexShrink: 0,
+              transition: 'background 0.1s',
+              border: profileMenuAnchor ? `2px solid ${G}` : 'none',
             }}
           >
             {avatarLetter}
           </div>
 
           {!collapsed && (
-            <>
-              <span
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: '0.68rem',
-                  color: '#888',
-                  flex: 1,
-                  minWidth: 0,
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {displayLabel}
-              </span>
-              <button
-                onClick={onLogout}
-                onMouseEnter={() => setLogoutHovered(true)}
-                onMouseLeave={() => setLogoutHovered(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: '0.6rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.08em',
-                  color: logoutHovered ? '#cc0000' : '#666',
-                  padding: '4px 0',
-                  flexShrink: 0,
-                  transition: 'color 0.1s',
-                }}
-              >
-                LOGOUT
-              </button>
-            </>
+            <span
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: '0.68rem',
+                color: '#888',
+                flex: 1,
+                minWidth: 0,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {displayLabel}
+            </span>
           )}
         </div>
       </div>
+
+      {/* Profile dropdown portal */}
+      {profileMenuAnchor && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            bottom: profileMenuAnchor.bottom,
+            left: profileMenuAnchor.left,
+            minWidth: Math.max(profileMenuAnchor.width, 160),
+            zIndex: 1000,
+            background: W,
+            border: `2px solid ${B}`,
+            boxShadow: `4px 4px 0 ${B}`,
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <ProfileMenuItem
+            label="Settings"
+            onClick={() => { setProfileMenuAnchor(null); console.log('Settings clicked') }}
+          />
+          <div style={{ height: 1, background: '#eee' }} />
+          <ProfileMenuItem
+            label="Logout"
+            color="#cc0000"
+            onClick={() => { setProfileMenuAnchor(null); onLogout() }}
+          />
+        </div>,
+        document.body
+      )}
+    </div>
+  )
+}
+
+function ProfileMenuItem({
+  label,
+  color = B,
+  onClick,
+}: {
+  label: string
+  color?: string
+  onClick: () => void
+}) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        padding: '10px 16px',
+        fontFamily: "'IBM Plex Mono', monospace",
+        fontSize: '0.72rem',
+        color,
+        fontWeight: color === '#cc0000' ? 600 : 400,
+        cursor: 'pointer',
+        background: hovered && color !== '#cc0000' ? '#f0f0f0' : 'transparent',
+        userSelect: 'none',
+      }}
+    >
+      {label}
     </div>
   )
 }

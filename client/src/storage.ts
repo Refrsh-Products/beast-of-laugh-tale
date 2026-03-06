@@ -98,6 +98,38 @@ export function updateNotebook(id: number, changes: Partial<Notebook>): void {
   }
 }
 
+export function deleteNotebook(id: number): void {
+  saveNotebooks(getNotebooks().filter((n) => n.id !== id))
+}
+
+// ── Archived notebooks ────────────────────────────────────────────
+export function getArchivedNotebooks(): Notebook[] {
+  const raw = localStorage.getItem('freshr_archived_notebooks')
+  return raw ? JSON.parse(raw) : []
+}
+
+export function saveArchivedNotebooks(notebooks: Notebook[]): void {
+  localStorage.setItem('freshr_archived_notebooks', JSON.stringify(notebooks))
+}
+
+export function archiveNotebook(id: number): void {
+  const active = getNotebooks()
+  const idx = active.findIndex((n) => n.id === id)
+  if (idx === -1) return
+  const [nb] = active.splice(idx, 1)
+  saveNotebooks(active)
+  saveArchivedNotebooks([...getArchivedNotebooks(), nb])
+}
+
+export function unarchiveNotebook(id: number): void {
+  const archived = getArchivedNotebooks()
+  const idx = archived.findIndex((n) => n.id === id)
+  if (idx === -1) return
+  const [nb] = archived.splice(idx, 1)
+  saveArchivedNotebooks(archived)
+  saveNotebooks([...getNotebooks(), nb])
+}
+
 export function seedNotebooks(): void {
   if (getNotebooks().length > 0) return
   const seed: Notebook[] = [
