@@ -8,9 +8,12 @@ const W = '#FFFFFF'
 interface SidebarProps {
   onLogout: () => void
   userEmail: string
+  userName?: string
 }
 
-export default function Sidebar({ onLogout, userEmail }: SidebarProps) {
+export default function Sidebar({ onLogout, userEmail, userName }: SidebarProps) {
+  const displayLabel = userName || userEmail
+  const avatarLetter = (userName || userEmail || '?')[0].toUpperCase()
   const navigate = useNavigate()
   const [collapsed, setCollapsed] = useState(false)
   const [logoutHovered, setLogoutHovered] = useState(false)
@@ -204,7 +207,7 @@ export default function Sidebar({ onLogout, userEmail }: SidebarProps) {
               flexShrink: 0,
             }}
           >
-            {userEmail ? userEmail[0].toUpperCase() : '?'}
+            {avatarLetter}
           </div>
 
           {!collapsed && (
@@ -221,7 +224,7 @@ export default function Sidebar({ onLogout, userEmail }: SidebarProps) {
                   whiteSpace: 'nowrap',
                 }}
               >
-                {userEmail}
+                {displayLabel}
               </span>
               <button
                 onClick={onLogout}

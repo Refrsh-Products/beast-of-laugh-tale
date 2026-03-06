@@ -4,7 +4,9 @@ import { useNavigate, Navigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import {
   getUser,
+  getAccount,
   isLoggedIn,
+  hasCompletedOnboarding,
   endSession,
   getNotebooks,
   seedNotebooks,
@@ -386,6 +388,7 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const loggedIn = isLoggedIn()
   const user = getUser()
+  const account = getAccount()
   const [notebooks, setNotebooks] = useState<Notebook[]>([])
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
@@ -431,6 +434,7 @@ export default function DashboardPage() {
   })
 
   if (!loggedIn) return <Navigate to="/login" replace />
+  if (!hasCompletedOnboarding()) return <Navigate to="/onboarding" replace />
 
   return (
     <div
@@ -440,7 +444,7 @@ export default function DashboardPage() {
         overflow: 'hidden',
       }}
     >
-      <Sidebar onLogout={handleLogout} userEmail={user?.email ?? ''} />
+      <Sidebar onLogout={handleLogout} userEmail={user?.email ?? ''} userName={account?.name} />
 
       {/* ── Main content ── */}
       <div

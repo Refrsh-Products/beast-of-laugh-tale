@@ -88,7 +88,7 @@ export default function SignupPage() {
     saveUser(user)
     savePassword(password)
     startSession()
-    navigate('/dashboard')
+    navigate('/onboarding')
   }
 
   const inputStyle: React.CSSProperties = {

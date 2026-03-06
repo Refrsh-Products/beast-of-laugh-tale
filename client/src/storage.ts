@@ -14,6 +14,12 @@ export interface Notebook {
   file_count: number
 }
 
+export interface StoredAccount {
+  name: string
+  phone: string
+  address: string
+}
+
 export interface NotebookFile {
   id: number
   notebook: number
@@ -48,6 +54,20 @@ export function startSession(): void {
 
 export function endSession(): void {
   localStorage.removeItem('freshr_session')
+}
+
+// ── Account (profile) ─────────────────────────────────────────────
+export function getAccount(): StoredAccount | null {
+  const raw = localStorage.getItem('freshr_account')
+  return raw ? JSON.parse(raw) : null
+}
+
+export function saveAccount(account: StoredAccount): void {
+  localStorage.setItem('freshr_account', JSON.stringify(account))
+}
+
+export function hasCompletedOnboarding(): boolean {
+  return getAccount() !== null
 }
 
 // ── Password ──────────────────────────────────────────────────────
