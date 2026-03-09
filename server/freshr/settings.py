@@ -33,6 +33,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost", "web"]
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
 
 # Application definition
 
@@ -45,9 +50,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # OUR APPS
+    'corsheaders',
     'users',
     'accounts',
     'rest_framework',
+    'rest_framework_simplejwt.token_blacklist',
     "notebooks",
     "rag",
     "drf_spectacular"
@@ -58,6 +65,7 @@ AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -177,3 +185,7 @@ CELERY_RESULT_BACKEND = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 DEFAULT_FROM_EMAIL = 'noreply@freshr.com'
 FRONTEND_URL = os.getenv("FRONTEND_URL", 'http://localhost:3000')
+
+# Google OAuth2.0
+GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
+GOOGLE_OAUTH_CLIENT_SECET = os.getenv('GOOGLE_OAUTH_CLIENT_SECET')
