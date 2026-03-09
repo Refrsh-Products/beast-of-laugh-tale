@@ -1,10 +1,10 @@
-import './App.css'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import LandingPage from './LandingPage'
-import SignupPage from './SignupPage'
-import LoginPage from './LoginPage'
-import DashboardPage from './DashboardPage'
-import OnboardingPage from './OnboardingPage'
+import "./App.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import LandingPage from "./LandingPage";
+import SignupPage from "./SignupPage";
+import LoginPage from "./page/LoginPage";
+import DashboardPage from "./DashboardPage";
+import OnboardingPage from "./OnboardingPage";
 
 export default function App() {
   return (
@@ -17,5 +17,5 @@ export default function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
       </Routes>
     </BrowserRouter>
-  )
+  );
 }

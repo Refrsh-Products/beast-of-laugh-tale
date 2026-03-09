@@ -36,6 +36,27 @@ class RegistrationSerializer(serializers.Serializer):
             password=validated_data['password']
         ) # type: ignore
         return user
+    
+class LoginSerializer(serializers.Serializer):
+    """
+    Serializer for user login requests.
+
+    Fields:
+        - email: The user's email address (required).
+        - password: The user's password (write-only, required).
+    """
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+
+class GoogleAuthSerializer(serializers.Serializer):
+    """Google OAuth2 token from the client (ID token)"""
+    token = serializers.CharField()
+
+
+class MessageResponseSerializer(serializers.Serializer):
+    """Generic message response"""
+    message = serializers.CharField()
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):

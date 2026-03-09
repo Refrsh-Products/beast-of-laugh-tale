@@ -1,0 +1,42 @@
+import axios from "axios";
+
+const createFreshrApiInstance = () => {
+  return axios.create({
+    baseURL: import.meta.env.VITE_API_BASE_URL,
+    timeout: 10000, // Request timeout in milliseconds
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+};
+
+// Users
+export const UserServiceApiBase = "/users";
+export const UserServiceApiEndpoints = {
+  accounts: `${UserServiceApiBase}/accounts/`,
+  account: (id: string) => `${UserServiceApiBase}/account/${id}/`,
+};
+
+// Auth
+export const AuthServiceApiBase = "/auth";
+export const AuthServiceApiEndpoints = {
+  login: `${AuthServiceApiBase}/login/`,
+  googleLogin: `${AuthServiceApiBase}/google-login`,
+  logout: `${AuthServiceApiBase}/logout/`,
+  refreshToken: `${AuthServiceApiBase}/token/refresh/`,
+  resetPassword: `${AuthServiceApiBase}/password-reset/`,
+  resetPasswordConfirm: `${AuthServiceApiBase}/password-reset/confirm/`,
+  register: `${AuthServiceApiBase}/register/`,
+};
+
+// Notebooks
+export const NotebookServiceApiBase = "/notebooks";
+export const NotebookServiceApiEndpoints = {
+  createFile: (notebook_id: string) =>
+    `${NotebookServiceApiBase}/${notebook_id}/file/create`,
+  createNotebook: `${NotebookServiceApiBase}/create/`,
+  deleteNotebook: (notebook_id: string) =>
+    `${NotebookServiceApiBase}delete/${notebook_id}/`,
+};
+
+export default createFreshrApiInstance;

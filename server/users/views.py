@@ -1,25 +1,141 @@
+from typing import cast
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.contrib.auth import get_user_model
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
+from django.contrib.auth import authenticate
 from drf_spectacular.utils import extend_schema
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 
+from .models import User
 from .serializers import (
+    GoogleAuthSerializer,
+    LoginSerializer,
+    MessageResponseSerializer,
     RegistrationSerializer,
     UserSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
 )
 
-User = get_user_model()
+class GoogleAuth(APIView):
+    """
+    POST: Authenticate a user via Google OAuth2.
+    Accepts a Google ID token, verifies it, and returns JWT tokens.
+    Creates a new user account on first sign-in.
+    """
+    permission_classes = [AllowAny]
 
+    @extend_schema(
+        request=GoogleAuthSerializer,
+        responses={200: UserSerializer},
+    )
+    def post(self, request):
+        serializer = GoogleAuthSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data: dict = serializer.validated_data  # type: ignore[assignment]
+        token: str = data['token']
+
+        try:
+            client = id_token.verify_oauth2_token(
+                token,
+                google_requests.Request(),
+                settings.GOOGLE_OAUTH_CLIENT_ID
+            )
+
+            email = client['email']
+            first_name = client.get('given_name', '')
+            last_name = client.get('family_name', '')
+            # profile_picture_url = client.get('picture', '')
+
+            user, created = User.objects.get_or_create(email=email)
+            if created:
+                user.set_unusable_password()
+                user.first_name = first_name
+                user.last_name = last_name
+                user.registration_method = 'google'
+                user.save()
+            else:
+                if user.registration_method != 'google':
+                    return Response({
+                        'error': "User needs to sign in through email",
+                        'status': False
+                    }, status=status.HTTP_403_FORBIDDEN)
+
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'tokens': {
+                    'access': str(refresh.access_token),
+                    'refresh': str(refresh),
+                },
+                'status': True
+            }, status=status.HTTP_200_OK)
+        
+
+        except ValueError:
+            return Response({
+                'error': "Invalid token",
+                'status':False
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+class LoginView(APIView):
+    """
+    Handles user login and token generation.
+    """
+    
+    @extend_schema(
+            request=LoginSerializer,
+            responses=UserSerializer
+    )
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            user = authenticate(
+                request,
+                username=serializer.validated_data["email"], # type: ignore
+                password=serializer.validated_data["password"], # type: ignore
+            )
+            if user:
+                user = cast(User, user)
+                refresh = RefreshToken.for_user(user)
+                return Response(
+                    {
+                        'user': UserSerializer(user).data,
+                        'tokens': {
+                            'refresh': str(refresh),
+                            'access': str(refresh.access_token),
+                        }
+                    }, status=status.HTTP_200_OK
+                )
+            return Response(
+                {"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class LogoutView(APIView):
+    """
+    Handles user logout and token blacklisting.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh_token")
+
+            # Blacklist the refresh token
+            refresh = RefreshToken(refresh_token)
+            refresh.blacklist()
+
+            return Response({"message": "Logout successful"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 class RegistrationView(APIView):
     """
@@ -35,10 +151,10 @@ class RegistrationView(APIView):
     def post(self, request):
         serializer = RegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
+        user = cast(User, serializer.save())
 
         # Generate JWT tokens
-        refresh = RefreshToken.for_user(user) # type: ignore
+        refresh = RefreshToken.for_user(user)
 
         return Response({
             'user': UserSerializer(user).data,
@@ -58,18 +174,17 @@ class PasswordResetRequestView(APIView):
 
     @extend_schema(
         request=PasswordResetRequestSerializer,
-        responses={200: dict}
+        responses={200: MessageResponseSerializer}
     )
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        validated_data = serializer.validated_data
-        if validated_data is not None:
-            email = validated_data['email'] # type: ignore
+        data: dict = serializer.validated_data  # type: ignore[assignment]
+        email: str = data['email']
 
         try:
-            user = User.objects.get(email__iexact=email) # type: ignore
+            user = User.objects.get(email__iexact=email)
             # Generate token
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
@@ -83,7 +198,7 @@ class PasswordResetRequestView(APIView):
                 subject='Password Reset Request',
                 message=f'Click the link to reset your password: {reset_url}',
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@freshr.com'),
-                recipient_list=[email], # type: ignore
+                recipient_list=[email],
                 fail_silently=False,
             )
         except User.DoesNotExist:
@@ -104,14 +219,15 @@ class PasswordResetConfirmView(APIView):
 
     @extend_schema(
         request=PasswordResetConfirmSerializer,
-        responses={200: dict}
+        responses={200: MessageResponseSerializer}
     )
     def post(self, request):
         serializer = PasswordResetConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
+        data: dict = serializer.validated_data  # type: ignore[assignment]
         try:
-            uid = force_str(urlsafe_base64_decode(serializer.validated_data['uid'])) # type: ignore
+            uid = force_str(urlsafe_base64_decode(data['uid']))
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             return Response(
@@ -119,13 +235,13 @@ class PasswordResetConfirmView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if not default_token_generator.check_token(user, serializer.validated_data['token']): # type: ignore
+        if not default_token_generator.check_token(user, data['token']):
             return Response(
                 {'error': 'Invalid or expired reset link.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        user.set_password(serializer.validated_data['new_password']) # type: ignore
+        user.set_password(data['new_password'])
         user.save()
 
         return Response({
