@@ -1,5 +1,6 @@
 import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import LandingPage from "./page/LandingPage";
 import SignupPage from "./SignupPage";
 import LoginPage from "./page/LoginPage";
@@ -8,6 +9,7 @@ import OnboardingPage from "./OnboardingPage";
 
 export default function App() {
   return (
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_AUTH_CLIENT_ID}>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
@@ -17,5 +19,6 @@ export default function App() {
         <Route path="/dashboard" element={<DashboardPage />} />
       </Routes>
     </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 }
