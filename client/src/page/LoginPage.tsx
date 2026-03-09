@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { saveUser, startSession } from "../storage";
-import LoginBtn from "../components/LoginBtn";
+import LoginBtn from "../components/login/LoginBtn";
 import createFreshrApiInstance, {
   AuthServiceApiEndpoints,
 } from "../services/freshr-api";
@@ -87,6 +87,10 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleOAuth = () => {
+    return;
+  };
+
   return (
     <div
       style={{
@@ -146,6 +150,7 @@ export default function LoginPage() {
 
           {/* Google button */}
           <button
+            onClick={handleGoogleOAuth}
             style={{
               width: "100%",
               background: W,
