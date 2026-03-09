@@ -21,7 +21,7 @@ export const UserServiceApiEndpoints = {
 export const AuthServiceApiBase = "/auth";
 export const AuthServiceApiEndpoints = {
   login: `${AuthServiceApiBase}/login/`,
-  googleLogin: `${AuthServiceApiBase}/google-login`,
+  googleLogin: `${AuthServiceApiBase}/google-login/`,
   logout: `${AuthServiceApiBase}/logout/`,
   refreshToken: `${AuthServiceApiBase}/token/refresh/`,
   resetPassword: `${AuthServiceApiBase}/password-reset/`,

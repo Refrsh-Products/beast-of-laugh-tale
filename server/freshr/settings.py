@@ -21,7 +21,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables
 load_dotenv()
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
@@ -187,5 +186,4 @@ DEFAULT_FROM_EMAIL = 'noreply@freshr.com'
 FRONTEND_URL = os.getenv("FRONTEND_URL", 'http://localhost:3000')
 
 # Google OAuth2.0
-GOOGLE_OAUTH_CLIENT_ID = os.getenv('GOOGLE_OAUTH_CLIENT_ID')
 GOOGLE_OAUTH_CLIENT_SECET = os.getenv('GOOGLE_OAUTH_CLIENT_SECET')

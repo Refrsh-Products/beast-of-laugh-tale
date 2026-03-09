@@ -11,8 +11,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth import authenticate
 from drf_spectacular.utils import extend_schema
-from google.auth.transport import requests as google_requests
-from google.oauth2 import id_token
+import requests as http_requests
 
 from .models import User
 from .serializers import (
@@ -38,24 +37,43 @@ class GoogleAuth(APIView):
         responses={200: UserSerializer},
     )
     def post(self, request):
+        print(f"[GoogleAuth] POST received. request.data: {request.data}")
+
         serializer = GoogleAuthSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data: dict = serializer.validated_data  # type: ignore[assignment]
         token: str = data['token']
 
-        try:
-            client = id_token.verify_oauth2_token(
-                token,
-                google_requests.Request(),
-                settings.GOOGLE_OAUTH_CLIENT_ID
-            )
+        print(f"[GoogleAuth] Token received (first 20 chars): {token[:20]}...")
 
+        try:
+            print("[GoogleAuth] Calling Google userinfo endpoint...")
+            userinfo_response = http_requests.get(
+                'https://www.googleapis.com/oauth2/v3/userinfo',
+                headers={'Authorization': f'Bearer {token}'},
+                timeout=10,
+            )
+            print(f"[GoogleAuth] Google userinfo status: {userinfo_response.status_code}")
+            print(f"[GoogleAuth] Google userinfo body: {userinfo_response.text}")
+
+            if userinfo_response.status_code != 200:
+                print(f"[GoogleAuth] ERROR: Invalid token response from Google")
+                return Response({
+                    'error': "Invalid token",
+                    'status': False
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            client = userinfo_response.json()
             email = client['email']
+            print(f"[GoogleAuth] User email from Google: {email}")
+
             first_name = client.get('given_name', '')
             last_name = client.get('family_name', '')
             # profile_picture_url = client.get('picture', '')
 
             user, created = User.objects.get_or_create(email=email)
+            print(f"[GoogleAuth] User {'CREATED' if created else 'FOUND'}: {user.email}")
+
             if created:
                 user.set_unusable_password()
                 user.first_name = first_name
@@ -63,6 +81,7 @@ class GoogleAuth(APIView):
                 user.registration_method = 'google'
                 user.save()
             else:
+                print(f"[GoogleAuth] Existing user registration_method: {user.registration_method}")
                 if user.registration_method != 'google':
                     return Response({
                         'error': "User needs to sign in through email",
@@ -70,6 +89,7 @@ class GoogleAuth(APIView):
                     }, status=status.HTTP_403_FORBIDDEN)
 
             refresh = RefreshToken.for_user(user)
+            print(f"[GoogleAuth] JWT tokens generated successfully for {user.email}")
             return Response({
                 'tokens': {
                     'access': str(refresh.access_token),
@@ -79,10 +99,11 @@ class GoogleAuth(APIView):
             }, status=status.HTTP_200_OK)
         
 
-        except ValueError:
+        except (KeyError, http_requests.exceptions.RequestException) as e:
+            print(f"[GoogleAuth] EXCEPTION: {type(e).__name__}: {e}")
             return Response({
                 'error': "Invalid token",
-                'status':False
+                'status': False
             }, status=status.HTTP_400_BAD_REQUEST)
         
 class LoginView(APIView):
