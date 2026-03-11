@@ -1,0 +1,84 @@
+import type { Notebook } from '../../storage'
+
+const B = '#000000'
+const W = '#FFFFFF'
+
+export default function ArchivedSection({
+  notebooks,
+  onUnarchive,
+}: {
+  notebooks: Notebook[]
+  onUnarchive: (id: number) => void
+}) {
+  if (notebooks.length === 0) return null
+
+  return (
+    <div style={{ marginTop: 40 }}>
+      <div
+        style={{
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: '0.6rem',
+          fontWeight: 700,
+          letterSpacing: '0.14em',
+          color: '#aaa',
+          marginBottom: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}
+      >
+        ARCHIVED
+        <span style={{ fontWeight: 400 }}>({notebooks.length})</span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {notebooks.map((nb) => (
+          <div
+            key={nb.id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 12,
+              padding: '10px 16px',
+              background: W,
+              border: `2px solid #ccc`,
+              boxShadow: `2px 2px 0 #ccc`,
+            }}
+          >
+            <span
+              style={{
+                flex: 1,
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                color: '#888',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                minWidth: 0,
+              }}
+            >
+              {nb.title}
+            </span>
+            <button
+              onClick={() => onUnarchive(nb.id)}
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: '0.62rem',
+                fontWeight: 700,
+                letterSpacing: '0.06em',
+                background: 'none',
+                border: `2px solid ${B}`,
+                padding: '4px 10px',
+                cursor: 'pointer',
+                flexShrink: 0,
+                color: B,
+              }}
+            >
+              Unarchive
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

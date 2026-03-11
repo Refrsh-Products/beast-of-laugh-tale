@@ -1,0 +1,129 @@
+const B = '#000000'
+const W = '#FFFFFF'
+
+export default function DashboardHeader({
+  notebookCount,
+  searchQuery,
+  view,
+  onSearchChange,
+  onViewChange,
+}: {
+  notebookCount: number
+  searchQuery: string
+  view: 'grid' | 'list'
+  onSearchChange: (val: string) => void
+  onViewChange: (view: 'grid' | 'list') => void
+}) {
+  return (
+    <div
+      style={{
+        padding: '24px 32px 16px',
+        borderBottom: `2px solid ${B}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexShrink: 0,
+        background: W,
+      }}
+    >
+      <div>
+        <h1
+          style={{
+            fontFamily: "'Syne', sans-serif",
+            fontWeight: 800,
+            fontSize: '1.6rem',
+            letterSpacing: '-0.02em',
+            margin: 0,
+            lineHeight: 1.1,
+          }}
+        >
+          My Notebooks
+        </h1>
+        <p
+          style={{
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: '0.7rem',
+            color: '#888',
+            margin: '4px 0 0',
+          }}
+        >
+          {notebookCount} notebooks
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* Search */}
+        <div style={{ position: 'relative' }}>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="Search notebooks..."
+            style={{
+              border: `2px solid ${B}`,
+              borderRadius: 0,
+              padding: '8px 12px 8px 32px',
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: '0.72rem',
+              background: W,
+              outline: 'none',
+              width: 200,
+            }}
+          />
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 14 14"
+            fill="none"
+            style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+          >
+            <circle cx="6" cy="6" r="4.5" stroke="#aaa" strokeWidth="1.5" />
+            <path d="M10 10l2.5 2.5" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </div>
+
+        {/* Grid/List toggle */}
+        <div style={{ display: 'flex', border: `2px solid ${B}` }}>
+          <button
+            onClick={() => onViewChange('grid')}
+            style={{
+              background: view === 'grid' ? B : W,
+              color: view === 'grid' ? W : B,
+              border: 'none',
+              padding: '8px 10px',
+              cursor: 'pointer',
+              lineHeight: 1,
+            }}
+            title="Grid view"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+              <rect x="0" y="0" width="6" height="6" />
+              <rect x="8" y="0" width="6" height="6" />
+              <rect x="0" y="8" width="6" height="6" />
+              <rect x="8" y="8" width="6" height="6" />
+            </svg>
+          </button>
+          <button
+            onClick={() => onViewChange('list')}
+            style={{
+              background: view === 'list' ? B : W,
+              color: view === 'list' ? W : B,
+              border: 'none',
+              borderLeft: `1px solid ${B}`,
+              padding: '8px 10px',
+              cursor: 'pointer',
+              lineHeight: 1,
+            }}
+            title="List view"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+              <rect x="0" y="0" width="14" height="2.5" />
+              <rect x="0" y="5.75" width="14" height="2.5" />
+              <rect x="0" y="11.5" width="14" height="2.5" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
+import ProfileMenuItem from './components/sidebar/ProfileMenuItem'
 
 const G = '#84e487'
 const B = '#000000'
@@ -249,33 +250,3 @@ export default function Sidebar({ onLogout, userEmail, userName }: SidebarProps)
   )
 }
 
-function ProfileMenuItem({
-  label,
-  color = B,
-  onClick,
-}: {
-  label: string
-  color?: string
-  onClick: () => void
-}) {
-  const [hovered, setHovered] = useState(false)
-  return (
-    <div
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        padding: '10px 16px',
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: '0.72rem',
-        color,
-        fontWeight: color === '#cc0000' ? 600 : 400,
-        cursor: 'pointer',
-        background: hovered && color !== '#cc0000' ? '#f0f0f0' : 'transparent',
-        userSelect: 'none',
-      }}
-    >
-      {label}
-    </div>
-  )
-}

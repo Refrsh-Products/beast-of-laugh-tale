@@ -1,22 +1,61 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import LoginBtn from "../components/login/LoginBtn";
-import Loading from "../components/loading/Loading";
-import useAuthService from "../services/auth";
 import GoogleAuthBtn from "../components/google-auth/GoogleAuthBtn";
 import FreshrLogo from "../components/logo/FreshrLogo";
+import SignUpBtn from "../components/sign-up/SignUpBtn";
+import useAuthService from "../services/auth";
+import Loading from "../components/loading/Loading";
 
 const B = "#000000";
 const W = "#FFFFFF";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const navigate = useNavigate();
   const authService = useAuthService();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async () => {
+    setError("");
+
+    if (!email || !password || !confirm) {
+      setError("Please fill in all fields.");
+      return;
+    }
+    if (
+      !/^(?=.*?[a-z])(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(
+        password,
+      )
+    ) {
+      setError(
+        "Password must be at least 8 characters long, contain 1 uppercase letter, 1 lowercase letter, 1 special character, and 1 number.",
+      );
+      return;
+    }
+    if (password !== confirm) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const user = await authService.register(email, password, confirm);
+      console.log("Registed user", user);
+
+      navigate("/onboarding");
+    } catch (err) {
+      console.error("[SignupPage] Error During Registration:", err);
+      setError(`Failed to Register User: ${email}\nError: ${err}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
@@ -39,27 +78,6 @@ export default function LoginPage() {
     marginBottom: 6,
   };
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      setError("Please fill in all fields.");
-      return;
-    }
-
-    setError("");
-    setIsLoading(true);
-
-    try {
-      const user = await authService.login(email, password);
-      console.log("Logged in user:", user);
-
-      navigate("/dashboard");
-    } catch {
-      setError("Incorrect email or password. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (isLoading) return <Loading />;
 
   return (
@@ -70,7 +88,23 @@ export default function LoginPage() {
         fontFamily: "'IBM Plex Mono', monospace",
       }}
     >
-      {/* ── LEFT HALF (form) ── */}
+      {/* ── LEFT HALF ── */}
+      <div
+        style={{
+          flex: "0 0 50%",
+          boxSizing: "border-box",
+          background: B,
+          display: "none",
+          position: "relative",
+          borderRight: `3px solid ${B}`,
+        }}
+        className="signup-left"
+      >
+        {/* Logo */}
+        <FreshrLogo />
+      </div>
+
+      {/* ── RIGHT HALF ── */}
       <div
         style={{
           flex: "0 0 50%",
@@ -84,8 +118,24 @@ export default function LoginPage() {
           boxSizing: "border-box",
         }}
       >
-        {/* Logo */}
-        <FreshrLogo />
+        {/* Mobile logo */}
+        <div
+          style={{
+            position: "absolute",
+            top: 28,
+            left: 28,
+            fontFamily: "'Syne', sans-serif",
+            fontWeight: 800,
+            fontSize: "1.35rem",
+            letterSpacing: "-0.02em",
+            color: B,
+            cursor: "pointer",
+          }}
+          className="signup-mobile-logo"
+          onClick={() => navigate("/")}
+        >
+          FRESHR
+        </div>
 
         {/* Form container */}
         <div style={{ width: "100%", maxWidth: 420 }}>
@@ -99,9 +149,7 @@ export default function LoginPage() {
               lineHeight: 1.1,
             }}
           >
-            Welcome
-            <br />
-            back
+            Create your account
           </h1>
 
           {/* Google button */}
@@ -148,7 +196,7 @@ export default function LoginPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleLogin();
+              handleSubmit();
             }}
             style={{ display: "flex", flexDirection: "column", gap: 16 }}
           >
@@ -197,15 +245,44 @@ export default function LoginPage() {
               </div>
             </div>
 
+            <div>
+              <label style={labelStyle}>CONFIRM PASSWORD</label>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showConfirm ? "text" : "password"}
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  placeholder="••••••••"
+                  style={{ ...inputStyle, paddingRight: 48 }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((v) => !v)}
+                  style={{
+                    position: "absolute",
+                    right: 12,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                    color: "#888",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.65rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  {showConfirm ? "HIDE" : "SHOW"}
+                </button>
+              </div>
+            </div>
+
             <div style={{ marginTop: 8 }}>
-              <LoginBtn
-                variant="green"
-                fullWidth
-                type="button"
-                onClick={handleLogin}
-              >
-                Log in →
-              </LoginBtn>
+              <SignUpBtn variant="green" fullWidth type="submit">
+                Sign up →
+              </SignUpBtn>
             </div>
           </form>
 
@@ -218,9 +295,9 @@ export default function LoginPage() {
               textAlign: "center",
             }}
           >
-            Don't have an account?{" "}
+            Already have an account?{" "}
             <Link
-              to="/signup"
+              to="/login"
               style={{
                 color: B,
                 fontWeight: 700,
@@ -228,27 +305,16 @@ export default function LoginPage() {
                 textUnderlineOffset: 3,
               }}
             >
-              Sign up
+              Log in
             </Link>
           </p>
         </div>
       </div>
 
-      {/* ── RIGHT HALF (black) ── */}
-      <div
-        style={{
-          flex: "0 0 50%",
-          boxSizing: "border-box",
-          background: B,
-          display: "none",
-          position: "relative",
-        }}
-        className="login-right"
-      ></div>
-
       <style>{`
         @media (min-width: 768px) {
-          .login-right { display: block !important; }
+          .signup-left { display: block !important; }
+          .signup-mobile-logo { display: none !important; }
         }
       `}</style>
     </div>
