@@ -1,96 +1,61 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { saveUser, savePassword, startSession } from "./storage";
-import GoogleAuthBtn from "./components/google-auth/GoogleAuthBtn";
+import GoogleAuthBtn from "../components/google-auth/GoogleAuthBtn";
+import FreshrLogo from "../components/logo/FreshrLogo";
+import SignUpBtn from "../components/sign-up/SignUpBtn";
+import useAuthService from "../services/auth";
+import Loading from "../components/loading/Loading";
 
-const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
 
-function Btn({
-  children,
-  variant = "green",
-  lg,
-  fullWidth,
-  onClick,
-  type = "button",
-}: {
-  children: React.ReactNode;
-  variant?: "green" | "black" | "outline";
-  lg?: boolean;
-  fullWidth?: boolean;
-  onClick?: () => void;
-  type?: "button" | "submit";
-}) {
-  const [down, setDown] = useState(false);
-  const bg = variant === "black" ? B : variant === "green" ? G : W;
-  const txt = variant === "black" ? W : B;
-
-  return (
-    <button
-      type={type}
-      onClick={onClick}
-      style={{
-        background: bg,
-        color: txt,
-        border: `2px solid ${B}`,
-        boxShadow: down ? `2px 2px 0 ${B}` : `4px 4px 0 ${B}`,
-        transform: down ? "translate(2px, 2px)" : "none",
-        padding: lg ? "16px 36px" : "12px 22px",
-        fontSize: "0.78rem",
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontWeight: 600,
-        letterSpacing: "0.08em",
-        cursor: "pointer",
-        transition: "transform 0.08s, box-shadow 0.08s",
-        lineHeight: 1,
-        width: fullWidth ? "100%" : undefined,
-      }}
-      onMouseDown={() => setDown(true)}
-      onMouseUp={() => setDown(false)}
-      onMouseLeave={() => setDown(false)}
-    >
-      {children}
-    </button>
-  );
-}
-
 export default function SignupPage() {
   const navigate = useNavigate();
+  const authService = useAuthService();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const handleSubmit = async () => {
     setError("");
+
     if (!email || !password || !confirm) {
       setError("Please fill in all fields.");
       return;
     }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (
+      !/^(?=.*?[a-z])(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(
+        password,
+      )
+    ) {
+      setError(
+        "Password must be at least 8 characters long, contain 1 uppercase letter, 1 lowercase letter, 1 special character, and 1 number.",
+      );
       return;
     }
     if (password !== confirm) {
       setError("Passwords do not match.");
       return;
     }
-    const user = {
-      id: crypto.randomUUID(),
-      email,
-      tier_plan: "FREE" as const,
-      is_active: true,
-      created_at: new Date().toISOString(),
-    };
-    saveUser(user);
-    savePassword(password);
-    startSession();
-    navigate("/onboarding");
-  }
+
+    setIsLoading(true);
+
+    try {
+      const user = await authService.register(email, password, confirm);
+      console.log("Registed user", user);
+
+      navigate("/onboarding");
+    } catch (err) {
+      console.error("[SignupPage] Error During Registration:", err);
+      setError(`Failed to Register User: ${email}\nError: ${err}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
@@ -113,6 +78,8 @@ export default function SignupPage() {
     marginBottom: 6,
   };
 
+  if (isLoading) return <Loading />;
+
   return (
     <div
       style={{
@@ -134,22 +101,7 @@ export default function SignupPage() {
         className="signup-left"
       >
         {/* Logo */}
-        <div
-          style={{
-            position: "absolute",
-            top: 32,
-            left: 36,
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.5rem",
-            letterSpacing: "-0.02em",
-            color: W,
-            cursor: "pointer",
-          }}
-          onClick={() => navigate("/")}
-        >
-          FRESHR
-        </div>
+        <FreshrLogo />
       </div>
 
       {/* ── RIGHT HALF ── */}
@@ -242,7 +194,10 @@ export default function SignupPage() {
 
           {/* Fields */}
           <form
-            onSubmit={handleSubmit}
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSubmit();
+            }}
             style={{ display: "flex", flexDirection: "column", gap: 16 }}
           >
             <div>
@@ -325,9 +280,9 @@ export default function SignupPage() {
             </div>
 
             <div style={{ marginTop: 8 }}>
-              <Btn variant="green" fullWidth type="submit">
+              <SignUpBtn variant="green" fullWidth type="submit">
                 Sign up →
-              </Btn>
+              </SignUpBtn>
             </div>
           </form>
 

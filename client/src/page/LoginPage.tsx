@@ -1,31 +1,22 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { saveUser, startSession } from "../storage";
 import LoginBtn from "../components/login/LoginBtn";
-import createFreshrApiInstance, {
-  AuthServiceApiEndpoints,
-} from "../services/freshr-api";
-import useAxiosInterceptor from "../hooks/useAxiosInterceptor";
-import { useFetch } from "../hooks/useFetch";
 import Loading from "../components/loading/Loading";
-import type { LoginRequest } from "./dto/LoginRequest.dto";
-import type { LoginResponse } from "./dto/LoginResponse.dto";
+import useAuthService from "../services/auth";
 import GoogleAuthBtn from "../components/google-auth/GoogleAuthBtn";
+import FreshrLogo from "../components/logo/FreshrLogo";
 
 const B = "#000000";
 const W = "#FFFFFF";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const authService = useAuthService();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  const api = createFreshrApiInstance();
-  const apiInceptor = useAxiosInterceptor(api, false);
-  const { fetchData } = useFetch(apiInceptor);
 
   const inputStyle: React.CSSProperties = {
     width: "100%",
@@ -49,8 +40,6 @@ export default function LoginPage() {
   };
 
   const handleLogin = async () => {
-    if (isLoading) return <Loading />;
-
     if (!email || !password) {
       setError("Please fill in all fields.");
       return;
@@ -60,26 +49,9 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetchData(AuthServiceApiEndpoints.login, "POST", {
-        email,
-        password,
-      } as LoginRequest);
+      const user = await authService.login(email, password);
+      console.log("Logged in user:", user);
 
-      const data = response as LoginResponse;
-      sessionStorage.setItem("accessToken", data.tokens.access ?? "");
-      sessionStorage.setItem("refreshToken", data.tokens.refresh ?? "");
-      sessionStorage.setItem("userPlan", data.user.tier_plan ?? "");
-      sessionStorage.setItem("userId", data.user.id ?? "");
-      sessionStorage.setItem("email", data.user.email ?? "");
-
-      saveUser({
-        id: data.user.id,
-        email: data.user.email,
-        tier_plan: data.user.tier_plan as "FREE" | "MONTHLY" | "YEARLY",
-        is_active: data.user.is_active,
-        created_at: data.user.created_at,
-      });
-      startSession();
       navigate("/dashboard");
     } catch {
       setError("Incorrect email or password. Please try again.");
@@ -87,6 +59,8 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  if (isLoading) return <Loading />;
 
   return (
     <div
@@ -111,22 +85,7 @@ export default function LoginPage() {
         }}
       >
         {/* Logo */}
-        <div
-          style={{
-            position: "absolute",
-            top: 32,
-            left: 36,
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.5rem",
-            letterSpacing: "-0.02em",
-            color: B,
-            cursor: "pointer",
-          }}
-          onClick={() => navigate("/")}
-        >
-          FRESHR
-        </div>
+        <FreshrLogo />
 
         {/* Form container */}
         <div style={{ width: "100%", maxWidth: 420 }}>
