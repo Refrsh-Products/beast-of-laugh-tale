@@ -32,7 +32,7 @@ const AuthServiceMock: AuthService = {
   logout: () => endSession(),
 
   register: () => {
-    console.log("please implement this when you need to work with it.");
+    return Promise.reject(new Error("Not implemented"));
   },
 
   getAccount: () => getAccount(),
@@ -42,7 +42,7 @@ const AuthServiceMock: AuthService = {
     return Promise.resolve();
   },
 
-  hasCompletedOnboarding: () => hasCompletedOnboarding(),
+  hasCompletedOnboarding: () => Promise.resolve(hasCompletedOnboarding()),
 };
 
 export default AuthServiceMock;

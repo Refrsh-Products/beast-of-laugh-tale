@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
     """Read-only user serializer for responses"""
     class Meta:
         model = User
-        fields = ['id', 'email', 'tier_plan', 'is_active', 'created_at']
+        fields = ['id', 'email', 'is_active', 'created_at']
         read_only_fields = fields
 
 

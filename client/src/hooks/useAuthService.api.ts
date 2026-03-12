@@ -1,14 +1,22 @@
 import createFreshrApiInstance, {
   AuthServiceApiEndpoints,
+  UserServiceApiEndpoints,
 } from "../services/freshr-api";
-import { saveUser, endSession, startSession, savePassword } from "../storage";
+import {
+  saveUser,
+  endSession,
+  startSession,
+  savePassword,
+  saveAccount,
+} from "../storage";
 import type { AuthService } from "../services/auth/AuthService.types";
-import type { StoredUser } from "../storage";
+import type { StoredAccount, StoredUser } from "../storage";
 import type { LoginResponse } from "../page/dto/LoginResponse.dto";
 import type { LoginRequest } from "../page/dto/LoginRequest.dto";
 import useAxiosInterceptor from "./useAxiosInterceptor";
 import { useFetch } from "./useFetch";
 import type { RegistrationResponse } from "../page/dto/RegistrationResponse.dto";
+import type { AccountMeResponse } from "../page/dto/AccountMeResponse.dto";
 
 const useAuthServiceApi = (): AuthService => {
   const api = createFreshrApiInstance();
@@ -34,14 +42,41 @@ const useAuthServiceApi = (): AuthService => {
 
         sessionStorage.setItem("accessToken", data.tokens.access ?? "");
         sessionStorage.setItem("refreshToken", data.tokens.refresh ?? "");
-        sessionStorage.setItem("userPlan", data.user.tier_plan ?? "");
         sessionStorage.setItem("userId", data.user.id ?? "");
         sessionStorage.setItem("email", data.user.email ?? "");
+
+        try {
+          const accountResp = await fetchData<AccountMeResponse>(
+            UserServiceApiEndpoints.accountMe,
+            "GET",
+            null,
+            { headers: { Authorization: `Bearer ${data.tokens.access}` } },
+          );
+          sessionStorage.setItem(
+            "freshr_onboarding_completed",
+            String(accountResp.onboarding_completed),
+          );
+          const account: StoredAccount = {
+            id: accountResp.id,
+            first_name: accountResp.first_name,
+            last_name: accountResp.last_name,
+            profile_picture_url: accountResp.profile_picture_url,
+            address1: accountResp.address1,
+            address2: accountResp.address2 ?? "",
+            city: accountResp.city,
+            postal_code: accountResp.postal_code,
+            phone: accountResp.phone,
+            tier_plan: accountResp.tier_plan,
+          };
+          saveAccount(account);
+        } catch (err) {
+          console.error("[AuthServiceApi] Failed to fetch account: ", err);
+          sessionStorage.setItem("freshr_onboarding_completed", "false");
+        }
 
         const user: StoredUser = {
           id: data.user.id,
           email: data.user.email,
-          tier_plan: data.user.tier_plan as "FREE" | "MONTHLY" | "YEARLY",
           is_active: data.user.is_active,
           created_at: data.user.created_at,
         };
@@ -49,7 +84,7 @@ const useAuthServiceApi = (): AuthService => {
         startSession();
         return user;
       } catch (err) {
-        console.error("[AuthServiceApi] Login failed:", err);
+        console.error("[AuthServiceApi] Login failed: ", err);
         throw err;
       }
     },
@@ -70,9 +105,11 @@ const useAuthServiceApi = (): AuthService => {
       } finally {
         sessionStorage.removeItem("accessToken");
         sessionStorage.removeItem("refreshToken");
-        sessionStorage.removeItem("userPlan");
         sessionStorage.removeItem("userId");
         sessionStorage.removeItem("email");
+        sessionStorage.removeItem("freshr_onboarding_completed");
+        localStorage.removeItem("freshr_account");
+        localStorage.removeItem("freshr_user");
         endSession();
       }
     },
@@ -92,14 +129,13 @@ const useAuthServiceApi = (): AuthService => {
 
         sessionStorage.setItem("accessToken", data.tokens.access ?? "");
         sessionStorage.setItem("refreshToken", data.tokens.refresh ?? "");
-        sessionStorage.setItem("userPlan", data.user.tier_plan ?? "");
         sessionStorage.setItem("userId", data.user.id ?? "");
         sessionStorage.setItem("email", data.user.email ?? "");
+        sessionStorage.setItem("freshr_onboarding_completed", "false");
 
         const user: StoredUser = {
           id: data.user.id,
           email: data.user.email,
-          tier_plan: data.user.tier_plan as "FREE" | "MONTHLY" | "YEARLY",
           is_active: data.user.is_active,
           created_at: data.user.created_at,
         };
@@ -128,11 +164,22 @@ const useAuthServiceApi = (): AuthService => {
     },
 
     saveAccount: async (account) => {
+      await fetchData(UserServiceApiEndpoints.accounts, "POST", account);
       localStorage.setItem("freshr_account", JSON.stringify(account));
+      sessionStorage.setItem("freshr_onboarding_completed", "true");
     },
 
-    hasCompletedOnboarding: () => {
-      return localStorage.getItem("freshr_account") !== null;
+    hasCompletedOnboarding: async () => {
+      try {
+        const token = sessionStorage.getItem("accessToken");
+        const response = await api.get<{ onboarding_completed: boolean }>(
+          UserServiceApiEndpoints.accountMe,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
+        return response.data.onboarding_completed === true;
+      } catch {
+        return false;
+      }
     },
   };
 };

@@ -1,4 +1,5 @@
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import NotFound
 from .serializers import AccountSerializer
 from rest_framework import generics
 from .models import Account
@@ -13,14 +14,22 @@ class AccountListAPIView(generics.ListCreateAPIView):
     serializer_class = AccountSerializer
     permission_classes = (IsAuthenticated,)
 
-# Show a specific account by ID
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user, onboarding_completed=True)
+
+# Show the current user's account (no ID needed)
 class AccountDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     """
-    GET: View details of one account.
-    PUT: Replace an entire account record.
-    PATCH: Update only specific fields of an account.
-    DELETE: Remove the account from the database.
+    GET: View the current user's account details.
+    PUT: Replace the current user's account record.
+    PATCH: Update specific fields of the current user's account.
+    DELETE: Remove the current user's account.
     """
-    queryset = Account.objects.all()
     serializer_class = AccountSerializer
     permission_classes = (IsAuthenticated,)
+
+    def get_object(self):  # type: ignore[override]
+        try:
+            return Account.objects.get(user=self.request.user)
+        except Account.DoesNotExist:
+            raise NotFound("No account found for this user.")

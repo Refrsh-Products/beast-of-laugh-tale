@@ -1,12 +1,16 @@
 import { useGoogleLogin } from "@react-oauth/google";
 import createFreshrApiInstance, {
   AuthServiceApiEndpoints,
+  UserServiceApiEndpoints,
 } from "../../services/freshr-api";
-import { startSession } from "../../storage";
+import { startSession, saveGoogleProfile, saveUser, saveAccount } from "../../storage";
+import type { StoredAccount } from "../../storage";
+import type { AccountMeResponse } from "../../page/dto/AccountMeResponse.dto";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useFetch } from "../../hooks/useFetch";
 import useAxiosInterceptor from "../../hooks/useAxiosInterceptor";
+import type { GoogleLoginResponse } from "../../page/dto/GoogleLoginResponse.dto";
 
 const B = "#000000";
 const W = "#FFFFFF";
@@ -34,14 +38,49 @@ export default function GoogleAuthBtn() {
           { token: tokenResponse.access_token },
         );
         console.log("[GoogleAuth] Backend response:", response);
-        const data = response as {
-          tokens: { access: string; refresh: string };
-          status: boolean;
-        };
+        const data = response as GoogleLoginResponse;
         sessionStorage.setItem("accessToken", data.tokens.access ?? "");
         sessionStorage.setItem("refreshToken", data.tokens.refresh ?? "");
-        startSession();
-        navigate("/dashboard");
+        sessionStorage.setItem("userId", data.user.id ?? "");
+        sessionStorage.setItem("email", data.user.email ?? "");
+        saveUser({
+          id: data.user.id,
+          email: data.user.email,
+          is_active: data.user.is_active,
+          created_at: data.user.created_at,
+        });
+        if (data.new_user) {
+          saveGoogleProfile(data.profile);
+          startSession();
+          navigate("/onboarding");
+        } else {
+          try {
+            const accountResp = await fetchData<AccountMeResponse>(
+              UserServiceApiEndpoints.accountMe,
+              "GET",
+              null,
+              { headers: { Authorization: `Bearer ${data.tokens.access}` } },
+            );
+            const account: StoredAccount = {
+              id: accountResp.id,
+              first_name: accountResp.first_name,
+              last_name: accountResp.last_name,
+              profile_picture_url: accountResp.profile_picture_url,
+              address1: accountResp.address1,
+              address2: accountResp.address2 ?? "",
+              city: accountResp.city,
+              postal_code: accountResp.postal_code,
+              phone: accountResp.phone,
+              tier_plan: accountResp.tier_plan,
+            };
+            saveAccount(account);
+          } catch (err) {
+            console.error("[GoogleAuth] Failed to fetch account:", err);
+          }
+          startSession();
+          console.log("[GoogleAuth] NAVIGATING TO DASHBOARD");
+          navigate("/dashboard");
+        }
       } catch (err) {
         console.error("[GoogleAuth] Backend call failed:", err);
         setError("Google sign-in failed. Please try again.");

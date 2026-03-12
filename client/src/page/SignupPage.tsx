@@ -280,7 +280,12 @@ export default function SignupPage() {
             </div>
 
             <div style={{ marginTop: 8 }}>
-              <SignUpBtn variant="green" fullWidth type="submit">
+              <SignUpBtn
+                variant="green"
+                fullWidth
+                type="submit"
+                onClick={handleSubmit}
+              >
                 Sign up →
               </SignUpBtn>
             </div>

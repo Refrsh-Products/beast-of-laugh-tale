@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
-import useAuthService from "./services/auth";
-import FreshrLogo from "./components/logo/FreshrLogo";
+import useAuthService from "../services/auth";
+import FreshrLogo from "../components/logo/FreshrLogo";
+import { getGoogleProfile, clearGoogleProfile } from "../storage";
 
 const G = "#84e487";
 const B = "#000000";
@@ -10,28 +11,56 @@ const W = "#FFFFFF";
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const authService = useAuthService();
-  const [name, setName] = useState("");
+  const googleProfile = getGoogleProfile();
+  const [firstName, setFirstName] = useState(googleProfile?.first_name ?? "");
+  const [lastName, setLastName] = useState(googleProfile?.last_name ?? "");
   const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
+  const [address1, setAddress1] = useState("");
+  const [address2, setAddress2] = useState("");
+  const [city, setCity] = useState("");
+  const [postalCode, setPostalCode] = useState("");
   const [error, setError] = useState("");
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!authService.isLoggedIn()) return;
+    authService.hasCompletedOnboarding().then(setOnboardingComplete);
+  }, []);
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
-  if (authService.hasCompletedOnboarding())
-    return <Navigate to="/dashboard" replace />;
+  if (onboardingComplete === null) return null;
+  if (onboardingComplete) return <Navigate to="/dashboard" replace />;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!name.trim() || !phone.trim() || !address.trim()) {
-      setError("Please fill in all fields.");
+    if (
+      !firstName.trim() ||
+      !lastName.trim() ||
+      !phone.trim() ||
+      !address1.trim() ||
+      !city.trim() ||
+      !postalCode.trim()
+    ) {
+      setError("Please fill in all required fields.");
       return;
     }
-    void authService.saveAccount({
-      name: name.trim(),
-      phone: phone.trim(),
-      address: address.trim(),
-    });
-    navigate("/dashboard");
+    try {
+      await authService.saveAccount({
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+        phone: phone.trim(),
+        address1: address1.trim(),
+        address2: address2.trim() || undefined,
+        city: city.trim(),
+        postal_code: postalCode.trim(),
+        profile_picture_url: googleProfile?.profile_picture_url,
+      });
+      clearGoogleProfile();
+      navigate("/dashboard");
+    } catch {
+      setError("Failed to save your profile. Please try again.");
+    }
   }
 
   const inputStyle: React.CSSProperties = {
@@ -120,20 +149,29 @@ export default function OnboardingPage() {
           </p>
         )}
 
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: 20 }}
-        >
-          <div>
-            <label style={labelStyle}>FULL NAME</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Jane Smith"
-              style={inputStyle}
-              autoFocus
-            />
+        <form style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+          <div style={{ display: "flex", gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>FIRST NAME</label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="Jane"
+                style={inputStyle}
+                autoFocus
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>LAST NAME</label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Smith"
+                style={inputStyle}
+              />
+            </div>
           </div>
 
           <div>
@@ -148,19 +186,57 @@ export default function OnboardingPage() {
           </div>
 
           <div>
-            <label style={labelStyle}>ADDRESS</label>
+            <label style={labelStyle}>ADDRESS LINE 1</label>
             <input
               type="text"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="123 Main St, City, Country"
+              value={address1}
+              onChange={(e) => setAddress1(e.target.value)}
+              placeholder="123 Main St"
               style={inputStyle}
             />
           </div>
 
+          <div>
+            <label style={labelStyle}>
+              ADDRESS LINE 2{" "}
+              <span style={{ fontWeight: 400, opacity: 0.5 }}>(OPTIONAL)</span>
+            </label>
+            <input
+              type="text"
+              value={address2}
+              onChange={(e) => setAddress2(e.target.value)}
+              placeholder="Apt 4B"
+              style={inputStyle}
+            />
+          </div>
+
+          <div style={{ display: "flex", gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>CITY</label>
+              <input
+                type="text"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                placeholder="New York"
+                style={inputStyle}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>POSTAL CODE</label>
+              <input
+                type="text"
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+                placeholder="10001"
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
           <div style={{ marginTop: 8 }}>
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               style={{
                 width: "100%",
                 background: G,
