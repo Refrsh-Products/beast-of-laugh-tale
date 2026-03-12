@@ -8,5 +8,5 @@ export interface AuthService {
   register(email: string, password: string, password_confirm: string): Promise<StoredUser>;
   getAccount(): StoredAccount | null;
   saveAccount(account: StoredAccount): Promise<void>;
-  hasCompletedOnboarding(): boolean;
+  hasCompletedOnboarding(): Promise<boolean>;
 }

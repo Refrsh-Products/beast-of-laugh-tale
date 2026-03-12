@@ -69,15 +69,13 @@ class GoogleAuth(APIView):
 
             first_name = client.get('given_name', '')
             last_name = client.get('family_name', '')
-            # profile_picture_url = client.get('picture', '')
+            profile_picture_url = client.get('picture', '')
 
             user, created = User.objects.get_or_create(email=email)
             print(f"[GoogleAuth] User {'CREATED' if created else 'FOUND'}: {user.email}")
 
             if created:
                 user.set_unusable_password()
-                user.first_name = first_name
-                user.last_name = last_name
                 user.registration_method = 'google'
                 user.save()
             else:
@@ -94,6 +92,13 @@ class GoogleAuth(APIView):
                 'tokens': {
                     'access': str(refresh.access_token),
                     'refresh': str(refresh),
+                },
+                'user': UserSerializer(user).data,
+                'new_user': created,
+                'profile': {
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'profile_picture_url': profile_picture_url,
                 },
                 'status': True
             }, status=status.HTTP_200_OK)

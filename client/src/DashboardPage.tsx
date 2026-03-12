@@ -37,6 +37,14 @@ export default function DashboardPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
   const [createError, setCreateError] = useState("");
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(
+    null,
+  );
+
+  useEffect(() => {
+    if (!authService.isLoggedIn()) return;
+    authService.hasCompletedOnboarding().then(setOnboardingComplete);
+  }, []);
 
   async function refreshNotebooks() {
     setNotebooks(await notebookService.list());
@@ -138,8 +146,9 @@ export default function DashboardPage() {
   }
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
-  if (!authService.hasCompletedOnboarding())
-    return <Navigate to="/onboarding" replace />;
+  if (onboardingComplete === null) return null;
+  if (!onboardingComplete) return <Navigate to="/onboarding" replace />;
+  if (!user || !account) return <Navigate to="/login" replace />;
 
   const sorted = [...notebooks].sort((a, b) => {
     if (a.pinned && !b.pinned) return -1;
@@ -155,8 +164,10 @@ export default function DashboardPage() {
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       <Sidebar
         onLogout={handleLogout}
-        userEmail={user?.email ?? ""}
-        userName={account?.name}
+        userEmail={user.email ?? ""}
+        userName={
+          (account.first_name ?? user.email) + " " + (account.last_name ?? "")
+        }
       />
 
       <div

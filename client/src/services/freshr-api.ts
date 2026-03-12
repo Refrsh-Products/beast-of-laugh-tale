@@ -14,7 +14,7 @@ const createFreshrApiInstance = () => {
 export const UserServiceApiBase = "/users";
 export const UserServiceApiEndpoints = {
   accounts: `${UserServiceApiBase}/accounts/`,
-  account: (id: string) => `${UserServiceApiBase}/account/${id}/`,
+  accountMe: `${UserServiceApiBase}/accounts/me/`,
 };
 
 // Auth

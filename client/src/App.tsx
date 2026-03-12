@@ -5,7 +5,7 @@ import LandingPage from "./page/LandingPage";
 import SignupPage from "./page/SignupPage";
 import LoginPage from "./page/LoginPage";
 import DashboardPage from "./DashboardPage";
-import OnboardingPage from "./OnboardingPage";
+import OnboardingPage from "./page/OnboardingPage";
 
 export default function App() {
   return (

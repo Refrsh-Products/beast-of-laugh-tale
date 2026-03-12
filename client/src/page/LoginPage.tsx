@@ -148,7 +148,7 @@ export default function LoginPage() {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleLogin();
+              handleLogin;
             }}
             style={{ display: "flex", flexDirection: "column", gap: 16 }}
           >
