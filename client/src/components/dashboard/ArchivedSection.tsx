@@ -8,7 +8,7 @@ export default function ArchivedSection({
   onUnarchive,
 }: {
   notebooks: Notebook[]
-  onUnarchive: (id: number) => void
+  onUnarchive: (id: string) => void
 }) {
   if (notebooks.length === 0) return null
 

@@ -6,11 +6,12 @@ export interface StoredUser {
 }
 
 export interface Notebook {
-  id: number;
+  id: string;
   title: string;
   created_at: string;
+  updated_at: string;
   pinned: boolean;
-  file_count: number;
+  file_count?: number;
 }
 
 export interface StoredAccount {
@@ -116,7 +117,7 @@ export function saveNotebooks(notebooks: Notebook[]): void {
   localStorage.setItem("freshr_notebooks", JSON.stringify(notebooks));
 }
 
-export function updateNotebook(id: number, changes: Partial<Notebook>): void {
+export function updateNotebook(id: string, changes: Partial<Notebook>): void {
   const notebooks = getNotebooks();
   const idx = notebooks.findIndex((n) => n.id === id);
   if (idx !== -1) {
@@ -126,20 +127,19 @@ export function updateNotebook(id: number, changes: Partial<Notebook>): void {
 }
 
 export function createNotebook(title: string): Notebook {
-  const existing = getNotebooks();
-  const maxId = existing.reduce((m, n) => Math.max(m, n.id), 0);
   const nb: Notebook = {
-    id: maxId + 1,
+    id: crypto.randomUUID(),
     title,
     created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     pinned: false,
     file_count: 0,
   };
-  saveNotebooks([...existing, nb]);
+  saveNotebooks([...getNotebooks(), nb]);
   return nb;
 }
 
-export function deleteNotebook(id: number): void {
+export function deleteNotebook(id: string): void {
   saveNotebooks(getNotebooks().filter((n) => n.id !== id));
 }
 
@@ -153,7 +153,7 @@ export function saveArchivedNotebooks(notebooks: Notebook[]): void {
   localStorage.setItem("freshr_archived_notebooks", JSON.stringify(notebooks));
 }
 
-export function archiveNotebook(id: number): void {
+export function archiveNotebook(id: string): void {
   const active = getNotebooks();
   const idx = active.findIndex((n) => n.id === id);
   if (idx === -1) return;
@@ -162,7 +162,7 @@ export function archiveNotebook(id: number): void {
   saveArchivedNotebooks([...getArchivedNotebooks(), nb]);
 }
 
-export function unarchiveNotebook(id: number): void {
+export function unarchiveNotebook(id: string): void {
   const archived = getArchivedNotebooks();
   const idx = archived.findIndex((n) => n.id === id);
   if (idx === -1) return;
@@ -175,37 +175,42 @@ export function seedNotebooks(): void {
   if (getNotebooks().length > 0) return;
   const seed: Notebook[] = [
     {
-      id: 1,
+      id: "00000000-0000-0000-0000-000000000001",
       title: "Organic Chemistry — Semester 1",
       created_at: "2026-01-14T10:00:00Z",
+      updated_at: "2026-01-14T10:00:00Z",
       pinned: true,
       file_count: 6,
     },
     {
-      id: 2,
+      id: "00000000-0000-0000-0000-000000000002",
       title: "Machine Learning Fundamentals",
       created_at: "2026-01-28T10:00:00Z",
+      updated_at: "2026-01-14T10:00:00Z",
       pinned: false,
       file_count: 11,
     },
     {
-      id: 3,
+      id: "00000000-0000-0000-0000-000000000003",
       title: "History of Architecture",
       created_at: "2026-02-03T10:00:00Z",
+      updated_at: "2026-01-14T10:00:00Z",
       pinned: false,
       file_count: 4,
     },
     {
-      id: 4,
+      id: "00000000-0000-0000-0000-000000000004",
       title: "Calculus II — Problem Sets",
       created_at: "2026-02-17T10:00:00Z",
+      updated_at: "2026-01-14T10:00:00Z",
       pinned: true,
       file_count: 8,
     },
     {
-      id: 5,
+      id: "00000000-0000-0000-0000-000000000005",
       title: "Spanish B2 Grammar Notes",
       created_at: "2026-02-25T10:00:00Z",
+      updated_at: "2026-01-14T10:00:00Z",
       pinned: false,
       file_count: 3,
     },

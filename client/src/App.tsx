@@ -4,7 +4,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import LandingPage from "./page/LandingPage";
 import SignupPage from "./page/SignupPage";
 import LoginPage from "./page/LoginPage";
-import DashboardPage from "./DashboardPage";
+import DashboardPage from "./page/DashboardPage";
 import OnboardingPage from "./page/OnboardingPage";
 
 export default function App() {

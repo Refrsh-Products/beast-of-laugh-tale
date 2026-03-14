@@ -18,8 +18,8 @@ class NotebookFileSerializer(serializers.ModelSerializer):
 class NotebookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notebook
-        fields = ["id", "title", "created_at"]
-        read_only_fields = ["id", "created_at"]
+        fields = '__all__'
+        read_only_fields = ["id", "user", "created_at", "updated_at"]
 
 
 

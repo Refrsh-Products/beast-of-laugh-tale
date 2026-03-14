@@ -1,0 +1,85 @@
+import createFreshrApiInstance, {
+  NotebookServiceApiEndpoints,
+} from "../services/freshr-api";
+import type { NotebookService } from "../services/notebooks/NotebookService.types";
+import type { Notebook } from "../storage";
+import useAxiosInterceptor from "./useAxiosInterceptor";
+import { useFetch } from "./useFetch";
+import { useMemo } from "react";
+
+const useNotebookServiceApi = (): NotebookService => {
+  const api = useMemo(() => createFreshrApiInstance(), []);
+  const apiWithInterceptor = useAxiosInterceptor(api);
+  const { fetchData } = useFetch(apiWithInterceptor);
+
+  return {
+    list: async () => {
+      try {
+        const response = await fetchData<Notebook[]>(
+          NotebookServiceApiEndpoints.getNotebooks,
+          "GET",
+        );
+        return response;
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    listArchived: async () => {
+      // Backend endpoint TBD — return empty until confirmed
+      return [];
+    },
+
+    create: async (title) => {
+      try {
+        const response = await fetchData<Notebook>(
+          NotebookServiceApiEndpoints.createNotebook,
+          "POST",
+          { title: title },
+        );
+        return response;
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    update: async (notebook_id, changes) => {
+      try {
+        const response = await fetchData<Notebook>(
+          NotebookServiceApiEndpoints.partialUpdateNotebook(notebook_id),
+          "PATCH",
+          changes,
+        );
+        return response;
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    delete: async (notebook_id) => {
+      try {
+        await fetchData(
+          NotebookServiceApiEndpoints.deleteNotebook(notebook_id),
+          "DELETE",
+        );
+        console.log("[useNotebookServiceApi] Deleting Notebook: ", notebook_id);
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    archive: async (notebook_id) => {
+      console.log("Implement archiving the notebook: ", notebook_id);
+    },
+
+    unarchive: async (notebook_id) => {
+      console.log("Implement unarchiving the notebook: ", notebook_id);
+    },
+
+    seed: async () => {
+      // No-op in API mode — backend has its own data
+    },
+  };
+};
+
+export default useNotebookServiceApi;

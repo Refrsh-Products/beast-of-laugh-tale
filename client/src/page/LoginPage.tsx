@@ -147,8 +147,9 @@ export default function LoginPage() {
           {/* Fields */}
           <form
             onSubmit={(e) => {
+              console.log("trying to submit");
               e.preventDefault();
-              handleLogin;
+              handleLogin();
             }}
             style={{ display: "flex", flexDirection: "column", gap: 16 }}
           >
@@ -201,8 +202,7 @@ export default function LoginPage() {
               <LoginBtn
                 variant="green"
                 fullWidth
-                type="button"
-                onClick={handleLogin}
+                type="submit"
               >
                 Log in →
               </LoginBtn>

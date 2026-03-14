@@ -32,11 +32,18 @@ export const AuthServiceApiEndpoints = {
 // Notebooks
 export const NotebookServiceApiBase = "/notebooks";
 export const NotebookServiceApiEndpoints = {
+  getNotebooks: `${NotebookServiceApiBase}/`,
+  createNotebook: `${NotebookServiceApiBase}/`,
+  getNotebook: (notebook_id: string) =>
+    `${NotebookServiceApiBase}/notebook/${notebook_id}/`,
+  completeUpdateNotebook: (notebook_id: string) =>
+    `${NotebookServiceApiBase}/notebook/${notebook_id}/`,
+  partialUpdateNotebook: (notebook_id: string) =>
+    `${NotebookServiceApiBase}/notebook/${notebook_id}`,
+  deleteNotebook: (notebook_id: string) =>
+    `${NotebookServiceApiBase}/notebook/${notebook_id}`,
   createFile: (notebook_id: string) =>
     `${NotebookServiceApiBase}/${notebook_id}/file/create`,
-  createNotebook: `${NotebookServiceApiBase}/create/`,
-  deleteNotebook: (notebook_id: string) =>
-    `${NotebookServiceApiBase}delete/${notebook_id}/`,
 };
 
 export default createFreshrApiInstance;

@@ -17,9 +17,10 @@ import useAxiosInterceptor from "./useAxiosInterceptor";
 import { useFetch } from "./useFetch";
 import type { RegistrationResponse } from "../page/dto/RegistrationResponse.dto";
 import type { AccountMeResponse } from "../page/dto/AccountMeResponse.dto";
+import { useMemo } from "react";
 
 const useAuthServiceApi = (): AuthService => {
-  const api = createFreshrApiInstance();
+  const api = useMemo(() => createFreshrApiInstance(), []);
   const apiWithInterceptor = useAxiosInterceptor(api, false);
   const { fetchData } = useFetch(apiWithInterceptor);
 

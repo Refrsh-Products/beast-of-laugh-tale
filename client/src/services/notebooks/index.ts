@@ -1,8 +1,11 @@
-import NotebookServiceMock from './NotebookService.mock'
-import NotebookServiceApi from './NotebookService.api'
+import NotebookServiceMock from "./NotebookService.mock";
+import useNotebookServiceApi from "../../hooks/useNotebookService.api";
 
-const useMock = import.meta.env.VITE_USE_MOCK === 'true'
+const useMock = import.meta.env.VITE_USE_MOCK === "true";
 
-const notebookService = useMock ? NotebookServiceMock : NotebookServiceApi
+const useNotebookService = () => {
+  const apiService = useNotebookServiceApi();
+  return useMock ? NotebookServiceMock : apiService;
+};
 
-export default notebookService
+export default useNotebookService;

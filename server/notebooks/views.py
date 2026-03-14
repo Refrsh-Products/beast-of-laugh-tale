@@ -1,16 +1,10 @@
-from rest_framework import generics
-from rest_framework import status
-from rest_framework.parsers import MultiPartParser, FormParser
-from .models import Notebook
-from .models import NotebookFile
-from .serializers import NotebookSerializer
-from .serializers import NotebookFileSerializer
-from .serializers import NotebookFileInputSerializer
-from .serializers import NotebookFileCreateResponseSerializer
-from .serializers import GenerateQuizInputSerialize
-
+from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
+from .models import Notebook, NotebookFile
+from .serializers import NotebookSerializer, NotebookFileSerializer, NotebookFileInputSerializer, NotebookFileCreateResponseSerializer, GenerateQuizInputSerialize
+
 from django.shortcuts import get_object_or_404
 from pathlib import Path
 from .services.notebook_file import NotebookFileService
@@ -20,19 +14,25 @@ from rag.tasks import ingest_note_task
 from rest_framework.permissions import IsAuthenticated
 
 
-class NotebookCreateAPIView(generics.CreateAPIView):
-    permission_classes = (IsAuthenticated,)
-    queryset = Notebook.objects.all()
+class NotebookDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = NotebookSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self): # type: ignore
+        return get_object_or_404(Notebook, pk=self.kwargs["pk"], user=self.request.user)
+
+class NotebookListAPIView(generics.ListCreateAPIView):
+    queryset = Notebook.objects.none()
+    serializer_class = NotebookSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self): # type: ignore
+        return Notebook.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-class NotebookDeleteAPIView(generics.DestroyAPIView):
-    permission_classes = (IsAuthenticated,)
-    queryset = Notebook.objects.all()
-    serializer_class = NotebookSerializer
-
+# TODO: Create Archive View - show list of all archived notebooks, change an archived notebook to unarchived
 
 class NotebookFileCreateAPIView(APIView):
     permission_classes = (IsAuthenticated,)
