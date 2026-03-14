@@ -1,0 +1,1222 @@
+--- GIT STATUS ---
+On branch sheikh/merge/frontend-v2
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+	new file:   client/src/components/notebook/ChatColumn.tsx
+	new file:   client/src/components/notebook/ChatMessage.tsx
+	new file:   client/src/components/notebook/FileItem.tsx
+	new file:   client/src/components/notebook/FilesColumn.tsx
+	new file:   client/src/components/notebook/NotebookTitle.tsx
+	new file:   client/src/components/notebook/OptionsColumn.tsx
+	new file:   client/src/components/profile/ProfileAvatar.tsx
+	new file:   client/src/components/profile/ProfileSidebar.tsx
+	new file:   client/src/components/settings/SettingsField.tsx
+	new file:   client/src/components/ui/ToastContainer.tsx
+	new file:   client/src/hooks/useToast.ts
+	new file:   client/src/page/ForgotPasswordPage.tsx
+	new file:   client/src/page/ForgotPasswordSentPage.tsx
+	new file:   client/src/page/NotebookPage.tsx
+	new file:   client/src/page/ProfilePage.tsx
+	new file:   client/src/page/ResetPasswordPage.tsx
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   client/src/App.tsx
+	modified:   client/src/components/profile/ProfileSidebar.tsx
+	deleted:    client/src/components/sidebar/ProfileMenuItem.tsx
+	modified:   client/src/components/sidebar/Sidebar.tsx
+	modified:   client/src/hooks/useAuthService.api.ts
+	modified:   client/src/hooks/useNotebookService.api.ts
+	modified:   client/src/page/DashboardPage.tsx
+	modified:   client/src/page/LoginPage.tsx
+	modified:   client/src/page/NotebookPage.tsx
+	modified:   client/src/page/OnboardingPage.tsx
+	modified:   client/src/page/ProfilePage.tsx
+	modified:   client/src/services/auth/AuthService.mock.ts
+	modified:   client/src/services/auth/AuthService.types.ts
+	modified:   client/src/services/freshr-api.ts
+	modified:   client/src/services/notebooks/NotebookService.mock.ts
+	modified:   client/vite.config.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	client/src/hooks/useAccountService.api.ts
+	client/src/services/account/
+	git-auto-commit.sh
+	git_context.txt
+
+
+--- GIT DIFF ---
+diff --git a/client/src/App.tsx b/client/src/App.tsx
+index c78bf46..1570541 100644
+--- a/client/src/App.tsx
++++ b/client/src/App.tsx
+@@ -6,6 +6,11 @@ import SignupPage from "./page/SignupPage";
+ import LoginPage from "./page/LoginPage";
+ import DashboardPage from "./page/DashboardPage";
+ import OnboardingPage from "./page/OnboardingPage";
++import ForgotPasswordPage from "./page/ForgotPasswordPage";
++import ForgotPasswordSentPage from "./page/ForgotPasswordSentPage";
++import ResetPasswordPage from "./page/ResetPasswordPage";
++import ProfilePage from "./page/ProfilePage";
++import NotebookPage from "./page/NotebookPage";
+ 
+ export default function App() {
+   return (
+@@ -17,6 +22,14 @@ export default function App() {
+           <Route path="/login" element={<LoginPage />} />
+           <Route path="/onboarding" element={<OnboardingPage />} />
+           <Route path="/dashboard" element={<DashboardPage />} />
++          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
++          <Route
++            path="/forgot-password/sent"
++            element={<ForgotPasswordSentPage />}
++          />
++          <Route path="/reset-password" element={<ResetPasswordPage />} />
++          <Route path="/profile" element={<ProfilePage />} />
++          <Route path="/notebook/:id" element={<NotebookPage />} />
+         </Routes>
+       </BrowserRouter>
+     </GoogleOAuthProvider>
+diff --git a/client/src/components/profile/ProfileSidebar.tsx b/client/src/components/profile/ProfileSidebar.tsx
+index 7bf0811..cad2fa7 100644
+--- a/client/src/components/profile/ProfileSidebar.tsx
++++ b/client/src/components/profile/ProfileSidebar.tsx
+@@ -5,7 +5,7 @@ const W = "#FFFFFF";
+ export type ProfileTab = "profile" | "account";
+ 
+ interface ProfileSidebarProps {
+-  avatarLetter: string;
++  avatar: string;
+   name: string;
+   email: string;
+   plan: string;
+@@ -43,7 +43,7 @@ function NavItem({
+ }
+ 
+ export default function ProfileSidebar({
+-  avatarLetter,
++  avatar,
+   name,
+   email,
+   plan,
+@@ -73,6 +73,8 @@ export default function ProfileSidebar({
+           display: "flex",
+           alignItems: "center",
+           justifyContent: "center",
++          overflow: "hidden",
++          position: "relative",
+           fontFamily: "'Syne', sans-serif",
+           fontWeight: 800,
+           fontSize: "1.4rem",
+@@ -83,7 +85,15 @@ export default function ProfileSidebar({
+           flexShrink: 0,
+         }}
+       >
+-        {avatarLetter}
++        {avatar.startsWith("http") ? (
++          <img
++            src={avatar}
++            alt={name}
++            style={{ width: "100%", height: "100%", objectFit: "cover" }}
++          />
++        ) : (
++          avatar // This is the single letter fallback
++        )}
+       </div>
+ 
+       {/* Name */}
+diff --git a/client/src/components/sidebar/ProfileMenuItem.tsx b/client/src/components/sidebar/ProfileMenuItem.tsx
+deleted file mode 100644
+index e0463e7..0000000
+--- a/client/src/components/sidebar/ProfileMenuItem.tsx
++++ /dev/null
+@@ -1,34 +0,0 @@
+-import { useState } from 'react'
+-
+-const B = '#000000'
+-
+-export default function ProfileMenuItem({
+-  label,
+-  color = B,
+-  onClick,
+-}: {
+-  label: string
+-  color?: string
+-  onClick: () => void
+-}) {
+-  const [hovered, setHovered] = useState(false)
+-  return (
+-    <div
+-      onClick={onClick}
+-      onMouseEnter={() => setHovered(true)}
+-      onMouseLeave={() => setHovered(false)}
+-      style={{
+-        padding: '10px 16px',
+-        fontFamily: "'IBM Plex Mono', monospace",
+-        fontSize: '0.72rem',
+-        color,
+-        fontWeight: color === '#cc0000' ? 600 : 400,
+-        cursor: 'pointer',
+-        background: hovered && color !== '#cc0000' ? '#f0f0f0' : 'transparent',
+-        userSelect: 'none',
+-      }}
+-    >
+-      {label}
+-    </div>
+-  )
+-}
+diff --git a/client/src/components/sidebar/Sidebar.tsx b/client/src/components/sidebar/Sidebar.tsx
+index 6467d4c..af5f841 100644
+--- a/client/src/components/sidebar/Sidebar.tsx
++++ b/client/src/components/sidebar/Sidebar.tsx
+@@ -1,63 +1,20 @@
+-import { useState, useEffect, useRef } from "react";
+-import { createPortal } from "react-dom";
++import { useState } from "react";
+ import { useNavigate } from "react-router-dom";
+-import ProfileMenuItem from "./ProfileMenuItem";
+ 
+ const G = "#84e487";
+ const B = "#000000";
+ const W = "#FFFFFF";
+ 
+ interface SidebarProps {
+-  onLogout: () => void;
+   userEmail: string;
+   userName?: string;
+ }
+ 
+-export default function Sidebar({
+-  onLogout,
+-  userEmail,
+-  userName,
+-}: SidebarProps) {
++export default function Sidebar({ userEmail, userName }: SidebarProps) {
+   const displayLabel = userName || userEmail;
+   const avatarLetter = (userName || userEmail || "?")[0].toUpperCase();
+   const navigate = useNavigate();
+   const [collapsed, setCollapsed] = useState(false);
+-  const [profileMenuAnchor, setProfileMenuAnchor] = useState<{
+-    bottom: number;
+-    left: number;
+-    width: number;
+-  } | null>(null);
+-  const profileRowRef = useRef<HTMLDivElement>(null);
+-
+-  // Close profile dropdown on outside click
+-  useEffect(() => {
+-    if (!profileMenuAnchor) return;
+-    function handler(e: MouseEvent) {
+-      if (
+-        profileRowRef.current &&
+-        !profileRowRef.current.contains(e.target as Node)
+-      ) {
+-        setProfileMenuAnchor(null);
+-      }
+-    }
+-    document.addEventListener("mousedown", handler);
+-    return () => document.removeEventListener("mousedown", handler);
+-  }, [profileMenuAnchor]);
+-
+-  function toggleProfileMenu() {
+-    if (profileMenuAnchor) {
+-      setProfileMenuAnchor(null);
+-      return;
+-    }
+-    const el = profileRowRef.current;
+-    if (!el) return;
+-    const rect = el.getBoundingClientRect();
+-    setProfileMenuAnchor({
+-      bottom: window.innerHeight - rect.top + 4,
+-      left: rect.left,
+-      width: rect.width,
+-    });
+-  }
+ 
+   return (
+     <div
+@@ -179,10 +136,9 @@ export default function Sidebar({
+           flexShrink: 0,
+         }}
+       >
+-        {/* Profile row — click to open dropdown */}
++        {/* Profile row — click to go to profile page */}
+         <div
+-          ref={profileRowRef}
+-          onClick={toggleProfileMenu}
++          onClick={() => navigate("/profile")}
+           style={{
+             display: "flex",
+             alignItems: "center",
+@@ -205,8 +161,8 @@ export default function Sidebar({
+             style={{
+               width: 28,
+               height: 28,
+-              background: profileMenuAnchor ? W : G,
+-              color: profileMenuAnchor ? B : B,
++              background: G,
++              color: B,
+               borderRadius: "50%",
+               display: "flex",
+               alignItems: "center",
+@@ -215,8 +171,6 @@ export default function Sidebar({
+               fontWeight: 800,
+               fontSize: "0.7rem",
+               flexShrink: 0,
+-              transition: "background 0.1s",
+-              border: profileMenuAnchor ? `2px solid ${G}` : "none",
+             }}
+           >
+             {avatarLetter}
+@@ -240,42 +194,6 @@ export default function Sidebar({
+           )}
+         </div>
+       </div>
+-
+-      {/* Profile dropdown portal */}
+-      {profileMenuAnchor &&
+-        createPortal(
+-          <div
+-            style={{
+-              position: "fixed",
+-              bottom: profileMenuAnchor.bottom,
+-              left: profileMenuAnchor.left,
+-              minWidth: Math.max(profileMenuAnchor.width, 160),
+-              zIndex: 1000,
+-              background: W,
+-              border: `2px solid ${B}`,
+-              boxShadow: `4px 4px 0 ${B}`,
+-            }}
+-            onMouseDown={(e) => e.stopPropagation()}
+-          >
+-            <ProfileMenuItem
+-              label="Settings"
+-              onClick={() => {
+-                setProfileMenuAnchor(null);
+-                console.log("Settings clicked");
+-              }}
+-            />
+-            <div style={{ height: 1, background: "#eee" }} />
+-            <ProfileMenuItem
+-              label="Logout"
+-              color="#cc0000"
+-              onClick={() => {
+-                setProfileMenuAnchor(null);
+-                onLogout();
+-              }}
+-            />
+-          </div>,
+-          document.body,
+-        )}
+     </div>
+   );
+ }
+diff --git a/client/src/hooks/useAuthService.api.ts b/client/src/hooks/useAuthService.api.ts
+index a6767fd..b640d6d 100644
+--- a/client/src/hooks/useAuthService.api.ts
++++ b/client/src/hooks/useAuthService.api.ts
+@@ -19,6 +19,8 @@ import type { RegistrationResponse } from "../page/dto/RegistrationResponse.dto"
+ import type { AccountMeResponse } from "../page/dto/AccountMeResponse.dto";
+ import { useMemo } from "react";
+ 
++// saveAccount is used during login to eagerly cache the profile in localStorage
++
+ const useAuthServiceApi = (): AuthService => {
+   const api = useMemo(() => createFreshrApiInstance(), []);
+   const apiWithInterceptor = useAxiosInterceptor(api, false);
+@@ -92,6 +94,7 @@ const useAuthServiceApi = (): AuthService => {
+ 
+     logout: async () => {
+       const refreshToken = sessionStorage.getItem("refreshToken");
++      const accessToken = sessionStorage.getItem("accessToken");
+       try {
+         const response = await fetchData(
+           AuthServiceApiEndpoints.logout,
+@@ -99,6 +102,7 @@ const useAuthServiceApi = (): AuthService => {
+           {
+             refresh_token: refreshToken,
+           },
++          { headers: { Authorization: `Bearer ${accessToken}` } },
+         );
+         console.log("[AuthServiceApi] Logout request response:", response);
+       } catch (err) {
+@@ -158,30 +162,6 @@ const useAuthServiceApi = (): AuthService => {
+         throw err;
+       }
+     },
+-
+-    getAccount: () => {
+-      const raw = localStorage.getItem("freshr_account");
+-      return raw ? JSON.parse(raw) : null;
+-    },
+-
+-    saveAccount: async (account) => {
+-      await fetchData(UserServiceApiEndpoints.accounts, "POST", account);
+-      localStorage.setItem("freshr_account", JSON.stringify(account));
+-      sessionStorage.setItem("freshr_onboarding_completed", "true");
+-    },
+-
+-    hasCompletedOnboarding: async () => {
+-      try {
+-        const token = sessionStorage.getItem("accessToken");
+-        const response = await api.get<{ onboarding_completed: boolean }>(
+-          UserServiceApiEndpoints.accountMe,
+-          { headers: { Authorization: `Bearer ${token}` } },
+-        );
+-        return response.data.onboarding_completed === true;
+-      } catch {
+-        return false;
+-      }
+-    },
+   };
+ };
+ 
+diff --git a/client/src/hooks/useNotebookService.api.ts b/client/src/hooks/useNotebookService.api.ts
+index 3c5e713..fb0780a 100644
+--- a/client/src/hooks/useNotebookService.api.ts
++++ b/client/src/hooks/useNotebookService.api.ts
+@@ -46,7 +46,7 @@ const useNotebookServiceApi = (): NotebookService => {
+     update: async (notebook_id, changes) => {
+       try {
+         const response = await fetchData<Notebook>(
+-          NotebookServiceApiEndpoints.partialUpdateNotebook(notebook_id),
++          NotebookServiceApiEndpoints.updateNotebook(notebook_id),
+           "PATCH",
+           changes,
+         );
+diff --git a/client/src/page/DashboardPage.tsx b/client/src/page/DashboardPage.tsx
+index 96e1787..8c40442 100644
+--- a/client/src/page/DashboardPage.tsx
++++ b/client/src/page/DashboardPage.tsx
+@@ -1,9 +1,10 @@
+ import { useState, useEffect } from "react";
+ import { createPortal } from "react-dom";
+-import { useNavigate, Navigate } from "react-router-dom";
++import { Navigate } from "react-router-dom";
+ import Sidebar from "../components/sidebar/Sidebar";
+ import useNotebookService from "../services/notebooks";
+ import useAuthService from "../services/auth";
++import useAccountService from "../services/account";
+ import type { Notebook } from "../storage";
+ 
+ import DashboardHeader from "../components/dashboard/DashboardHeader";
+@@ -15,13 +16,15 @@ import CreateNotebookModal from "../components/dashboard/CreateNotebookModal";
+ import DeleteNotebookModal from "../components/dashboard/DeleteNotebookModal";
+ import ArchivedSection from "../components/dashboard/ArchivedSection";
+ import NotebookMenu from "../components/dashboard/NotebookMenu";
++import { useToast } from "../hooks/useToast";
++import ToastContainer from "../components/ui/ToastContainer";
+ 
+ export default function DashboardPage() {
+-  const navigate = useNavigate();
+   const authService = useAuthService();
++  const accountService = useAccountService();
+   const notebookService = useNotebookService();
+   const user = authService.getUser();
+-  const account = authService.getAccount();
++  const account = accountService.getAccount();
+ 
+   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
+   const [archivedNotebooks, setArchivedNotebooks] = useState<Notebook[]>([]);
+@@ -38,18 +41,18 @@ export default function DashboardPage() {
+   const [showCreateModal, setShowCreateModal] = useState(false);
+   const [createTitle, setCreateTitle] = useState("");
+   const [createError, setCreateError] = useState("");
++  const { toasts, showToast } = useToast();
+   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(
+     null,
+   );
+ 
+   useEffect(() => {
+     if (!authService.isLoggedIn()) return;
+-    authService.hasCompletedOnboarding().then(setOnboardingComplete);
++    accountService.hasCompletedOnboarding().then(setOnboardingComplete);
+   }, []);
+ 
+   async function refreshNotebooks() {
+     const notebooks = await notebookService.list();
+-    console.log(notebooks);
+     setNotebooks(notebooks);
+   }
+ 
+@@ -94,7 +97,10 @@ export default function DashboardPage() {
+   async function handleRenameConfirm() {
+     if (editingId === null) return;
+     const trimmed = editValue.trim();
+-    if (trimmed) await notebookService.update(editingId, { title: trimmed });
++    if (trimmed) {
++      await notebookService.update(editingId, { title: trimmed });
++      showToast("Notebook renamed", "neutral");
++    }
+     setEditingId(null);
+     setEditValue("");
+     refreshNotebooks();
+@@ -110,12 +116,14 @@ export default function DashboardPage() {
+     await notebookService.archive(id);
+     await refreshNotebooks();
+     await refreshArchived();
++    showToast("Notebook archived", "neutral");
+   }
+ 
+   async function handleUnarchive(id: string) {
+     await notebookService.unarchive(id);
+     await refreshNotebooks();
+     await refreshArchived();
++    showToast("Notebook restored", "neutral");
+   }
+ 
+   async function handleCreateSubmit() {
+@@ -129,6 +137,7 @@ export default function DashboardPage() {
+     setCreateError("");
+     setShowCreateModal(false);
+     refreshNotebooks();
++    showToast("Notebook created");
+   }
+ 
+   function handleDeleteRequest(id: string) {
+@@ -143,11 +152,7 @@ export default function DashboardPage() {
+     console.log(resp);
+     setConfirmDeleteId(null);
+     refreshNotebooks();
+-  }
+-
+-  function handleLogout() {
+-    authService.logout();
+-    navigate("/login");
++    showToast("Notebook deleted", "danger");
+   }
+ 
+   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
+@@ -168,7 +173,6 @@ export default function DashboardPage() {
+   return (
+     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
+       <Sidebar
+-        onLogout={handleLogout}
+         userEmail={user.email ?? ""}
+         userName={
+           (account.first_name ?? user.email) + " " + (account.last_name ?? "")
+@@ -290,6 +294,7 @@ export default function DashboardPage() {
+           />,
+           document.body,
+         )}
++      <ToastContainer toasts={toasts} />
+     </div>
+   );
+ }
+diff --git a/client/src/page/LoginPage.tsx b/client/src/page/LoginPage.tsx
+index 1325cd7..7fafc12 100644
+--- a/client/src/page/LoginPage.tsx
++++ b/client/src/page/LoginPage.tsx
+@@ -50,7 +50,7 @@ export default function LoginPage() {
+ 
+     try {
+       const user = await authService.login(email, password);
+-      console.log("Logged in user:", user);
++      console.log("[LoginPage] Logged in user:", user);
+ 
+       navigate("/dashboard");
+     } catch {
+@@ -147,7 +147,6 @@ export default function LoginPage() {
+           {/* Fields */}
+           <form
+             onSubmit={(e) => {
+-              console.log("trying to submit");
+               e.preventDefault();
+               handleLogin();
+             }}
+@@ -198,12 +197,22 @@ export default function LoginPage() {
+               </div>
+             </div>
+ 
+-            <div style={{ marginTop: 8 }}>
+-              <LoginBtn
+-                variant="green"
+-                fullWidth
+-                type="submit"
++            <div style={{ textAlign: "right" }}>
++              <Link
++                to="/forgot-password"
++                style={{
++                  fontSize: "0.72rem",
++                  color: "#555",
++                  textDecoration: "underline",
++                  textUnderlineOffset: 3,
++                }}
+               >
++                Forgot password?
++              </Link>
++            </div>
++
++            <div style={{ marginTop: 8 }}>
++              <LoginBtn variant="green" fullWidth type="submit">
+                 Log in →
+               </LoginBtn>
+             </div>
+diff --git a/client/src/page/NotebookPage.tsx b/client/src/page/NotebookPage.tsx
+index ed4ea1c..5728abb 100644
+--- a/client/src/page/NotebookPage.tsx
++++ b/client/src/page/NotebookPage.tsx
+@@ -1,7 +1,7 @@
+ import { useState, useEffect } from "react";
+ import { useParams, useNavigate, Navigate } from "react-router-dom";
+-import authService from "../services/auth";
+-import notebookService from "../services/notebooks";
++import useAuthService from "../services/auth";
++import useNotebookService from "../services/notebooks";
+ import type { Notebook, NotebookFile } from "../storage";
+ 
+ import NotebookTitle from "../components/notebook/NotebookTitle";
+@@ -16,6 +16,8 @@ const W = "#FFFFFF";
+ 
+ export default function NotebookPage() {
+   const { id } = useParams<{ id: string }>();
++  const authService = useAuthService();
++  const notebookService = useNotebookService();
+   const navigate = useNavigate();
+   const { toasts, showToast } = useToast();
+ 
+@@ -24,7 +26,7 @@ export default function NotebookPage() {
+   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+   const [notFound, setNotFound] = useState(false);
+ 
+-  const notebookId = Number(id);
++  const notebookId = id ?? "";
+ 
+   useEffect(() => {
+     async function load() {
+@@ -42,6 +44,7 @@ export default function NotebookPage() {
+   }, [notebookId]);
+ 
+   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
++
+   if (notFound) return <Navigate to="/dashboard" replace />;
+ 
+   async function handleTitleSave(newTitle: string) {
+@@ -129,7 +132,7 @@ export default function NotebookPage() {
+         <div style={{ width: 140, flexShrink: 0 }} />
+       </div>
+ 
+-      {/* 4-column layout */}
++      {/* 3-column layout */}
+       <div
+         style={{
+           flex: 1,
+diff --git a/client/src/page/OnboardingPage.tsx b/client/src/page/OnboardingPage.tsx
+index 749c749..5a704df 100644
+--- a/client/src/page/OnboardingPage.tsx
++++ b/client/src/page/OnboardingPage.tsx
+@@ -1,6 +1,7 @@
+ import { useState, useEffect } from "react";
+ import { useNavigate, Navigate } from "react-router-dom";
+ import useAuthService from "../services/auth";
++import useAccountService from "../services/account";
+ import FreshrLogo from "../components/logo/FreshrLogo";
+ import { getGoogleProfile, clearGoogleProfile } from "../storage";
+ 
+@@ -11,6 +12,7 @@ const W = "#FFFFFF";
+ export default function OnboardingPage() {
+   const navigate = useNavigate();
+   const authService = useAuthService();
++  const accountService = useAccountService();
+   const googleProfile = getGoogleProfile();
+   const [firstName, setFirstName] = useState(googleProfile?.first_name ?? "");
+   const [lastName, setLastName] = useState(googleProfile?.last_name ?? "");
+@@ -20,11 +22,13 @@ export default function OnboardingPage() {
+   const [city, setCity] = useState("");
+   const [postalCode, setPostalCode] = useState("");
+   const [error, setError] = useState("");
+-  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
++  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(
++    null,
++  );
+ 
+   useEffect(() => {
+     if (!authService.isLoggedIn()) return;
+-    authService.hasCompletedOnboarding().then(setOnboardingComplete);
++    accountService.hasCompletedOnboarding().then(setOnboardingComplete);
+   }, []);
+ 
+   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
+@@ -46,15 +50,18 @@ export default function OnboardingPage() {
+       return;
+     }
+     try {
+-      await authService.saveAccount({
++      const existingAccount = accountService.getAccount();
++      await accountService.saveAccount({
++        id: existingAccount?.id ?? sessionStorage.getItem("userId") ?? "",
+         first_name: firstName.trim(),
+         last_name: lastName.trim(),
+         phone: phone.trim(),
+         address1: address1.trim(),
+-        address2: address2.trim() || undefined,
++        address2: address2.trim() || "",
+         city: city.trim(),
+         postal_code: postalCode.trim(),
+         profile_picture_url: googleProfile?.profile_picture_url,
++        tier_plan: (existingAccount?.tier_plan ?? "FREE") as any,
+       });
+       clearGoogleProfile();
+       navigate("/dashboard");
+diff --git a/client/src/page/ProfilePage.tsx b/client/src/page/ProfilePage.tsx
+index 18fcb97..3d85444 100644
+--- a/client/src/page/ProfilePage.tsx
++++ b/client/src/page/ProfilePage.tsx
+@@ -1,6 +1,8 @@
+ import { useState, useEffect } from "react";
+ import { useNavigate, Navigate } from "react-router-dom";
+-import authService from "../services/auth";
++import useAuthService from "../services/auth";
++import useAccountService from "../services/account";
++import type { StoredAccount } from "../storage";
+ import SettingsField from "../components/settings/SettingsField";
+ import ProfileSidebar, {
+   type ProfileTab,
+@@ -10,7 +12,7 @@ const G = "#84e487";
+ const B = "#000000";
+ const W = "#FFFFFF";
+ 
+-type EditableField = "name" | "phone" | "address";
++type EditableField = "name" | "phone" | "address" | "city" | "postal_code";
+ 
+ function formatMemberSince(dateStr: string): string {
+   try {
+@@ -52,17 +54,28 @@ function ReadOnlyRow({ label, value }: { label: string; value: string }) {
+ }
+ 
+ export default function ProfilePage() {
++  const authService = useAuthService();
++  const accountService = useAccountService();
+   const navigate = useNavigate();
+   const user = authService.getUser();
+-  const account = authService.getAccount();
++  const account = accountService.getAccount();
+ 
+-  const [name, setName] = useState(account?.name ?? "");
++  const [name, setName] = useState(
++    account ? `${account.first_name} ${account.last_name}`.trim() : "",
++  );
+   const [phone, setPhone] = useState(account?.phone ?? "");
+-  const [address, setAddress] = useState(account?.address ?? "");
++  const [address, setAddress] = useState(account?.address1 ?? "");
++  const [address2, setAddress2] = useState(account?.address2 ?? "");
++  const [city, setCity] = useState(account?.city ?? "");
++  const [postalCode, setPostalCode] = useState(account?.postal_code ?? "");
+   const [activeTab, setActiveTab] = useState<ProfileTab>("profile");
+ 
+   const [editingField, setEditingField] = useState<EditableField | null>(null);
+   const [editValue, setEditValue] = useState("");
++  const [editFirstName, setEditFirstName] = useState("");
++  const [editLastName, setEditLastName] = useState("");
++  const [editAddress2, setEditAddress2] = useState("");
++  const [nameError, setNameError] = useState<string | null>(null);
+   const [success, setSuccess] = useState<string | null>(null);
+ 
+   useEffect(() => {
+@@ -74,40 +87,94 @@ export default function ProfilePage() {
+   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
+ 
+   const avatarLetter = (name || user?.email || "?")[0].toUpperCase();
+-  const planLabel = user?.tier_plan ?? "FREE";
++  // Use the URL if it exists and isn't an empty string, otherwise fallback to the letter
++  const avatar =
++    account?.profile_picture_url && account.profile_picture_url.trim() !== ""
++      ? account.profile_picture_url
++      : avatarLetter;
++  const planLabel = account?.tier_plan ?? "FREE";
+ 
+   function startEdit(field: EditableField) {
+     setEditingField(field);
+-    setEditValue(field === "name" ? name : field === "phone" ? phone : address);
++    if (field === "name") {
++      setEditFirstName(account?.first_name ?? "");
++      setEditLastName(account?.last_name ?? "");
++    } else if (field === "address") {
++      setEditValue(address);
++      setEditAddress2(address2);
++    } else {
++      const valueMap: Record<string, string> = {
++        phone,
++        city,
++        postal_code: postalCode,
++      };
++      setEditValue(valueMap[field] ?? "");
++    }
+     setSuccess(null);
+   }
+ 
+   function cancelEdit() {
+     setEditingField(null);
+     setEditValue("");
++    setEditFirstName("");
++    setEditLastName("");
++    setEditAddress2("");
++    setNameError(null);
+   }
+ 
+-  function saveEdit() {
+-    if (!editingField) return;
+-    const trimmed = editValue.trim();
+-    if (!trimmed) return;
++  async function saveEdit() {
++    if (!editingField || !account) return;
+ 
+-    const updated = {
+-      name: editingField === "name" ? trimmed : name,
+-      phone: editingField === "phone" ? trimmed : phone,
+-      address: editingField === "address" ? trimmed : address,
+-    };
++    let updated: StoredAccount;
+ 
+-    if (editingField === "name") setName(trimmed);
+-    if (editingField === "phone") setPhone(trimmed);
+-    if (editingField === "address") setAddress(trimmed);
++    if (editingField === "name") {
++      const fn = editFirstName.trim();
++      const ln = editLastName.trim();
++      if (!fn || !ln) {
++        setNameError(
++          !fn ? "First name is required." : "Last name is required.",
++        );
++        return;
++      }
++      setNameError(null);
++      updated = { ...account, first_name: fn, last_name: ln };
++      setName(`${fn} ${ln}`.trim());
++    } else if (editingField === "address") {
++      const a1 = editValue.trim();
++      if (!a1) return;
++      const a2 = editAddress2.trim();
++      updated = { ...account, address1: a1, address2: a2 };
++      setAddress(a1);
++      setAddress2(a2);
++    } else {
++      const trimmed = editValue.trim();
++      if (!trimmed) return;
++      updated = {
++        ...account,
++        phone: editingField === "phone" ? trimmed : account.phone,
++        city: editingField === "city" ? trimmed : account.city,
++        postal_code:
++          editingField === "postal_code" ? trimmed : account.postal_code,
++      };
++      if (editingField === "phone") setPhone(trimmed);
++      if (editingField === "city") setCity(trimmed);
++      if (editingField === "postal_code") setPostalCode(trimmed);
++    }
+ 
+-    void authService.saveAccount(updated);
+     setEditingField(null);
+     setEditValue("");
+-    setSuccess(
+-      `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} updated.`,
+-    );
++    setEditFirstName("");
++    setEditLastName("");
++    setEditAddress2("");
++
++    try {
++      await accountService.updateAccount(updated);
++      setSuccess(
++        `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} updated.`,
++      );
++    } catch {
++      setSuccess("Failed to save. Please try again.");
++    }
+   }
+ 
+   function handleLogout() {
+@@ -151,7 +218,7 @@ export default function ProfilePage() {
+       {/* Two-panel layout */}
+       <div style={{ display: "flex", flex: 1 }}>
+         <ProfileSidebar
+-          avatarLetter={avatarLetter}
++          avatar={avatar}
+           name={name}
+           email={user?.email ?? ""}
+           plan={planLabel}
+@@ -204,30 +271,264 @@ export default function ProfilePage() {
+                 <div
+                   style={{ display: "flex", flexDirection: "column", gap: 0 }}
+                 >
++                  {editingField === "name" ? (
++                    <div
++                      style={{
++                        borderBottom: `2px solid ${B}`,
++                        paddingBottom: 20,
++                      }}
++                    >
++                      <label
++                        style={{
++                          display: "block",
++                          fontFamily: "'IBM Plex Mono', monospace",
++                          fontSize: "0.65rem",
++                          fontWeight: 700,
++                          letterSpacing: "0.14em",
++                          color: "#555",
++                          marginBottom: 8,
++                        }}
++                      >
++                        NAME
++                      </label>
++                      <div
++                        style={{
++                          display: "flex",
++                          flexDirection: "column",
++                          gap: 8,
++                        }}
++                      >
++                        <input
++                          autoFocus
++                          required
++                          placeholder="First name"
++                          value={editFirstName}
++                          onChange={(e) => setEditFirstName(e.target.value)}
++                          onKeyDown={(e) => {
++                            if (e.key === "Enter") saveEdit();
++                            if (e.key === "Escape") cancelEdit();
++                          }}
++                          style={{
++                            border: `3px solid ${B}`,
++                            borderRadius: 0,
++                            padding: "10px 12px",
++                            fontFamily: "'IBM Plex Mono', monospace",
++                            fontSize: "0.88rem",
++                            background: W,
++                            outline: "none",
++                            boxSizing: "border-box",
++                          }}
++                        />
++                        <input
++                          required
++                          placeholder="Last name"
++                          value={editLastName}
++                          onChange={(e) => setEditLastName(e.target.value)}
++                          onKeyDown={(e) => {
++                            if (e.key === "Enter") saveEdit();
++                            if (e.key === "Escape") cancelEdit();
++                          }}
++                          style={{
++                            border: `3px solid ${B}`,
++                            borderRadius: 0,
++                            padding: "10px 12px",
++                            fontFamily: "'IBM Plex Mono', monospace",
++                            fontSize: "0.88rem",
++                            background: W,
++                            outline: "none",
++                            boxSizing: "border-box",
++                          }}
++                        />
++                        {nameError && (
++                          <p
++                            style={{
++                              fontFamily: "'IBM Plex Mono', monospace",
++                              fontSize: "0.7rem",
++                              color: "#cc0000",
++                              margin: 0,
++                            }}
++                          >
++                            {nameError}
++                          </p>
++                        )}
++                        <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
++                          <button
++                            onClick={saveEdit}
++                            style={{
++                              background: G,
++                              color: B,
++                              border: `2px solid ${B}`,
++                              boxShadow: `3px 3px 0 ${B}`,
++                              padding: "10px 16px",
++                              fontFamily: "'IBM Plex Mono', monospace",
++                              fontWeight: 700,
++                              fontSize: "0.7rem",
++                              letterSpacing: "0.06em",
++                              cursor: "pointer",
++                              lineHeight: 1,
++                            }}
++                          >
++                            Save
++                          </button>
++                          <button
++                            onClick={cancelEdit}
++                            style={{
++                              background: W,
++                              color: B,
++                              border: `2px solid ${B}`,
++                              padding: "10px 16px",
++                              fontFamily: "'IBM Plex Mono', monospace",
++                              fontWeight: 700,
++                              fontSize: "0.7rem",
++                              letterSpacing: "0.06em",
++                              cursor: "pointer",
++                              lineHeight: 1,
++                            }}
++                          >
++                            Cancel
++                          </button>
++                        </div>
++                      </div>
++                    </div>
++                  ) : (
++                    <SettingsField
++                      label="NAME"
++                      value={name}
++                      onEditStart={() => startEdit("name")}
++                      onSave={saveEdit}
++                      onCancel={cancelEdit}
++                    />
++                  )}
+                   <SettingsField
+-                    label="NAME"
+-                    value={editingField === "name" ? editValue : name}
+-                    isEditing={editingField === "name"}
++                    label="PHONE"
++                    value={editingField === "phone" ? editValue : phone}
++                    isEditing={editingField === "phone"}
+                     onChange={setEditValue}
+-                    onEditStart={() => startEdit("name")}
++                    onEditStart={() => startEdit("phone")}
+                     onSave={saveEdit}
+                     onCancel={cancelEdit}
+                   />
++                  {editingField === "address" ? (
++                    <div style={{ borderBottom: `2px solid ${B}`, paddingBottom: 20 }}>
++                      <label
++                        style={{
++                          display: "block",
++                          fontFamily: "'IBM Plex Mono', monospace",
++                          fontSize: "0.65rem",
++                          fontWeight: 700,
++                          letterSpacing: "0.14em",
++                          color: "#555",
++                          marginBottom: 8,
++                        }}
++                      >
++                        ADDRESS
++                      </label>
++                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
++                        <input
++                          autoFocus
++                          required
++                          placeholder="Address line 1"
++                          value={editValue}
++                          onChange={(e) => setEditValue(e.target.value)}
++                          onKeyDown={(e) => {
++                            if (e.key === "Enter") saveEdit();
++                            if (e.key === "Escape") cancelEdit();
++                          }}
++                          style={{
++                            border: `3px solid ${B}`,
++                            borderRadius: 0,
++                            padding: "10px 12px",
++                            fontFamily: "'IBM Plex Mono', monospace",
++                            fontSize: "0.88rem",
++                            background: W,
++                            outline: "none",
++                            boxSizing: "border-box",
++                          }}
++                        />
++                        <input
++                          placeholder="Address line 2 (optional)"
++                          value={editAddress2}
++                          onChange={(e) => setEditAddress2(e.target.value)}
++                          onKeyDown={(e) => {
++                            if (e.key === "Enter") saveEdit();
++                            if (e.key === "Escape") cancelEdit();
++                          }}
++                          style={{
++                            border: `3px solid ${B}`,
++                            borderRadius: 0,
++                            padding: "10px 12px",
++                            fontFamily: "'IBM Plex Mono', monospace",
++                            fontSize: "0.88rem",
++                            background: W,
++                            outline: "none",
++                            boxSizing: "border-box",
++                          }}
++                        />
++                        <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
++                          <button
++                            onClick={saveEdit}
++                            style={{
++                              background: G,
++                              color: B,
++                              border: `2px solid ${B}`,
++                              boxShadow: `3px 3px 0 ${B}`,
++                              padding: "10px 16px",
++                              fontFamily: "'IBM Plex Mono', monospace",
++                              fontWeight: 700,
++                              fontSize: "0.7rem",
++                              letterSpacing: "0.06em",
++                              cursor: "pointer",
++                              lineHeight: 1,
++                            }}
++                          >
++                            Save
++                          </button>
++                          <button
++                            onClick={cancelEdit}
++                            style={{
++                              background: W,
++                              color: B,
++                              border: `2px solid ${B}`,
++                              padding: "10px 16px",
++                              fontFamily: "'IBM Plex Mono', monospace",
++                              fontWeight: 700,
++                              fontSize: "0.7rem",
++                              letterSpacing: "0.06em",
++                              cursor: "pointer",
++                              lineHeight: 1,
++                            }}
++                          >
++                            Cancel
++                          </button>
++                        </div>
++                      </div>
++                    </div>
++                  ) : (
++                    <SettingsField
++                      label="ADDRESS"
++                      value={[address, address2].filter(Boolean).join(", ")}
++                      onEditStart={() => startEdit("address")}
++                      onSave={saveEdit}
++                      onCancel={cancelEdit}
++                    />
++                  )}
+                   <SettingsField
+-                    label="PHONE"
+-                    value={editingField === "phone" ? editValue : phone}
+-                    isEditing={editingField === "phone"}
++                    label="CITY"
++                    value={editingField === "city" ? editValue : city}
++                    isEditing={editingField === "city"}
+                     onChange={setEditValue}
+-                    onEditStart={() => startEdit("phone")}
++                    onEditStart={() => startEdit("city")}
+                     onSave={saveEdit}
+                     onCancel={cancelEdit}
+                   />
+                   <SettingsField
+-                    label="ADDRESS"
+-                    value={editingField === "address" ? editValue : address}
+-                    isEditing={editingField === "address"}
++                    label="POSTAL CODE"
++                    value={
++                      editingField === "postal_code" ? editValue : postalCode
++                    }
++                    isEditing={editingField === "postal_code"}
+                     onChange={setEditValue}
+-                    onEditStart={() => startEdit("address")}
++                    onEditStart={() => startEdit("postal_code")}
+                     onSave={saveEdit}
+                     onCancel={cancelEdit}
+                   />
+diff --git a/client/src/services/auth/AuthService.mock.ts b/client/src/services/auth/AuthService.mock.ts
+index 643e1bf..0e75fd6 100644
+--- a/client/src/services/auth/AuthService.mock.ts
++++ b/client/src/services/auth/AuthService.mock.ts
+@@ -3,9 +3,6 @@ import {
+   getUser,
+   startSession,
+   endSession,
+-  getAccount,
+-  saveAccount,
+-  hasCompletedOnboarding,
+   getPassword,
+ } from "../../storage";
+ import type { AuthService } from "./AuthService.types";
+@@ -34,15 +31,6 @@ const AuthServiceMock: AuthService = {
+   register: () => {
+     return Promise.reject(new Error("Not implemented"));
+   },
+-
+-  getAccount: () => getAccount(),
+-
+-  saveAccount: (account) => {
+-    saveAccount(account);
+-    return Promise.resolve();
+-  },
+-
+-  hasCompletedOnboarding: () => Promise.resolve(hasCompletedOnboarding()),
+ };
+ 
+ export default AuthServiceMock;
+diff --git a/client/src/services/auth/AuthService.types.ts b/client/src/services/auth/AuthService.types.ts
+index 1a22a72..a97c6a4 100644
+--- a/client/src/services/auth/AuthService.types.ts
++++ b/client/src/services/auth/AuthService.types.ts
+@@ -1,12 +1,13 @@
+-import type { StoredUser, StoredAccount } from "../../storage";
++import type { StoredUser } from "../../storage";
+ 
+ export interface AuthService {
+   isLoggedIn(): boolean;
+   getUser(): StoredUser | null;
+   login(email: string, password: string): Promise<StoredUser>;
+   logout(): void;
+-  register(email: string, password: string, password_confirm: string): Promise<StoredUser>;
+-  getAccount(): StoredAccount | null;
+-  saveAccount(account: StoredAccount): Promise<void>;
+-  hasCompletedOnboarding(): Promise<boolean>;
++  register(
++    email: string,
++    password: string,
++    password_confirm: string,
++  ): Promise<StoredUser>;
+ }
+diff --git a/client/src/services/freshr-api.ts b/client/src/services/freshr-api.ts
+index 424931e..2f3aa61 100644
+--- a/client/src/services/freshr-api.ts
++++ b/client/src/services/freshr-api.ts
+@@ -36,9 +36,7 @@ export const NotebookServiceApiEndpoints = {
+   createNotebook: `${NotebookServiceApiBase}/`,
+   getNotebook: (notebook_id: string) =>
+     `${NotebookServiceApiBase}/notebook/${notebook_id}/`,
+-  completeUpdateNotebook: (notebook_id: string) =>
+-    `${NotebookServiceApiBase}/notebook/${notebook_id}/`,
+-  partialUpdateNotebook: (notebook_id: string) =>
++  updateNotebook: (notebook_id: string) =>
+     `${NotebookServiceApiBase}/notebook/${notebook_id}`,
+   deleteNotebook: (notebook_id: string) =>
+     `${NotebookServiceApiBase}/notebook/${notebook_id}`,
+diff --git a/client/src/services/notebooks/NotebookService.mock.ts b/client/src/services/notebooks/NotebookService.mock.ts
+index 082f035..af034d1 100644
+--- a/client/src/services/notebooks/NotebookService.mock.ts
++++ b/client/src/services/notebooks/NotebookService.mock.ts
+@@ -14,7 +14,12 @@ const NotebookServiceMock: NotebookService = {
+   list: () => Promise.resolve(getNotebooks()),
+   listArchived: () => Promise.resolve(getArchivedNotebooks()),
+   create: (title) => Promise.resolve(createNotebook(title)),
+-  update: (id, changes) => { updateNotebook(id, changes); return Promise.resolve() },
++  update: (id, changes) => {
++    updateNotebook(id, changes)
++    const updated = getNotebooks().find((notebook) => notebook.id === id)
++    if (!updated) return Promise.reject(new Error(`Notebook with id "${id}" not found`))
++    return Promise.resolve(updated)
++  },
+   delete: (id) => { deleteNotebook(id); return Promise.resolve() },
+   archive: (id) => { archiveNotebook(id); return Promise.resolve() },
+   unarchive: (id) => { unarchiveNotebook(id); return Promise.resolve() },
+diff --git a/client/vite.config.ts b/client/vite.config.ts
+index c4069b7..9a6a876 100644
+--- a/client/vite.config.ts
++++ b/client/vite.config.ts
+@@ -1,8 +1,11 @@
+-import { defineConfig } from 'vite'
+-import react from '@vitejs/plugin-react'
+-import tailwindcss from '@tailwindcss/vite'
++import { defineConfig } from "vite";
++import react from "@vitejs/plugin-react";
++import tailwindcss from "@tailwindcss/vite";
+ 
+ // https://vite.dev/config/
+ export default defineConfig({
++  server: {
++    allowedHosts: [".ngrok-free.app"],
++  },
+   plugins: [react(), tailwindcss()],
+-})
++});

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate, Navigate } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import Sidebar from "../components/sidebar/Sidebar";
 import useNotebookService from "../services/notebooks";
 import useAuthService from "../services/auth";
+import useAccountService from "../services/account";
 import type { Notebook } from "../storage";
 
 import DashboardHeader from "../components/dashboard/DashboardHeader";
@@ -15,13 +16,15 @@ import CreateNotebookModal from "../components/dashboard/CreateNotebookModal";
 import DeleteNotebookModal from "../components/dashboard/DeleteNotebookModal";
 import ArchivedSection from "../components/dashboard/ArchivedSection";
 import NotebookMenu from "../components/dashboard/NotebookMenu";
+import { useToast } from "../hooks/useToast";
+import ToastContainer from "../components/ui/ToastContainer";
 
 export default function DashboardPage() {
-  const navigate = useNavigate();
   const authService = useAuthService();
+  const accountService = useAccountService();
   const notebookService = useNotebookService();
   const user = authService.getUser();
-  const account = authService.getAccount();
+  const account = accountService.getAccount();
 
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [archivedNotebooks, setArchivedNotebooks] = useState<Notebook[]>([]);
@@ -38,18 +41,18 @@ export default function DashboardPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
   const [createError, setCreateError] = useState("");
+  const { toasts, showToast } = useToast();
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(
     null,
   );
 
   useEffect(() => {
     if (!authService.isLoggedIn()) return;
-    authService.hasCompletedOnboarding().then(setOnboardingComplete);
+    accountService.hasCompletedOnboarding().then(setOnboardingComplete);
   }, []);
 
   async function refreshNotebooks() {
     const notebooks = await notebookService.list();
-    console.log(notebooks);
     setNotebooks(notebooks);
   }
 
@@ -94,7 +97,10 @@ export default function DashboardPage() {
   async function handleRenameConfirm() {
     if (editingId === null) return;
     const trimmed = editValue.trim();
-    if (trimmed) await notebookService.update(editingId, { title: trimmed });
+    if (trimmed) {
+      await notebookService.update(editingId, { title: trimmed });
+      showToast("Notebook renamed", "neutral");
+    }
     setEditingId(null);
     setEditValue("");
     refreshNotebooks();
@@ -110,12 +116,14 @@ export default function DashboardPage() {
     await notebookService.archive(id);
     await refreshNotebooks();
     await refreshArchived();
+    showToast("Notebook archived", "neutral");
   }
 
   async function handleUnarchive(id: string) {
     await notebookService.unarchive(id);
     await refreshNotebooks();
     await refreshArchived();
+    showToast("Notebook restored", "neutral");
   }
 
   async function handleCreateSubmit() {
@@ -129,6 +137,7 @@ export default function DashboardPage() {
     setCreateError("");
     setShowCreateModal(false);
     refreshNotebooks();
+    showToast("Notebook created");
   }
 
   function handleDeleteRequest(id: string) {
@@ -143,11 +152,7 @@ export default function DashboardPage() {
     console.log(resp);
     setConfirmDeleteId(null);
     refreshNotebooks();
-  }
-
-  function handleLogout() {
-    authService.logout();
-    navigate("/login");
+    showToast("Notebook deleted", "danger");
   }
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
@@ -168,7 +173,6 @@ export default function DashboardPage() {
   return (
     <div style={{ display: "flex", height: "100vh", overflow: "hidden" }}>
       <Sidebar
-        onLogout={handleLogout}
         userEmail={user.email ?? ""}
         userName={
           (account.first_name ?? user.email) + " " + (account.last_name ?? "")
@@ -290,6 +294,7 @@ export default function DashboardPage() {
           />,
           document.body,
         )}
+      <ToastContainer toasts={toasts} />
     </div>
   );
 }

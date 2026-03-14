@@ -1,63 +1,20 @@
-import { useState, useEffect, useRef } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ProfileMenuItem from "./ProfileMenuItem";
 
 const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
 
 interface SidebarProps {
-  onLogout: () => void;
   userEmail: string;
   userName?: string;
 }
 
-export default function Sidebar({
-  onLogout,
-  userEmail,
-  userName,
-}: SidebarProps) {
+export default function Sidebar({ userEmail, userName }: SidebarProps) {
   const displayLabel = userName || userEmail;
   const avatarLetter = (userName || userEmail || "?")[0].toUpperCase();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
-  const [profileMenuAnchor, setProfileMenuAnchor] = useState<{
-    bottom: number;
-    left: number;
-    width: number;
-  } | null>(null);
-  const profileRowRef = useRef<HTMLDivElement>(null);
-
-  // Close profile dropdown on outside click
-  useEffect(() => {
-    if (!profileMenuAnchor) return;
-    function handler(e: MouseEvent) {
-      if (
-        profileRowRef.current &&
-        !profileRowRef.current.contains(e.target as Node)
-      ) {
-        setProfileMenuAnchor(null);
-      }
-    }
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [profileMenuAnchor]);
-
-  function toggleProfileMenu() {
-    if (profileMenuAnchor) {
-      setProfileMenuAnchor(null);
-      return;
-    }
-    const el = profileRowRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    setProfileMenuAnchor({
-      bottom: window.innerHeight - rect.top + 4,
-      left: rect.left,
-      width: rect.width,
-    });
-  }
 
   return (
     <div
@@ -179,10 +136,9 @@ export default function Sidebar({
           flexShrink: 0,
         }}
       >
-        {/* Profile row — click to open dropdown */}
+        {/* Profile row — click to go to profile page */}
         <div
-          ref={profileRowRef}
-          onClick={toggleProfileMenu}
+          onClick={() => navigate("/profile")}
           style={{
             display: "flex",
             alignItems: "center",
@@ -205,8 +161,8 @@ export default function Sidebar({
             style={{
               width: 28,
               height: 28,
-              background: profileMenuAnchor ? W : G,
-              color: profileMenuAnchor ? B : B,
+              background: G,
+              color: B,
               borderRadius: "50%",
               display: "flex",
               alignItems: "center",
@@ -215,8 +171,6 @@ export default function Sidebar({
               fontWeight: 800,
               fontSize: "0.7rem",
               flexShrink: 0,
-              transition: "background 0.1s",
-              border: profileMenuAnchor ? `2px solid ${G}` : "none",
             }}
           >
             {avatarLetter}
@@ -240,42 +194,6 @@ export default function Sidebar({
           )}
         </div>
       </div>
-
-      {/* Profile dropdown portal */}
-      {profileMenuAnchor &&
-        createPortal(
-          <div
-            style={{
-              position: "fixed",
-              bottom: profileMenuAnchor.bottom,
-              left: profileMenuAnchor.left,
-              minWidth: Math.max(profileMenuAnchor.width, 160),
-              zIndex: 1000,
-              background: W,
-              border: `2px solid ${B}`,
-              boxShadow: `4px 4px 0 ${B}`,
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <ProfileMenuItem
-              label="Settings"
-              onClick={() => {
-                setProfileMenuAnchor(null);
-                console.log("Settings clicked");
-              }}
-            />
-            <div style={{ height: 1, background: "#eee" }} />
-            <ProfileMenuItem
-              label="Logout"
-              color="#cc0000"
-              onClick={() => {
-                setProfileMenuAnchor(null);
-                onLogout();
-              }}
-            />
-          </div>,
-          document.body,
-        )}
     </div>
   );
 }

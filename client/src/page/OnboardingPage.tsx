@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import useAuthService from "../services/auth";
+import useAccountService from "../services/account";
 import FreshrLogo from "../components/logo/FreshrLogo";
 import { getGoogleProfile, clearGoogleProfile } from "../storage";
 
@@ -11,6 +12,7 @@ const W = "#FFFFFF";
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const authService = useAuthService();
+  const accountService = useAccountService();
   const googleProfile = getGoogleProfile();
   const [firstName, setFirstName] = useState(googleProfile?.first_name ?? "");
   const [lastName, setLastName] = useState(googleProfile?.last_name ?? "");
@@ -20,11 +22,13 @@ export default function OnboardingPage() {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [error, setError] = useState("");
-  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!authService.isLoggedIn()) return;
-    authService.hasCompletedOnboarding().then(setOnboardingComplete);
+    accountService.hasCompletedOnboarding().then(setOnboardingComplete);
   }, []);
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
@@ -46,15 +50,18 @@ export default function OnboardingPage() {
       return;
     }
     try {
-      await authService.saveAccount({
+      const existingAccount = accountService.getAccount();
+      await accountService.saveAccount({
+        id: existingAccount?.id ?? sessionStorage.getItem("userId") ?? "",
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         phone: phone.trim(),
         address1: address1.trim(),
-        address2: address2.trim() || undefined,
+        address2: address2.trim() || "",
         city: city.trim(),
         postal_code: postalCode.trim(),
         profile_picture_url: googleProfile?.profile_picture_url,
+        tier_plan: (existingAccount?.tier_plan ?? "FREE") as any,
       });
       clearGoogleProfile();
       navigate("/dashboard");

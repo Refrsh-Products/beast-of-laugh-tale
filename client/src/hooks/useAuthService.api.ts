@@ -19,6 +19,8 @@ import type { RegistrationResponse } from "../page/dto/RegistrationResponse.dto"
 import type { AccountMeResponse } from "../page/dto/AccountMeResponse.dto";
 import { useMemo } from "react";
 
+// saveAccount is used during login to eagerly cache the profile in localStorage
+
 const useAuthServiceApi = (): AuthService => {
   const api = useMemo(() => createFreshrApiInstance(), []);
   const apiWithInterceptor = useAxiosInterceptor(api, false);
@@ -92,6 +94,7 @@ const useAuthServiceApi = (): AuthService => {
 
     logout: async () => {
       const refreshToken = sessionStorage.getItem("refreshToken");
+      const accessToken = sessionStorage.getItem("accessToken");
       try {
         const response = await fetchData(
           AuthServiceApiEndpoints.logout,
@@ -99,6 +102,7 @@ const useAuthServiceApi = (): AuthService => {
           {
             refresh_token: refreshToken,
           },
+          { headers: { Authorization: `Bearer ${accessToken}` } },
         );
         console.log("[AuthServiceApi] Logout request response:", response);
       } catch (err) {
@@ -156,30 +160,6 @@ const useAuthServiceApi = (): AuthService => {
           throw new Error(messages.join("\n"));
         }
         throw err;
-      }
-    },
-
-    getAccount: () => {
-      const raw = localStorage.getItem("freshr_account");
-      return raw ? JSON.parse(raw) : null;
-    },
-
-    saveAccount: async (account) => {
-      await fetchData(UserServiceApiEndpoints.accounts, "POST", account);
-      localStorage.setItem("freshr_account", JSON.stringify(account));
-      sessionStorage.setItem("freshr_onboarding_completed", "true");
-    },
-
-    hasCompletedOnboarding: async () => {
-      try {
-        const token = sessionStorage.getItem("accessToken");
-        const response = await api.get<{ onboarding_completed: boolean }>(
-          UserServiceApiEndpoints.accountMe,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
-        return response.data.onboarding_completed === true;
-      } catch {
-        return false;
       }
     },
   };
