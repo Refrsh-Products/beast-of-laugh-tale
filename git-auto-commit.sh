@@ -5,7 +5,7 @@ API_KEY=$ANTHROPIC_API_KEY
 TEMP_CONTEXT="git_context.txt"
 
 if [ -z "$API_KEY" ]; then
-    echo -e "\033[1;31mError: ANTHROPIC_API_KEY environment variable is not set.\033[0m"
+    echo -e "\033[1;31mError: ANTHROPIC_API_KEY is not set.\033[0m"
     exit 1
 fi
 
@@ -16,14 +16,13 @@ git status >> $TEMP_CONTEXT
 echo -e "\n--- GIT DIFF ---" >> $TEMP_CONTEXT
 git diff >> $TEMP_CONTEXT
 
-# 2. Prepare the payload safely using Python to JSON-encode the string
+# 2. Prepare Payload
 echo "Analyzing changes with Claude..."
 CLEAN_CONTEXT=$(cat $TEMP_CONTEXT)
-# This creates a single safely escaped JSON string for the message content
 SAFE_PAYLOAD=$(python3 -c '
 import json, sys
 content = sys.stdin.read()
-prompt = f"Analyze this git state and return ONLY a valid JSON object. No conversational filler. JSON keys: \"branch_name\", \"summary\", \"description\". Context: {content}"
+prompt = f"Analyze this git state. Return ONLY a JSON object with keys: \"branch_name\", \"summary\", \"description\". \n\nIMPORTANT: \"summary\" MUST BE UNDER 50 CHARACTERS. \n\nContext: {content}"
 print(json.dumps({
     "model": "claude-haiku-4-5-20251001",
     "max_tokens": 1000,
@@ -41,29 +40,41 @@ RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
      -H "content-type: application/json" \
      -d "$SAFE_PAYLOAD")
 
-# 4. Extract Data
-# We look for the text inside the first content block
+# 4. Extract and Format
 RAW_TEXT=$(echo "$RESPONSE" | jq -r '.content[0].text // empty')
-
-if [ -z "$RAW_TEXT" ]; then
-    echo -e "\033[1;31mError: API returned an error or empty response.\033[0m"
-    echo "$RESPONSE" | jq .
-    rm $TEMP_CONTEXT
-    exit 1
-fi
-
-# Strip markdown code blocks if Claude adds them
 CLEAN_JSON=$(echo "$RAW_TEXT" | sed -n '/{/,/}/p')
 
-BRANCH_NAME=$(echo "$CLEAN_JSON" | jq -r '.branch_name')
+BRANCH_NAME=$(echo "$CLEAN_JSON" | jq -r '.branch_name' | tr ' ' '-')
 SUMMARY=$(echo "$CLEAN_JSON" | jq -r '.summary')
 DESCRIPTION=$(echo "$CLEAN_JSON" | jq -r '.description')
 
-# 5. Interactive Loop
+# Force-trim summary to 50 chars
+if [ ${#SUMMARY} -gt 50 ]; then
+    SUMMARY="${SUMMARY:0:47}..."
+fi
+
+# 5. Branch Name Validation
+check_branch_exists() {
+    local name=$1
+    if git rev-parse --verify "$name" >/dev/null 2>&1 || git ls-remote --heads origin "$name" | grep -q "$name"; then
+        return 0 # Exists
+    else
+        return 1 # Does not exist
+    fi
+}
+
+if check_branch_exists "$BRANCH_NAME"; then
+    SUFFIX=$(openssl rand -hex 2)
+    NEW_BRANCH="${BRANCH_NAME}-${SUFFIX}"
+    echo -e "\033[1;33mNote: Branch '$BRANCH_NAME' exists. Using '$NEW_BRANCH'.\033[0m"
+    BRANCH_NAME=$NEW_BRANCH
+fi
+
+# 6. Interactive Loop
 while true; do
     echo -e "\n\033[1;36m--- PROPOSED GIT ACTIONS ---\033[0m"
     echo -e "\033[1;34mBranch:  \033[0m$BRANCH_NAME"
-    echo -e "\033[1;32mSummary: \033[0m$SUMMARY"
+    echo -e "\033[1;32mSummary: \033[0m$SUMMARY \033[1;30m(${#SUMMARY} chars)\033[0m"
     echo -e "\033[1;33mDetails: \033[0m$DESCRIPTION"
     echo -e "-----------------------------\n"
 
@@ -77,7 +88,6 @@ while true; do
             echo "SUMMARY=\"$SUMMARY\"" >> $EDIT_FILE
             echo "DESCRIPTION=\"$DESCRIPTION\"" >> $EDIT_FILE
             ${EDITOR:-nano} $EDIT_FILE
-            # Re-import edited values
             BRANCH_NAME=$(grep 'BRANCH_NAME=' $EDIT_FILE | cut -d'"' -f2)
             SUMMARY=$(grep 'SUMMARY=' $EDIT_FILE | cut -d'"' -f2)
             DESCRIPTION=$(grep 'DESCRIPTION=' $EDIT_FILE | cut -d'"' -f2)
@@ -91,11 +101,28 @@ while true; do
     esac
 done
 
-# 6. Execution
+# 7. Execution
+echo "Executing Git commands..."
 git checkout -b "$BRANCH_NAME"
 git add .
 git commit -m "$SUMMARY" -m "$DESCRIPTION"
 git push -u origin "$BRANCH_NAME"
 
+# 8. Open PR in Browser
+# Get the remote URL and convert it to a web URL
+REMOTE_URL=$(git config --get remote.origin.url | sed -e 's/git@github.com:/https:\/\/github.com\//' -e 's/\.git$//')
+
+if [[ $REMOTE_URL == *"github.com"* ]]; then
+    PR_URL="${REMOTE_URL}/compare/${BRANCH_NAME}?expand=1"
+    echo -e "\033[1;35mOpening PR URL: $PR_URL\033[0m"
+    
+    # Detect OS to use correct open command
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+        open "$PR_URL"
+    else
+        xdg-open "$PR_URL" 2>/dev/null || echo "Please open: $PR_URL"
+    fi
+fi
+
 rm $TEMP_CONTEXT
-echo -e "\n\033[1;32mSuccessfully pushed $BRANCH_NAME!\033[0m"
+echo -e "\n\033[1;32mWorkflow Complete!\033[0m"
