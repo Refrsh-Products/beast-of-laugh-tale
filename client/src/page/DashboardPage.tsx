@@ -1,24 +1,25 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate, Navigate } from "react-router-dom";
-import Sidebar from "./Sidebar";
-import notebookService from "./services/notebooks";
-import useAuthService from "./services/auth";
-import type { Notebook } from "./storage";
+import Sidebar from "../components/sidebar/Sidebar";
+import useNotebookService from "../services/notebooks";
+import useAuthService from "../services/auth";
+import type { Notebook } from "../storage";
 
-import DashboardHeader from "./components/dashboard/DashboardHeader";
-import NotebookCard from "./components/dashboard/NotebookCard";
-import CreateCard from "./components/dashboard/CreateCard";
-import NotebookRow from "./components/dashboard/NotebookRow";
-import CreateRow from "./components/dashboard/CreateRow";
-import CreateNotebookModal from "./components/dashboard/CreateNotebookModal";
-import DeleteNotebookModal from "./components/dashboard/DeleteNotebookModal";
-import ArchivedSection from "./components/dashboard/ArchivedSection";
-import NotebookMenu from "./components/dashboard/NotebookMenu";
+import DashboardHeader from "../components/dashboard/DashboardHeader";
+import NotebookCard from "../components/dashboard/NotebookCard";
+import CreateCard from "../components/dashboard/CreateCard";
+import NotebookRow from "../components/dashboard/NotebookRow";
+import CreateRow from "../components/dashboard/CreateRow";
+import CreateNotebookModal from "../components/dashboard/CreateNotebookModal";
+import DeleteNotebookModal from "../components/dashboard/DeleteNotebookModal";
+import ArchivedSection from "../components/dashboard/ArchivedSection";
+import NotebookMenu from "../components/dashboard/NotebookMenu";
 
 export default function DashboardPage() {
   const navigate = useNavigate();
   const authService = useAuthService();
+  const notebookService = useNotebookService();
   const user = authService.getUser();
   const account = authService.getAccount();
 
@@ -26,14 +27,14 @@ export default function DashboardPage() {
   const [archivedNotebooks, setArchivedNotebooks] = useState<Notebook[]>([]);
   const [view, setView] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
-  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [menuAnchor, setMenuAnchor] = useState<{
     top: number;
     right: number;
   } | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
   const [createError, setCreateError] = useState("");
@@ -47,7 +48,9 @@ export default function DashboardPage() {
   }, []);
 
   async function refreshNotebooks() {
-    setNotebooks(await notebookService.list());
+    const notebooks = await notebookService.list();
+    console.log(notebooks);
+    setNotebooks(notebooks);
   }
 
   async function refreshArchived() {
@@ -75,14 +78,14 @@ export default function DashboardPage() {
   }, [openMenuId]);
 
   function handleMenuOpen(
-    id: number | null,
+    id: string | null,
     anchor?: { top: number; right: number },
   ) {
     setOpenMenuId(id);
     setMenuAnchor(anchor ?? null);
   }
 
-  function handleRenameStart(id: number, title: string) {
+  function handleRenameStart(id: string, title: string) {
     handleMenuOpen(null);
     setEditingId(id);
     setEditValue(title);
@@ -102,14 +105,14 @@ export default function DashboardPage() {
     setEditValue("");
   }
 
-  async function handleArchive(id: number) {
+  async function handleArchive(id: string) {
     handleMenuOpen(null);
     await notebookService.archive(id);
     await refreshNotebooks();
     await refreshArchived();
   }
 
-  async function handleUnarchive(id: number) {
+  async function handleUnarchive(id: string) {
     await notebookService.unarchive(id);
     await refreshNotebooks();
     await refreshArchived();
@@ -128,14 +131,16 @@ export default function DashboardPage() {
     refreshNotebooks();
   }
 
-  function handleDeleteRequest(id: number) {
+  function handleDeleteRequest(id: string) {
     handleMenuOpen(null);
     setConfirmDeleteId(id);
   }
 
   async function handleDeleteConfirm() {
     if (confirmDeleteId === null) return;
-    await notebookService.delete(confirmDeleteId);
+    console.log(confirmDeleteId);
+    const resp = await notebookService.delete(confirmDeleteId);
+    console.log(resp);
     setConfirmDeleteId(null);
     refreshNotebooks();
   }

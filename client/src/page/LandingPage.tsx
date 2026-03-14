@@ -52,13 +52,22 @@ export default function LandingPage() {
           FRESHR
         </span>
 
-        <span
-          id="nav-cta"
-          onClick={() => navigate("/signup")}
-          style={{ cursor: "pointer" }}
-        >
-          <Btn variant="green">Get started →</Btn>
-        </span>
+        <div id="nav-actions" className="flex items-center gap-3">
+          <span
+            id="nav-cta"
+            onClick={() => navigate("/signup")}
+            style={{ cursor: "pointer" }}
+          >
+            <Btn variant="green">Sign up</Btn>
+          </span>
+          <span
+            id="nav-log-in"
+            onClick={() => navigate("/login")}
+            style={{ cursor: "pointer" }}
+          >
+            <Btn variant="outline">Log in</Btn>
+          </span>
+        </div>
       </nav>
 
       {/* ── HERO ── */}

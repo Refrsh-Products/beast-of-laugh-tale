@@ -9,7 +9,7 @@ interface LoginBtnProps {
   variant: "green" | "black" | "outline";
   lg?: boolean;
   fullWidth: boolean;
-  onClick: () => void;
+  onClick?: () => void;
   type: "button" | "submit";
 }
 
