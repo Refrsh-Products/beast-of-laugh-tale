@@ -108,15 +108,20 @@ git add .
 git commit -m "$SUMMARY" -m "$DESCRIPTION"
 git push -u origin "$BRANCH_NAME"
 
-# 8. Open PR in Browser
-# Get the remote URL and convert it to a web URL
+# 8. Open PR in Browser with Pre-filled Title and Body
 REMOTE_URL=$(git config --get remote.origin.url | sed -e 's/git@github.com:/https:\/\/github.com\//' -e 's/\.git$//')
 
 if [[ $REMOTE_URL == *"github.com"* ]]; then
-    PR_URL="${REMOTE_URL}/compare/${BRANCH_NAME}?expand=1"
-    echo -e "\033[1;35mOpening PR URL: $PR_URL\033[0m"
+    # URL Encode the Summary and Description for the browser
+    # We use python3 for reliable URL encoding
+    ENCODED_SUMMARY=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$SUMMARY")
+    ENCODED_DESCRIPTION=$(python3 -c "import urllib.parse, sys; print(urllib.parse.quote(sys.argv[1]))" "$DESCRIPTION")
+
+    # Construct the deep link
+    PR_URL="${REMOTE_URL}/compare/${BRANCH_NAME}?expand=1&title=${ENCODED_SUMMARY}&body=${ENCODED_DESCRIPTION}"
     
-    # Detect OS to use correct open command
+    echo -e "\033[1;35mOpening PR URL with pre-filled metadata...\033[0m"
+    
     if [[ "$OSTYPE" == "darwin"* ]]; then
         open "$PR_URL"
     else
