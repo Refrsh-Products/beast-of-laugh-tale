@@ -6,6 +6,11 @@ import SignupPage from "./page/SignupPage";
 import LoginPage from "./page/LoginPage";
 import DashboardPage from "./page/DashboardPage";
 import OnboardingPage from "./page/OnboardingPage";
+import ForgotPasswordPage from "./page/ForgotPasswordPage";
+import ForgotPasswordSentPage from "./page/ForgotPasswordSentPage";
+import ResetPasswordPage from "./page/ResetPasswordPage";
+import ProfilePage from "./page/ProfilePage";
+import NotebookPage from "./page/NotebookPage";
 
 export default function App() {
   return (
@@ -17,6 +22,14 @@ export default function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route
+            path="/forgot-password/sent"
+            element={<ForgotPasswordSentPage />}
+          />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/notebook/:id" element={<NotebookPage />} />
         </Routes>
       </BrowserRouter>
     </GoogleOAuthProvider>

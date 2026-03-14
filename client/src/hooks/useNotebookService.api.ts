@@ -46,7 +46,7 @@ const useNotebookServiceApi = (): NotebookService => {
     update: async (notebook_id, changes) => {
       try {
         const response = await fetchData<Notebook>(
-          NotebookServiceApiEndpoints.partialUpdateNotebook(notebook_id),
+          NotebookServiceApiEndpoints.updateNotebook(notebook_id),
           "PATCH",
           changes,
         );

@@ -50,7 +50,7 @@ export default function LoginPage() {
 
     try {
       const user = await authService.login(email, password);
-      console.log("Logged in user:", user);
+      console.log("[LoginPage] Logged in user:", user);
 
       navigate("/dashboard");
     } catch {
@@ -147,7 +147,6 @@ export default function LoginPage() {
           {/* Fields */}
           <form
             onSubmit={(e) => {
-              console.log("trying to submit");
               e.preventDefault();
               handleLogin();
             }}
@@ -198,12 +197,22 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div style={{ marginTop: 8 }}>
-              <LoginBtn
-                variant="green"
-                fullWidth
-                type="submit"
+            <div style={{ textAlign: "right" }}>
+              <Link
+                to="/forgot-password"
+                style={{
+                  fontSize: "0.72rem",
+                  color: "#555",
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
               >
+                Forgot password?
+              </Link>
+            </div>
+
+            <div style={{ marginTop: 8 }}>
+              <LoginBtn variant="green" fullWidth type="submit">
                 Log in →
               </LoginBtn>
             </div>

@@ -14,7 +14,12 @@ const NotebookServiceMock: NotebookService = {
   list: () => Promise.resolve(getNotebooks()),
   listArchived: () => Promise.resolve(getArchivedNotebooks()),
   create: (title) => Promise.resolve(createNotebook(title)),
-  update: (id, changes) => { updateNotebook(id, changes); return Promise.resolve() },
+  update: (id, changes) => {
+    updateNotebook(id, changes)
+    const updated = getNotebooks().find((notebook) => notebook.id === id)
+    if (!updated) return Promise.reject(new Error(`Notebook with id "${id}" not found`))
+    return Promise.resolve(updated)
+  },
   delete: (id) => { deleteNotebook(id); return Promise.resolve() },
   archive: (id) => { archiveNotebook(id); return Promise.resolve() },
   unarchive: (id) => { unarchiveNotebook(id); return Promise.resolve() },

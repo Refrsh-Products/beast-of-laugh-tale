@@ -3,9 +3,6 @@ import {
   getUser,
   startSession,
   endSession,
-  getAccount,
-  saveAccount,
-  hasCompletedOnboarding,
   getPassword,
 } from "../../storage";
 import type { AuthService } from "./AuthService.types";
@@ -34,15 +31,6 @@ const AuthServiceMock: AuthService = {
   register: () => {
     return Promise.reject(new Error("Not implemented"));
   },
-
-  getAccount: () => getAccount(),
-
-  saveAccount: (account) => {
-    saveAccount(account);
-    return Promise.resolve();
-  },
-
-  hasCompletedOnboarding: () => Promise.resolve(hasCompletedOnboarding()),
 };
 
 export default AuthServiceMock;
