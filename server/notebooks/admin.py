@@ -21,7 +21,7 @@ class NotebookFileInline(admin.TabularInline):
 
 @admin.register(Notebook)
 class NotebookAdmin(admin.ModelAdmin):
-    list_display = ("id", "title", "created_at")
+    list_display = ("id", "title", "created_at", "updated_at")
     inlines = [NotebookFileInline]
 
 @admin.register(NotebookFile)
