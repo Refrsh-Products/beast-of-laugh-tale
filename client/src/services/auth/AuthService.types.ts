@@ -10,4 +10,11 @@ export interface AuthService {
     password: string,
     password_confirm: string,
   ): Promise<StoredUser>;
+  requestPasswordReset(email: string): void;
+  resetPassword(
+    uid: string,
+    token: string,
+    new_password: string,
+    new_password_confirm: string,
+  ): void;
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import useAuthService from "../services/auth";
 
 const G = "#84e487";
 const B = "#000000";
@@ -7,6 +8,7 @@ const W = "#FFFFFF";
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
+  const authService = useAuthService();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -21,6 +23,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     try {
       // TODO: wire up authService.requestPasswordReset(email) when ready
+      authService.requestPasswordReset(email);
       navigate("/forgot-password/sent", { state: { email } });
     } finally {
       setIsLoading(false);

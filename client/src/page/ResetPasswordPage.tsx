@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import useAuthService from "../services/auth";
 
 const G = "#84e487";
 const B = "#000000";
@@ -7,6 +8,7 @@ const W = "#FFFFFF";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
+  const authService = useAuthService();
   const [searchParams] = useSearchParams();
   const uid = searchParams.get("uid") ?? "";
   const token = searchParams.get("token") ?? "";
@@ -38,6 +40,10 @@ export default function ResetPasswordPage() {
     setIsLoading(true);
     try {
       // TODO: wire up authService.resetPassword(uid, token, password) when ready
+      console.log(
+        `uid: ${uid}, token: ${token}, pass: ${password}, confirm: ${confirm}`,
+      );
+      authService.resetPassword(uid, token, password, confirm);
       navigate("/login", { state: { resetSuccess: true } });
     } finally {
       setIsLoading(false);

@@ -190,7 +190,6 @@ class RegistrationView(APIView):
             }
         }, status=status.HTTP_201_CREATED)
 
-
 class PasswordResetRequestView(APIView):
     """
     POST: Request a password reset email.
@@ -216,16 +215,18 @@ class PasswordResetRequestView(APIView):
             uid = urlsafe_base64_encode(force_bytes(user.pk))
 
             # Build reset URL (frontend URL)
-            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+            frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
             reset_url = f"{frontend_url}/reset-password?uid={uid}&token={token}"
 
-            # Send email
+            # Send email (html_message avoids quoted-printable encoding mangling the URL)
+            print(f"[PasswordReset] Reset URL: {reset_url}")
             send_mail(
-                subject='Password Reset Request',
+                subject='FRESHR Password Reset Request',
                 message=f'Click the link to reset your password: {reset_url}',
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@freshr.com'),
                 recipient_list=[email],
                 fail_silently=False,
+                html_message=f'<p>Click the link below to reset your FRESHR password:</p><p><a href="{reset_url}">{reset_url}</a></p>',
             )
         except User.DoesNotExist:
             # Don't reveal whether email exists
@@ -235,7 +236,6 @@ class PasswordResetRequestView(APIView):
         return Response({
             'message': 'If an account with this email exists, a password reset link has been sent.'
         }, status=status.HTTP_200_OK)
-
 
 class PasswordResetConfirmView(APIView):
     """
@@ -252,6 +252,7 @@ class PasswordResetConfirmView(APIView):
         serializer.is_valid(raise_exception=True)
 
         data: dict = serializer.validated_data  # type: ignore[assignment]
+        print(data)
         try:
             uid = force_str(urlsafe_base64_decode(data['uid']))
             user = User.objects.get(pk=uid)

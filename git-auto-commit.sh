@@ -18,11 +18,31 @@ git diff >> $TEMP_CONTEXT
 
 # 2. Prepare Payload
 echo "Analyzing changes with Claude..."
-CLEAN_CONTEXT=$(cat $TEMP_CONTEXT)
+GIT_USERNAME=$(git config user.name | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+CLEAN_CONTEXT="Git username: $GIT_USERNAME\n\n$(cat $TEMP_CONTEXT)"
 SAFE_PAYLOAD=$(python3 -c '
 import json, sys
 content = sys.stdin.read()
-prompt = f"Analyze this git state. Return ONLY a JSON object with keys: \"branch_name\", \"summary\", \"description\". \n\nIMPORTANT: \"summary\" MUST BE UNDER 50 CHARACTERS. \n\nContext: {content}"
+prompt = f"""Analyze this git state and generate a NEW branch name for these uncommitted changes.
+
+Return ONLY a JSON object with these exact keys: "branch_name", "summary", "description".
+
+BRANCH NAME RULES:
+- Format MUST be: {{git_username}}/{{type}}/{{short-description}}
+- {{git_username}}: extract from "git status" output or use "user" as fallback
+- {{type}}: pick ONE based on the diff — feat, fix, refactor, docs, test, chore, style
+- {{short-description}}: 2–4 lowercase hyphenated words describing WHAT is changing (derive from filenames and diff content)
+- Example: johndoe/feat/add-auth-middleware
+
+SUMMARY RULES:
+- MUST be under 50 characters
+- A human-readable commit message title
+
+DESCRIPTION RULES:
+- 1–3 sentences explaining what changed and why
+
+Context:
+{content}"""
 print(json.dumps({
     "model": "claude-haiku-4-5-20251001",
     "max_tokens": 1000,
