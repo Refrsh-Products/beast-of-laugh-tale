@@ -23,6 +23,7 @@ export default function NotebookRow({
   onEditChange,
   onEditConfirm,
   onEditCancel,
+  onClick,
 }: {
   notebook: Notebook;
   openMenuId: string | null;
@@ -35,6 +36,7 @@ export default function NotebookRow({
   onEditChange: (val: string) => void;
   onEditConfirm: () => void;
   onEditCancel: () => void;
+  onClick?: (notebook: Notebook) => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const menuOpen = openMenuId === notebook.id;
@@ -65,6 +67,7 @@ export default function NotebookRow({
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => !isEditing && onClick?.(notebook)}
     >
       {/* Pin icon */}
       <div style={{ width: 14, flexShrink: 0 }}>

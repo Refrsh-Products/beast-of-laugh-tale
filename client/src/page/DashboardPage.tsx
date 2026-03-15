@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import Sidebar from "../components/sidebar/Sidebar";
 import useNotebookService from "../services/notebooks";
 import useAuthService from "../services/auth";
@@ -23,6 +23,7 @@ export default function DashboardPage() {
   const authService = useAuthService();
   const accountService = useAccountService();
   const notebookService = useNotebookService();
+  const navigate = useNavigate();
   const user = authService.getUser();
   const account = accountService.getAccount();
 
@@ -218,6 +219,7 @@ export default function DashboardPage() {
                   onEditChange={setEditValue}
                   onEditConfirm={handleRenameConfirm}
                   onEditCancel={handleRenameCancel}
+                  onClick={() => navigate(`/notebook/${nb.id}`)}
                 />
               ))}
             </div>
@@ -235,6 +237,7 @@ export default function DashboardPage() {
                   onEditChange={setEditValue}
                   onEditConfirm={handleRenameConfirm}
                   onEditCancel={handleRenameCancel}
+                  onClick={() => navigate(`/notebook/${nb.id}`)}
                 />
               ))}
             </div>

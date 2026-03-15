@@ -162,6 +162,40 @@ const useAuthServiceApi = (): AuthService => {
         throw err;
       }
     },
+
+    requestPasswordReset: async (email) => {
+      try {
+        const resp = await fetchData(
+          AuthServiceApiEndpoints.resetPassword,
+          "POST",
+          { email: email },
+        );
+        console.log("[useAuthServiceApi] Reset Password Response: ", resp);
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    resetPassword: async (uid, token, new_password, new_password_confirm) => {
+      try {
+        const resp = await fetchData(
+          AuthServiceApiEndpoints.resetPasswordConfirm,
+          "POST",
+          {
+            uid: uid,
+            token: token,
+            new_password: new_password,
+            new_password_confirm: new_password_confirm,
+          },
+        );
+        console.log(
+          "[useAuthServiceApi] Confirm Reset Password Response: ",
+          resp,
+        );
+      } catch (err) {
+        throw err;
+      }
+    },
   };
 };
 

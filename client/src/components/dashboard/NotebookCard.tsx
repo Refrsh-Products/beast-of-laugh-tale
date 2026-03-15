@@ -23,6 +23,7 @@ export default function NotebookCard({
   onEditChange,
   onEditConfirm,
   onEditCancel,
+  onClick,
 }: {
   notebook: Notebook;
   openMenuId: string | null;
@@ -35,6 +36,7 @@ export default function NotebookCard({
   onEditChange: (val: string) => void;
   onEditConfirm: () => void;
   onEditCancel: () => void;
+  onClick?: (notebook: Notebook) => void;
 }) {
   const [hovered, setHovered] = useState(false);
   const menuOpen = openMenuId === notebook.id;
@@ -66,6 +68,7 @@ export default function NotebookCard({
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => !isEditing && onClick?.(notebook)}
     >
       {/* Top row */}
       <div
