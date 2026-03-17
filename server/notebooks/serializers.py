@@ -6,13 +6,14 @@ class NotebookFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = NotebookFile
         fields = [
-                "id", 
-                "name", 
-                "file", 
-                "content",
+                "id",
+                "name",
+                "file",
                 "file_type",
+                "ingestion_status",
+                "ingestion_error",
                 "uploaded_at",
-                "updated_at"
+                "updated_at",
                 ]
 
 class NotebookSerializer(serializers.ModelSerializer):
@@ -27,16 +28,16 @@ class NotebookFileInputSerializer(serializers.Serializer):
     file = serializers.FileField()
 
 
-class NotebookFileCreateResponseSerializer(serializers.Serializer):
+class NotebookFileCreateSuccessSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    error_messages = serializers.ListField(default=list)
+    id = serializers.UUIDField()
+    ingestion_status = serializers.CharField()
+
+
+class NotebookFileCreateErrorSerializer(serializers.Serializer):
     success = serializers.BooleanField()
     error_messages = serializers.DictField(
-               child=serializers.ListField(
-                   child=serializers.CharField()
-                   ),
-               default=dict
-            )
-    status = serializers.IntegerField()
-
-
-class GenerateQuizInputSerialize(serializers.Serializer):
-    notebook_id = serializers.IntegerField()
+        child=serializers.ListField(child=serializers.CharField()),
+        default=dict
+    )

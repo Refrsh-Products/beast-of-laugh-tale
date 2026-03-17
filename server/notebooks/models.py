@@ -16,16 +16,28 @@ class Notebook(models.Model):
 
 
 class NotebookFile(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     notebook = models.ForeignKey(
             Notebook,
             related_name="files",
             on_delete=models.CASCADE
             )
 
-    name = models.CharField(max_length=20, default="Untitled")
-    content = models.TextField(blank=True)
+    class IngestionStatus(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PROCESSING = "processing", "Processing"
+        READY = "ready", "Ready"
+        FAILED = "failed", "Failed"
+
+    name = models.CharField(max_length=255, default="Untitled")
+    file_url = models.CharField(max_length=500, blank=True)
     file_type = models.CharField(max_length=20)
-    is_indexed = models.BooleanField(default=False)
+    ingestion_status = models.CharField(
+        max_length=20,
+        choices=IngestionStatus.choices,
+        default=IngestionStatus.PENDING,
+    )
+    ingestion_error = models.TextField(blank=True)
 
 
     file = models.FileField(upload_to="notebooks/")
