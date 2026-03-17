@@ -8,12 +8,8 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
 
 from notebooks.models import Notebook
+from .serializers import QueryInputSerializer
 from .services import query_notebook_rag
-
-
-class QueryInputSerializer(serializers.Serializer):
-    notebook_id = serializers.IntegerField()
-    user_query = serializers.CharField()
 
 
 class QueryVectorDBAPIView(APIView):
@@ -39,26 +35,14 @@ class QueryVectorDBAPIView(APIView):
         },
     )
     def post(self, request):
-        raw_notebook_id = request.data.get("notebook_id")
-        user_query = request.data.get("user_query")
+        serializer = QueryInputSerializer(data=request.data)
 
-        if not raw_notebook_id or not user_query:
-            return Response(
-                {
-                    "success": False,
-                    "errors": {"detail": "notebook_id and user_query are required."},
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            notebook_id = int(raw_notebook_id)
-        except (TypeError, ValueError):
-            return Response(
-                {"success": False, "errors": {"detail": "notebook_id must be an integer."}},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
+        if not serializer.is_valid():
+            return Response({"success": False, "errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        notebook_id = serializer.validated_data["notebook_id"] # type: ignore
+        user_query = serializer.validated_data["user_query"] # type: ignore
+        
         get_object_or_404(Notebook, id=notebook_id, user=request.user)
 
         try:

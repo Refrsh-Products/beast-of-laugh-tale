@@ -1,6 +1,5 @@
 import os
 from typing import List
-import dotenv
 import json
 from langchain_core.documents import Document
 from langchain_postgres import PGVectorStore, PGEngine
@@ -12,7 +11,12 @@ from asgiref.sync import sync_to_async
 from sqlalchemy.exc import ProgrammingError
 
 
+_vectorstore_table_initialized = False
+
+
 async def get_vector_store():
+    global _vectorstore_table_initialized
+
     connection_string = os.getenv("CONNECTION_STRING")
     if connection_string is None:
         raise ValueError("CONNECTION_STRING environment variable is not set")
@@ -20,14 +24,17 @@ async def get_vector_store():
     embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
     pg_engine = PGEngine.from_connection_string(url=connection_string)
 
-    try:
-        await pg_engine.ainit_vectorstore_table(
-            table_name="rag_embeddings",
-            vector_size=3072,
-            overwrite_existing=False,
-        )
-    except ProgrammingError:
-        pass  # Table already exists
+    if not _vectorstore_table_initialized:
+        try:
+            await pg_engine.ainit_vectorstore_table(
+                table_name="rag_embeddings",
+                vector_size=3072,
+                overwrite_existing=False,
+            )
+        except ProgrammingError:
+            pass  # Table already exists (created by another process)
+        
+        _vectorstore_table_initialized = True
 
     return await PGVectorStore.create(
         engine=pg_engine,
@@ -37,21 +44,29 @@ async def get_vector_store():
 
 async def ingest_note_to_rag(note_id):
     from unstructured.partition.pdf import partition_pdf
+    from unstructured.partition.image import partition_image
     from unstructured.chunking.title import chunk_by_title
 
     note = await NotebookFile.objects.select_related('notebook__user').aget(id=note_id)
-    file = note.file.path
+    file_path = note.file.path
 
     # Step 1: Partition
-    print(f"Partitioning document: {file}")
+    print(f"Partitioning document: {file_path}")
 
-    elements = partition_pdf(
-        filename=file,  # Path to your PDF file
-        strategy="hi_res", # Use the most accurate (but slower) processing method of extraction
-        infer_table_structure=True, # Keep tables as structured HTML, not jumbled text
-        extract_image_block_types=["Image"], # Grab images found in the PDF
-        extract_image_block_to_payload=True # Store images as base64 data you can actually use
-    )
+    IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "tiff", "bmp"}
+
+    if note.file_type == "pdf":
+        elements = partition_pdf(
+            filename=file_path,
+            strategy="hi_res",
+            infer_table_structure=True,
+            extract_image_block_types=["Image"],
+            extract_image_block_to_payload=True
+        )
+    elif note.file_type in IMAGE_EXTENSIONS:
+        elements = partition_image(filename=file_path)
+    else:
+        raise ValueError(f"Unsupported file type: {note.file_type}")
 
     print(f"Extracted {len(elements)} elements")
 
@@ -109,7 +124,6 @@ async def ingest_note_to_rag(note_id):
                 "original_content": json.dumps({
                     "raw_text": content_data['text'],
                     "tables_html": content_data['tables'],
-                    "images_base64": content_data['images']
                 })
             }
         )
@@ -120,15 +134,52 @@ async def ingest_note_to_rag(note_id):
     summarised_chunks = langchain_documents
 
     for doc in summarised_chunks:
-        doc.metadata["notebook_id"] = note.notebook.pk
+        doc.metadata["notebook_id"] = str(note.notebook.pk)
         doc.metadata["user_id"] = str(note.notebook.user.pk)
+        doc.metadata["notebook_file_id"] = str(note.pk)
 
     # Step 4: Vector Store
     vector_store = await get_vector_store()
     await vector_store.aadd_documents(summarised_chunks)
 
-    note.is_indexed = True
-    await note.asave()
+    note.ingestion_status = NotebookFile.IngestionStatus.READY
+    await note.asave(update_fields=["ingestion_status"])
+
+async def delete_file_vectors(notebook_file_id: str):
+    """Delete all vector chunks belonging to a single NotebookFile."""
+    connection_string = os.getenv("CONNECTION_STRING")
+    if not connection_string:
+        raise ValueError("CONNECTION_STRING environment variable is not set")
+
+    from sqlalchemy.ext.asyncio import create_async_engine
+    engine = create_async_engine(connection_string)
+    async with engine.begin() as conn:
+        await conn.execute(
+            __import__("sqlalchemy").text(
+                "DELETE FROM rag_embeddings WHERE langchain_metadata->>'notebook_file_id' = :file_id"
+            ),
+            {"file_id": str(notebook_file_id)},
+        )
+    await engine.dispose()
+
+
+async def delete_notebook_vectors(notebook_id: str):
+    """Delete all vector chunks belonging to an entire Notebook."""
+    connection_string = os.getenv("CONNECTION_STRING")
+    if not connection_string:
+        raise ValueError("CONNECTION_STRING environment variable is not set")
+
+    from sqlalchemy.ext.asyncio import create_async_engine
+    engine = create_async_engine(connection_string)
+    async with engine.begin() as conn:
+        await conn.execute(
+            __import__("sqlalchemy").text(
+                "DELETE FROM rag_embeddings WHERE langchain_metadata->>'notebook_id' = :notebook_id"
+            ),
+            {"notebook_id": str(notebook_id)},
+        )
+    await engine.dispose()
+
 
 async def query_notebook_rag(notebook_id, user_id, user_query):
     vector_store = await get_vector_store()
@@ -138,7 +189,7 @@ async def query_notebook_rag(notebook_id, user_id, user_query):
     results = await vector_store.asimilarity_search(
         user_query, 
         k=5, 
-        filter={"notebook_id": notebook_id, "user_id": str(user_id)}
+        filter={"notebook_id": str(notebook_id), "user_id": str(user_id)}
     )
     
     return results
