@@ -7,7 +7,7 @@ interface FileItemProps {
   file: NotebookFile;
   deleteMode: boolean;
   selected: boolean;
-  onToggleSelect: (id: number) => void;
+  onToggleSelect: (id: string) => void;
 }
 
 function FileIcon() {

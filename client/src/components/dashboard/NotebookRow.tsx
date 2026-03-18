@@ -16,6 +16,7 @@ function formatDate(iso: string): string {
 
 export default function NotebookRow({
   notebook,
+  fileCount,
   openMenuId,
   onMenuOpen,
   editingId,
@@ -26,6 +27,7 @@ export default function NotebookRow({
   onClick,
 }: {
   notebook: Notebook;
+  fileCount: number;
   openMenuId: string | null;
   onMenuOpen: (
     id: string | null,
@@ -141,7 +143,7 @@ export default function NotebookRow({
           flexShrink: 0,
         }}
       >
-        {notebook.file_count} files
+        {fileCount} files
       </span>
 
       {/* Date */}

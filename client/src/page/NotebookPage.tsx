@@ -5,7 +5,9 @@ import useNotebookService from "../services/notebooks";
 import type { Notebook, NotebookFile } from "../storage";
 
 import NotebookTitle from "../components/notebook/NotebookTitle";
-import FilesColumn from "../components/notebook/FilesColumn";
+import FilesColumn, {
+  type FileUploadState,
+} from "../components/notebook/FilesColumn";
 import ChatColumn from "../components/notebook/ChatColumn";
 import OptionsColumn from "../components/notebook/OptionsColumn";
 import ToastContainer from "../components/ui/ToastContainer";
@@ -25,20 +27,26 @@ export default function NotebookPage() {
   const [files, setFiles] = useState<NotebookFile[]>([]);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<FileUploadState[]>([]);
 
   const notebookId = id ?? "";
 
   useEffect(() => {
     async function load() {
-      const all = await notebookService.list();
-      const found = all.find((n) => n.id === notebookId) ?? null;
+      const found = await notebookService.getNotebook(notebookId);
       if (!found) {
         setNotFound(true);
         return;
       }
+      console.log(found);
       setNotebook(found);
-      // TODO: load files via notebookService.listFiles(notebookId) when Safwan wires it up
-      setFiles([]);
+
+      try {
+        const files = await notebookService.listFiles(notebookId);
+        setFiles([...files]);
+      } catch (err) {
+        showToast("Failed to load files", "danger");
+      }
     }
     load();
   }, [notebookId]);
@@ -54,21 +62,75 @@ export default function NotebookPage() {
     showToast("Notebook renamed", "neutral");
   }
 
-  function handleUpload(uploaded: File[]) {
-    // TODO: wire up file upload API when Safwan is ready
-    showToast(
-      `${uploaded.length} file${uploaded.length > 1 ? "s" : ""} uploaded`,
-      "success",
+  async function handleUpload(uploaded: File[]) {
+    setUploadProgress(
+      uploaded.map((f) => ({ name: f.name, status: "uploading" })),
     );
+
+    let successCount = 0;
+
+    await Promise.all(
+      uploaded.map(async (file, i) => {
+        try {
+          const response = await notebookService.createFile(notebookId, file);
+          if (!response.success) {
+            const errMsg =
+              Array.isArray(response.errors) && response.errors.length
+                ? (response.errors as string[]).join(", ")
+                : "Upload failed";
+            setUploadProgress((prev) =>
+              prev.map((p, idx) =>
+                idx === i ? { ...p, status: "error", error: errMsg } : p,
+              ),
+            );
+            showToast(`${file.name}: ${errMsg}`, "danger");
+          } else {
+            successCount++;
+            setUploadProgress((prev) =>
+              prev.map((p, idx) => (idx === i ? { ...p, status: "done" } : p)),
+            );
+          }
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : "Upload failed";
+          setUploadProgress((prev) =>
+            prev.map((p, idx) =>
+              idx === i ? { ...p, status: "error", error: errMsg } : p,
+            ),
+          );
+          showToast(`${file.name}: ${errMsg}`, "danger");
+        }
+      }),
+    );
+
+    if (successCount > 0) {
+      showToast(
+        `${successCount} file${successCount > 1 ? "s" : ""} uploaded`,
+        "success",
+      );
+      try {
+        setFiles(await notebookService.listFiles(notebookId));
+      } catch {}
+    }
+
+    setTimeout(
+      () =>
+        setUploadProgress((prev) => prev.filter((p) => p.status === "error")),
+      2000,
+    );
+    setTimeout(() => setUploadProgress([]), 6000);
   }
 
-  function handleDeleteSelected(ids: number[]) {
-    // TODO: wire up file delete API when Safwan is ready
-    setFiles((prev) => prev.filter((f) => !ids.includes(f.id)));
-    showToast(
-      `${ids.length} file${ids.length > 1 ? "s" : ""} deleted`,
-      "danger",
-    );
+  async function handleDeleteSelected(ids: string[]) {
+    try {
+      await Promise.all(
+        ids.map((id) => notebookService.deleteFile(notebookId, id)),
+      );
+      setFiles((prev) => prev.filter((f) => !ids.includes(f.id)));
+      showToast(
+        `${ids.length} file${ids.length > 1 ? "s" : ""} deleted`,
+        "danger",
+      );
+    } catch {}
   }
 
   async function handleSendMessage(message: string): Promise<string> {
@@ -147,6 +209,7 @@ export default function NotebookPage() {
           files={files}
           onUpload={handleUpload}
           onDeleteSelected={handleDeleteSelected}
+          uploadProgress={uploadProgress}
         />
 
         {/* Chat column (spans 2 grid columns) */}

@@ -2,6 +2,7 @@ import createFreshrApiInstance, {
   NotebookServiceApiEndpoints,
 } from "../services/freshr-api";
 import type { NotebookService } from "../services/notebooks/NotebookService.types";
+import type { NotebookFileCreateResponse } from "../services/notebooks/types";
 import type { Notebook } from "../storage";
 import useAxiosInterceptor from "./useAxiosInterceptor";
 import { useFetch } from "./useFetch";
@@ -28,6 +29,18 @@ const useNotebookServiceApi = (): NotebookService => {
     listArchived: async () => {
       // Backend endpoint TBD — return empty until confirmed
       return [];
+    },
+
+    getNotebook: async (notebook_id) => {
+      try {
+        const response = await fetchData(
+          NotebookServiceApiEndpoints.getNotebook(notebook_id),
+          "GET",
+        );
+        return response as Awaited<ReturnType<NotebookService["getNotebook"]>>;
+      } catch (err) {
+        throw err;
+      }
     },
 
     create: async (title) => {
@@ -78,6 +91,47 @@ const useNotebookServiceApi = (): NotebookService => {
 
     seed: async () => {
       // No-op in API mode — backend has its own data
+    },
+
+    listFiles: async (notebookId) => {
+      try {
+        const response = await fetchData(
+          NotebookServiceApiEndpoints.getNotebookFiles(notebookId),
+          "GET",
+        );
+        return response as Awaited<ReturnType<NotebookService["listFiles"]>>;
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    createFile: async (notebookId, file) => {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetchData(
+          NotebookServiceApiEndpoints.createFile(notebookId),
+          "POST",
+          formData,
+          { headers: { "Content-Type": undefined } },
+        );
+
+        return response as NotebookFileCreateResponse;
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    deleteFile: async (notebook_id, file_id) => {
+      try {
+        await fetchData(
+          NotebookServiceApiEndpoints.deleteNotebookFiles(notebook_id, file_id),
+          "DELETE",
+        );
+      } catch (err) {
+        throw err;
+      }
     },
   };
 };
