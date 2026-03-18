@@ -35,13 +35,17 @@ export const NotebookServiceApiEndpoints = {
   getNotebooks: `${NotebookServiceApiBase}/`,
   createNotebook: `${NotebookServiceApiBase}/`,
   getNotebook: (notebook_id: string) =>
-    `${NotebookServiceApiBase}/notebook/${notebook_id}/`,
+    `${NotebookServiceApiBase}/${notebook_id}`,
   updateNotebook: (notebook_id: string) =>
     `${NotebookServiceApiBase}/notebook/${notebook_id}`,
   deleteNotebook: (notebook_id: string) =>
     `${NotebookServiceApiBase}/notebook/${notebook_id}`,
   createFile: (notebook_id: string) =>
-    `${NotebookServiceApiBase}/${notebook_id}/file/create`,
+    `${NotebookServiceApiBase}/${notebook_id}/files/create`,
+  getNotebookFiles: (notebook_id: string) =>
+    `${NotebookServiceApiBase}/${notebook_id}/files`,
+  deleteNotebookFiles: (notebook_id: string, file_id: string) =>
+    `${NotebookServiceApiBase}/${notebook_id}/files/delete/${file_id}/`,
 };
 
 export default createFreshrApiInstance;

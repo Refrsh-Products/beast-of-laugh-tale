@@ -7,20 +7,164 @@ const B = "#000000";
 const W = "#FFFFFF";
 const R = "#FF4D4D";
 
+export interface FileUploadState {
+  name: string;
+  status: "uploading" | "done" | "error";
+  error?: string;
+}
+
 interface FilesColumnProps {
   files: NotebookFile[];
   onUpload: (files: File[]) => void;
-  onDeleteSelected: (ids: number[]) => void;
+  onDeleteSelected: (ids: string[]) => void;
+  uploadProgress?: FileUploadState[];
+}
+
+function SpinnerIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" style={{ flexShrink: 0 }}>
+      <circle cx="7" cy="7" r="5" fill="none" stroke="#ddd" strokeWidth="2" />
+      <path
+        d="M7 2 A5 5 0 0 1 12 7"
+        fill="none"
+        stroke={B}
+        strokeWidth="2"
+        strokeLinecap="round"
+      >
+        <animateTransform
+          attributeName="transform"
+          type="rotate"
+          from="0 7 7"
+          to="360 7 7"
+          dur="0.7s"
+          repeatCount="indefinite"
+        />
+      </path>
+    </svg>
+  );
+}
+
+function UploadProgressItem({ item }: { item: FileUploadState }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "flex-start",
+        gap: 8,
+        padding: "8px 10px",
+        background:
+          item.status === "error"
+            ? "#fff5f5"
+            : item.status === "done"
+              ? "#f5fff5"
+              : "#fafafa",
+        border: `1.5px solid ${item.status === "error" ? R : item.status === "done" ? G : "#ccc"}`,
+      }}
+    >
+      {item.status === "uploading" && <SpinnerIcon />}
+      {item.status === "done" && (
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          style={{ flexShrink: 0, marginTop: 1 }}
+        >
+          <circle cx="7" cy="7" r="6" fill={G} stroke={B} strokeWidth="1.5" />
+          <path
+            d="M4 7l2 2 4-4"
+            stroke={B}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      )}
+      {item.status === "error" && (
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 14 14"
+          fill="none"
+          style={{ flexShrink: 0, marginTop: 1 }}
+        >
+          <circle cx="7" cy="7" r="6" fill={R} stroke={B} strokeWidth="1.5" />
+          <path
+            d="M5 5l4 4M9 5l-4 4"
+            stroke={W}
+            strokeWidth="1.5"
+            strokeLinecap="round"
+          />
+        </svg>
+      )}
+      <div style={{ flex: 1, overflow: "hidden" }}>
+        <span
+          style={{
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: "0.72rem",
+            color: B,
+            display: "block",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {item.name}
+        </span>
+        {item.status === "error" && item.error && (
+          <span
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.62rem",
+              color: R,
+              display: "block",
+              marginTop: 2,
+              lineHeight: 1.4,
+            }}
+          >
+            {item.error}
+          </span>
+        )}
+        {item.status === "uploading" && (
+          <span
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.62rem",
+              color: "#888",
+              display: "block",
+              marginTop: 2,
+            }}
+          >
+            Uploading...
+          </span>
+        )}
+        {item.status === "done" && (
+          <span
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.62rem",
+              color: "#444",
+              display: "block",
+              marginTop: 2,
+            }}
+          >
+            Processing
+          </span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function FilesColumn({
   files,
   onUpload,
   onDeleteSelected,
+  uploadProgress = [],
 }: FilesColumnProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [deleteMode, setDeleteMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -37,7 +181,7 @@ export default function FilesColumn({
     e.target.value = "";
   }
 
-  function toggleSelect(id: number) {
+  function toggleSelect(id: string) {
     setSelectedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
@@ -227,7 +371,10 @@ export default function FilesColumn({
           padding: "0 12px 12px",
         }}
       >
-        {files.length === 0 ? (
+        {uploadProgress.map((item, i) => (
+          <UploadProgressItem key={`upload-${i}`} item={item} />
+        ))}
+        {files.length === 0 && uploadProgress.length === 0 ? (
           <p
             style={{
               fontFamily: "'IBM Plex Mono', monospace",

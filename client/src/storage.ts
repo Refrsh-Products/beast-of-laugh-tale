@@ -35,8 +35,8 @@ export interface StoredGoogleProfile {
 }
 
 export interface NotebookFile {
-  id: number;
-  notebook: number;
+  id: string;
+  notebook: string;
   name: string;
   file_type: string;
   is_indexed: boolean;

@@ -16,6 +16,7 @@ function formatDate(iso: string): string {
 
 export default function NotebookCard({
   notebook,
+  fileCount,
   openMenuId,
   onMenuOpen,
   editingId,
@@ -26,6 +27,7 @@ export default function NotebookCard({
   onClick,
 }: {
   notebook: Notebook;
+  fileCount: number;
   openMenuId: string | null;
   onMenuOpen: (
     id: string | null,
@@ -186,7 +188,7 @@ export default function NotebookCard({
         }}
       >
         <span>Created {formatDate(notebook.created_at)}</span>
-        <span>{notebook.file_count} files</span>
+        <span>{fileCount} files</span>
       </div>
     </div>
   );

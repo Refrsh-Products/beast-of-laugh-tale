@@ -29,6 +29,7 @@ export default function DashboardPage() {
 
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [archivedNotebooks, setArchivedNotebooks] = useState<Notebook[]>([]);
+  const [fileCounts, setFileCounts] = useState<Record<string, number>>({});
   const [view, setView] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
@@ -55,6 +56,12 @@ export default function DashboardPage() {
   async function refreshNotebooks() {
     const notebooks = await notebookService.list();
     setNotebooks(notebooks);
+    const counts = await Promise.all(
+      notebooks.map((nb) =>
+        notebookService.listFiles(nb.id).then((files) => [nb.id, files.length] as const).catch(() => [nb.id, 0] as const)
+      )
+    );
+    setFileCounts(Object.fromEntries(counts));
   }
 
   async function refreshArchived() {
@@ -212,6 +219,7 @@ export default function DashboardPage() {
                 <NotebookCard
                   key={nb.id}
                   notebook={nb}
+                  fileCount={fileCounts[nb.id] ?? 0}
                   openMenuId={openMenuId}
                   onMenuOpen={handleMenuOpen}
                   editingId={editingId}
@@ -230,6 +238,7 @@ export default function DashboardPage() {
                 <NotebookRow
                   key={nb.id}
                   notebook={nb}
+                  fileCount={fileCounts[nb.id] ?? 0}
                   openMenuId={openMenuId}
                   onMenuOpen={handleMenuOpen}
                   editingId={editingId}
