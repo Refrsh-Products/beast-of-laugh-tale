@@ -1,5 +1,5 @@
 import type { Notebook, NotebookFile } from "../../storage";
-import type { NotebookFileCreateResponse } from "./types";
+import type { NotebookFileCreateResponse } from "./NotebookFile.types";
 
 export interface NotebookService {
   list(): Promise<Notebook[]>; // List of all the notebooks for the user

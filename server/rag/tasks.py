@@ -8,7 +8,7 @@ def ingest_note_task(note_id):
     from notebooks.models import NotebookFile
 
     note = NotebookFile.objects.get(id=note_id)
-    note.ingestion_status = NotebookFile.IngestionStatus.PROCESSING
+    note.ingestion_status = NotebookFile.IngestionStatus.PROCESSING # type: ignore
     note.ingestion_error = ""
     note.save(update_fields=["ingestion_status", "ingestion_error"])
 
@@ -16,7 +16,7 @@ def ingest_note_task(note_id):
         asyncio.run(ingest_note_to_rag(note_id))
     except Exception as exc:
         NotebookFile.objects.filter(id=note_id).update(
-            ingestion_status=NotebookFile.IngestionStatus.FAILED,
+            ingestion_status=NotebookFile.IngestionStatus.FAILED, # type: ignore
             ingestion_error=str(exc),
         )
         raise

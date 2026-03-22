@@ -113,6 +113,18 @@ export function getNotebooks(): Notebook[] {
   return raw ? JSON.parse(raw) : [];
 }
 
+export function getNotebook(notebook_id: string): Notebook {
+  const raw = localStorage.getItem("freshr_notebooks");
+  const notebooks = raw ? (JSON.parse(raw) as Notebook[]) : [];
+  const notebook = notebooks.find((n) => n.id === notebook_id);
+
+  if (!notebook) {
+    throw new Error(`Notebook with id ${notebook_id} not found.`);
+  }
+
+  return notebook;
+}
+
 export function saveNotebooks(notebooks: Notebook[]): void {
   localStorage.setItem("freshr_notebooks", JSON.stringify(notebooks));
 }
@@ -143,6 +155,46 @@ export function deleteNotebook(id: string): void {
   saveNotebooks(getNotebooks().filter((n) => n.id !== id));
 }
 
+// ── Notebook Files ────────────────────────────────────────────────
+function getNotebookFiles(): NotebookFile[] {
+  const raw = localStorage.getItem("freshr_notebook_files");
+  return raw ? JSON.parse(raw) : [];
+}
+
+function saveNotebookFiles(files: NotebookFile[]): void {
+  localStorage.setItem("freshr_notebook_files", JSON.stringify(files));
+}
+
+export function listFiles(notebookId: string): NotebookFile[] {
+  return getNotebookFiles().filter((f) => f.notebook === notebookId);
+}
+
+export function createFile(notebookId: string, file: File): NotebookFile {
+  const newFile: NotebookFile = {
+    id: crypto.randomUUID(),
+    notebook: notebookId,
+    name: file.name,
+    file_type: file.name.split(".").pop() ?? "unknown",
+    is_indexed: false,
+    uploaded_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  saveNotebookFiles([...getNotebookFiles(), newFile]);
+  const files = listFiles(notebookId);
+  updateNotebook(notebookId, { file_count: files.length });
+  return newFile;
+}
+
+export function deleteFile(notebookId: string, fileId: string): void {
+  saveNotebookFiles(
+    getNotebookFiles().filter(
+      (f) => !(f.notebook === notebookId && f.id === fileId),
+    ),
+  );
+  const files = listFiles(notebookId);
+  updateNotebook(notebookId, { file_count: files.length });
+}
+
 // ── Archived notebooks ────────────────────────────────────────────
 export function getArchivedNotebooks(): Notebook[] {
   const raw = localStorage.getItem("freshr_archived_notebooks");
@@ -169,6 +221,111 @@ export function unarchiveNotebook(id: string): void {
   const [nb] = archived.splice(idx, 1);
   saveArchivedNotebooks(archived);
   saveNotebooks([...getNotebooks(), nb]);
+}
+
+// ── Chats ─────────────────────────────────────────────────────────
+export interface StoredChatSession {
+  id: string;
+  notebook_id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StoredChatMessage {
+  id: string;
+  chat_id: string;
+  role: "user" | "chatbot";
+  content: string;
+  token_count: number | null;
+  order_index: number;
+  sent_at: string;
+  is_deleted: boolean;
+}
+
+function getChatSessions(): StoredChatSession[] {
+  const raw = localStorage.getItem("freshr_chat_sessions");
+  return raw ? JSON.parse(raw) : [];
+}
+
+function saveChatSessions(sessions: StoredChatSession[]): void {
+  localStorage.setItem("freshr_chat_sessions", JSON.stringify(sessions));
+}
+
+function getChatMessages(): StoredChatMessage[] {
+  const raw = localStorage.getItem("freshr_chat_messages");
+  return raw ? JSON.parse(raw) : [];
+}
+
+function saveChatMessages(messages: StoredChatMessage[]): void {
+  localStorage.setItem("freshr_chat_messages", JSON.stringify(messages));
+}
+
+export function listChatSessions(notebookId: string): StoredChatSession[] {
+  return getChatSessions().filter((s) => s.notebook_id === notebookId);
+}
+
+export function getChatSession(chatId: string): StoredChatSession {
+  const session = getChatSessions().find((s) => s.id === chatId);
+  if (!session) throw new Error(`Chat session with id ${chatId} not found.`);
+  return session;
+}
+
+export function createChatSession(
+  notebookId: string,
+  title = "",
+): StoredChatSession {
+  const session: StoredChatSession = {
+    id: crypto.randomUUID(),
+    notebook_id: notebookId,
+    title,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  saveChatSessions([...getChatSessions(), session]);
+  return session;
+}
+
+export function updateChatSession(chatId: string, title: string): StoredChatSession {
+  const sessions = getChatSessions();
+  const idx = sessions.findIndex((s) => s.id === chatId);
+  if (idx === -1) throw new Error(`Chat session with id ${chatId} not found.`);
+  const updated = { ...sessions[idx], title, updated_at: new Date().toISOString() };
+  sessions[idx] = updated;
+  saveChatSessions(sessions);
+  return updated;
+}
+
+export function deleteChatSession(chatId: string): void {
+  saveChatSessions(getChatSessions().filter((s) => s.id !== chatId));
+  saveChatMessages(getChatMessages().filter((m) => m.chat_id !== chatId));
+}
+
+export function listChatMessages(chatId: string): StoredChatMessage[] {
+  return getChatMessages().filter(
+    (m) => m.chat_id === chatId && !m.is_deleted,
+  );
+}
+
+export function createChatMessage(
+  chatId: string,
+  role: "user" | "chatbot",
+  content: string,
+): StoredChatMessage {
+  const all = getChatMessages();
+  const order_index = all.filter((m) => m.chat_id === chatId).length;
+  const message: StoredChatMessage = {
+    id: crypto.randomUUID(),
+    chat_id: chatId,
+    role,
+    content,
+    token_count: null,
+    order_index,
+    sent_at: new Date().toISOString(),
+    is_deleted: false,
+  };
+  saveChatMessages([...all, message]);
+  return message;
 }
 
 export function seedNotebooks(): void {

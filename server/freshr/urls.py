@@ -26,6 +26,10 @@ urlpatterns = [
     path('users/', include('accounts.urls')),
     path('notebooks/', include(("notebooks.urls", "notebooks"), namespace="notebooks")),
     path('rag/', include(("rag.urls", "rag"), namespace="rag")),
+    path('chats/', include(("chats.urls", "chats"), namespace="chats")),
+    # path('presentation/', include(("presentation.urls", "presentation"), namespace="presentation")),
+    # path('quiz/', include(("quiz.urls","quiz"), namespace="quiz")),
+    # path('flashcard/', include(("flashcard.urls","flashcard"), namespace="flashcard")),
 
     # authentication endpoints
     path('auth/', include('users.urls')),

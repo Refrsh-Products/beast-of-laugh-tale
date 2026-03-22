@@ -1,0 +1,106 @@
+from django.http import StreamingHttpResponse
+from django.shortcuts import get_object_or_404
+from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.serializers import BaseSerializer
+from rest_framework.views import APIView
+
+from .serializers import ChatMessageCreateSerializer, ChatMessageSerializer, ChatSerializer, ChatCreateSerializer, ChatUpdateSerializer
+from .models import Chats, ChatMessages, ChatRole
+from .services.llm_service import _stream_llm_response
+from .services.rag_retrieval_service import get_notebook_context, build_study_assistant_prompt
+
+
+class ChatListCreateView(generics.ListCreateAPIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get_serializer_class(self) -> type[BaseSerializer]:  # type: ignore[override]
+        if self.request.method == "POST":
+            return ChatCreateSerializer
+        return ChatSerializer
+
+    def get_queryset(self):  # type: ignore[override]
+        qs = Chats.objects.filter(notebook__user=self.request.user)
+        notebook_id = self.request.query_params.get("notebook") # type: ignore
+        if notebook_id:
+            qs = qs.filter(notebook_id=notebook_id)
+        return qs
+
+
+class ChatDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = (IsAuthenticated,)
+    lookup_url_kwarg = "chat_id"
+
+    def get_serializer_class(self) -> type[BaseSerializer]:  # type: ignore[override]
+        if self.request.method in ("PUT", "PATCH"):
+            return ChatUpdateSerializer
+        return ChatSerializer
+
+    def get_queryset(self):  # type: ignore[override]
+        return Chats.objects.filter(notebook__user=self.request.user)
+
+
+class ChatMessageListCreateView(generics.ListCreateAPIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get_serializer_class(self) -> type[BaseSerializer]:  # type: ignore[override]
+        if self.request.method == "POST":
+            return ChatMessageCreateSerializer
+        return ChatMessageSerializer
+
+    def get_queryset(self):  # type: ignore[override]
+        return ChatMessages.objects.filter(
+            chat__id=self.kwargs["chat_id"],
+            chat__notebook__user=self.request.user,
+            is_deleted=False,
+        )
+
+    def perform_create(self, serializer):
+        chat = get_object_or_404(
+            Chats,
+            id=self.kwargs["chat_id"],
+            notebook__user=self.request.user,
+        )
+        next_index = ChatMessages.objects.filter(chat=chat).count()
+        serializer.save(chat=chat, role=ChatRole.USER, order_index=next_index)
+
+
+class ChatMessageStreamView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request: Request, chat_id: str) -> Response | StreamingHttpResponse:
+        # FETCH DATA
+        chat = get_object_or_404(Chats, id=chat_id, notebook__user=request.user)
+        messages = ChatMessages.objects.filter(
+            chat=chat, is_deleted=False
+        ).order_by("order_index")
+
+        last_user_message = messages.filter(role=ChatRole.USER).last()
+        if last_user_message is None:
+            return Response(
+                {"detail": "No user message to respond to."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        context = get_notebook_context(chat, request.user.id, last_user_message.content)
+        system_prompt = build_study_assistant_prompt(context)
+        
+        # Map to Claude-compatible roles ("user" / "assistant")
+        conversation_history = [
+            {
+                "role": "user" if msg.role == ChatRole.USER else "assistant",
+                "content": msg.content,
+            }
+            for msg in messages
+        ]
+
+        # STREAM DATA
+        streaming_response = StreamingHttpResponse(
+            _stream_llm_response(chat, system_prompt, conversation_history, messages.count()),
+            content_type="text/event-stream",
+        )
+        streaming_response["Cache-Control"] = "no-cache"
+        streaming_response["X-Accel-Buffering"] = "no"
+        return streaming_response

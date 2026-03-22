@@ -56,6 +56,10 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     "notebooks",
     "rag",
+    "chats",
+    "presentation",
+    "quiz",
+    "flashcard",
     "drf_spectacular"
 ]
 

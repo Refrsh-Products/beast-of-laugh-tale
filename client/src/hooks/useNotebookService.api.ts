@@ -2,7 +2,7 @@ import createFreshrApiInstance, {
   NotebookServiceApiEndpoints,
 } from "../services/freshr-api";
 import type { NotebookService } from "../services/notebooks/NotebookService.types";
-import type { NotebookFileCreateResponse } from "../services/notebooks/types";
+import type { NotebookFileCreateResponse } from "../services/notebooks/NotebookFile.types";
 import type { Notebook } from "../storage";
 import useAxiosInterceptor from "./useAxiosInterceptor";
 import { useFetch } from "./useFetch";

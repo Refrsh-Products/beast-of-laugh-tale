@@ -1,25 +1,94 @@
 import { useState, useRef, useEffect } from "react";
 import ChatMessage from "./ChatMessage";
 import type { Message } from "./ChatMessage";
+import type {
+  ChatSession,
+  ChatMessage as ApiChatMessage,
+} from "../../services/chat/ChatService.types";
 
 const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
 
 interface ChatColumnProps {
-  onSend: (message: string) => Promise<string>;
+  onSend: (message: string) => Promise<{ reply: string; sessionId: string }>;
+  sessions: ChatSession[];
+  activeSessionId: string | null;
+  onSessionSelect: (sessionId: string) => void;
+  onNewSession: (title?: string) => Promise<string>;
+  onSessionCreated: (sessionId: string) => void;
+  onRenameSession: (chatId: string, title: string) => Promise<void>;
+  getChatMessages: (chatId: string) => Promise<ApiChatMessage[]>;
 }
 
-export default function ChatColumn({ onSend }: ChatColumnProps) {
+export default function ChatColumn({
+  onSend,
+  sessions,
+  activeSessionId,
+  onSessionSelect,
+  onNewSession,
+  onSessionCreated,
+  onRenameSession,
+  getChatMessages,
+}: ChatColumnProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [isNaming, setIsNaming] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
-  let nextId = useRef(0);
+  const nextId = useRef(0);
+  const skipFetchRef = useRef<string | null>(null);
+
+  async function handleConfirmNew() {
+    const title = newTitle.trim();
+    setIsNaming(false);
+    setNewTitle("");
+    const newId = await onNewSession(title || undefined);
+    skipFetchRef.current = newId;
+    onSessionCreated(newId);
+  }
+
+  async function handleConfirmRename(id: string) {
+    const title = editTitle.trim();
+    setEditingId(null);
+    if (title) await onRenameSession(id, title);
+  }
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    if (!activeSessionId) {
+      setMessages([]);
+      return;
+    }
+    if (skipFetchRef.current === activeSessionId) {
+      skipFetchRef.current = null;
+      return;
+    }
+    setMessages([]);
+    setIsLoading(true);
+    getChatMessages(activeSessionId)
+      .then((apiMessages) => {
+        const sorted = [...apiMessages].sort(
+          (a, b) => a.order_index - b.order_index,
+        );
+        setMessages(
+          sorted.map((m, i) => ({
+            id: i,
+            role: m.role === "user" ? "user" : "ai",
+            text: m.content,
+          })),
+        );
+        nextId.current = sorted.length;
+      })
+      .finally(() => setIsLoading(false));
+  }, [activeSessionId]);
 
   async function handleSend() {
     const trimmed = input.trim();
@@ -35,8 +104,11 @@ export default function ChatColumn({ onSend }: ChatColumnProps) {
     setIsLoading(true);
 
     try {
-      // TODO: wire up real RAG query via notebookService when Safwan is ready
-      const reply = await onSend(trimmed);
+      const { reply, sessionId: returnedSessionId } = await onSend(trimmed);
+      if (returnedSessionId !== activeSessionId) {
+        skipFetchRef.current = returnedSessionId;
+        onSessionCreated(returnedSessionId);
+      }
       const aiMessage: Message = {
         id: nextId.current++,
         role: "ai",
@@ -62,23 +134,233 @@ export default function ChatColumn({ onSend }: ChatColumnProps) {
       {/* Column header */}
       <div
         style={{
-          padding: "14px 16px 10px",
           borderBottom: `2px solid ${B}`,
           background: W,
           flexShrink: 0,
         }}
       >
-        <span
+        <div style={{ padding: "14px 16px 10px" }}>
+          <span
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.62rem",
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              color: "#555",
+            }}
+          >
+            CHAT
+          </span>
+        </div>
+
+        {/* History toggle */}
+        <div
           style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.62rem",
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: "#555",
+            padding: "8px 16px",
+            borderTop: `1px solid #e0e0e0`,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            userSelect: "none",
           }}
         >
-          CHAT
-        </span>
+          <div
+            onClick={() => setHistoryOpen((o) => !o)}
+            style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", flex: 1 }}
+          >
+            <span
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "0.6rem",
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+                color: "#888",
+              }}
+            >
+              HISTORY ({sessions.length})
+            </span>
+            <span style={{ fontSize: "0.6rem", color: "#888" }}>
+              {historyOpen ? "▲" : "▼"}
+            </span>
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsNaming(true);
+              setNewTitle("");
+            }}
+            title="New chat session"
+            style={{
+              background: "transparent",
+              border: `1.5px solid #ccc`,
+              color: "#888",
+              width: 20,
+              height: 20,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.8rem",
+              lineHeight: 1,
+              flexShrink: 0,
+              padding: 0,
+            }}
+          >
+            +
+          </button>
+        </div>
+
+        {/* New session naming input */}
+        {isNaming && (
+          <div
+            style={{
+              padding: "8px 16px",
+              borderTop: `1px solid #e0e0e0`,
+              display: "flex",
+              gap: 6,
+            }}
+          >
+            <input
+              autoFocus
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleConfirmNew();
+                if (e.key === "Escape") { setIsNaming(false); setNewTitle(""); }
+              }}
+              placeholder="Session title (optional)"
+              style={{
+                flex: 1,
+                border: `1.5px solid ${B}`,
+                padding: "4px 8px",
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "0.68rem",
+                outline: "none",
+              }}
+            />
+            <button
+              onClick={handleConfirmNew}
+              style={{ border: `1.5px solid ${B}`, background: B, color: W, padding: "4px 8px", cursor: "pointer", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.68rem" }}
+            >
+              ✓
+            </button>
+            <button
+              onClick={() => { setIsNaming(false); setNewTitle(""); }}
+              style={{ border: `1.5px solid #ccc`, background: "transparent", color: "#888", padding: "4px 8px", cursor: "pointer", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.68rem" }}
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* History list */}
+        {historyOpen && (
+          <div
+            style={{
+              maxHeight: 160,
+              overflowY: "auto",
+              borderTop: `1px solid #e0e0e0`,
+            }}
+          >
+            {sessions.length === 0 ? (
+              <div
+                style={{
+                  padding: "10px 16px",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.68rem",
+                  color: "#bbb",
+                }}
+              >
+                No sessions yet
+              </div>
+            ) : (
+              sessions.map((s) => {
+                const isActive = s.id === activeSessionId;
+                const isEditing = editingId === s.id;
+                return (
+                  <div
+                    key={s.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      background: isActive ? B : "transparent",
+                      borderLeft: isActive ? `3px solid ${G}` : "3px solid transparent",
+                      borderBottom: "1px solid #f0f0f0",
+                    }}
+                  >
+                    {isEditing ? (
+                      <>
+                        <input
+                          autoFocus
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleConfirmRename(s.id);
+                            if (e.key === "Escape") setEditingId(null);
+                          }}
+                          onBlur={() => handleConfirmRename(s.id)}
+                          style={{
+                            flex: 1,
+                            border: "none",
+                            borderBottom: `1.5px solid ${B}`,
+                            padding: "8px 16px",
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontSize: "0.7rem",
+                            background: "transparent",
+                            color: isActive ? W : B,
+                            outline: "none",
+                          }}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div
+                          onClick={() => {
+                            onSessionSelect(s.id);
+                            setHistoryOpen(false);
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: "8px 16px",
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontSize: "0.7rem",
+                            cursor: "pointer",
+                            color: isActive ? W : B,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {s.title || "Untitled session"}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingId(s.id);
+                            setEditTitle(s.title || "");
+                          }}
+                          title="Rename session"
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            color: isActive ? W : "#aaa",
+                            padding: "0 10px",
+                            fontSize: "0.65rem",
+                            flexShrink: 0,
+                          }}
+                        >
+                          ✎
+                        </button>
+                      </>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
       </div>
 
       {/* Messages area */}
@@ -92,7 +374,7 @@ export default function ChatColumn({ onSend }: ChatColumnProps) {
           gap: 12,
         }}
       >
-        {messages.length === 0 ? (
+        {messages.length === 0 && !isLoading ? (
           <EmptyState />
         ) : (
           <>

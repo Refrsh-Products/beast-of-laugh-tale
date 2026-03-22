@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Navigate } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  Navigate,
+  useSearchParams,
+} from "react-router-dom";
 import useAuthService from "../services/auth";
 import useNotebookService from "../services/notebooks";
 import type { Notebook, NotebookFile } from "../storage";
@@ -12,14 +17,17 @@ import ChatColumn from "../components/notebook/ChatColumn";
 import OptionsColumn from "../components/notebook/OptionsColumn";
 import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
+import useChatService from "../services/chat";
 
 const B = "#000000";
 const W = "#FFFFFF";
 
 export default function NotebookPage() {
   const { id } = useParams<{ id: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const authService = useAuthService();
   const notebookService = useNotebookService();
+  const chatService = useChatService();
   const navigate = useNavigate();
   const { toasts, showToast } = useToast();
 
@@ -28,6 +36,9 @@ export default function NotebookPage() {
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<FileUploadState[]>([]);
+  const [chatSessions, setChatSessions] = useState<
+    Awaited<ReturnType<typeof chatService.listChatSessions>>
+  >([]);
 
   const notebookId = id ?? "";
 
@@ -38,7 +49,6 @@ export default function NotebookPage() {
         setNotFound(true);
         return;
       }
-      console.log(found);
       setNotebook(found);
 
       try {
@@ -46,6 +56,13 @@ export default function NotebookPage() {
         setFiles([...files]);
       } catch (err) {
         showToast("Failed to load files", "danger");
+      }
+
+      try {
+        const sessions = await chatService.listChatSessions(notebookId);
+        setChatSessions(sessions);
+      } catch (err) {
+        showToast("Failed to load chat sessions", "danger");
       }
     }
     load();
@@ -133,9 +150,47 @@ export default function NotebookPage() {
     } catch {}
   }
 
-  async function handleSendMessage(message: string): Promise<string> {
-    // TODO: wire up RAG query via notebookService when Safwan is ready
-    return `This is a placeholder response to: "${message}"`;
+  async function handleSendMessage(
+    message: string,
+  ): Promise<{ reply: string; sessionId: string }> {
+    let sessionId = activeSessionId;
+    const sessionExists = chatSessions.some((s) => s.id === sessionId);
+
+    if (!sessionId || !sessionExists) {
+      const session = await chatService.createChatSession(notebookId);
+      sessionId = session.id;
+      setChatSessions((prev) => [...prev, session]);
+      // URL update is intentionally left to ChatColumn via onSessionCreated
+    }
+
+    await chatService.createChatSessionMessage(sessionId, message);
+
+    // TODO: Stream AI response
+    return { reply: `This is a placeholder response to: "${message}"`, sessionId };
+  }
+
+  const activeSessionId = searchParams.get("session");
+
+  function handleSessionSelect(sessionId: string) {
+    setSearchParams({ session: sessionId });
+  }
+
+  function handleSessionCreated(sessionId: string) {
+    setSearchParams({ session: sessionId }, { replace: true });
+  }
+
+  async function handleNewSession(title?: string): Promise<string> {
+    const session = await chatService.createChatSession(notebookId, title);
+    setChatSessions((prev) => [...prev, session]);
+    return session.id;
+    // URL update is intentionally left to ChatColumn via onSessionCreated
+  }
+
+  async function handleRenameSession(chatId: string, title: string) {
+    await chatService.updateChatSession(chatId, title);
+    setChatSessions((prev) =>
+      prev.map((s) => (s.id === chatId ? { ...s, title } : s)),
+    );
   }
 
   async function handleGenerateQuiz() {
@@ -212,8 +267,17 @@ export default function NotebookPage() {
           uploadProgress={uploadProgress}
         />
 
-        {/* Chat column (spans 2 grid columns) */}
-        <ChatColumn onSend={handleSendMessage} />
+        {/* Chat column */}
+        <ChatColumn
+          onSend={handleSendMessage}
+          sessions={chatSessions}
+          activeSessionId={activeSessionId}
+          onSessionSelect={handleSessionSelect}
+          onNewSession={handleNewSession}
+          onSessionCreated={handleSessionCreated}
+          onRenameSession={handleRenameSession}
+          getChatMessages={chatService.getChatSessionMessages}
+        />
 
         {/* Options column */}
         <OptionsColumn
