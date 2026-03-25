@@ -153,20 +153,28 @@ export default function NotebookPage() {
   async function handleSendMessage(
     message: string,
   ): Promise<{ reply: string; sessionId: string }> {
-    let sessionId = activeSessionId;
-    const sessionExists = chatSessions.some((s) => s.id === sessionId);
+    if (files.length === 0) {
+      showToast("Upload lecture notes before chatting", "danger");
+      throw new Error("no files"); // aborts the chat session in ChatColumn
+    } else {
+      let sessionId = activeSessionId;
+      const sessionExists = chatSessions.some((s) => s.id === sessionId);
 
-    if (!sessionId || !sessionExists) {
-      const session = await chatService.createChatSession(notebookId);
-      sessionId = session.id;
-      setChatSessions((prev) => [...prev, session]);
-      // URL update is intentionally left to ChatColumn via onSessionCreated
+      if (!sessionId || !sessionExists) {
+        const session = await chatService.createChatSession(notebookId);
+        sessionId = session.id;
+        setChatSessions((prev) => [...prev, session]);
+        // URL update is intentionally left to ChatColumn via onSessionCreated
+      }
+
+      await chatService.createChatSessionMessage(sessionId, message);
+
+      // TODO: Stream AI response
+      return {
+        reply: `This is a placeholder response to: "${message}"`,
+        sessionId,
+      };
     }
-
-    await chatService.createChatSessionMessage(sessionId, message);
-
-    // TODO: Stream AI response
-    return { reply: `This is a placeholder response to: "${message}"`, sessionId };
   }
 
   const activeSessionId = searchParams.get("session");

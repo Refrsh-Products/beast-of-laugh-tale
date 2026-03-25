@@ -115,6 +115,8 @@ export default function ChatColumn({
         text: reply,
       };
       setMessages((prev) => [...prev, aiMessage]);
+    } catch {
+      setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
     } finally {
       setIsLoading(false);
     }
