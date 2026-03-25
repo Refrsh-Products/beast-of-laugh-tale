@@ -16,7 +16,7 @@ def ingest_note_task(note_id):
         asyncio.run(ingest_note_to_rag(note_id))
     except Exception as exc:
         NotebookFile.objects.filter(id=note_id).update(
-            ingestion_status=NotebookFile.IngestionStatus.FAILED, # type: ignore
+            ingestion_status=NotebookFile.IngestionStatus.FAILED, 
             ingestion_error=str(exc),
         )
         raise
