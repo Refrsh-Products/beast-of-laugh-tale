@@ -48,4 +48,21 @@ export const NotebookServiceApiEndpoints = {
     `${NotebookServiceApiBase}/${notebook_id}/files/delete/${file_id}/`,
 };
 
+// Chats
+export const ChatServiceApiBase = "/chats";
+export const ChatServiceApiEndpoints = {
+  getChatSessions: `${ChatServiceApiBase}/`,
+  createChatSession: `${ChatServiceApiBase}/`,
+  updateChatSession: (chat_id: string) => `${ChatServiceApiBase}/${chat_id}/`,
+  deleteChatSession: (chat_id: string) => `${ChatServiceApiBase}/${chat_id}/`,
+  getChatSessionDetails: (chat_id: string) =>
+    `${ChatServiceApiBase}/${chat_id}/`,
+  getChatSessionMessages: (chat_id: string) =>
+    `${ChatServiceApiBase}/${chat_id}/messages/`,
+  createChatSessionMessage: (chat_id: string) =>
+    `${ChatServiceApiBase}/${chat_id}/messages/`,
+  chatMessageStream: (chat_id: string) =>
+    `${ChatServiceApiBase}/${chat_id}/messages/stream/`,
+};
+
 export default createFreshrApiInstance;

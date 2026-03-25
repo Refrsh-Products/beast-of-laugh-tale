@@ -3,6 +3,12 @@ import uuid
 from django.db import models
 from django.conf import settings
 
+class IngestionStatus(models.TextChoices):
+        PENDING = "pending", "Pending"
+        PROCESSING = "processing", "Processing"
+        READY = "ready", "Ready"
+        FAILED = "failed", "Failed"
+
 class Notebook(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notebooks")
@@ -22,12 +28,6 @@ class NotebookFile(models.Model):
             related_name="files",
             on_delete=models.CASCADE
             )
-
-    class IngestionStatus(models.TextChoices):
-        PENDING = "pending", "Pending"
-        PROCESSING = "processing", "Processing"
-        READY = "ready", "Ready"
-        FAILED = "failed", "Failed"
 
     name = models.CharField(max_length=255, default="Untitled")
     file_url = models.CharField(max_length=500, blank=True)

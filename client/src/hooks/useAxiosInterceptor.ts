@@ -4,7 +4,7 @@ It is used to add the token to the header of the request.
 It handles the 401 error and redirects the user to the login page.
 */
 
-import type { AxiosInstance } from "axios";
+import axios, { type AxiosInstance } from "axios";
 import { useEffect } from "react";
 import { AuthServiceApiEndpoints } from "../services/freshr-api";
 
@@ -36,8 +36,8 @@ const useAxiosInterceptor = (api: AxiosInstance, useToken: boolean = true) => {
           originalRequest._retry = true;
 
           try {
-            const refreshResponse = await api.post(
-              AuthServiceApiEndpoints.refreshToken,
+            const refreshResponse = await axios.post(
+              `${import.meta.env.VITE_API_BASE_URL}${AuthServiceApiEndpoints.refreshToken}`,
               { refresh: refreshToken },
             );
 
