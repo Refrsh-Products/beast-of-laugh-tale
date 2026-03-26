@@ -8,7 +8,7 @@ def ingest_note_task(note_id):
     from notebooks.models import NotebookFile
 
     note = NotebookFile.objects.get(id=note_id)
-    note.ingestion_status = NotebookFile.IngestionStatus.PROCESSING # type: ignore
+    note.ingestion_status = NotebookFile.IngestionStatus.PROCESSING 
     note.ingestion_error = ""
     note.save(update_fields=["ingestion_status", "ingestion_error"])
 

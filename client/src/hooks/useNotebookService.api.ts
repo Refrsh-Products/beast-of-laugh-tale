@@ -133,6 +133,10 @@ const useNotebookServiceApi = (): NotebookService => {
         throw err;
       }
     },
+
+    renameFile: async (_notebook_id, _file_id, _newName) => {
+      // TODO: wire up rename endpoint when Safwan is ready
+    },
   };
 };
 

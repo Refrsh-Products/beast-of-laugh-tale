@@ -37,9 +37,9 @@ export const NotebookServiceApiEndpoints = {
   getNotebook: (notebook_id: string) =>
     `${NotebookServiceApiBase}/${notebook_id}`,
   updateNotebook: (notebook_id: string) =>
-    `${NotebookServiceApiBase}/notebook/${notebook_id}`,
+    `${NotebookServiceApiBase}/${notebook_id}`,
   deleteNotebook: (notebook_id: string) =>
-    `${NotebookServiceApiBase}/notebook/${notebook_id}`,
+    `${NotebookServiceApiBase}/${notebook_id}`,
   createFile: (notebook_id: string) =>
     `${NotebookServiceApiBase}/${notebook_id}/files/create`,
   getNotebookFiles: (notebook_id: string) =>

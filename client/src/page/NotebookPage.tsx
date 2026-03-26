@@ -14,7 +14,10 @@ import FilesColumn, {
   type FileUploadState,
 } from "../components/notebook/FilesColumn";
 import ChatColumn from "../components/notebook/ChatColumn";
-import OptionsColumn from "../components/notebook/OptionsColumn";
+import OptionsColumn, {
+  type ActiveView,
+} from "../components/notebook/OptionsColumn";
+import QuizColumn from "../components/notebook/QuizColumn";
 import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
 import useChatService from "../services/chat";
@@ -34,6 +37,7 @@ export default function NotebookPage() {
   const [notebook, setNotebook] = useState<Notebook | null>(null);
   const [files, setFiles] = useState<NotebookFile[]>([]);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [activeView, setActiveView] = useState<ActiveView>("chat");
   const [notFound, setNotFound] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<FileUploadState[]>([]);
   const [chatSessions, setChatSessions] = useState<
@@ -44,18 +48,23 @@ export default function NotebookPage() {
 
   useEffect(() => {
     async function load() {
-      const found = await notebookService.getNotebook(notebookId);
-      if (!found) {
-        setNotFound(true);
-        return;
-      }
-      setNotebook(found);
-
       try {
-        const files = await notebookService.listFiles(notebookId);
-        setFiles([...files]);
+        const found = await notebookService.getNotebook(notebookId);
+        if (!found) {
+          setNotFound(true);
+          return;
+        }
+        setNotebook(found);
+
+        try {
+          const files = await notebookService.listFiles(notebookId);
+          setFiles([...files]);
+        } catch (err) {
+          showToast("Failed to load files", "danger");
+        }
       } catch (err) {
-        showToast("Failed to load files", "danger");
+        console.error("[NotebookPage] load() error:", err);
+        setNotFound(true);
       }
 
       try {
@@ -214,6 +223,24 @@ export default function NotebookPage() {
 
   if (!notebook) return null;
 
+  async function handleDeleteOne(id: string) {
+    try {
+      await notebookService.deleteFile(notebookId, id);
+      setFiles((prev) => prev.filter((f) => f.id !== id));
+      showToast("File deleted", "danger");
+    } catch {}
+  }
+
+  async function handleRenameFile(id: string, newName: string) {
+    try {
+      await notebookService.renameFile(notebookId, id, newName);
+      setFiles((prev) =>
+        prev.map((f) => (f.id === id ? { ...f, name: newName } : f)),
+      );
+      showToast("File renamed", "neutral");
+    } catch {}
+  }
+
   return (
     <div
       style={{
@@ -262,35 +289,41 @@ export default function NotebookPage() {
         style={{
           flex: 1,
           display: "grid",
-          gridTemplateColumns: "1fr 2fr 1fr",
+          gridTemplateColumns: "220px 1fr 260px",
           overflow: "hidden",
           position: "relative",
         }}
       >
-        {/* Files column */}
+        {/* Options/Tools nav column (left) */}
+        <OptionsColumn activeView={activeView} onViewChange={setActiveView} />
+
+        {/* Dynamic main window (Chat or Quiz) */}
+        {activeView === "chat" ? (
+          <ChatColumn
+            onSend={handleSendMessage}
+            sessions={chatSessions}
+            activeSessionId={activeSessionId}
+            onSessionSelect={handleSessionSelect}
+            onNewSession={handleNewSession}
+            onSessionCreated={handleSessionCreated}
+            onRenameSession={handleRenameSession}
+            getChatMessages={chatService.getChatSessionMessages}
+          />
+        ) : (
+          <QuizColumn
+            onGenerateQuiz={handleGenerateQuiz}
+            isGenerating={isGeneratingQuiz}
+          />
+        )}
+
+        {/* Files column (right) */}
         <FilesColumn
           files={files}
           onUpload={handleUpload}
           onDeleteSelected={handleDeleteSelected}
+          onDeleteOne={handleDeleteOne}
+          onRename={handleRenameFile}
           uploadProgress={uploadProgress}
-        />
-
-        {/* Chat column */}
-        <ChatColumn
-          onSend={handleSendMessage}
-          sessions={chatSessions}
-          activeSessionId={activeSessionId}
-          onSessionSelect={handleSessionSelect}
-          onNewSession={handleNewSession}
-          onSessionCreated={handleSessionCreated}
-          onRenameSession={handleRenameSession}
-          getChatMessages={chatService.getChatSessionMessages}
-        />
-
-        {/* Options column */}
-        <OptionsColumn
-          onGenerateQuiz={handleGenerateQuiz}
-          isGenerating={isGeneratingQuiz}
         />
       </div>
 

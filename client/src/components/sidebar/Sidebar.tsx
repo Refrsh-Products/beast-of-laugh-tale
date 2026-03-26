@@ -15,6 +15,8 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
   const avatarLetter = (userName || userEmail || "?")[0].toUpperCase();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
+  const [collapseHovered, setCollapseHovered] = useState(false);
+  const [collapsePressed, setCollapsePressed] = useState(false);
 
   return (
     <div
@@ -64,19 +66,50 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
         )}
         <button
           onClick={() => setCollapsed((v) => !v)}
+          onMouseEnter={() => setCollapseHovered(true)}
+          onMouseLeave={() => {
+            setCollapseHovered(false);
+            setCollapsePressed(false);
+          }}
+          onMouseDown={() => setCollapsePressed(true)}
+          onMouseUp={() => setCollapsePressed(false)}
           style={{
-            background: "none",
-            border: "none",
-            color: "#888",
+            background: collapsePressed
+              ? "#333"
+              : collapseHovered
+                ? "#1a1a1a"
+                : "none",
+            border: `1px solid ${collapseHovered ? "#555" : "#333"}`,
             cursor: "pointer",
-            fontSize: "0.75rem",
-            padding: 4,
+            padding: "4px 5px",
             lineHeight: 1,
             flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transform: collapsePressed ? "scale(0.92)" : "scale(1)",
+            transition: "background 0.12s, border-color 0.12s, transform 0.08s",
           }}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? "▶" : "◀"}
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            style={{
+              transform: collapsed ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.2s ease",
+            }}
+          >
+            <path
+              d="M7.5 2L4 6l3.5 4"
+              stroke={collapseHovered ? "#aaa" : "#666"}
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
         </button>
       </div>
 
