@@ -16,5 +16,10 @@ export interface NotebookService {
     file: File,
   ): Promise<NotebookFileCreateResponse>; // Upload a new file in notebook with the given id
   deleteFile(notebook_id: string, file_id: string): Promise<void>;
+  renameFile(
+    notebook_id: string,
+    file_id: string,
+    newName: string,
+  ): Promise<void>;
   seed(): Promise<void>;
 }

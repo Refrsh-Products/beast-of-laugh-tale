@@ -11,6 +11,7 @@ import {
   createFile,
   deleteFile,
   seedNotebooks,
+  renameNotebookFile,
 } from "../../storage";
 import type { NotebookService } from "./NotebookService.types";
 
@@ -52,7 +53,10 @@ const NotebookServiceMock: NotebookService = {
     deleteFile(notebookId, fileId);
     return Promise.resolve();
   },
-
+  renameFile: (notebookId, fileId, newName) => {
+    renameNotebookFile(notebookId, fileId, newName);
+    return Promise.resolve();
+  },
   seed: () => {
     seedNotebooks();
     return Promise.resolve();

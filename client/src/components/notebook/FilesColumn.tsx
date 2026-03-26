@@ -17,6 +17,8 @@ interface FilesColumnProps {
   files: NotebookFile[];
   onUpload: (files: File[]) => void;
   onDeleteSelected: (ids: string[]) => void;
+  onDeleteOne: (id: string) => void;
+  onRename: (id: string, newName: string) => void;
   uploadProgress?: FileUploadState[];
 }
 
@@ -160,10 +162,12 @@ export default function FilesColumn({
   files,
   onUpload,
   onDeleteSelected,
+  onDeleteOne,
+  onRename,
   uploadProgress = [],
 }: FilesColumnProps) {
   const [isDragging, setIsDragging] = useState(false);
-  const [deleteMode, setDeleteMode] = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -187,19 +191,16 @@ export default function FilesColumn({
     );
   }
 
-  function enterDeleteMode() {
-    setDeleteMode(true);
-    setSelectedIds([]);
-  }
-
-  function cancelDeleteMode() {
-    setDeleteMode(false);
-    setSelectedIds([]);
+  function toggleBulkMode() {
+    setBulkMode((v) => {
+      if (v) setSelectedIds([]);
+      return !v;
+    });
   }
 
   function confirmDelete() {
     onDeleteSelected(selectedIds);
-    setDeleteMode(false);
+    setBulkMode(false);
     setSelectedIds([]);
     setShowConfirm(false);
   }
@@ -211,19 +212,20 @@ export default function FilesColumn({
         flexDirection: "column",
         height: "100%",
         background: W,
-        borderRight: `2px solid ${B}`,
         overflow: "hidden",
       }}
     >
       {/* Column header */}
       <div
         style={{
-          padding: "14px 14px 10px",
+          height: 44,
+          padding: "0 14px",
           borderBottom: `2px solid ${B}`,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           flexShrink: 0,
+          gap: 8,
         }}
       >
         <span
@@ -238,64 +240,58 @@ export default function FilesColumn({
           FILES
         </span>
 
-        {/* Delete mode controls */}
-        {deleteMode ? (
-          <div style={{ display: "flex", gap: 6 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Bulk delete confirm button — only shown when items are selected */}
+          {bulkMode && selectedIds.length > 0 && (
             <button
-              onClick={() => selectedIds.length > 0 && setShowConfirm(true)}
-              disabled={selectedIds.length === 0}
+              onClick={() => setShowConfirm(true)}
               style={{
-                background: selectedIds.length > 0 ? R : "#eee",
-                color: selectedIds.length > 0 ? W : "#aaa",
-                border: `1.5px solid ${selectedIds.length > 0 ? B : "#ccc"}`,
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.62rem",
-                fontWeight: 700,
-                padding: "4px 8px",
-                cursor: selectedIds.length > 0 ? "pointer" : "not-allowed",
-                letterSpacing: "0.04em",
-              }}
-            >
-              Delete selected
-            </button>
-            <button
-              onClick={cancelDeleteMode}
-              style={{
-                background: W,
-                color: B,
+                background: R,
+                color: W,
                 border: `1.5px solid ${B}`,
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.62rem",
+                fontSize: "0.6rem",
                 fontWeight: 700,
-                padding: "4px 8px",
+                padding: "3px 8px",
                 cursor: "pointer",
                 letterSpacing: "0.04em",
+                whiteSpace: "nowrap",
               }}
             >
-              Cancel
+              Delete ({selectedIds.length})
             </button>
-          </div>
-        ) : (
-          <button
-            onClick={enterDeleteMode}
-            disabled={files.length === 0}
+          )}
+
+          {/* Red checkbox toggle for bulk mode */}
+          <div
+            onClick={files.length > 0 ? toggleBulkMode : undefined}
+            title="Bulk delete"
             style={{
-              background: "none",
-              border: "none",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.62rem",
-              fontWeight: 700,
-              color: files.length === 0 ? "#ccc" : "#888",
+              width: 16,
+              height: 16,
+              border: `2px solid ${files.length === 0 ? "#ddd" : R}`,
+              background: bulkMode ? R : "transparent",
               cursor: files.length === 0 ? "not-allowed" : "pointer",
-              letterSpacing: "0.04em",
-              textDecoration: "underline",
-              textUnderlineOffset: 3,
-              padding: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              transition: "background 0.12s",
             }}
           >
-            Delete
-          </button>
-        )}
+            {bulkMode && (
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                <path
+                  d="M1.5 5l2.5 2.5 4.5-5"
+                  stroke={W}
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Drop zone */}
@@ -391,15 +387,17 @@ export default function FilesColumn({
             <FileItem
               key={file.id}
               file={file}
-              deleteMode={deleteMode}
+              bulkMode={bulkMode}
               selected={selectedIds.includes(file.id)}
               onToggleSelect={toggleSelect}
+              onDelete={onDeleteOne}
+              onRename={onRename}
             />
           ))
         )}
       </div>
 
-      {/* Delete confirmation modal */}
+      {/* Bulk delete confirmation modal */}
       {showConfirm && (
         <div
           style={{

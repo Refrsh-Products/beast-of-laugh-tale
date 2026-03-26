@@ -3,7 +3,12 @@ import createFreshrApiInstance, {
   AuthServiceApiEndpoints,
   UserServiceApiEndpoints,
 } from "../../services/freshr-api";
-import { startSession, saveGoogleProfile, saveUser, saveAccount } from "../../storage";
+import {
+  startSession,
+  saveGoogleProfile,
+  saveUser,
+  saveAccount,
+} from "../../storage";
 import type { StoredAccount } from "../../storage";
 import type { AccountMeResponse } from "../../page/dto/AccountMeResponse.dto";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +21,8 @@ const B = "#000000";
 const W = "#FFFFFF";
 
 export default function GoogleAuthBtn() {
+  if (import.meta.env.VITE_USE_MOCK === "true") return null;
+
   const navigate = useNavigate();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);

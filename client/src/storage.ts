@@ -155,18 +155,67 @@ export function deleteNotebook(id: string): void {
   saveNotebooks(getNotebooks().filter((n) => n.id !== id));
 }
 
-// ── Notebook Files ────────────────────────────────────────────────
-function getNotebookFiles(): NotebookFile[] {
-  const raw = localStorage.getItem("freshr_notebook_files");
+// ── Notebook Files (mock — metadata only, no file content) ────────────────────────────────────────────────
+function filesKey(notebookId: string): string {
+  return `freshr_files_${notebookId}`;
+}
+
+export function getNotebookFiles(notebookId: string): NotebookFile[] {
+  const raw = localStorage.getItem(filesKey(notebookId));
   return raw ? JSON.parse(raw) : [];
 }
 
-function saveNotebookFiles(files: NotebookFile[]): void {
-  localStorage.setItem("freshr_notebook_files", JSON.stringify(files));
+export function saveNotebookFiles(
+  notebookId: string,
+  files: NotebookFile[],
+): void {
+  localStorage.setItem(filesKey(notebookId), JSON.stringify(files));
+}
+
+export function addNotebookFile(
+  notebookId: string,
+  name: string,
+  fileType: string,
+): NotebookFile {
+  const file: NotebookFile = {
+    id: crypto.randomUUID(),
+    notebook: notebookId,
+    name,
+    file_type: fileType,
+    is_indexed: false,
+    uploaded_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  saveNotebookFiles(notebookId, [...getNotebookFiles(notebookId), file]);
+  return file;
+}
+
+export function deleteNotebookFile(notebookId: string, fileId: string): void {
+  saveNotebookFiles(
+    notebookId,
+    getNotebookFiles(notebookId).filter((f) => f.id !== fileId),
+  );
+}
+
+export function renameNotebookFile(
+  notebookId: string,
+  fileId: string,
+  newName: string,
+): void {
+  const files = getNotebookFiles(notebookId);
+  const idx = files.findIndex((f) => f.id === fileId);
+  if (idx !== -1) {
+    files[idx] = {
+      ...files[idx],
+      name: newName,
+      updated_at: new Date().toISOString(),
+    };
+    saveNotebookFiles(notebookId, files);
+  }
 }
 
 export function listFiles(notebookId: string): NotebookFile[] {
-  return getNotebookFiles().filter((f) => f.notebook === notebookId);
+  return getNotebookFiles(notebookId).filter((f) => f.notebook === notebookId);
 }
 
 export function createFile(notebookId: string, file: File): NotebookFile {
@@ -179,7 +228,7 @@ export function createFile(notebookId: string, file: File): NotebookFile {
     uploaded_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
-  saveNotebookFiles([...getNotebookFiles(), newFile]);
+  saveNotebookFiles(notebookId, [...getNotebookFiles(notebookId), newFile]);
   const files = listFiles(notebookId);
   updateNotebook(notebookId, { file_count: files.length });
   return newFile;
@@ -187,7 +236,8 @@ export function createFile(notebookId: string, file: File): NotebookFile {
 
 export function deleteFile(notebookId: string, fileId: string): void {
   saveNotebookFiles(
-    getNotebookFiles().filter(
+    notebookId,
+    getNotebookFiles(notebookId).filter(
       (f) => !(f.notebook === notebookId && f.id === fileId),
     ),
   );
@@ -286,11 +336,18 @@ export function createChatSession(
   return session;
 }
 
-export function updateChatSession(chatId: string, title: string): StoredChatSession {
+export function updateChatSession(
+  chatId: string,
+  title: string,
+): StoredChatSession {
   const sessions = getChatSessions();
   const idx = sessions.findIndex((s) => s.id === chatId);
   if (idx === -1) throw new Error(`Chat session with id ${chatId} not found.`);
-  const updated = { ...sessions[idx], title, updated_at: new Date().toISOString() };
+  const updated = {
+    ...sessions[idx],
+    title,
+    updated_at: new Date().toISOString(),
+  };
   sessions[idx] = updated;
   saveChatSessions(sessions);
   return updated;
@@ -302,9 +359,7 @@ export function deleteChatSession(chatId: string): void {
 }
 
 export function listChatMessages(chatId: string): StoredChatMessage[] {
-  return getChatMessages().filter(
-    (m) => m.chat_id === chatId && !m.is_deleted,
-  );
+  return getChatMessages().filter((m) => m.chat_id === chatId && !m.is_deleted);
 }
 
 export function createChatMessage(
