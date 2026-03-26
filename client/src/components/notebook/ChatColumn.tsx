@@ -11,13 +11,17 @@ const B = "#000000";
 const W = "#FFFFFF";
 
 interface ChatColumnProps {
-  onSend: (message: string) => Promise<{ reply: string; sessionId: string }>;
+  onSend: (
+    message: string,
+    onChunk?: (text: string) => void,
+  ) => Promise<{ reply: string; sessionId: string }>;
   sessions: ChatSession[];
   activeSessionId: string | null;
   onSessionSelect: (sessionId: string) => void;
   onNewSession: (title?: string) => Promise<string>;
   onSessionCreated: (sessionId: string) => void;
   onRenameSession: (chatId: string, title: string) => Promise<void>;
+  onDeleteSession: (chatId: string) => Promise<void>;
   getChatMessages: (chatId: string) => Promise<ApiChatMessage[]>;
 }
 
@@ -29,6 +33,7 @@ export default function ChatColumn({
   onNewSession,
   onSessionCreated,
   onRenameSession,
+  onDeleteSession,
   getChatMessages,
 }: ChatColumnProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -99,24 +104,35 @@ export default function ChatColumn({
       role: "user",
       text: trimmed,
     };
+    const aiMessageId = nextId.current++;
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
+    // Add empty AI message placeholder for streaming
+    setMessages((prev) => [...prev, { id: aiMessageId, role: "ai", text: "" }]);
+
     try {
-      const { reply, sessionId: returnedSessionId } = await onSend(trimmed);
+      const { sessionId: returnedSessionId } = await onSend(
+        trimmed,
+        (chunk) => {
+          // Append each chunk to the AI message in real-time
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === aiMessageId ? { ...m, text: m.text + chunk } : m,
+            ),
+          );
+        },
+      );
+
       if (returnedSessionId !== activeSessionId) {
         skipFetchRef.current = returnedSessionId;
         onSessionCreated(returnedSessionId);
       }
-      const aiMessage: Message = {
-        id: nextId.current++,
-        role: "ai",
-        text: reply,
-      };
-      setMessages((prev) => [...prev, aiMessage]);
     } catch {
-      setMessages((prev) => prev.filter((m) => m.id !== userMessage.id));
+      setMessages((prev) =>
+        prev.filter((m) => m.id !== userMessage.id && m.id !== aiMessageId),
+      );
     } finally {
       setIsLoading(false);
     }
@@ -168,7 +184,13 @@ export default function ChatColumn({
         >
           <div
             onClick={() => setHistoryOpen((o) => !o)}
-            style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", flex: 1 }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              cursor: "pointer",
+              flex: 1,
+            }}
           >
             <span
               style={{
@@ -229,7 +251,10 @@ export default function ChatColumn({
               onChange={(e) => setNewTitle(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleConfirmNew();
-                if (e.key === "Escape") { setIsNaming(false); setNewTitle(""); }
+                if (e.key === "Escape") {
+                  setIsNaming(false);
+                  setNewTitle("");
+                }
               }}
               placeholder="Session title (optional)"
               style={{
@@ -243,13 +268,32 @@ export default function ChatColumn({
             />
             <button
               onClick={handleConfirmNew}
-              style={{ border: `1.5px solid ${B}`, background: B, color: W, padding: "4px 8px", cursor: "pointer", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.68rem" }}
+              style={{
+                border: `1.5px solid ${B}`,
+                background: B,
+                color: W,
+                padding: "4px 8px",
+                cursor: "pointer",
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "0.68rem",
+              }}
             >
               ✓
             </button>
             <button
-              onClick={() => { setIsNaming(false); setNewTitle(""); }}
-              style={{ border: `1.5px solid #ccc`, background: "transparent", color: "#888", padding: "4px 8px", cursor: "pointer", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.68rem" }}
+              onClick={() => {
+                setIsNaming(false);
+                setNewTitle("");
+              }}
+              style={{
+                border: `1.5px solid #ccc`,
+                background: "transparent",
+                color: "#888",
+                padding: "4px 8px",
+                cursor: "pointer",
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "0.68rem",
+              }}
             >
               ✕
             </button>
@@ -287,7 +331,9 @@ export default function ChatColumn({
                       display: "flex",
                       alignItems: "center",
                       background: isActive ? B : "transparent",
-                      borderLeft: isActive ? `3px solid ${G}` : "3px solid transparent",
+                      borderLeft: isActive
+                        ? `3px solid ${G}`
+                        : "3px solid transparent",
                       borderBottom: "1px solid #f0f0f0",
                     }}
                   >
@@ -348,12 +394,30 @@ export default function ChatColumn({
                             border: "none",
                             cursor: "pointer",
                             color: isActive ? W : "#aaa",
-                            padding: "0 10px",
+                            padding: "0 6px",
                             fontSize: "0.65rem",
                             flexShrink: 0,
                           }}
                         >
                           ✎
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteSession(s.id);
+                          }}
+                          title="Delete session"
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            cursor: "pointer",
+                            color: isActive ? "#ff8080" : "#ccc",
+                            padding: "0 10px 0 0",
+                            fontSize: "0.65rem",
+                            flexShrink: 0,
+                          }}
+                        >
+                          ✕
                         </button>
                       </>
                     )}

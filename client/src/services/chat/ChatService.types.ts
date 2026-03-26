@@ -27,4 +27,8 @@ export interface ChatServices {
     chatId: string,
     content: string,
   ): Promise<ChatMessage>;
+  streamChatReply(
+    chatId: string,
+    onChunk: (text: string) => void,
+  ): Promise<void>;
 }

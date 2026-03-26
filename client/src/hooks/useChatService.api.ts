@@ -103,6 +103,39 @@ const useChatServiceApi = (): ChatServices => {
         throw err;
       }
     },
+
+    streamChatReply: async (
+      chatId: string,
+      onChunk: (text: string) => void,
+    ): Promise<void> => {
+      const token = sessionStorage.getItem("accessToken");
+      const url = `${import.meta.env.VITE_API_BASE_URL}/chats/${chatId}/messages/stream/`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.body) throw new Error("No response body");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+
+        const lines = chunk.split("\n").filter((l) => l.startsWith("data: "));
+        for (const line of lines) {
+          const parsed = JSON.parse(line.slice(6)); // strip "data: "
+          if (parsed.text) onChunk(parsed.text);
+        }
+      }
+    },
   };
 };
 

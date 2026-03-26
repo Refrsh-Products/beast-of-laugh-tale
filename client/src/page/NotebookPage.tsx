@@ -161,6 +161,7 @@ export default function NotebookPage() {
 
   async function handleSendMessage(
     message: string,
+    onChunk?: (text: string) => void,
   ): Promise<{ reply: string; sessionId: string }> {
     if (files.length === 0) {
       showToast("Upload lecture notes before chatting", "danger");
@@ -178,9 +179,15 @@ export default function NotebookPage() {
 
       await chatService.createChatSessionMessage(sessionId, message);
 
-      // TODO: Stream AI response
+      // Stream AI response
+      let fullReply = "";
+      await chatService.streamChatReply(sessionId, (chunk) => {
+        fullReply += chunk;
+        onChunk?.(chunk);
+      });
+
       return {
-        reply: `This is a placeholder response to: "${message}"`,
+        reply: fullReply,
         sessionId,
       };
     }
@@ -208,6 +215,14 @@ export default function NotebookPage() {
     setChatSessions((prev) =>
       prev.map((s) => (s.id === chatId ? { ...s, title } : s)),
     );
+  }
+
+  async function handleDeleteSession(chatId: string) {
+    await chatService.deleteChatSession(chatId);
+    setChatSessions((prev) => prev.filter((s) => s.id !== chatId));
+    if (activeSessionId === chatId) {
+      setSearchParams({});
+    }
   }
 
   async function handleGenerateQuiz() {
@@ -307,6 +322,7 @@ export default function NotebookPage() {
             onNewSession={handleNewSession}
             onSessionCreated={handleSessionCreated}
             onRenameSession={handleRenameSession}
+            onDeleteSession={handleDeleteSession}
             getChatMessages={chatService.getChatSessionMessages}
           />
         ) : (
