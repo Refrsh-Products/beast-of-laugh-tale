@@ -51,6 +51,9 @@ export default function SettingsField({
               if (e.key === "Enter") onSave?.();
               if (e.key === "Escape") onCancel?.();
             }}
+            onMouseEnter={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = G; }}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
+            onFocus={(e) => (e.currentTarget.style.borderColor = B)}
             style={{
               flex: 1,
               border: `3px solid ${B}`,
@@ -61,10 +64,13 @@ export default function SettingsField({
               background: W,
               outline: "none",
               boxSizing: "border-box",
+              transition: "border-color 0.15s",
             }}
           />
           <button
             onClick={onSave}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; }}
             style={{
               background: G,
               color: B,
@@ -78,12 +84,15 @@ export default function SettingsField({
               cursor: "pointer",
               whiteSpace: "nowrap",
               lineHeight: 1,
+              transition: "transform 0.15s, box-shadow 0.15s",
             }}
           >
             Save
           </button>
           <button
             onClick={onCancel}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
             style={{
               background: W,
               color: B,
@@ -96,6 +105,7 @@ export default function SettingsField({
               cursor: "pointer",
               whiteSpace: "nowrap",
               lineHeight: 1,
+              transition: "transform 0.15s, box-shadow 0.15s",
             }}
           >
             Cancel
@@ -124,6 +134,8 @@ export default function SettingsField({
           {!disabled && (
             <button
               onClick={onEditStart}
+              onMouseEnter={(e) => (e.currentTarget.style.color = B)}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "#888")}
               style={{
                 background: "none",
                 border: "none",
@@ -138,6 +150,7 @@ export default function SettingsField({
                 textDecoration: "underline",
                 textUnderlineOffset: 3,
                 flexShrink: 0,
+                transition: "color 0.12s",
               }}
             >
               Edit

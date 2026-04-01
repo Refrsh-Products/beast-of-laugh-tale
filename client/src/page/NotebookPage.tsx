@@ -281,6 +281,8 @@ export default function NotebookPage() {
       >
         <span
           onClick={() => navigate("/dashboard")}
+          onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
           style={{
             fontSize: "0.78rem",
             fontWeight: 700,
@@ -288,6 +290,8 @@ export default function NotebookPage() {
             cursor: "pointer",
             letterSpacing: "0.04em",
             flexShrink: 0,
+            textDecoration: "none",
+            textUnderlineOffset: "3px",
           }}
         >
           ← Back to dashboard

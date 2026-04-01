@@ -61,6 +61,8 @@ export default function ArchivedSection({
             </span>
             <button
               onClick={() => onUnarchive(nb.id)}
+              onMouseEnter={(e) => { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: '0.62rem',
@@ -72,6 +74,7 @@ export default function ArchivedSection({
                 cursor: 'pointer',
                 flexShrink: 0,
                 color: B,
+                transition: 'transform 0.15s, box-shadow 0.15s',
               }}
             >
               Unarchive

@@ -39,14 +39,34 @@ export default function ChatColumn({
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [isNaming, setIsNaming] = useState(false);
   const [newTitle, setNewTitle] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const nextId = useRef(0);
   const skipFetchRef = useRef<string | null>(null);
+
+  const currentSession = sessions.find((s) => s.id === activeSessionId);
+
+  useEffect(() => {
+    function handleOutsideClick(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setDropdownOpen(false);
+        setEditingId(null);
+      }
+    }
+    if (dropdownOpen) {
+      document.addEventListener("mousedown", handleOutsideClick);
+    }
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [dropdownOpen]);
 
   async function handleConfirmNew() {
     const title = newTitle.trim();
@@ -109,14 +129,12 @@ export default function ChatColumn({
     setInput("");
     setIsLoading(true);
 
-    // Add empty AI message placeholder for streaming
     setMessages((prev) => [...prev, { id: aiMessageId, role: "ai", text: "" }]);
 
     try {
       const { sessionId: returnedSessionId } = await onSend(
         trimmed,
         (chunk) => {
-          // Append each chunk to the AI message in real-time
           setMessages((prev) =>
             prev.map((m) =>
               m.id === aiMessageId ? { ...m, text: m.text + chunk } : m,
@@ -149,102 +167,23 @@ export default function ChatColumn({
         overflow: "hidden",
       }}
     >
-      {/* Column header */}
+      {/* Header: session name + ⋮ menu */}
       <div
         style={{
+          height: 44,
+          padding: "0 16px",
           borderBottom: `2px solid ${B}`,
           background: W,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
           flexShrink: 0,
+          gap: 10,
         }}
       >
-        <div style={{ padding: "14px 16px 10px" }}>
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.62rem",
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              color: "#555",
-            }}
-          >
-            CHAT
-          </span>
-        </div>
-
-        {/* History toggle */}
-        <div
-          style={{
-            padding: "8px 16px",
-            borderTop: `1px solid #e0e0e0`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            userSelect: "none",
-          }}
-        >
-          <div
-            onClick={() => setHistoryOpen((o) => !o)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              cursor: "pointer",
-              flex: 1,
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.6rem",
-                fontWeight: 700,
-                letterSpacing: "0.14em",
-                color: "#888",
-              }}
-            >
-              HISTORY ({sessions.length})
-            </span>
-            <span style={{ fontSize: "0.6rem", color: "#888" }}>
-              {historyOpen ? "▲" : "▼"}
-            </span>
-          </div>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsNaming(true);
-              setNewTitle("");
-            }}
-            title="New chat session"
-            style={{
-              background: "transparent",
-              border: `1.5px solid #ccc`,
-              color: "#888",
-              width: 20,
-              height: 20,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.8rem",
-              lineHeight: 1,
-              flexShrink: 0,
-              padding: 0,
-            }}
-          >
-            +
-          </button>
-        </div>
-
-        {/* New session naming input */}
-        {isNaming && (
-          <div
-            style={{
-              padding: "8px 16px",
-              borderTop: `1px solid #e0e0e0`,
-              display: "flex",
-              gap: 6,
-            }}
-          >
+        {/* Left: session name or naming input */}
+        {isNaming ? (
+          <div style={{ display: "flex", gap: 6, flex: 1 }}>
             <input
               autoFocus
               value={newTitle}
@@ -262,8 +201,9 @@ export default function ChatColumn({
                 border: `1.5px solid ${B}`,
                 padding: "4px 8px",
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.68rem",
+                fontSize: "0.72rem",
                 outline: "none",
+                background: W,
               }}
             />
             <button
@@ -272,10 +212,10 @@ export default function ChatColumn({
                 border: `1.5px solid ${B}`,
                 background: B,
                 color: W,
-                padding: "4px 8px",
+                padding: "4px 10px",
                 cursor: "pointer",
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.68rem",
+                fontSize: "0.72rem",
               }}
             >
               ✓
@@ -292,138 +232,225 @@ export default function ChatColumn({
                 padding: "4px 8px",
                 cursor: "pointer",
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.68rem",
+                fontSize: "0.72rem",
               }}
             >
               ✕
             </button>
           </div>
-        )}
-
-        {/* History list */}
-        {historyOpen && (
-          <div
+        ) : (
+          <span
             style={{
-              maxHeight: 160,
-              overflowY: "auto",
-              borderTop: `1px solid #e0e0e0`,
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              color: currentSession ? B : "#ccc",
+              letterSpacing: "0.02em",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+              flex: 1,
             }}
           >
-            {sessions.length === 0 ? (
+            {currentSession?.title || "No session selected"}
+          </span>
+        )}
+
+        {/* Right: ⋮ button + floating dropdown */}
+        {!isNaming && (
+          <div ref={dropdownRef} style={{ position: "relative", flexShrink: 0 }}>
+            <button
+              onClick={() => setDropdownOpen((o) => !o)}
+              style={{
+                background: dropdownOpen ? B : "transparent",
+                border: `1.5px solid ${dropdownOpen ? B : "#ddd"}`,
+                color: dropdownOpen ? W : "#666",
+                width: 28,
+                height: 28,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "1rem",
+                lineHeight: 1,
+                transition: "background 0.1s, border-color 0.1s",
+                flexShrink: 0,
+              }}
+            >
+              ⋮
+            </button>
+
+            {dropdownOpen && (
               <div
                 style={{
-                  padding: "10px 16px",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.68rem",
-                  color: "#bbb",
+                  position: "absolute",
+                  right: 0,
+                  top: "calc(100% + 6px)",
+                  background: W,
+                  border: `2px solid ${B}`,
+                  boxShadow: `4px 4px 0 ${B}`,
+                  minWidth: 210,
+                  zIndex: 100,
+                  overflow: "hidden",
                 }}
               >
-                No sessions yet
-              </div>
-            ) : (
-              sessions.map((s) => {
-                const isActive = s.id === activeSessionId;
-                const isEditing = editingId === s.id;
-                return (
-                  <div
-                    key={s.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      background: isActive ? B : "transparent",
-                      borderLeft: isActive
-                        ? `3px solid ${G}`
-                        : "3px solid transparent",
-                      borderBottom: "1px solid #f0f0f0",
-                    }}
-                  >
-                    {isEditing ? (
-                      <>
-                        <input
-                          autoFocus
-                          value={editTitle}
-                          onChange={(e) => setEditTitle(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") handleConfirmRename(s.id);
-                            if (e.key === "Escape") setEditingId(null);
-                          }}
-                          onBlur={() => handleConfirmRename(s.id)}
-                          style={{
-                            flex: 1,
-                            border: "none",
-                            borderBottom: `1.5px solid ${B}`,
-                            padding: "8px 16px",
-                            fontFamily: "'IBM Plex Mono', monospace",
-                            fontSize: "0.7rem",
-                            background: "transparent",
-                            color: isActive ? W : B,
-                            outline: "none",
-                          }}
-                        />
-                      </>
-                    ) : (
-                      <>
+                {/* New chat */}
+                <button
+                  onClick={() => {
+                    setDropdownOpen(false);
+                    setIsNaming(true);
+                    setNewTitle("");
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "10px 14px",
+                    background: "transparent",
+                    border: "none",
+                    borderBottom: `1.5px solid #eee`,
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    color: B,
+                    cursor: "pointer",
+                    textAlign: "left",
+                    letterSpacing: "0.02em",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.background = "#f5f5f0")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.background = "transparent")
+                  }
+                >
+                  + New chat
+                </button>
+
+                {/* Session list */}
+                <div style={{ maxHeight: 220, overflowY: "auto" }}>
+                  {sessions.length === 0 ? (
+                    <div
+                      style={{
+                        padding: "10px 14px",
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: "0.68rem",
+                        color: "#bbb",
+                      }}
+                    >
+                      No sessions yet
+                    </div>
+                  ) : (
+                    sessions.map((s) => {
+                      const isActive = s.id === activeSessionId;
+                      const isEditing = editingId === s.id;
+                      const isHovered = hoveredId === s.id;
+                      return (
                         <div
-                          onClick={() => {
-                            onSessionSelect(s.id);
-                            setHistoryOpen(false);
-                          }}
+                          key={s.id}
+                          onMouseEnter={() => setHoveredId(s.id)}
+                          onMouseLeave={() => setHoveredId(null)}
                           style={{
-                            flex: 1,
-                            padding: "8px 16px",
-                            fontFamily: "'IBM Plex Mono', monospace",
-                            fontSize: "0.7rem",
-                            cursor: "pointer",
-                            color: isActive ? W : B,
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
+                            display: "flex",
+                            alignItems: "center",
+                            background: isActive ? B : isHovered ? "#f5f5f0" : W,
+                            borderLeft: isActive
+                              ? `3px solid ${G}`
+                              : "3px solid transparent",
+                            borderBottom: "1px solid #f0f0f0",
                           }}
                         >
-                          {s.title || "Untitled session"}
+                          {isEditing ? (
+                            <input
+                              autoFocus
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleConfirmRename(s.id);
+                                if (e.key === "Escape") setEditingId(null);
+                              }}
+                              onBlur={() => handleConfirmRename(s.id)}
+                              style={{
+                                flex: 1,
+                                border: "none",
+                                borderBottom: `1.5px solid ${B}`,
+                                padding: "8px 14px",
+                                fontFamily: "'IBM Plex Mono', monospace",
+                                fontSize: "0.7rem",
+                                background: "transparent",
+                                color: isActive ? W : B,
+                                outline: "none",
+                              }}
+                            />
+                          ) : (
+                            <>
+                              <div
+                                onClick={() => {
+                                  onSessionSelect(s.id);
+                                  setDropdownOpen(false);
+                                }}
+                                style={{
+                                  flex: 1,
+                                  padding: "9px 14px",
+                                  fontFamily: "'IBM Plex Mono', monospace",
+                                  fontSize: "0.72rem",
+                                  cursor: "pointer",
+                                  color: isActive ? W : B,
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >
+                                {s.title || "Untitled session"}
+                              </div>
+                              {(isHovered || isActive) && (
+                                <>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingId(s.id);
+                                      setEditTitle(s.title || "");
+                                    }}
+                                    title="Rename"
+                                    style={{
+                                      background: "transparent",
+                                      border: "none",
+                                      cursor: "pointer",
+                                      color: isActive ? W : "#aaa",
+                                      padding: "0 6px",
+                                      fontSize: "0.65rem",
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    ✎
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onDeleteSession(s.id);
+                                    }}
+                                    title="Delete"
+                                    style={{
+                                      background: "transparent",
+                                      border: "none",
+                                      cursor: "pointer",
+                                      color: isActive ? "#ff8080" : "#ccc",
+                                      padding: "0 10px 0 0",
+                                      fontSize: "0.65rem",
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    ✕
+                                  </button>
+                                </>
+                              )}
+                            </>
+                          )}
                         </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingId(s.id);
-                            setEditTitle(s.title || "");
-                          }}
-                          title="Rename session"
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            cursor: "pointer",
-                            color: isActive ? W : "#aaa",
-                            padding: "0 6px",
-                            fontSize: "0.65rem",
-                            flexShrink: 0,
-                          }}
-                        >
-                          ✎
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteSession(s.id);
-                          }}
-                          title="Delete session"
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            cursor: "pointer",
-                            color: isActive ? "#ff8080" : "#ccc",
-                            padding: "0 10px 0 0",
-                            fontSize: "0.65rem",
-                            flexShrink: 0,
-                          }}
-                        >
-                          ✕
-                        </button>
-                      </>
-                    )}
-                  </div>
-                );
-              })
+                      );
+                    })
+                  )}
+                </div>
+              </div>
             )}
           </div>
         )}
@@ -489,6 +516,8 @@ export default function ChatColumn({
         <button
           onClick={handleSend}
           disabled={!input.trim() || isLoading}
+          onMouseEnter={(e) => { if (input.trim() && !isLoading) { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `6px 6px 0 ${G}`; } }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = input.trim() && !isLoading ? `3px 3px 0 ${G}` : "none"; }}
           style={{
             background: input.trim() && !isLoading ? B : "#ccc",
             color: W,
@@ -501,6 +530,7 @@ export default function ChatColumn({
             cursor: input.trim() && !isLoading ? "pointer" : "not-allowed",
             flexShrink: 0,
             lineHeight: 1,
+            transition: "transform 0.15s, box-shadow 0.15s",
           }}
         >
           →
@@ -524,7 +554,6 @@ function EmptyState() {
         textAlign: "center",
       }}
     >
-      <span style={{ fontSize: "2rem" }}>🧠</span>
       <p
         style={{
           fontFamily: "'Syne', sans-serif",

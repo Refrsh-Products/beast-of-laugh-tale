@@ -83,31 +83,6 @@ export default function OptionsColumn({
         overflow: "hidden",
       }}
     >
-      {/* Column header */}
-      <div
-        style={{
-          height: 44,
-          padding: "0 14px",
-          borderBottom: `2px solid ${B}`,
-          display: "flex",
-          alignItems: "center",
-          flexShrink: 0,
-          background: "#f7f7f5",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.62rem",
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: "#555",
-          }}
-        >
-          TOOLS
-        </span>
-      </div>
-
       {/* Nav items */}
       <div
         style={{
@@ -115,7 +90,7 @@ export default function OptionsColumn({
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
-          padding: "10px 10px",
+          padding: "14px 10px",
           gap: 4,
         }}
       >

@@ -6,6 +6,7 @@ import useAuthService from "../services/auth";
 import GoogleAuthBtn from "../components/google-auth/GoogleAuthBtn";
 import FreshrLogo from "../components/logo/FreshrLogo";
 
+const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
 
@@ -28,6 +29,13 @@ export default function LoginPage() {
     background: W,
     outline: "none",
     boxSizing: "border-box",
+    transition: "border-color 0.15s",
+  };
+
+  const inputHandlers = {
+    onMouseEnter: (e: React.MouseEvent<HTMLInputElement>) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = G; },
+    onMouseLeave: (e: React.MouseEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = B; },
+    onFocus: (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = B; },
   };
 
   const labelStyle: React.CSSProperties = {
@@ -160,6 +168,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 style={inputStyle}
+                {...inputHandlers}
               />
             </div>
 
@@ -172,10 +181,13 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   style={{ ...inputStyle, paddingRight: 48 }}
+                  {...inputHandlers}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = B)}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#888")}
                   style={{
                     position: "absolute",
                     right: 12,
@@ -190,6 +202,7 @@ export default function LoginPage() {
                     fontSize: "0.65rem",
                     fontWeight: 700,
                     letterSpacing: "0.05em",
+                    transition: "color 0.12s",
                   }}
                 >
                   {showPassword ? "HIDE" : "SHOW"}

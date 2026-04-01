@@ -123,6 +123,8 @@ export default function QuizColumn({
         <button
           onClick={onGenerateQuiz}
           disabled={isGenerating}
+          onMouseEnter={(e) => { if (!isGenerating) { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`; } }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = isGenerating ? "none" : `4px 4px 0 ${B}`; }}
           style={{
             background: isGenerating ? "#eee" : G,
             color: isGenerating ? "#aaa" : B,
@@ -134,7 +136,7 @@ export default function QuizColumn({
             fontSize: "0.78rem",
             letterSpacing: "0.06em",
             cursor: isGenerating ? "not-allowed" : "pointer",
-            transition: "box-shadow 0.1s, transform 0.1s",
+            transition: "transform 0.15s, box-shadow 0.15s",
             marginTop: 4,
           }}
         >

@@ -203,12 +203,16 @@ export default function ProfilePage() {
       >
         <span
           onClick={() => navigate("/dashboard")}
+          onMouseEnter={(e) => (e.currentTarget.style.textDecoration = "underline")}
+          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
           style={{
             fontSize: "0.78rem",
             fontWeight: 700,
             color: B,
             cursor: "pointer",
             letterSpacing: "0.04em",
+            textDecoration: "none",
+            textUnderlineOffset: "3px",
           }}
         >
           ← Back to dashboard
@@ -308,6 +312,9 @@ export default function ProfilePage() {
                             if (e.key === "Enter") saveEdit();
                             if (e.key === "Escape") cancelEdit();
                           }}
+                          onMouseEnter={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = G; }}
+                          onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
+                          onFocus={(e) => (e.currentTarget.style.borderColor = B)}
                           style={{
                             border: `3px solid ${B}`,
                             borderRadius: 0,
@@ -317,6 +324,7 @@ export default function ProfilePage() {
                             background: W,
                             outline: "none",
                             boxSizing: "border-box",
+                            transition: "border-color 0.15s",
                           }}
                         />
                         <input
@@ -328,6 +336,9 @@ export default function ProfilePage() {
                             if (e.key === "Enter") saveEdit();
                             if (e.key === "Escape") cancelEdit();
                           }}
+                          onMouseEnter={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = G; }}
+                          onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
+                          onFocus={(e) => (e.currentTarget.style.borderColor = B)}
                           style={{
                             border: `3px solid ${B}`,
                             borderRadius: 0,
@@ -337,6 +348,7 @@ export default function ProfilePage() {
                             background: W,
                             outline: "none",
                             boxSizing: "border-box",
+                            transition: "border-color 0.15s",
                           }}
                         />
                         {nameError && (
@@ -354,6 +366,8 @@ export default function ProfilePage() {
                         <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
                           <button
                             onClick={saveEdit}
+                            onMouseEnter={(e) => { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; }}
                             style={{
                               background: G,
                               color: B,
@@ -366,12 +380,15 @@ export default function ProfilePage() {
                               letterSpacing: "0.06em",
                               cursor: "pointer",
                               lineHeight: 1,
+                              transition: "transform 0.15s, box-shadow 0.15s",
                             }}
                           >
                             Save
                           </button>
                           <button
                             onClick={cancelEdit}
+                            onMouseEnter={(e) => { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
                             style={{
                               background: W,
                               color: B,
@@ -383,6 +400,7 @@ export default function ProfilePage() {
                               letterSpacing: "0.06em",
                               cursor: "pointer",
                               lineHeight: 1,
+                              transition: "transform 0.15s, box-shadow 0.15s",
                             }}
                           >
                             Cancel
@@ -434,6 +452,9 @@ export default function ProfilePage() {
                             if (e.key === "Enter") saveEdit();
                             if (e.key === "Escape") cancelEdit();
                           }}
+                          onMouseEnter={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = G; }}
+                          onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
+                          onFocus={(e) => (e.currentTarget.style.borderColor = B)}
                           style={{
                             border: `3px solid ${B}`,
                             borderRadius: 0,
@@ -443,6 +464,7 @@ export default function ProfilePage() {
                             background: W,
                             outline: "none",
                             boxSizing: "border-box",
+                            transition: "border-color 0.15s",
                           }}
                         />
                         <input
@@ -453,6 +475,9 @@ export default function ProfilePage() {
                             if (e.key === "Enter") saveEdit();
                             if (e.key === "Escape") cancelEdit();
                           }}
+                          onMouseEnter={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = G; }}
+                          onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
+                          onFocus={(e) => (e.currentTarget.style.borderColor = B)}
                           style={{
                             border: `3px solid ${B}`,
                             borderRadius: 0,
@@ -462,11 +487,14 @@ export default function ProfilePage() {
                             background: W,
                             outline: "none",
                             boxSizing: "border-box",
+                            transition: "border-color 0.15s",
                           }}
                         />
                         <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
                           <button
                             onClick={saveEdit}
+                            onMouseEnter={(e) => { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; }}
                             style={{
                               background: G,
                               color: B,
@@ -479,12 +507,15 @@ export default function ProfilePage() {
                               letterSpacing: "0.06em",
                               cursor: "pointer",
                               lineHeight: 1,
+                              transition: "transform 0.15s, box-shadow 0.15s",
                             }}
                           >
                             Save
                           </button>
                           <button
                             onClick={cancelEdit}
+                            onMouseEnter={(e) => { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
                             style={{
                               background: W,
                               color: B,
@@ -496,6 +527,7 @@ export default function ProfilePage() {
                               letterSpacing: "0.06em",
                               cursor: "pointer",
                               lineHeight: 1,
+                              transition: "transform 0.15s, box-shadow 0.15s",
                             }}
                           >
                             Cancel

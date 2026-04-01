@@ -61,6 +61,13 @@ export default function ResetPasswordPage() {
     background: W,
     outline: "none",
     boxSizing: "border-box",
+    transition: "border-color 0.15s",
+  };
+
+  const inputHandlers = {
+    onMouseEnter: (e: React.MouseEvent<HTMLInputElement>) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = G; },
+    onMouseLeave: (e: React.MouseEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = B; },
+    onFocus: (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = B; },
   };
 
   return (
@@ -89,6 +96,8 @@ export default function ResetPasswordPage() {
         {/* Logo */}
         <div
           onClick={() => navigate("/")}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           style={{
             fontFamily: "'Syne', sans-serif",
             fontWeight: 800,
@@ -98,6 +107,7 @@ export default function ResetPasswordPage() {
             cursor: "pointer",
             userSelect: "none",
             marginBottom: 32,
+            transition: "opacity 0.12s",
           }}
         >
           FRESHR
@@ -130,6 +140,8 @@ export default function ResetPasswordPage() {
             </p>
             <span
               onClick={() => navigate("/forgot-password")}
+              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.6")}
+              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
               style={{
                 fontSize: "0.75rem",
                 fontWeight: 700,
@@ -137,6 +149,7 @@ export default function ResetPasswordPage() {
                 textDecoration: "underline",
                 textUnderlineOffset: 3,
                 cursor: "pointer",
+                transition: "opacity 0.12s",
               }}
             >
               Request a new reset link →
@@ -207,10 +220,13 @@ export default function ResetPasswordPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
                     style={inputStyle}
+                    {...inputHandlers}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = B)}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#888")}
                     style={{
                       position: "absolute",
                       right: 12,
@@ -225,6 +241,7 @@ export default function ResetPasswordPage() {
                       fontSize: "0.65rem",
                       fontWeight: 700,
                       letterSpacing: "0.05em",
+                      transition: "color 0.12s",
                     }}
                   >
                     {showPassword ? "HIDE" : "SHOW"}
@@ -252,6 +269,7 @@ export default function ResetPasswordPage() {
                     onChange={(e) => setConfirm(e.target.value)}
                     placeholder="••••••••"
                     style={inputStyle}
+                    {...inputHandlers}
                   />
                   <button
                     type="button"
@@ -270,6 +288,7 @@ export default function ResetPasswordPage() {
                       fontSize: "0.65rem",
                       fontWeight: 700,
                       letterSpacing: "0.05em",
+                      transition: "color 0.12s",
                     }}
                   >
                     {showConfirm ? "HIDE" : "SHOW"}
@@ -281,6 +300,8 @@ export default function ResetPasswordPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
+                  onMouseEnter={(e) => { if (!isLoading) { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`; } }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = `4px 4px 0 ${B}`; }}
                   style={{
                     width: "100%",
                     background: G,
@@ -295,6 +316,7 @@ export default function ResetPasswordPage() {
                     cursor: isLoading ? "not-allowed" : "pointer",
                     opacity: isLoading ? 0.6 : 1,
                     lineHeight: 1,
+                    transition: "transform 0.15s, box-shadow 0.15s",
                   }}
                 >
                   {isLoading ? "Saving..." : "Set new password →"}

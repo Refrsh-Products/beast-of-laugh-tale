@@ -215,85 +215,6 @@ export default function FilesColumn({
         overflow: "hidden",
       }}
     >
-      {/* Column header */}
-      <div
-        style={{
-          height: 44,
-          padding: "0 14px",
-          borderBottom: `2px solid ${B}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexShrink: 0,
-          gap: 8,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.62rem",
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: "#555",
-          }}
-        >
-          FILES
-        </span>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {/* Bulk delete confirm button — only shown when items are selected */}
-          {bulkMode && selectedIds.length > 0 && (
-            <button
-              onClick={() => setShowConfirm(true)}
-              style={{
-                background: R,
-                color: W,
-                border: `1.5px solid ${B}`,
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.6rem",
-                fontWeight: 700,
-                padding: "3px 8px",
-                cursor: "pointer",
-                letterSpacing: "0.04em",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Delete ({selectedIds.length})
-            </button>
-          )}
-
-          {/* Red checkbox toggle for bulk mode */}
-          <div
-            onClick={files.length > 0 ? toggleBulkMode : undefined}
-            title="Bulk delete"
-            style={{
-              width: 16,
-              height: 16,
-              border: `2px solid ${files.length === 0 ? "#ddd" : R}`,
-              background: bulkMode ? R : "transparent",
-              cursor: files.length === 0 ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              transition: "background 0.12s",
-            }}
-          >
-            {bulkMode && (
-              <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path
-                  d="M1.5 5l2.5 2.5 4.5-5"
-                  stroke={W}
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* Drop zone */}
       <div
         onDragOver={(e) => {
@@ -303,6 +224,18 @@ export default function FilesColumn({
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
+        onMouseEnter={(e) => {
+          if (!isDragging) {
+            (e.currentTarget as HTMLElement).style.borderColor = B;
+            (e.currentTarget as HTMLElement).style.background = "#f0f0eb";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isDragging) {
+            (e.currentTarget as HTMLElement).style.borderColor = "#ccc";
+            (e.currentTarget as HTMLElement).style.background = "#fafafa";
+          }
+        }}
         style={{
           margin: 12,
           border: `2px dashed ${isDragging ? G : "#ccc"}`,
@@ -367,6 +300,70 @@ export default function FilesColumn({
           padding: "0 12px 12px",
         }}
       >
+        {/* Bulk controls — only shown when files exist */}
+        {files.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "flex-end",
+              gap: 8,
+              padding: "6px 0 2px",
+            }}
+          >
+            {bulkMode && selectedIds.length > 0 && (
+              <button
+                onClick={() => setShowConfirm(true)}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translate(-2px, -2px)"; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
+                style={{
+                  background: R,
+                  color: W,
+                  border: `1.5px solid ${B}`,
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.6rem",
+                  fontWeight: 700,
+                  padding: "3px 8px",
+                  cursor: "pointer",
+                  letterSpacing: "0.04em",
+                  whiteSpace: "nowrap",
+                  transition: "transform 0.15s, box-shadow 0.15s",
+                }}
+              >
+                Delete ({selectedIds.length})
+              </button>
+            )}
+            <div
+              onClick={toggleBulkMode}
+              title="Bulk delete"
+              style={{
+                width: 16,
+                height: 16,
+                border: `2px solid ${R}`,
+                background: bulkMode ? R : "transparent",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                transition: "background 0.12s",
+              }}
+            >
+              {bulkMode && (
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path
+                    d="M1.5 5l2.5 2.5 4.5-5"
+                    stroke={W}
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              )}
+            </div>
+          </div>
+        )}
+
         {uploadProgress.map((item, i) => (
           <UploadProgressItem key={`upload-${i}`} item={item} />
         ))}
@@ -445,6 +442,8 @@ export default function FilesColumn({
             <div style={{ display: "flex", gap: 10 }}>
               <button
                 onClick={confirmDelete}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; }}
                 style={{
                   flex: 1,
                   background: R,
@@ -456,12 +455,15 @@ export default function FilesColumn({
                   fontWeight: 700,
                   fontSize: "0.75rem",
                   cursor: "pointer",
+                  transition: "transform 0.15s, box-shadow 0.15s",
                 }}
               >
                 Delete
               </button>
               <button
                 onClick={() => setShowConfirm(false)}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
                 style={{
                   flex: 1,
                   background: W,
@@ -472,6 +474,7 @@ export default function FilesColumn({
                   fontWeight: 700,
                   fontSize: "0.75rem",
                   cursor: "pointer",
+                  transition: "transform 0.15s, box-shadow 0.15s",
                 }}
               >
                 Cancel

@@ -1,3 +1,4 @@
+const G = '#84e487'
 const B = '#000000'
 const W = '#FFFFFF'
 
@@ -59,6 +60,9 @@ export default function DashboardHeader({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search notebooks..."
+            onMouseEnter={(e) => { if (document.activeElement !== e.currentTarget) e.currentTarget.style.borderColor = G; }}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
+            onFocus={(e) => (e.currentTarget.style.borderColor = B)}
             style={{
               border: `2px solid ${B}`,
               borderRadius: 0,
@@ -68,6 +72,7 @@ export default function DashboardHeader({
               background: W,
               outline: 'none',
               width: 200,
+              transition: 'border-color 0.15s',
             }}
           />
           <svg
@@ -86,6 +91,8 @@ export default function DashboardHeader({
         <div style={{ display: 'flex', border: `2px solid ${B}` }}>
           <button
             onClick={() => onViewChange('grid')}
+            onMouseEnter={(e) => { if (view !== 'grid') e.currentTarget.style.background = '#eee'; }}
+            onMouseLeave={(e) => { if (view !== 'grid') e.currentTarget.style.background = W; }}
             style={{
               background: view === 'grid' ? B : W,
               color: view === 'grid' ? W : B,
@@ -93,6 +100,7 @@ export default function DashboardHeader({
               padding: '8px 10px',
               cursor: 'pointer',
               lineHeight: 1,
+              transition: 'background 0.12s',
             }}
             title="Grid view"
           >
@@ -105,6 +113,8 @@ export default function DashboardHeader({
           </button>
           <button
             onClick={() => onViewChange('list')}
+            onMouseEnter={(e) => { if (view !== 'list') e.currentTarget.style.background = '#eee'; }}
+            onMouseLeave={(e) => { if (view !== 'list') e.currentTarget.style.background = W; }}
             style={{
               background: view === 'list' ? B : W,
               color: view === 'list' ? W : B,
@@ -113,6 +123,7 @@ export default function DashboardHeader({
               padding: '8px 10px',
               cursor: 'pointer',
               lineHeight: 1,
+              transition: 'background 0.12s',
             }}
             title="List view"
           >
