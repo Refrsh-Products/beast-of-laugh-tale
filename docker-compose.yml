@@ -75,6 +75,14 @@ services:
       redis:
         condition: service_healthy
 
+  mkdocs:
+    image: squidfunk/mkdocs-material
+    volumes:
+      - ./server:/docs
+    ports:
+      - "8001:8000"
+    command: serve --dev-addr=0.0.0.0:8000
+
 volumes:
   postgres_data:
   media:
