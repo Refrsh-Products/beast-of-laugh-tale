@@ -2,10 +2,22 @@ import uuid
 from django.db import models
 from django.conf import settings
 
+
 class TierPlan(models.TextChoices):
     FREE = 'FREE', 'Free'
+    PAID = 'PAID', 'Paid'
+
+
+class BillingInterval(models.TextChoices):
     MONTHLY = 'MONTHLY', 'Monthly'
     YEARLY = 'YEARLY', 'Yearly'
+
+
+class SubscriptionStatus(models.TextChoices):
+    ACTIVE = 'ACTIVE', 'Active'
+    INACTIVE = 'INACTIVE', 'Inactive'
+    CANCELLED = 'CANCELLED', 'Cancelled'
+    EXPIRED = 'EXPIRED', 'Expired'
 
 
 class Account(models.Model):
@@ -30,6 +42,19 @@ class Account(models.Model):
         choices=TierPlan.choices,
         default=TierPlan.FREE
     )
+    billing_interval = models.CharField(
+        max_length=10,
+        choices=BillingInterval.choices,
+        null=True,
+        blank=True
+    )
+    subscription_status = models.CharField(
+        max_length=15,
+        choices=SubscriptionStatus.choices,
+        default=SubscriptionStatus.INACTIVE
+    )
+    subscription_start_date = models.DateTimeField(null=True, blank=True)
+    subscription_end_date = models.DateTimeField(null=True, blank=True)
     onboarding_completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

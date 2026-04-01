@@ -10,4 +10,7 @@ nav:
   - Job Description: job-description.md
   - User Manual: user-manual.md
   - Static Code Analysis: static-code-analysis.md
+  - Payment Flow: payment-flow.md
+  - Test Plan: test-plan.md
+  - Testing Conventions: testing-conventions.md
 theme: readthedocs

@@ -20,6 +20,7 @@ click-didyoumean==0.3.1
 click-plugins==1.1.1.2
 click-repl==0.3.0
 contourpy==1.3.3
+coverage==7.13.5
 cryptography==46.0.5
 cycler==0.12.1
 dataclasses-json==0.6.7
@@ -32,6 +33,8 @@ docstring_parser==0.17.0
 dotenv==0.9.9
 drf-spectacular==0.29.0
 emoji==2.15.0
+factory_boy==3.3.3
+Faker==40.12.0
 filelock==3.24.3
 filetype==1.2.0
 flatbuffers==25.12.19
@@ -49,6 +52,7 @@ httpx==0.28.1
 huggingface_hub==1.4.1
 idna==3.11
 inflection==0.5.1
+iniconfig==2.3.0
 Jinja2==3.1.6
 jiter==0.13.0
 joblib==1.5.3
@@ -95,6 +99,7 @@ pgvector==0.3.6
 pi_heif==1.2.1
 pillow==12.1.1
 platformdirs==4.5.1
+pluggy==1.6.0
 prompt_toolkit==3.0.52
 protobuf==6.33.5
 psutil==7.2.2
@@ -106,13 +111,17 @@ pyasn1_modules==0.4.2
 pycparser==3.0
 pycryptodome==3.23.0
 pydantic==2.12.5
-pydantic_core
+pydantic_core==2.41.5
 Pygments==2.19.2
 PyJWT==2.11.0
 PyMuPDF==1.27.1
 pyparsing==3.3.2
 pypdf==6.7.1
 pypdfium2==5.4.0
+pytest==9.0.2
+pytest-asyncio==1.3.0
+pytest-cov==7.1.0
+pytest-django==4.12.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
 python-iso639==2026.1.31

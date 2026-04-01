@@ -31,6 +31,8 @@ urlpatterns = [
     # path('quiz/', include(("quiz.urls","quiz"), namespace="quiz")),
     # path('flashcard/', include(("flashcard.urls","flashcard"), namespace="flashcard")),
 
+    path('payments/', include(("payments.urls", "payments"), namespace="payments")),
+
     # authentication endpoints
     path('auth/', include('users.urls')),
     path('auth/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),

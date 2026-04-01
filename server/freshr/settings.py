@@ -60,7 +60,8 @@ INSTALLED_APPS = [
     "presentation",
     "quiz",
     "flashcard",
-    "drf_spectacular"
+    "drf_spectacular",
+    "payments",
 ]
 
 # Custom User Model
@@ -191,3 +192,11 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", 'http://localhost:3000')
 
 # Google OAuth2.0
 GOOGLE_OAUTH_CLIENT_SECET = os.getenv('GOOGLE_OAUTH_CLIENT_SECET')
+
+# ZiniPay
+ZINIPAY_API_KEY = os.getenv('ZINIPAY_API_KEY', '')
+ZINIPAY_MONTHLY_PRICE = os.getenv('ZINIPAY_MONTHLY_PRICE', '9.99')
+ZINIPAY_YEARLY_PRICE = os.getenv('ZINIPAY_YEARLY_PRICE', '99.99')
+
+# Public URL of this backend (used for webhook registration)
+BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:8000')
