@@ -54,7 +54,6 @@ def test_logout_success_and_token_refresh_blacklisted(api_client, user):
 # Failure paths
 # ---------------------------------------------------------------------------
 
-@pytest.mark.django_db
 def test_logout_unauthenticated(api_client):
     """
     Given:  a unauthenticated user
