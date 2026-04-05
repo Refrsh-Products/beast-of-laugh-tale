@@ -39,7 +39,8 @@ export interface NotebookFile {
   notebook: string;
   name: string;
   file_type: string;
-  is_indexed: boolean;
+  ingestion_status: "pending" | "processing" | "ready" | "failed";
+  ingestion_error?: string;
   uploaded_at: string;
   updated_at: string;
 }
@@ -182,7 +183,7 @@ export function addNotebookFile(
     notebook: notebookId,
     name,
     file_type: fileType,
-    is_indexed: false,
+    ingestion_status: "pending",
     uploaded_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };
@@ -224,7 +225,7 @@ export function createFile(notebookId: string, file: File): NotebookFile {
     notebook: notebookId,
     name: file.name,
     file_type: file.name.split(".").pop() ?? "unknown",
-    is_indexed: false,
+    ingestion_status: "pending",
     uploaded_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   };

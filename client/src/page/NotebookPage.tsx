@@ -46,6 +46,24 @@ export default function NotebookPage() {
 
   const notebookId = id ?? "";
 
+  const hasProcessingFiles = files.some(
+    (f) =>
+      f.ingestion_status === "pending" || f.ingestion_status === "processing",
+  );
+  const hasReadyFiles = files.some((f) => f.ingestion_status === "ready");
+
+  // Poll file list every 3s while any file is still being ingested
+  useEffect(() => {
+    if (!hasProcessingFiles) return;
+    const interval = setInterval(async () => {
+      try {
+        const updated = await notebookService.listFiles(notebookId);
+        setFiles([...updated]);
+      } catch {}
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [hasProcessingFiles, notebookId]);
+
   useEffect(() => {
     async function load() {
       try {
@@ -165,8 +183,13 @@ export default function NotebookPage() {
   ): Promise<{ reply: string; sessionId: string }> {
     if (files.length === 0) {
       showToast("Upload lecture notes before chatting", "danger");
-      throw new Error("no files"); // aborts the chat session in ChatColumn
-    } else {
+      throw new Error("no files");
+    }
+    if (!hasReadyFiles) {
+      showToast("Your files are still being indexed. Please wait...", "danger");
+      throw new Error("files processing");
+    }
+    {
       let sessionId = activeSessionId;
       const sessionExists = chatSessions.some((s) => s.id === sessionId);
 
@@ -324,6 +347,7 @@ export default function NotebookPage() {
             onRenameSession={handleRenameSession}
             onDeleteSession={handleDeleteSession}
             getChatMessages={chatService.getChatSessionMessages}
+            chatDisabled={files.length > 0 && !hasReadyFiles}
           />
         ) : (
           <QuizColumn

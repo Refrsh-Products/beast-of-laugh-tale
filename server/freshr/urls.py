@@ -28,7 +28,7 @@ urlpatterns = [
     path('rag/', include(("rag.urls", "rag"), namespace="rag")),
     path('chats/', include(("chats.urls", "chats"), namespace="chats")),
     # path('presentation/', include(("presentation.urls", "presentation"), namespace="presentation")),
-    # path('quiz/', include(("quiz.urls","quiz"), namespace="quiz")),
+    path('quizzes/', include(("quiz.urls","quiz"), namespace="quiz")),
     # path('flashcard/', include(("flashcard.urls","flashcard"), namespace="flashcard")),
 
     path('payments/', include(("payments.urls", "payments"), namespace="payments")),

@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.serializers import BaseSerializer
 from rest_framework.views import APIView
 
+from notebooks.models import Notebook
 from .serializers import ChatMessageCreateSerializer, ChatMessageSerializer, ChatSerializer, ChatCreateSerializer, ChatUpdateSerializer
 from .models import Chats, ChatMessages, ChatRole
 from .services.llm_service import _stream_llm_response
@@ -28,6 +29,11 @@ class ChatListCreateView(generics.ListCreateAPIView):
             qs = qs.filter(notebook_id=notebook_id)
         return qs
 
+    def perform_create(self, serializer):
+        notebook = get_object_or_404(
+            Notebook, id=self.request.data.get("notebook"), user=self.request.user  # type: ignore[attr-defined]
+        )
+        serializer.save(notebook=notebook)
 
 class ChatDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (IsAuthenticated,)

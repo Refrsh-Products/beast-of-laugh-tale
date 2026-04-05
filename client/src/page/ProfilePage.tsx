@@ -409,7 +409,12 @@ export default function ProfilePage() {
                     onCancel={cancelEdit}
                   />
                   {editingField === "address" ? (
-                    <div style={{ borderBottom: `2px solid ${B}`, paddingBottom: 20 }}>
+                    <div
+                      style={{
+                        borderBottom: `2px solid ${B}`,
+                        paddingBottom: 20,
+                      }}
+                    >
                       <label
                         style={{
                           display: "block",
@@ -423,7 +428,13 @@ export default function ProfilePage() {
                       >
                         ADDRESS
                       </label>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                        }}
+                      >
                         <input
                           autoFocus
                           required

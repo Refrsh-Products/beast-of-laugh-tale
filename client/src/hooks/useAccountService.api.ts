@@ -1,7 +1,7 @@
 import createFreshrApiInstance, {
   UserServiceApiEndpoints,
 } from "../services/freshr-api";
-import { saveAccount, type StoredAccount } from "../storage";
+import { saveAccount } from "../storage";
 import type { AccountService } from "../services/account/Account.types";
 import type { AccountMeResponse } from "../page/dto/AccountMeResponse.dto";
 import useAxiosInterceptor from "./useAxiosInterceptor";

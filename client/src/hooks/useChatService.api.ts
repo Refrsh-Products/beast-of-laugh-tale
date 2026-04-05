@@ -131,7 +131,9 @@ const useChatServiceApi = (): ChatServices => {
 
         const lines = chunk.split("\n").filter((l) => l.startsWith("data: "));
         for (const line of lines) {
-          const parsed = JSON.parse(line.slice(6)); // strip "data: "
+          const raw = line.slice(6); // strip "data: "
+          if (raw === "[DONE]") continue;
+          const parsed = JSON.parse(raw);
           if (parsed.text) onChunk(parsed.text);
         }
       }

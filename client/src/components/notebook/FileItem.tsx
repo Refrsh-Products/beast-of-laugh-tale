@@ -202,6 +202,54 @@ export default function FileItem({
           />
         )}
 
+        {/* Ingestion status indicator */}
+        {(file.ingestion_status === "pending" ||
+          file.ingestion_status === "processing") && (
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            style={{ flexShrink: 0 }}
+          >
+            <title>Processing...</title>
+            <circle cx="6" cy="6" r="4" fill="none" stroke="#ddd" strokeWidth="1.8" />
+            <path
+              d="M6 2 A4 4 0 0 1 10 6"
+              fill="none"
+              stroke="#888"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            >
+              <animateTransform
+                attributeName="transform"
+                type="rotate"
+                from="0 6 6"
+                to="360 6 6"
+                dur="0.8s"
+                repeatCount="indefinite"
+              />
+            </path>
+          </svg>
+        )}
+        {file.ingestion_status === "failed" && (
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            style={{ flexShrink: 0 }}
+          >
+            <title>{file.ingestion_error || "Ingestion failed"}</title>
+            <circle cx="6" cy="6" r="5" fill="#FF4D4D" stroke={B} strokeWidth="1.2" />
+            <path
+              d="M6 3.5v3"
+              stroke="#fff"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+            />
+            <circle cx="6" cy="8.5" r="0.7" fill="#fff" />
+          </svg>
+        )}
+
         {/* 3-dot button — only in normal mode, visible on hover */}
         {!bulkMode && !isRenaming && (
           <button

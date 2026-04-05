@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const G = "#84e487";
@@ -8,15 +8,28 @@ const W = "#FFFFFF";
 interface SidebarProps {
   userEmail: string;
   userName?: string;
+  profilePictureUrl?: string;
 }
 
-export default function Sidebar({ userEmail, userName }: SidebarProps) {
+export default function Sidebar({
+  userEmail,
+  userName,
+  profilePictureUrl,
+}: SidebarProps) {
   const displayLabel = userName || userEmail;
   const avatarLetter = (userName || userEmail || "?")[0].toUpperCase();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [collapseHovered, setCollapseHovered] = useState(false);
   const [collapsePressed, setCollapsePressed] = useState(false);
+  const [avatarImageError, setAvatarImageError] = useState(false);
+
+  const hasAvatarImage =
+    !!profilePictureUrl && profilePictureUrl.trim() !== "" && !avatarImageError;
+
+  useEffect(() => {
+    setAvatarImageError(false);
+  }, [profilePictureUrl]);
 
   return (
     <div
@@ -194,7 +207,7 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
             style={{
               width: 28,
               height: 28,
-              background: G,
+              background: hasAvatarImage ? "transparent" : G,
               color: B,
               borderRadius: "50%",
               display: "flex",
@@ -204,9 +217,24 @@ export default function Sidebar({ userEmail, userName }: SidebarProps) {
               fontWeight: 800,
               fontSize: "0.7rem",
               flexShrink: 0,
+              overflow: "hidden",
             }}
           >
-            {avatarLetter}
+            {hasAvatarImage ? (
+              <img
+                src={profilePictureUrl}
+                alt={displayLabel}
+                onError={() => setAvatarImageError(true)}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            ) : (
+              avatarLetter
+            )}
           </div>
 
           {!collapsed && (
