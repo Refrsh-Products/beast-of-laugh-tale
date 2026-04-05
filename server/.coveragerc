@@ -1,0 +1,7 @@
+[run]
+omit =
+    */migrations/*
+    */venv/*
+    manage.py
+    # Add other files you want to ignore, like tests themselves
+    tests/*

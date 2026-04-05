@@ -58,8 +58,11 @@ export default function DashboardPage() {
     setNotebooks(notebooks);
     const counts = await Promise.all(
       notebooks.map((nb) =>
-        notebookService.listFiles(nb.id).then((files) => [nb.id, files.length] as const).catch(() => [nb.id, 0] as const)
-      )
+        notebookService
+          .listFiles(nb.id)
+          .then((files) => [nb.id, files.length] as const)
+          .catch(() => [nb.id, 0] as const),
+      ),
     );
     setFileCounts(Object.fromEntries(counts));
   }
@@ -185,6 +188,7 @@ export default function DashboardPage() {
         userName={
           (account.first_name ?? user.email) + " " + (account.last_name ?? "")
         }
+        profilePictureUrl={account.profile_picture_url ?? ""}
       />
 
       <div

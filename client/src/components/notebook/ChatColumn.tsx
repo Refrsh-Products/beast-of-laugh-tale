@@ -23,6 +23,7 @@ interface ChatColumnProps {
   onRenameSession: (chatId: string, title: string) => Promise<void>;
   onDeleteSession: (chatId: string) => Promise<void>;
   getChatMessages: (chatId: string) => Promise<ApiChatMessage[]>;
+  chatDisabled?: boolean;
 }
 
 export default function ChatColumn({
@@ -35,6 +36,7 @@ export default function ChatColumn({
   onRenameSession,
   onDeleteSession,
   getChatMessages,
+  chatDisabled = false,
 }: ChatColumnProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -53,7 +55,6 @@ export default function ChatColumn({
     setIsNaming(false);
     setNewTitle("");
     const newId = await onNewSession(title || undefined);
-    skipFetchRef.current = newId;
     onSessionCreated(newId);
   }
 
@@ -429,6 +430,50 @@ export default function ChatColumn({
         )}
       </div>
 
+      {/* Processing banner */}
+      {chatDisabled && (
+        <div
+          style={{
+            padding: "8px 16px",
+            background: "#fffbe6",
+            borderBottom: `1.5px solid #f0c040`,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            flexShrink: 0,
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 12 12" style={{ flexShrink: 0 }}>
+            <circle cx="6" cy="6" r="4" fill="none" stroke="#ccc" strokeWidth="1.8" />
+            <path
+              d="M6 2 A4 4 0 0 1 10 6"
+              fill="none"
+              stroke="#888"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            >
+              <animateTransform
+                attributeName="transform"
+                type="rotate"
+                from="0 6 6"
+                to="360 6 6"
+                dur="0.8s"
+                repeatCount="indefinite"
+              />
+            </path>
+          </svg>
+          <span
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.65rem",
+              color: "#7a6000",
+            }}
+          >
+            Indexing your files — chat will unlock once ready.
+          </span>
+        </div>
+      )}
+
       {/* Messages area */}
       <div
         style={{
@@ -473,32 +518,45 @@ export default function ChatColumn({
               handleSend();
             }
           }}
-          placeholder="Ask a question about your notes..."
+          disabled={chatDisabled}
+          placeholder={
+            chatDisabled
+              ? "Waiting for files to finish indexing..."
+              : "Ask a question about your notes..."
+          }
           style={{
             flex: 1,
-            border: `2px solid ${B}`,
+            border: `2px solid ${chatDisabled ? "#ccc" : B}`,
             borderRadius: 0,
             padding: "10px 12px",
             fontFamily: "'IBM Plex Mono', monospace",
             fontSize: "0.78rem",
-            background: W,
+            background: chatDisabled ? "#f5f5f5" : W,
             outline: "none",
             boxSizing: "border-box",
+            color: chatDisabled ? "#aaa" : B,
+            cursor: chatDisabled ? "not-allowed" : "text",
           }}
         />
         <button
           onClick={handleSend}
-          disabled={!input.trim() || isLoading}
+          disabled={!input.trim() || isLoading || chatDisabled}
           style={{
-            background: input.trim() && !isLoading ? B : "#ccc",
+            background: input.trim() && !isLoading && !chatDisabled ? B : "#ccc",
             color: W,
-            border: `2px solid ${input.trim() && !isLoading ? B : "#ccc"}`,
-            boxShadow: input.trim() && !isLoading ? `3px 3px 0 ${G}` : "none",
+            border: `2px solid ${input.trim() && !isLoading && !chatDisabled ? B : "#ccc"}`,
+            boxShadow:
+              input.trim() && !isLoading && !chatDisabled
+                ? `3px 3px 0 ${G}`
+                : "none",
             padding: "10px 16px",
             fontFamily: "'IBM Plex Mono', monospace",
             fontWeight: 700,
             fontSize: "0.78rem",
-            cursor: input.trim() && !isLoading ? "pointer" : "not-allowed",
+            cursor:
+              input.trim() && !isLoading && !chatDisabled
+                ? "pointer"
+                : "not-allowed",
             flexShrink: 0,
             lineHeight: 1,
           }}

@@ -1,4 +1,5 @@
 from typing import cast
+import uuid
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -14,6 +15,7 @@ from drf_spectacular.utils import extend_schema
 import requests as http_requests
 
 from .models import User
+from accounts.models import Account
 from .serializers import (
     GoogleAuthSerializer,
     LoginSerializer,
@@ -85,6 +87,11 @@ class GoogleAuth(APIView):
                         'error': "User needs to sign in through email",
                         'status': False
                     }, status=status.HTTP_403_FORBIDDEN)
+
+            if profile_picture_url:
+                Account.objects.filter(user=user).update(
+                    profile_picture_url=profile_picture_url
+                )
 
             refresh = RefreshToken.for_user(user)
             print(f"[GoogleAuth] JWT tokens generated successfully for {user.email}")
@@ -214,7 +221,7 @@ class PasswordResetRequestView(APIView):
             user = User.objects.get(email__iexact=email)
             # Generate token
             token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            uid = urlsafe_base64_encode(force_bytes(str(user.pk)))
 
             # Build reset URL (frontend URL)
             frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
@@ -256,9 +263,10 @@ class PasswordResetConfirmView(APIView):
         data: dict = serializer.validated_data  # type: ignore[assignment]
         print(data)
         try:
-            uid = force_str(urlsafe_base64_decode(data['uid']))
+            uid = uuid.UUID(force_str(urlsafe_base64_decode(data['uid'])))
             user = User.objects.get(pk=uid)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist) as e:
+            print(f"[PasswordResetConfirm] UID decode error: {type(e).__name__}: {e} | raw uid={data.get('uid')!r}")
             return Response(
                 {'error': 'Invalid reset link.'},
                 status=status.HTTP_400_BAD_REQUEST
