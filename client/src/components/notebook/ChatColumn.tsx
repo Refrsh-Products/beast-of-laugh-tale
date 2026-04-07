@@ -516,7 +516,7 @@ export default function ChatColumn({
         <button
           onClick={handleSend}
           disabled={!input.trim() || isLoading}
-          onMouseEnter={(e) => { if (input.trim() && !isLoading) { e.currentTarget.style.transform = "translate(-3px, -3px)"; e.currentTarget.style.boxShadow = `6px 6px 0 ${G}`; } }}
+          onMouseEnter={(e) => { if (input.trim() && !isLoading) { e.currentTarget.style.transform = "translate(-1.5px, -1.5px)"; e.currentTarget.style.boxShadow = `4px 4px 0 ${G}`; } }}
           onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = input.trim() && !isLoading ? `3px 3px 0 ${G}` : "none"; }}
           style={{
             background: input.trim() && !isLoading ? B : "#ccc",
