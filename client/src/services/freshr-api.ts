@@ -65,4 +65,12 @@ export const ChatServiceApiEndpoints = {
     `${ChatServiceApiBase}/${chat_id}/messages/stream/`,
 };
 
+// Payments
+export const PaymentServiceApiBase = "/payments";
+export const PaymentServiceApiEndpoints = {
+  getPayments: `${PaymentServiceApiBase}/`,
+  initiatePayment: `${PaymentServiceApiBase}/initiate/`,
+  initiateStripePayment: `${PaymentServiceApiBase}/stripe/initiate/`,
+};
+
 export default createFreshrApiInstance;

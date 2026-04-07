@@ -2,7 +2,7 @@ const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
 
-export type ProfileTab = "profile" | "account";
+export type ProfileTab = "profile" | "account" | "payment";
 
 interface ProfileSidebarProps {
   avatar: string;
@@ -89,6 +89,7 @@ export default function ProfileSidebar({
           <img
             src={avatar}
             alt={name}
+            referrerPolicy="no-referrer"
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
@@ -157,6 +158,11 @@ export default function ProfileSidebar({
           label="ACCOUNT"
           active={activeTab === "account"}
           onClick={() => onTabChange("account")}
+        />
+        <NavItem
+          label="UPGADE PLAN"
+          active={activeTab === "payment"}
+          onClick={() => onTabChange("payment")}
         />
       </div>
     </div>
