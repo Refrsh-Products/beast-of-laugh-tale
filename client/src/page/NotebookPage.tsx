@@ -353,6 +353,7 @@ export default function NotebookPage() {
           <QuizColumn
             onGenerateQuiz={handleGenerateQuiz}
             isGenerating={isGeneratingQuiz}
+            quizDisabled={files.length > 0}
           />
         )}
 

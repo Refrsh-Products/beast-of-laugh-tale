@@ -12,6 +12,8 @@ import ResetPasswordPage from "./page/ResetPasswordPage";
 import ProfilePage from "./page/ProfilePage";
 import NotebookPage from "./page/NotebookPage";
 import NotFoundPage from "./page/NotFoundPage";
+import PaymentSuccessPage from "./page/PaymentSuccessPage";
+import PaymentCancelPage from "./page/PaymentCancelPage";
 
 export default function App() {
   return (
@@ -30,6 +32,8 @@ export default function App() {
           />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/payment/success" element={<PaymentSuccessPage />} />
+          <Route path="/payment/cancel" element={<PaymentCancelPage />} />
           <Route path="/notebook/:id" element={<NotebookPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
