@@ -6,6 +6,7 @@ const W = "#FFFFFF";
 
 interface PreviousQuizzesColumnProps {
   quizzes: QuizAttempt[];
+  selectedQuizId: string | null;
   onQuizClick: (quiz: QuizAttempt) => void;
 }
 
@@ -24,14 +25,13 @@ function timeAgo(isoDate: string): string {
 
 function QuizCard({
   quiz,
+  selected,
   onClick,
 }: {
   quiz: QuizAttempt;
+  selected: boolean;
   onClick: () => void;
 }) {
-  const scorePercent = Math.round((quiz.score / quiz.question_count) * 100);
-  const accentColor =
-    scorePercent >= 80 ? "#2a9e30" : scorePercent >= 50 ? "#c47d00" : "#cc3333";
 
   const topicLabel =
     quiz.topics.length > 0
@@ -44,14 +44,14 @@ function QuizCard({
   return (
     <div
       onClick={onClick}
-      onMouseEnter={(e) => (e.currentTarget.style.background = "#f7f7f2")}
-      onMouseLeave={(e) => (e.currentTarget.style.background = W)}
+      onMouseEnter={(e) => { if (!selected) e.currentTarget.style.background = "#f7f7f2"; }}
+      onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = W; }}
       style={{
         padding: "12px 14px 12px 12px",
         borderBottom: `2px solid ${B}`,
-        borderLeft: `4px solid ${accentColor}`,
+        borderLeft: `4px solid ${G}`,
         cursor: "pointer",
-        background: W,
+        background: selected ? "#f0fdf0" : W,
         transition: "background 0.1s",
       }}
     >
@@ -84,7 +84,7 @@ function QuizCard({
         {/* Score badge */}
         <div
           style={{
-            border: `2px solid ${accentColor}`,
+            border: `2px solid ${B}`,
             padding: "2px 6px",
             flexShrink: 0,
           }}
@@ -94,7 +94,7 @@ function QuizCard({
               fontFamily: "'IBM Plex Mono', monospace",
               fontSize: "0.68rem",
               fontWeight: 700,
-              color: accentColor,
+              color: B,
             }}
           >
             {quiz.score}/{quiz.question_count}
@@ -157,6 +157,7 @@ function QuizCard({
 
 export default function PreviousQuizzesColumn({
   quizzes,
+  selectedQuizId,
   onQuizClick,
 }: PreviousQuizzesColumnProps) {
   return (
@@ -171,7 +172,7 @@ export default function PreviousQuizzesColumn({
       }}
     >
       {/* Title */}
-      <div style={{ padding: "14px 14px 10px", borderBottom: `2px solid ${B}`, flexShrink: 0 }}>
+      <div style={{ height: 44, padding: "0 14px", borderBottom: `2px solid ${B}`, flexShrink: 0, display: "flex", alignItems: "center" }}>
         <span
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
@@ -205,7 +206,12 @@ export default function PreviousQuizzesColumn({
           </div>
         ) : (
           quizzes.map((quiz) => (
-            <QuizCard key={quiz.id} quiz={quiz} onClick={() => onQuizClick(quiz)} />
+            <QuizCard
+              key={quiz.id}
+              quiz={quiz}
+              selected={quiz.id === selectedQuizId}
+              onClick={() => onQuizClick(quiz)}
+            />
           ))
         )}
       </div>

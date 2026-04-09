@@ -18,6 +18,7 @@ import OptionsColumn, {
   type ActiveView,
 } from "../components/notebook/OptionsColumn";
 import QuizColumn from "../components/notebook/QuizColumn";
+import QuizReviewColumn from "../components/notebook/QuizReviewColumn";
 import PreviousQuizzesColumn from "../components/notebook/PreviousQuizzesColumn";
 import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
@@ -44,6 +45,7 @@ export default function NotebookPage() {
   const [quizTopics, setQuizTopics] = useState<string[]>([]);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [previousQuizzes, setPreviousQuizzes] = useState<QuizAttempt[]>([]);
+  const [selectedQuiz, setSelectedQuiz] = useState<QuizAttempt | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<FileUploadState[]>([]);
   const [chatSessions, setChatSessions] = useState<
@@ -263,9 +265,16 @@ export default function NotebookPage() {
     }
   }
 
-  function handleQuizClick(_quiz: QuizAttempt) {
-    // TODO: show quiz detail view
-    showToast("Quiz detail view coming soon", "neutral");
+  function handleQuizClick(quiz: QuizAttempt) {
+    setSelectedQuiz(quiz);
+  }
+
+  function handleBackToGenerator() {
+    setSelectedQuiz(null);
+  }
+
+  function handleRetakeQuiz() {
+    setSelectedQuiz(null);
   }
 
   if (!notebook) return null;
@@ -361,6 +370,12 @@ export default function NotebookPage() {
             onDeleteSession={handleDeleteSession}
             getChatMessages={chatService.getChatSessionMessages}
           />
+        ) : selectedQuiz ? (
+          <QuizReviewColumn
+            quiz={selectedQuiz}
+            onBack={handleBackToGenerator}
+            onRetake={handleRetakeQuiz}
+          />
         ) : (
           <QuizColumn
             topics={quizTopics}
@@ -374,6 +389,7 @@ export default function NotebookPage() {
         {activeView === "quiz" ? (
           <PreviousQuizzesColumn
             quizzes={previousQuizzes}
+            selectedQuizId={selectedQuiz?.id ?? null}
             onQuizClick={handleQuizClick}
           />
         ) : (
