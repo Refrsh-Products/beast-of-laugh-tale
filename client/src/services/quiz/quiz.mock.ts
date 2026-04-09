@@ -69,6 +69,10 @@ function seedQuizzes(notebookId: string): void {
 }
 
 export const QuizServiceMock: QuizService = {
+  addAttempt(notebookId: string, attempt: QuizAttempt): void {
+    addQuizAttempt(notebookId, attempt);
+  },
+
   async getTopics(_notebookId: string): Promise<string[]> {
     await new Promise((r) => setTimeout(r, 300));
     return getMockTopics();
@@ -87,12 +91,6 @@ export const QuizServiceMock: QuizService = {
     const topicsForQuestions =
       options.topics.length > 0 ? options.topics : ["General"];
     const questions = generateFakeQuestions(topicsForQuestions, options.questionCount);
-    const userAnswers = questions.map((q) =>
-      Math.random() > 0.35 ? q.correct_index : (q.correct_index + 1) % 4,
-    );
-    const score = userAnswers.filter(
-      (ans, i) => ans === questions[i].correct_index,
-    ).length;
     const attempt: QuizAttempt = {
       id: crypto.randomUUID(),
       notebook_id: notebookId,
@@ -103,12 +101,12 @@ export const QuizServiceMock: QuizService = {
       difficulty: options.difficulty,
       timed: options.timed,
       time_limit: options.timeLimit,
-      time_taken: Math.floor(Math.random() * 600) + 60,
-      score,
+      time_taken: 0,
+      score: 0,
       questions,
-      user_answers: userAnswers,
+      user_answers: [],
     };
-    addQuizAttempt(notebookId, attempt);
+    // Do NOT save yet — the quiz-taking screen will save on completion
     return attempt;
   },
 };

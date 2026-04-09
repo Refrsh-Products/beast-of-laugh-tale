@@ -19,6 +19,7 @@ import OptionsColumn, {
 } from "../components/notebook/OptionsColumn";
 import QuizColumn from "../components/notebook/QuizColumn";
 import QuizReviewColumn from "../components/notebook/QuizReviewColumn";
+import QuizTakingScreen from "../components/notebook/QuizTakingScreen";
 import PreviousQuizzesColumn from "../components/notebook/PreviousQuizzesColumn";
 import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
@@ -46,6 +47,7 @@ export default function NotebookPage() {
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [previousQuizzes, setPreviousQuizzes] = useState<QuizAttempt[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizAttempt | null>(null);
+  const [activeQuiz, setActiveQuiz] = useState<QuizAttempt | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<FileUploadState[]>([]);
   const [chatSessions, setChatSessions] = useState<
@@ -254,15 +256,39 @@ export default function NotebookPage() {
   async function handleGenerateQuiz(options: QuizGenerateOptions) {
     setIsGeneratingQuiz(true);
     try {
-      await quizService.generateQuiz(notebookId, options);
-      const quizzes = await quizService.getPreviousQuizzes(notebookId);
-      setPreviousQuizzes(quizzes);
-      showToast("Quiz generated", "success");
+      const quiz = await quizService.generateQuiz(notebookId, options);
+      setSelectedQuiz(null);
+      setActiveQuiz(quiz);
     } catch {
       showToast("Failed to generate quiz", "danger");
     } finally {
       setIsGeneratingQuiz(false);
     }
+  }
+
+  async function handleQuizComplete(
+    userAnswers: (number | null)[],
+    timeTaken: number,
+  ) {
+    if (!activeQuiz) return;
+    const score = userAnswers.filter(
+      (ans, i) => ans === activeQuiz.questions[i].correct_index,
+    ).length;
+    const finalAttempt: QuizAttempt = {
+      ...activeQuiz,
+      user_answers: userAnswers,
+      score,
+      time_taken: timeTaken,
+    };
+    quizService.addAttempt(notebookId, finalAttempt);
+    const quizzes = await quizService.getPreviousQuizzes(notebookId);
+    setPreviousQuizzes(quizzes);
+    setActiveQuiz(null);
+    setSelectedQuiz(finalAttempt);
+  }
+
+  function handleQuizExit() {
+    setActiveQuiz(null);
   }
 
   function handleQuizClick(quiz: QuizAttempt) {
@@ -273,8 +299,25 @@ export default function NotebookPage() {
     setSelectedQuiz(null);
   }
 
-  function handleRetakeQuiz() {
-    setSelectedQuiz(null);
+  async function handleRetakeQuiz() {
+    if (!selectedQuiz) return;
+    setIsGeneratingQuiz(true);
+    try {
+      const quiz = await quizService.generateQuiz(notebookId, {
+        topics: selectedQuiz.topics,
+        prompt: selectedQuiz.prompt,
+        questionCount: selectedQuiz.question_count,
+        difficulty: selectedQuiz.difficulty,
+        timed: selectedQuiz.timed,
+        timeLimit: selectedQuiz.time_limit,
+      });
+      setSelectedQuiz(null);
+      setActiveQuiz(quiz);
+    } catch {
+      showToast("Failed to generate quiz", "danger");
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
   }
 
   if (!notebook) return null;
@@ -405,6 +448,15 @@ export default function NotebookPage() {
       </div>
 
       <ToastContainer toasts={toasts} />
+
+      {/* Quiz-taking overlay — sits on top of everything */}
+      {activeQuiz && (
+        <QuizTakingScreen
+          quiz={activeQuiz}
+          onComplete={handleQuizComplete}
+          onExit={handleQuizExit}
+        />
+      )}
     </div>
   );
 }

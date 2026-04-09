@@ -16,4 +16,5 @@ export interface QuizService {
     notebookId: string,
     options: QuizGenerateOptions,
   ) => Promise<QuizAttempt>;
+  addAttempt: (notebookId: string, attempt: QuizAttempt) => void;
 }
