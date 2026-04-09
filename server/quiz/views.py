@@ -1,12 +1,17 @@
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from datetime import date
+from django.db import transaction
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from notebooks.models import Notebook
+from accounts.models import Account, DailyUsage
+from accounts.services import quota
 from .models import QuizSession, QuizQuestion, QuizStatus
 from .services.quiz_generation import generate_quiz_mock
 from .serializers import (
@@ -57,11 +62,22 @@ class QuizSessionListCreateView(generics.ListCreateAPIView):
             difficulty=data["difficulty"],
         )
 
-        quiz = serializer.save(notebook=notebook, title=generated["title"])
+        with transaction.atomic():
+            account = Account.objects.select_for_update().get(user=self.request.user)
+            usage, _ = DailyUsage.objects.select_for_update().get_or_create(
+                account=account, date=date.today()
+            )
+            if not quota.check_daily_quiz_quota(account):
+                raise PermissionDenied("Daily quiz limit reached for your plan.")
 
-        QuizQuestion.objects.bulk_create([
-            QuizQuestion(quiz=quiz, **q) for q in generated["questions"]
-        ])
+            # Generate quiz
+            quiz = serializer.save(notebook=notebook, title=generated["title"])
+            QuizQuestion.objects.bulk_create([
+                QuizQuestion(quiz=quiz, **q) for q in generated["questions"]
+            ])
+
+            usage.quizzes_generated += 1
+            usage.save()
 
 
 class QuizSessionDetailView(generics.RetrieveUpdateDestroyAPIView):

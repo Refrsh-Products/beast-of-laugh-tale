@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
 import ProfileSidebar, {
@@ -22,7 +22,9 @@ export default function ProfilePage() {
   const name = account
     ? `${account.first_name} ${account.last_name}`.trim()
     : "";
-  const [activeTab, setActiveTab] = useState<ProfileTab>("profile");
+  const location = useLocation();
+  const initialTab = (location.state as { tab?: ProfileTab } | null)?.tab ?? "profile";
+  const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {

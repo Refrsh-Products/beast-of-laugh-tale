@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { createPortal } from "react-dom";
 import { Navigate, useNavigate } from "react-router-dom";
 import Sidebar from "../components/sidebar/Sidebar";
@@ -18,6 +18,9 @@ import ArchivedSection from "../components/dashboard/ArchivedSection";
 import NotebookMenu from "../components/dashboard/NotebookMenu";
 import { useToast } from "../hooks/useToast";
 import ToastContainer from "../components/ui/ToastContainer";
+import UsageBanner from "../components/dashboard/UsageBanner";
+import UpgradeModal from "../components/dashboard/UpgradeModal";
+import type { AccountUseage } from "../storage";
 
 export default function DashboardPage() {
   const authService = useAuthService();
@@ -41,16 +44,23 @@ export default function DashboardPage() {
   const [editValue, setEditValue] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [createTitle, setCreateTitle] = useState("");
   const [createError, setCreateError] = useState("");
   const { toasts, showToast } = useToast();
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(
     null,
   );
+  const [usage, setUsage] = useState<AccountUseage | null>(null);
 
   useEffect(() => {
     if (!authService.isLoggedIn()) return;
     accountService.hasCompletedOnboarding().then(setOnboardingComplete);
+    accountService
+      .getAccountUsage()
+      .then(setUsage)
+      .catch(() => {});
+    console.log(usage);
   }, []);
 
   async function refreshNotebooks() {
@@ -90,6 +100,14 @@ export default function DashboardPage() {
     document.addEventListener("mousedown", handleMouseDown);
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [openMenuId]);
+
+  function handleCreateRequest() {
+    if (usage && usage.notebooks.used >= usage.notebooks.limit) {
+      setShowUpgradeModal(true);
+    } else {
+      setShowCreateModal(true);
+    }
+  }
 
   function handleMenuOpen(
     id: string | null,
@@ -213,12 +231,14 @@ export default function DashboardPage() {
           className="freshr-scroll"
           style={{ flex: 1, overflowY: "auto", padding: "24px 32px" }}
         >
+          {usage && <UsageBanner usage={usage} />}
+
           {view === "grid" ? (
             <div
               className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
               style={{ gap: 20 }}
             >
-              <CreateCard onCreate={() => setShowCreateModal(true)} />
+              <CreateCard onCreate={handleCreateRequest} />
               {sorted.map((nb) => (
                 <NotebookCard
                   key={nb.id}
@@ -237,7 +257,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              <CreateRow onCreate={() => setShowCreateModal(true)} />
+              <CreateRow onCreate={handleCreateRequest} />
               {sorted.map((nb) => (
                 <NotebookRow
                   key={nb.id}
@@ -262,6 +282,10 @@ export default function DashboardPage() {
           />
         </div>
       </div>
+
+      {showUpgradeModal && (
+        <UpgradeModal onClose={() => setShowUpgradeModal(false)} />
+      )}
 
       {showCreateModal && (
         <CreateNotebookModal

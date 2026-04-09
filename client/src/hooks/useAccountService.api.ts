@@ -1,7 +1,7 @@
 import createFreshrApiInstance, {
   UserServiceApiEndpoints,
 } from "../services/freshr-api";
-import { saveAccount } from "../storage";
+import { saveAccount, type AccountUseage } from "../storage";
 import type { AccountService } from "../services/account/Account.types";
 import type { AccountMeResponse } from "../page/dto/AccountMeResponse.dto";
 import useAxiosInterceptor from "./useAxiosInterceptor";
@@ -51,6 +51,17 @@ const useAccountServiceApi = (): AccountService => {
         return response.onboarding_completed === true;
       } catch {
         return false;
+      }
+    },
+
+    getAccountUsage: async () => {
+      try {
+        const response = await fetchData<AccountUseage>(
+          UserServiceApiEndpoints.accountUsage,
+        );
+        return response;
+      } catch (err) {
+        throw err;
       }
     },
   };
