@@ -7,7 +7,7 @@ import {
 } from "react-router-dom";
 import useAuthService from "../services/auth";
 import useNotebookService from "../services/notebooks";
-import type { Notebook, NotebookFile } from "../storage";
+import type { Notebook, NotebookFile, QuizAttempt } from "../storage";
 
 import NotebookTitle from "../components/notebook/NotebookTitle";
 import FilesColumn, {
@@ -18,9 +18,11 @@ import OptionsColumn, {
   type ActiveView,
 } from "../components/notebook/OptionsColumn";
 import QuizColumn from "../components/notebook/QuizColumn";
+import PreviousQuizzesColumn from "../components/notebook/PreviousQuizzesColumn";
 import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
 import useChatService from "../services/chat";
+import useQuizService, { type QuizGenerateOptions } from "../services/quiz";
 
 const B = "#000000";
 const W = "#FFFFFF";
@@ -31,6 +33,7 @@ export default function NotebookPage() {
   const authService = useAuthService();
   const notebookService = useNotebookService();
   const chatService = useChatService();
+  const quizService = useQuizService();
   const navigate = useNavigate();
   const { toasts, showToast } = useToast();
 
@@ -38,6 +41,9 @@ export default function NotebookPage() {
   const [files, setFiles] = useState<NotebookFile[]>([]);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [activeView, setActiveView] = useState<ActiveView>("chat");
+  const [quizTopics, setQuizTopics] = useState<string[]>([]);
+  const [isLoadingTopics, setIsLoadingTopics] = useState(false);
+  const [previousQuizzes, setPreviousQuizzes] = useState<QuizAttempt[]>([]);
   const [notFound, setNotFound] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<FileUploadState[]>([]);
   const [chatSessions, setChatSessions] = useState<
@@ -76,6 +82,24 @@ export default function NotebookPage() {
     }
     load();
   }, [notebookId]);
+
+  useEffect(() => {
+    if (activeView !== "quiz") return;
+    async function loadQuizData() {
+      if (quizTopics.length === 0) {
+        setIsLoadingTopics(true);
+        try {
+          const topics = await quizService.getTopics(notebookId);
+          setQuizTopics(topics);
+        } finally {
+          setIsLoadingTopics(false);
+        }
+      }
+      const quizzes = await quizService.getPreviousQuizzes(notebookId);
+      setPreviousQuizzes(quizzes);
+    }
+    loadQuizData();
+  }, [activeView, notebookId]);
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
 
@@ -225,15 +249,23 @@ export default function NotebookPage() {
     }
   }
 
-  async function handleGenerateQuiz() {
+  async function handleGenerateQuiz(options: QuizGenerateOptions) {
     setIsGeneratingQuiz(true);
     try {
-      // TODO: wire up quiz generation API when Safwan is ready
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await quizService.generateQuiz(notebookId, options);
+      const quizzes = await quizService.getPreviousQuizzes(notebookId);
+      setPreviousQuizzes(quizzes);
       showToast("Quiz generated", "success");
+    } catch {
+      showToast("Failed to generate quiz", "danger");
     } finally {
       setIsGeneratingQuiz(false);
     }
+  }
+
+  function handleQuizClick(_quiz: QuizAttempt) {
+    // TODO: show quiz detail view
+    showToast("Quiz detail view coming soon", "neutral");
   }
 
   if (!notebook) return null;
@@ -331,20 +363,29 @@ export default function NotebookPage() {
           />
         ) : (
           <QuizColumn
-            onGenerateQuiz={handleGenerateQuiz}
+            topics={quizTopics}
+            isLoadingTopics={isLoadingTopics}
+            onGenerate={handleGenerateQuiz}
             isGenerating={isGeneratingQuiz}
           />
         )}
 
-        {/* Files column (right) */}
-        <FilesColumn
-          files={files}
-          onUpload={handleUpload}
-          onDeleteSelected={handleDeleteSelected}
-          onDeleteOne={handleDeleteOne}
-          onRename={handleRenameFile}
-          uploadProgress={uploadProgress}
-        />
+        {/* Right column — Files on chat tab, Previous Quizzes on quiz tab */}
+        {activeView === "quiz" ? (
+          <PreviousQuizzesColumn
+            quizzes={previousQuizzes}
+            onQuizClick={handleQuizClick}
+          />
+        ) : (
+          <FilesColumn
+            files={files}
+            onUpload={handleUpload}
+            onDeleteSelected={handleDeleteSelected}
+            onDeleteOne={handleDeleteOne}
+            onRename={handleRenameFile}
+            uploadProgress={uploadProgress}
+          />
+        )}
       </div>
 
       <ToastContainer toasts={toasts} />
