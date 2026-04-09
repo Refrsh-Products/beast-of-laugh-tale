@@ -1,8 +1,12 @@
+from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Notebook, NotebookFile
+from accounts.models import Account
+from accounts.services import quota
 from .serializers import NotebookSerializer, NotebookFileSerializer, NotebookFileInputSerializer, NotebookFileCreateSuccessSerializer, NotebookFileCreateErrorSerializer
 
 from django.shortcuts import get_object_or_404
@@ -28,7 +32,11 @@ class NotebookListAPIView(generics.ListCreateAPIView):
         return Notebook.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        with transaction.atomic():
+            account = Account.objects.select_for_update().get(user=self.request.user)
+            if not quota.check_notebook_quota(account):
+                raise PermissionDenied("Notebook limit reached for your plan.")
+            serializer.save(user=self.request.user)
 
 # TODO: Create Archive View - show list of all archived notebooks, change an archived notebook to unarchived
 
@@ -57,10 +65,19 @@ class NotebookFileCreateAPIView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
         uploaded_file = serializer.validated_data["file"] # type: ignore
-        notebook_file = NotebookFileService.add_notebook_file(
-                notebook=notebook,
-                uploaded_file=uploaded_file
-                )
+
+        with transaction.atomic():
+            account = Account.objects.select_for_update().get(user=self.request.user)
+            if not quota.check_storage_quota(account, uploaded_file.size):
+                raise PermissionDenied("Storage limit reached for your plan.")
+
+            notebook_file = NotebookFileService.add_notebook_file(
+                    notebook=notebook,
+                    uploaded_file=uploaded_file
+                    )
+            account.storage_bytes_used += uploaded_file.size
+            account.save()
+            
         if notebook_file:
             ingest_note_task.delay(notebook_file.pk)  # type: ignore[attr-defined]
             response = Response(

@@ -14,6 +14,22 @@ export interface Notebook {
   file_count?: number;
 }
 
+export interface AccountUseage {
+  plan: string;
+  notebooks: {
+    used: number;
+    limit: number;
+  };
+  storage: {
+    used_bytes: bigint;
+    limit_bytes: bigint;
+  };
+  daily_quizzes: {
+    used: number;
+    limit: number;
+  };
+}
+
 export interface StoredAccount {
   id: string;
   first_name: string;
