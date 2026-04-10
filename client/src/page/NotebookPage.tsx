@@ -48,6 +48,7 @@ export default function NotebookPage() {
   const [previousQuizzes, setPreviousQuizzes] = useState<QuizAttempt[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizAttempt | null>(null);
   const [activeQuiz, setActiveQuiz] = useState<QuizAttempt | null>(null);
+  const [pendingChatInput, setPendingChatInput] = useState<string>("");
   const [notFound, setNotFound] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<FileUploadState[]>([]);
   const [chatSessions, setChatSessions] = useState<
@@ -269,6 +270,7 @@ export default function NotebookPage() {
   async function handleQuizComplete(
     userAnswers: (number | null)[],
     timeTaken: number,
+    flaggedQuestions: number[],
   ) {
     if (!activeQuiz) return;
     const score = userAnswers.filter(
@@ -279,6 +281,7 @@ export default function NotebookPage() {
       user_answers: userAnswers,
       score,
       time_taken: timeTaken,
+      flagged_questions: flaggedQuestions,
     };
     quizService.addAttempt(notebookId, finalAttempt);
     const quizzes = await quizService.getPreviousQuizzes(notebookId);
@@ -289,6 +292,20 @@ export default function NotebookPage() {
 
   function handleQuizExit() {
     setActiveQuiz(null);
+  }
+
+  function handleTakeToChat(questionText: string, options: string[], topic: string) {
+    const formatted = [
+      `I'm studying ${topic} and I need help with this question:`,
+      "",
+      `"${questionText}"`,
+      "",
+      "Options were:",
+      ...options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`),
+    ].join("\n");
+    setActiveQuiz(null);
+    setPendingChatInput(formatted);
+    setActiveView("chat");
   }
 
   function handleQuizClick(quiz: QuizAttempt) {
@@ -412,6 +429,8 @@ export default function NotebookPage() {
             onRenameSession={handleRenameSession}
             onDeleteSession={handleDeleteSession}
             getChatMessages={chatService.getChatSessionMessages}
+            initialInput={pendingChatInput}
+            onInitialInputConsumed={() => setPendingChatInput("")}
           />
         ) : selectedQuiz ? (
           <QuizReviewColumn
@@ -455,6 +474,7 @@ export default function NotebookPage() {
           quiz={activeQuiz}
           onComplete={handleQuizComplete}
           onExit={handleQuizExit}
+          onTakeToChat={handleTakeToChat}
         />
       )}
     </div>

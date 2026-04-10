@@ -5,6 +5,7 @@ const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
 const R = "#FF4D4D";
+const AMBER = "#FCD34D";
 
 // ── Modal backdrop + card ─────────────────────────────────────────
 
@@ -332,27 +333,37 @@ function NavButton({
 
 interface QuizTakingScreenProps {
   quiz: QuizAttempt;
-  onComplete: (userAnswers: (number | null)[], timeTaken: number) => void;
+  onComplete: (userAnswers: (number | null)[], timeTaken: number, flaggedQuestions: number[]) => void;
   onExit: () => void;
+  onTakeToChat?: (questionText: string, options: string[], topic: string) => void;
 }
 
 export default function QuizTakingScreen({
   quiz,
   onComplete,
   onExit,
+  onTakeToChat,
 }: QuizTakingScreenProps) {
   const totalSeconds = quiz.timed && quiz.time_limit ? quiz.time_limit * 60 : 0;
+  const isPractice = !quiz.timed;
 
   const [currentQ, setCurrentQ] = useState(0);
   const [userAnswers, setUserAnswers] = useState<(number | null)[]>(
     Array(quiz.question_count).fill(null),
   );
+  const [flaggedQuestions, setFlaggedQuestions] = useState<number[]>([]);
   const [secondsRemaining, setSecondsRemaining] = useState(totalSeconds);
   const [secondsElapsed, setSecondsElapsed] = useState(0);
   const [frozen, setFrozen] = useState(false);
   const [showTimesUp, setShowTimesUp] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showUnansweredWarning, setShowUnansweredWarning] = useState(false);
+  const [explanationOpen, setExplanationOpen] = useState(false);
+
+  // Reset explanation panel when navigating to a different question
+  useEffect(() => {
+    setExplanationOpen(false);
+  }, [currentQ]);
 
   // Countdown timer (timed quizzes)
   useEffect(() => {
@@ -372,7 +383,7 @@ export default function QuizTakingScreen({
     return () => clearInterval(interval);
   }, [quiz.timed, totalSeconds, frozen]);
 
-  // Count-up timer (untimed quizzes)
+  // Count-up timer (untimed/practice quizzes)
   useEffect(() => {
     if (quiz.timed) return;
     if (frozen) return;
@@ -404,6 +415,14 @@ export default function QuizTakingScreen({
       ? "Custom prompt"
       : "General";
 
+  const isFlagged = flaggedQuestions.includes(currentQ);
+
+  function toggleFlag() {
+    setFlaggedQuestions((prev) =>
+      prev.includes(currentQ) ? prev.filter((i) => i !== currentQ) : [...prev, currentQ],
+    );
+  }
+
   function selectAnswer(optionIndex: number) {
     if (frozen) return;
     setUserAnswers((prev) => {
@@ -423,12 +442,19 @@ export default function QuizTakingScreen({
 
   function doSubmit() {
     const timeTaken = quiz.timed ? totalSeconds - secondsRemaining : secondsElapsed;
-    onComplete(userAnswers, timeTaken);
+    onComplete(userAnswers, timeTaken, flaggedQuestions);
   }
 
   function handleTimesUpResults() {
     setShowTimesUp(false);
-    onComplete(userAnswers, totalSeconds);
+    onComplete(userAnswers, totalSeconds, flaggedQuestions);
+  }
+
+  function handleTakeToChat() {
+    if (!onTakeToChat) return;
+    const question = quiz.questions[currentQ];
+    const topic = quiz.topics.length > 0 ? quiz.topics[0] : "this topic";
+    onTakeToChat(question.question, question.options, topic);
   }
 
   const question = quiz.questions[currentQ];
@@ -446,7 +472,7 @@ export default function QuizTakingScreen({
           overflow: "hidden",
         }}
       >
-        {/* Header — topic as title + timer + Q counter + progress bar folded in */}
+        {/* Header — 3-column grid: topic left | Q counter center | timer right */}
         <div
           style={{
             background: W,
@@ -454,7 +480,6 @@ export default function QuizTakingScreen({
             flexShrink: 0,
           }}
         >
-          {/* 3-column grid: topic left | Q counter center | timer right */}
           <div
             style={{
               padding: "0 32px",
@@ -507,7 +532,7 @@ export default function QuizTakingScreen({
             </span>
           </div>
 
-          {/* Progress bar — folded into the bottom of the header, no extra section */}
+          {/* Progress bar — folded into the bottom of the header */}
           <div style={{ height: 4, background: "#e8e8e8" }}>
             <div
               style={{
@@ -523,6 +548,29 @@ export default function QuizTakingScreen({
         {/* Scrollable question area */}
         <div style={{ flex: 1, overflowY: "auto", padding: "48px 32px 24px" }}>
           <div style={{ maxWidth: 600, margin: "0 auto" }}>
+
+            {/* Flag button — top right of question zone */}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+              <button
+                onClick={toggleFlag}
+                style={{
+                  background: isFlagged ? AMBER : "transparent",
+                  border: `1.5px solid ${isFlagged ? B : "#bbb"}`,
+                  color: isFlagged ? B : "#888",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.68rem",
+                  fontWeight: 600,
+                  letterSpacing: "0.04em",
+                  padding: "5px 12px",
+                  cursor: "pointer",
+                  transition: "background 0.15s, color 0.15s, border-color 0.15s",
+                }}
+              >
+                ⚑ {isFlagged ? "Flagged" : "Flag"}
+              </button>
+            </div>
+
+            {/* Question text */}
             <p
               style={{
                 fontFamily: "'Syne', sans-serif",
@@ -536,6 +584,7 @@ export default function QuizTakingScreen({
               {question.question}
             </p>
 
+            {/* Answer options */}
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {question.options.map((opt, oi) => {
                 const selected = userAnswers[currentQ] === oi;
@@ -588,6 +637,108 @@ export default function QuizTakingScreen({
                 );
               })}
             </div>
+
+            {/* Practice mode extras — explanation + take to chat */}
+            {isPractice && (
+              <div style={{ marginTop: 24 }}>
+                {/* Row: explanation toggle (left) + Take to Chat (right) */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: explanationOpen ? 12 : 0,
+                  }}
+                >
+                  {/* Explanation toggle */}
+                  {question.explanation ? (
+                    <button
+                      onClick={() => setExplanationOpen((o) => !o)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        padding: 0,
+                        cursor: "pointer",
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: "0.72rem",
+                        fontWeight: 600,
+                        color: "#555",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: "inline-block",
+                          transition: "transform 0.2s",
+                          transform: explanationOpen ? "rotate(90deg)" : "rotate(0deg)",
+                          fontSize: "0.65rem",
+                        }}
+                      >
+                        ▶
+                      </span>
+                      {explanationOpen ? "Hide Explanation" : "Show Explanation"}
+                    </button>
+                  ) : (
+                    <span />
+                  )}
+
+                  {/* Take to Chat button */}
+                  {onTakeToChat && (
+                    <button
+                      onClick={handleTakeToChat}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = B;
+                        e.currentTarget.style.borderColor = B;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = "#555";
+                        e.currentTarget.style.borderColor = "#bbb";
+                      }}
+                      style={{
+                        background: "transparent",
+                        border: "1.5px solid #bbb",
+                        color: "#555",
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: "0.68rem",
+                        fontWeight: 600,
+                        letterSpacing: "0.04em",
+                        padding: "6px 14px",
+                        cursor: "pointer",
+                        transition: "color 0.15s, border-color 0.15s",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      💬 Take to Chat →
+                    </button>
+                  )}
+                </div>
+
+                {/* Explanation panel */}
+                {explanationOpen && question.explanation && (
+                  <div
+                    style={{
+                      background: "#f0fdf4",
+                      border: `2px solid ${G}`,
+                      padding: "14px 18px",
+                    }}
+                  >
+                    <p
+                      style={{
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: "0.78rem",
+                        color: "#444",
+                        margin: 0,
+                        lineHeight: 1.7,
+                      }}
+                    >
+                      {question.explanation}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -607,17 +758,26 @@ export default function QuizTakingScreen({
             {quiz.questions.map((_, qi) => {
               const isCurrent = qi === currentQ;
               const isAnswered = userAnswers[qi] !== null;
+              const isQFlagged = flaggedQuestions.includes(qi);
+
+              // Color: current = green, flagged = amber, answered = black, unanswered = transparent
+              const dotBg = isCurrent ? G : isQFlagged ? AMBER : isAnswered ? B : "transparent";
+              const dotBorder = isQFlagged && !isCurrent ? AMBER : B;
+              const dotOutline = isCurrent && isQFlagged ? `2px solid ${AMBER}` : "none";
+
               return (
                 <div
                   key={qi}
                   onClick={() => setCurrentQ(qi)}
-                  title={`Q${qi + 1}`}
+                  title={`Q${qi + 1}${isQFlagged ? " (flagged)" : ""}`}
                   style={{
                     width: 10,
                     height: 10,
                     borderRadius: "50%",
-                    border: `2px solid ${B}`,
-                    background: isCurrent ? G : isAnswered ? B : "transparent",
+                    border: `2px solid ${dotBorder}`,
+                    background: dotBg,
+                    outline: dotOutline,
+                    outlineOffset: 2,
                     cursor: "pointer",
                     flexShrink: 0,
                     transition: "background 0.1s",

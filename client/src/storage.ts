@@ -392,6 +392,7 @@ export interface QuizQuestion {
   question: string;
   options: string[]; // always 4
   correct_index: number;
+  explanation?: string; // TODO(backend): AI-generated during quiz creation; mock uses hardcoded text
 }
 
 export interface QuizAttempt {
@@ -408,6 +409,7 @@ export interface QuizAttempt {
   score: number;
   questions: QuizQuestion[];
   user_answers: (number | null)[];
+  flagged_questions: number[]; // TODO(backend): persisted in DB; indices of questions the user flagged
 }
 
 function quizzesKey(notebookId: string): string {

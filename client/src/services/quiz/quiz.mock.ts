@@ -2,6 +2,8 @@ import type { QuizAttempt, QuizDifficulty, QuizQuestion } from "../../storage";
 import { getMockTopics, getQuizAttempts, saveQuizAttempts, addQuizAttempt } from "../../storage";
 import type { QuizGenerateOptions, QuizService } from "./quiz.types";
 
+const LETTER = ["A", "B", "C", "D"];
+
 function generateFakeQuestions(topics: string[], count: number): QuizQuestion[] {
   const questions: QuizQuestion[] = [];
   for (let i = 0; i < count; i++) {
@@ -17,6 +19,8 @@ function generateFakeQuestions(topics: string[], count: number): QuizQuestion[] 
         `${topic} — definition D`,
       ],
       correct_index: correctIndex,
+      // TODO(backend): real explanation is AI-generated during quiz creation
+      explanation: `The correct answer is ${LETTER[correctIndex]}. In the context of ${topic}, definition ${LETTER[correctIndex]} most accurately captures the core principle as covered in your study materials. The other options describe related but distinct concepts that are often confused with this one.`,
     });
   }
   return questions;
@@ -54,6 +58,7 @@ function makeSeedAttempt(
     score,
     questions,
     user_answers: userAnswers,
+    flagged_questions: [],
   };
 }
 
@@ -105,6 +110,7 @@ export const QuizServiceMock: QuizService = {
       score: 0,
       questions,
       user_answers: [],
+      flagged_questions: [],
     };
     // Do NOT save yet — the quiz-taking screen will save on completion
     return attempt;

@@ -23,6 +23,8 @@ interface ChatColumnProps {
   onRenameSession: (chatId: string, title: string) => Promise<void>;
   onDeleteSession: (chatId: string) => Promise<void>;
   getChatMessages: (chatId: string) => Promise<ApiChatMessage[]>;
+  initialInput?: string;
+  onInitialInputConsumed?: () => void;
 }
 
 export default function ChatColumn({
@@ -35,6 +37,8 @@ export default function ChatColumn({
   onRenameSession,
   onDeleteSession,
   getChatMessages,
+  initialInput,
+  onInitialInputConsumed,
 }: ChatColumnProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -51,6 +55,15 @@ export default function ChatColumn({
   const skipFetchRef = useRef<string | null>(null);
 
   const currentSession = sessions.find((s) => s.id === activeSessionId);
+
+  // Pre-populate input when arriving from "Take to Chat" in the quiz screen
+  useEffect(() => {
+    if (initialInput) {
+      setInput(initialInput);
+      onInitialInputConsumed?.();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialInput]);
 
   useEffect(() => {
     function handleOutsideClick(e: MouseEvent) {
