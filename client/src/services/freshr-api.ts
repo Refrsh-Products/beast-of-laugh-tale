@@ -74,4 +74,17 @@ export const PaymentServiceApiEndpoints = {
   initiateStripePayment: `${PaymentServiceApiBase}/stripe/initiate/`,
 };
 
+// Quizzes
+export const QuizServiceApiBase = "/quizzes";
+export const QuizServiceApiEndpoints = {
+  listQuizSessionsByNotebook: (notebookId: string) =>
+    `${QuizServiceApiBase}/?notebook=${notebookId}`,
+  createQuizSession: (notebookId: string) =>
+    `${QuizServiceApiBase}/?notebook=${notebookId}`,
+  listFavouriteQuizzes: `${QuizServiceApiBase}/favourites/`,
+  getQuizSession: (quizId: string) => `${QuizServiceApiBase}/${quizId}/`,
+  submitQuiz: (quizId: string) => `${QuizServiceApiBase}/${quizId}/submit/`,
+  retakeQuiz: (quizId: string) => `${QuizServiceApiBase}/${quizId}/retake/`,
+};
+
 export default createFreshrApiInstance;

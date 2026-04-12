@@ -4,7 +4,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from accounts.models import Account, TierPlan, SubscriptionStatus, DailyUsage
-from notebooks.models import Notebook
+from notebooks.models import Notebook, NotebookFile
 
 
 def get_effective_plan(account: Account):
@@ -30,6 +30,15 @@ def check_notebook_quota(account: Account):
         return True
     notebook_count = Notebook.objects.filter(user=account.user).count()
     return notebook_count < max_notebooks
+
+def check_file_per_notebook_quota(account: Account, notebook: Notebook):
+    plan = get_effective_plan(account)
+    limits = get_limits(plan)
+    max_files_per_notebook = limits["max_files_per_notebook"]
+    if max_files_per_notebook == "unlimited":
+        return True
+    notebook_file_count = NotebookFile.objects.filter(notebook=notebook).count()
+    return notebook_file_count < max_files_per_notebook
 
 
 def check_storage_quota(account: Account, incoming_bytes: int):

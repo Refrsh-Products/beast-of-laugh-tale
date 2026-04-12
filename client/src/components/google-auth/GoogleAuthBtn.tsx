@@ -118,6 +118,14 @@ export default function GoogleAuthBtn() {
       <button
         onClick={() => googleLogin()}
         disabled={isLoading}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translate(-3px, -3px)";
+          e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
+        }}
         style={{
           width: "100%",
           background: W,
@@ -134,6 +142,7 @@ export default function GoogleAuthBtn() {
           justifyContent: "center",
           gap: 10,
           marginBottom: 24,
+          transition: "transform 0.08s, box-shadow 0.08s",
         }}
         onMouseDown={(e) => {
           const el = e.currentTarget;
@@ -141,11 +150,6 @@ export default function GoogleAuthBtn() {
           el.style.transform = "translate(2px, 2px)";
         }}
         onMouseUp={(e) => {
-          const el = e.currentTarget;
-          el.style.boxShadow = `4px 4px 0 ${B}`;
-          el.style.transform = "none";
-        }}
-        onMouseLeave={(e) => {
           const el = e.currentTarget;
           el.style.boxShadow = `4px 4px 0 ${B}`;
           el.style.transform = "none";

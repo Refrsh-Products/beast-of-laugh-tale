@@ -400,6 +400,78 @@ export function createChatMessage(
   return message;
 }
 
+// ── Quizzes ──────────────────────────────────────────────────────────
+
+export type QuizDifficulty = "easy" | "medium" | "hard";
+
+export interface QuizQuestion {
+  id: string;
+  question: string;
+  options: string[]; // always 4
+  correct_index: number;
+  explanation?: string; // TODO(backend): AI-generated during quiz creation; mock uses hardcoded text
+}
+
+export interface QuizAttempt {
+  id: string;
+  notebook_id: string;
+  created_at: string;
+  topics: string[];
+  prompt?: string;
+  question_count: number;
+  difficulty: QuizDifficulty;
+  timed: boolean;
+  time_limit?: number; // minutes
+  time_taken: number; // seconds
+  score: number;
+  questions: QuizQuestion[];
+  user_answers: (number | null)[];
+  flagged_questions: number[]; // TODO(backend): persisted in DB; indices of questions the user flagged
+}
+
+function quizzesKey(notebookId: string): string {
+  return `freshr_quizzes_${notebookId}`;
+}
+
+export function getQuizAttempts(notebookId: string): QuizAttempt[] {
+  const raw = localStorage.getItem(quizzesKey(notebookId));
+  return raw ? JSON.parse(raw) : [];
+}
+
+export function saveQuizAttempts(
+  notebookId: string,
+  attempts: QuizAttempt[],
+): void {
+  localStorage.setItem(quizzesKey(notebookId), JSON.stringify(attempts));
+}
+
+export function addQuizAttempt(notebookId: string, attempt: QuizAttempt): void {
+  saveQuizAttempts(notebookId, [attempt, ...getQuizAttempts(notebookId)]);
+}
+
+// Might need to change this, since I am planning to dynamically create topics
+export function getMockTopics(): string[] {
+  return [
+    "Photosynthesis",
+    "Cell Division",
+    "DNA Replication",
+    "Newton's Laws",
+    "Thermodynamics",
+    "Organic Chemistry",
+    "Calculus Derivatives",
+    "Linear Algebra",
+    "World War II",
+    "Renaissance Art",
+    "Supply and Demand",
+    "Machine Learning",
+    "Neural Networks",
+    "Data Structures",
+    "Algorithms",
+  ];
+}
+
+// ─────────────────────────────────────────────────────────────────────
+
 export function seedNotebooks(): void {
   if (getNotebooks().length > 0) return;
   const seed: Notebook[] = [

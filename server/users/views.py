@@ -8,12 +8,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-from django.core.mail import send_mail
+# from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth import authenticate
 from drf_spectacular.utils import extend_schema
 import requests as http_requests
 
+from users.services import email_service
 from .models import User
 from accounts.models import Account
 from .serializers import (
@@ -219,6 +220,7 @@ class PasswordResetRequestView(APIView):
 
         try:
             user = User.objects.get(email__iexact=email)
+            account = Account.objects.get(user=user)
             # Generate token
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(str(user.pk)))
@@ -227,18 +229,16 @@ class PasswordResetRequestView(APIView):
             frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
             reset_url = f"{frontend_url}/reset-password?uid={uid}&token={token}"
 
-            # Send email (html_message avoids quoted-printable encoding mangling the URL)
             print(f"[PasswordReset] Reset URL: {reset_url}")
-            send_mail(
-                subject='FRESHR Password Reset Request',
-                message=f'Click the link to reset your password: {reset_url}',
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@freshr.com'),
-                recipient_list=[email],
-                fail_silently=False,
-                html_message=f'<p>Click the link below to reset your FRESHR password:</p><p><a href="{reset_url}">{reset_url}</a></p>',
+            email_service.send_template_email(
+                to=email,
+                subject='Reset Your FRESHR Password',
+                template_name='emails/password_reset.html',
+                context={'account': account, 'reset_url': reset_url},
             )
-        except User.DoesNotExist:
-            # Don't reveal whether email exists
+
+        except (User.DoesNotExist, Account.DoesNotExist):
+            # Don't reveal whether email/account exists
             pass
 
         # Always return success to prevent email enumeration

@@ -8,6 +8,7 @@ import {
 import useAuthService from "../services/auth";
 import useNotebookService from "../services/notebooks";
 import type { Notebook, NotebookFile } from "../storage";
+import type { QuizGenerateOptions } from "../services/quiz/Quiz.types";
 
 import NotebookTitle from "../components/notebook/NotebookTitle";
 import FilesColumn, {
@@ -17,10 +18,15 @@ import ChatColumn from "../components/notebook/ChatColumn";
 import OptionsColumn, {
   type ActiveView,
 } from "../components/notebook/OptionsColumn";
+import QuizReviewColumn from "../components/notebook/QuizReviewColumn";
+import QuizTakingScreen from "../components/notebook/QuizTakingScreen";
+import PastQuizColumn from "../components/notebook/PastQuizColumn";
 import QuizColumn from "../components/notebook/QuizColumn";
 import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
 import useChatService from "../services/chat";
+import useQuizService from "../services/quiz";
+import type { QuizSession } from "../hooks/useQuizService.api";
 
 const B = "#000000";
 const W = "#FFFFFF";
@@ -31,6 +37,7 @@ export default function NotebookPage() {
   const authService = useAuthService();
   const notebookService = useNotebookService();
   const chatService = useChatService();
+  const quizService = useQuizService();
   const navigate = useNavigate();
   const { toasts, showToast } = useToast();
 
@@ -38,6 +45,12 @@ export default function NotebookPage() {
   const [files, setFiles] = useState<NotebookFile[]>([]);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [activeView, setActiveView] = useState<ActiveView>("chat");
+  const [quizTopics, setQuizTopics] = useState<string[]>([]);
+  const [isLoadingTopics, setIsLoadingTopics] = useState(false);
+  const [previousQuizzes, setPreviousQuizzes] = useState<QuizSession[]>([]);
+  const [selectedQuiz, setSelectedQuiz] = useState<QuizSession | null>(null);
+  const [activeQuiz, setActiveQuiz] = useState<QuizSession | null>(null);
+  const [pendingChatInput, setPendingChatInput] = useState<string>("");
   const [notFound, setNotFound] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<FileUploadState[]>([]);
   const [chatSessions, setChatSessions] = useState<
@@ -95,6 +108,26 @@ export default function NotebookPage() {
     load();
   }, [notebookId]);
 
+  useEffect(() => {
+    if (activeView !== "quiz") return;
+    async function loadQuizData() {
+      if (quizTopics.length === 0) {
+        setIsLoadingTopics(true);
+        try {
+          // to create topics: Make a AI call with chunks from RAG and generate different topics.
+          const topics = ["topic 1", "topic 2", "topic 3"]; // this is just a placeholder
+          setQuizTopics(topics);
+        } finally {
+          setIsLoadingTopics(false);
+        }
+      }
+      const quizzes = await quizService.listQuizSessionsByNotebook(notebookId);
+      // const quizzes = await quizService.getPreviousQuizzes(notebookId);
+      setPreviousQuizzes(quizzes);
+    }
+    loadQuizData();
+  }, [activeView, notebookId]);
+
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
 
   if (notFound) return <Navigate to="/dashboard" replace />;
@@ -135,13 +168,15 @@ export default function NotebookPage() {
             );
           }
         } catch (err) {
-          const errMsg = err instanceof Error ? err.message : "Upload failed";
+          const errMsg =
+            (err as any)?.response?.data?.detail ??
+            (err instanceof Error ? err.message : "Upload failed");
           setUploadProgress((prev) =>
             prev.map((p, idx) =>
               idx === i ? { ...p, status: "error", error: errMsg } : p,
             ),
           );
-          showToast(`${file.name}: ${errMsg}`, "danger");
+          showToast(errMsg, "danger");
         }
       }),
     );
@@ -248,12 +283,99 @@ export default function NotebookPage() {
     }
   }
 
-  async function handleGenerateQuiz() {
+  async function handleGenerateQuiz(options: QuizGenerateOptions) {
+    // it will create a new quiz session, and automatically create the questions in the backend
+    setIsGeneratingQuiz(true);
+    const payload = {
+      notebook: notebookId,
+      topic: options.topics.join(" "),
+      difficulty: options.difficulty,
+      quiz_type: options.quizType,
+      time_limit: options.timeLimit,
+      num_questions: options.questionCount,
+    };
+    console.log(`Payload for generating quiz: ${payload}`);
+
+    try {
+      const quiz = await quizService.createQuizSession(payload);
+      setSelectedQuiz(null);
+      setActiveQuiz(quiz);
+    } catch {
+      showToast("Failed to generate quiz", "danger");
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  }
+
+  async function handleQuizComplete(
+    userAnswers: (number | null)[],
+    _timeTaken: number,
+    _flaggedQuestions: number[],
+  ) {
+    if (!activeQuiz) return;
+    const questions = activeQuiz.questions ?? [];
+    const answers = questions
+      .map((q, i) => {
+        const selectedIndex = userAnswers[i];
+        if (selectedIndex === null) return null;
+        const resolvedChoices =
+          q.choices.length > 0 ? q.choices : ["True", "False"];
+        return {
+          question_id: q.id,
+          user_answer: resolvedChoices[selectedIndex],
+        };
+      })
+      .filter((a): a is { question_id: string; user_answer: string } => a !== null);
+    try {
+      const completedQuiz = await quizService.submitQuiz(activeQuiz.id!, answers);
+      const quizzes = await quizService.listQuizSessionsByNotebook(notebookId);
+      setPreviousQuizzes(quizzes);
+      setActiveQuiz(null);
+      setSelectedQuiz(completedQuiz);
+    } catch {
+      showToast("Failed to submit quiz", "danger");
+    }
+  }
+
+  function handleQuizExit() {
+    setActiveQuiz(null);
+  }
+
+  function handleTakeToChat(
+    questionText: string,
+    options: string[],
+    topic: string,
+  ) {
+    const formatted = [
+      `I'm studying ${topic} and I need help with this question:`,
+      "",
+      `"${questionText}"`,
+      "",
+      "Options were:",
+      ...options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`),
+    ].join("\n");
+    setActiveQuiz(null);
+    setPendingChatInput(formatted);
+    setActiveView("chat");
+  }
+
+  function handleQuizClick(quiz: QuizSession) {
+    setSelectedQuiz(quiz);
+  }
+
+  function handleBackToGenerator() {
+    setSelectedQuiz(null);
+  }
+
+  async function handleRetakeQuiz() {
+    if (!selectedQuiz) return;
     setIsGeneratingQuiz(true);
     try {
-      // TODO: wire up quiz generation API when Safwan is ready
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      showToast("Quiz generated", "success");
+      const quiz = await quizService.retakePastQuiz(selectedQuiz.id!);
+      setSelectedQuiz(null);
+      setActiveQuiz(quiz);
+    } catch {
+      showToast("Failed to generate quiz", "danger");
     } finally {
       setIsGeneratingQuiz(false);
     }
@@ -304,6 +426,10 @@ export default function NotebookPage() {
       >
         <span
           onClick={() => navigate("/dashboard")}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.textDecoration = "underline")
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
           style={{
             fontSize: "0.78rem",
             fontWeight: 700,
@@ -311,6 +437,8 @@ export default function NotebookPage() {
             cursor: "pointer",
             letterSpacing: "0.04em",
             flexShrink: 0,
+            textDecoration: "none",
+            textUnderlineOffset: "3px",
           }}
         >
           ← Back to dashboard
@@ -348,27 +476,54 @@ export default function NotebookPage() {
             onDeleteSession={handleDeleteSession}
             getChatMessages={chatService.getChatSessionMessages}
             chatDisabled={files.length > 0 && !hasReadyFiles}
+            initialInput={pendingChatInput}
+            onInitialInputConsumed={() => setPendingChatInput("")}
+          />
+        ) : selectedQuiz ? (
+          <QuizReviewColumn
+            quiz={selectedQuiz}
+            onBack={handleBackToGenerator}
+            onRetake={handleRetakeQuiz}
           />
         ) : (
           <QuizColumn
-            onGenerateQuiz={handleGenerateQuiz}
+            topics={quizTopics}
+            isLoadingTopics={isLoadingTopics}
+            onGenerate={handleGenerateQuiz}
             isGenerating={isGeneratingQuiz}
-            quizDisabled={files.length > 0}
           />
         )}
 
-        {/* Files column (right) */}
-        <FilesColumn
-          files={files}
-          onUpload={handleUpload}
-          onDeleteSelected={handleDeleteSelected}
-          onDeleteOne={handleDeleteOne}
-          onRename={handleRenameFile}
-          uploadProgress={uploadProgress}
-        />
+        {/* Right column — Files on chat tab, Previous Quizzes on quiz tab */}
+        {activeView === "quiz" ? (
+          <PastQuizColumn
+            quizzes={previousQuizzes}
+            selectedQuizId={selectedQuiz?.id ?? null}
+            onQuizClick={handleQuizClick}
+          />
+        ) : (
+          <FilesColumn
+            files={files}
+            onUpload={handleUpload}
+            onDeleteSelected={handleDeleteSelected}
+            onDeleteOne={handleDeleteOne}
+            onRename={handleRenameFile}
+            uploadProgress={uploadProgress}
+          />
+        )}
       </div>
 
       <ToastContainer toasts={toasts} />
+
+      {/* Quiz-taking overlay — sits on top of everything */}
+      {activeQuiz && (
+        <QuizTakingScreen
+          quiz={activeQuiz}
+          onComplete={handleQuizComplete}
+          onExit={handleQuizExit}
+          onTakeToChat={handleTakeToChat}
+        />
+      )}
     </div>
   );
 }

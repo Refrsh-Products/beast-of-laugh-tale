@@ -115,7 +115,7 @@ export default function OptionsColumn({
           overflowY: "auto",
           display: "flex",
           flexDirection: "column",
-          padding: "10px 10px",
+          padding: "14px 10px",
           gap: 4,
         }}
       >

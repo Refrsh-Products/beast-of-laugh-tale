@@ -29,6 +29,14 @@ export default function LoginBtn({
     <button
       type={type}
       onClick={onClick}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = "translate(-3px, -3px)";
+        e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+        e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
+      }}
       style={{
         background: bg,
         color: txt,
@@ -47,7 +55,6 @@ export default function LoginBtn({
       }}
       onMouseDown={() => setDown(true)}
       onMouseUp={() => setDown(false)}
-      onMouseLeave={() => setDown(false)}
     >
       {children}
     </button>

@@ -25,6 +25,12 @@ function NavItem({
   return (
     <div
       onClick={onClick}
+      onMouseEnter={(e) => {
+        if (!active) (e.currentTarget as HTMLElement).style.color = B;
+      }}
+      onMouseLeave={(e) => {
+        if (!active) (e.currentTarget as HTMLElement).style.color = "#aaa";
+      }}
       style={{
         padding: "10px 0 10px 14px",
         borderLeft: `3px solid ${active ? B : "transparent"}`,
@@ -35,6 +41,7 @@ function NavItem({
         color: active ? B : "#aaa",
         cursor: "pointer",
         userSelect: "none",
+        transition: "color 0.12s",
       }}
     >
       {label}

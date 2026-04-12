@@ -1,44 +1,44 @@
-import type { Notebook } from '../../storage'
+import type { Notebook } from "../../storage";
 
-const B = '#000000'
-const W = '#FFFFFF'
+const B = "#000000";
+const W = "#FFFFFF";
 
 export default function ArchivedSection({
   notebooks,
   onUnarchive,
 }: {
-  notebooks: Notebook[]
-  onUnarchive: (id: string) => void
+  notebooks: Notebook[];
+  onUnarchive: (id: string) => void;
 }) {
-  if (notebooks.length === 0) return null
+  if (notebooks.length === 0) return null;
 
   return (
     <div style={{ marginTop: 40 }}>
       <div
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: '0.6rem',
+          fontSize: "0.6rem",
           fontWeight: 700,
-          letterSpacing: '0.14em',
-          color: '#aaa',
+          letterSpacing: "0.14em",
+          color: "#aaa",
           marginBottom: 12,
-          display: 'flex',
-          alignItems: 'center',
+          display: "flex",
+          alignItems: "center",
           gap: 8,
         }}
       >
         ARCHIVED
         <span style={{ fontWeight: 400 }}>({notebooks.length})</span>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {notebooks.map((nb) => (
           <div
             key={nb.id}
             style={{
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 12,
-              padding: '10px 16px',
+              padding: "10px 16px",
               background: W,
               border: `2px solid #ccc`,
               boxShadow: `2px 2px 0 #ccc`,
@@ -49,11 +49,11 @@ export default function ArchivedSection({
                 flex: 1,
                 fontFamily: "'Syne', sans-serif",
                 fontWeight: 700,
-                fontSize: '0.88rem',
-                color: '#888',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
+                fontSize: "0.88rem",
+                color: "#888",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
                 minWidth: 0,
               }}
             >
@@ -61,17 +61,26 @@ export default function ArchivedSection({
             </span>
             <button
               onClick={() => onUnarchive(nb.id)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translate(-3px, -3px)";
+                e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow = "none";
+              }}
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: '0.62rem',
+                fontSize: "0.62rem",
                 fontWeight: 700,
-                letterSpacing: '0.06em',
-                background: 'none',
+                letterSpacing: "0.06em",
+                background: "none",
                 border: `2px solid ${B}`,
-                padding: '4px 10px',
-                cursor: 'pointer',
+                padding: "4px 10px",
+                cursor: "pointer",
                 flexShrink: 0,
                 color: B,
+                transition: "transform 0.15s, box-shadow 0.15s",
               }}
             >
               Unarchive
@@ -80,5 +89,5 @@ export default function ArchivedSection({
         ))}
       </div>
     </div>
-  )
+  );
 }

@@ -1,5 +1,6 @@
-const B = '#000000'
-const W = '#FFFFFF'
+const G = "#84e487";
+const B = "#000000";
+const W = "#FFFFFF";
 
 export default function DashboardHeader({
   notebookCount,
@@ -8,20 +9,20 @@ export default function DashboardHeader({
   onSearchChange,
   onViewChange,
 }: {
-  notebookCount: number
-  searchQuery: string
-  view: 'grid' | 'list'
-  onSearchChange: (val: string) => void
-  onViewChange: (view: 'grid' | 'list') => void
+  notebookCount: number;
+  searchQuery: string;
+  view: "grid" | "list";
+  onSearchChange: (val: string) => void;
+  onViewChange: (view: "grid" | "list") => void;
 }) {
   return (
     <div
       style={{
-        padding: '24px 32px 16px',
+        padding: "24px 32px 16px",
         borderBottom: `2px solid ${B}`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
         flexShrink: 0,
         background: W,
       }}
@@ -31,8 +32,8 @@ export default function DashboardHeader({
           style={{
             fontFamily: "'Syne', sans-serif",
             fontWeight: 800,
-            fontSize: '1.6rem',
-            letterSpacing: '-0.02em',
+            fontSize: "1.6rem",
+            letterSpacing: "-0.02em",
             margin: 0,
             lineHeight: 1.1,
           }}
@@ -42,32 +43,39 @@ export default function DashboardHeader({
         <p
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: '0.7rem',
-            color: '#888',
-            margin: '4px 0 0',
+            fontSize: "0.7rem",
+            color: "#888",
+            margin: "4px 0 0",
           }}
         >
           {notebookCount} notebooks
         </p>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {/* Search */}
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: "relative" }}>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search notebooks..."
+            onMouseEnter={(e) => {
+              if (document.activeElement !== e.currentTarget)
+                e.currentTarget.style.borderColor = G;
+            }}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
+            onFocus={(e) => (e.currentTarget.style.borderColor = B)}
             style={{
               border: `2px solid ${B}`,
               borderRadius: 0,
-              padding: '8px 12px 8px 32px',
+              padding: "8px 12px 8px 32px",
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: '0.72rem',
+              fontSize: "0.72rem",
               background: W,
-              outline: 'none',
+              outline: "none",
               width: 200,
+              transition: "border-color 0.15s",
             }}
           />
           <svg
@@ -75,24 +83,42 @@ export default function DashboardHeader({
             height="14"
             viewBox="0 0 14 14"
             fill="none"
-            style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+            style={{
+              position: "absolute",
+              left: 10,
+              top: "50%",
+              transform: "translateY(-50%)",
+              pointerEvents: "none",
+            }}
           >
             <circle cx="6" cy="6" r="4.5" stroke="#aaa" strokeWidth="1.5" />
-            <path d="M10 10l2.5 2.5" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" />
+            <path
+              d="M10 10l2.5 2.5"
+              stroke="#aaa"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+            />
           </svg>
         </div>
 
         {/* Grid/List toggle */}
-        <div style={{ display: 'flex', border: `2px solid ${B}` }}>
+        <div style={{ display: "flex", border: `2px solid ${B}` }}>
           <button
-            onClick={() => onViewChange('grid')}
+            onClick={() => onViewChange("grid")}
+            onMouseEnter={(e) => {
+              if (view !== "grid") e.currentTarget.style.background = "#eee";
+            }}
+            onMouseLeave={(e) => {
+              if (view !== "grid") e.currentTarget.style.background = W;
+            }}
             style={{
-              background: view === 'grid' ? B : W,
-              color: view === 'grid' ? W : B,
-              border: 'none',
-              padding: '8px 10px',
-              cursor: 'pointer',
+              background: view === "grid" ? B : W,
+              color: view === "grid" ? W : B,
+              border: "none",
+              padding: "8px 10px",
+              cursor: "pointer",
               lineHeight: 1,
+              transition: "background 0.12s",
             }}
             title="Grid view"
           >
@@ -104,15 +130,22 @@ export default function DashboardHeader({
             </svg>
           </button>
           <button
-            onClick={() => onViewChange('list')}
+            onClick={() => onViewChange("list")}
+            onMouseEnter={(e) => {
+              if (view !== "list") e.currentTarget.style.background = "#eee";
+            }}
+            onMouseLeave={(e) => {
+              if (view !== "list") e.currentTarget.style.background = W;
+            }}
             style={{
-              background: view === 'list' ? B : W,
-              color: view === 'list' ? W : B,
-              border: 'none',
+              background: view === "list" ? B : W,
+              color: view === "list" ? W : B,
+              border: "none",
               borderLeft: `1px solid ${B}`,
-              padding: '8px 10px',
-              cursor: 'pointer',
+              padding: "8px 10px",
+              cursor: "pointer",
               lineHeight: 1,
+              transition: "background 0.12s",
             }}
             title="List view"
           >
@@ -125,5 +158,5 @@ export default function DashboardHeader({
         </div>
       </div>
     </div>
-  )
+  );
 }
