@@ -56,6 +56,8 @@ export default function ForgotPasswordPage() {
         {/* Logo */}
         <div
           onClick={() => navigate("/")}
+          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
+          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
           style={{
             fontFamily: "'Syne', sans-serif",
             fontWeight: 800,
@@ -65,6 +67,7 @@ export default function ForgotPasswordPage() {
             cursor: "pointer",
             userSelect: "none",
             marginBottom: 32,
+            transition: "opacity 0.12s",
           }}
         >
           FRESHR
@@ -127,6 +130,12 @@ export default function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
+              onMouseEnter={(e) => {
+                if (document.activeElement !== e.currentTarget)
+                  e.currentTarget.style.borderColor = G;
+              }}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
+              onFocus={(e) => (e.currentTarget.style.borderColor = B)}
               style={{
                 width: "100%",
                 border: `3px solid ${B}`,
@@ -137,6 +146,7 @@ export default function ForgotPasswordPage() {
                 background: W,
                 outline: "none",
                 boxSizing: "border-box",
+                transition: "border-color 0.15s",
               }}
             />
           </div>
@@ -152,10 +162,13 @@ export default function ForgotPasswordPage() {
         <p style={{ marginTop: 24, fontSize: "0.75rem", color: "#555" }}>
           <span
             onClick={() => navigate("/login")}
+            onMouseEnter={(e) => (e.currentTarget.style.color = B)}
+            onMouseLeave={(e) => (e.currentTarget.style.color = "inherit")}
             style={{
               cursor: "pointer",
               textDecoration: "underline",
               textUnderlineOffset: 3,
+              transition: "color 0.12s",
             }}
           >
             ← Back to login
@@ -177,6 +190,16 @@ function SubmitBtn({
     <button
       type="submit"
       disabled={disabled}
+      onMouseEnter={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.transform = "translate(-3px, -3px)";
+          e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`;
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = "none";
+        e.currentTarget.style.boxShadow = `4px 4px 0 ${B}`;
+      }}
       style={{
         width: "100%",
         background: G,
@@ -191,6 +214,7 @@ function SubmitBtn({
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.6 : 1,
         lineHeight: 1,
+        transition: "transform 0.15s, box-shadow 0.15s",
       }}
     >
       {children}

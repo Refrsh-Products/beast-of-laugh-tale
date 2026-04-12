@@ -68,6 +68,8 @@ class NotebookFileCreateAPIView(APIView):
 
         with transaction.atomic():
             account = Account.objects.select_for_update().get(user=self.request.user)
+            if not quota.check_file_per_notebook_quota(account, notebook):
+                raise PermissionDenied("File limit per notebook reached for your plan.")
             if not quota.check_storage_quota(account, uploaded_file.size):
                 raise PermissionDenied("Storage limit reached for your plan.")
 

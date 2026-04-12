@@ -23,7 +23,8 @@ export default function ProfilePage() {
     ? `${account.first_name} ${account.last_name}`.trim()
     : "";
   const location = useLocation();
-  const initialTab = (location.state as { tab?: ProfileTab } | null)?.tab ?? "profile";
+  const initialTab =
+    (location.state as { tab?: ProfileTab } | null)?.tab ?? "profile";
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -64,12 +65,18 @@ export default function ProfilePage() {
       >
         <span
           onClick={() => navigate("/dashboard")}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.textDecoration = "underline")
+          }
+          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
           style={{
             fontSize: "0.78rem",
             fontWeight: 700,
             color: B,
             cursor: "pointer",
             letterSpacing: "0.04em",
+            textDecoration: "none",
+            textUnderlineOffset: "3px",
           }}
         >
           ← Back to dashboard
