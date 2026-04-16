@@ -83,6 +83,7 @@ export const QuizServiceApiEndpoints = {
     `${QuizServiceApiBase}/?notebook=${notebookId}`,
   createQuizSession: (notebookId: string) =>
     `${QuizServiceApiBase}/?notebook=${notebookId}`,
+  deleteQuizSession: (quizId: string) => `${QuizServiceApiBase}/${quizId}/`,
   listFavouriteQuizzes: `${QuizServiceApiBase}/favourites/`,
   getQuizSession: (quizId: string) => `${QuizServiceApiBase}/${quizId}/`,
   submitQuiz: (quizId: string) => `${QuizServiceApiBase}/${quizId}/submit/`,

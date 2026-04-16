@@ -3,15 +3,22 @@ import type { QuizSession } from "../../hooks/useQuizService.api";
 const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
+const R = "#FF4D4D";
 
 export default function QuizCard({
   quiz,
   selected,
   onClick,
+  bulkMode = false,
+  bulkSelected = false,
+  onToggleSelect,
 }: {
   quiz: QuizSession;
   selected: boolean;
   onClick: () => void;
+  bulkMode?: boolean;
+  bulkSelected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }) {
   const topics = quiz.topics ?? (quiz.topic ? [quiz.topic] : []);
   const topicLabel =
@@ -28,22 +35,31 @@ export default function QuizCard({
     : null;
   const dateStr = quiz.started_at ?? quiz.generated_at ?? "";
 
+  function handleClick() {
+    if (bulkMode) {
+      onToggleSelect?.(quiz.id!);
+    } else {
+      onClick();
+    }
+  }
+
   return (
     <div
-      onClick={onClick}
+      onClick={handleClick}
       onMouseEnter={(e) => {
-        if (!selected) e.currentTarget.style.background = "#f7f7f2";
+        if (!selected && !bulkSelected) e.currentTarget.style.background = "#f7f7f2";
       }}
       onMouseLeave={(e) => {
-        if (!selected) e.currentTarget.style.background = W;
+        if (!selected && !bulkSelected) e.currentTarget.style.background = W;
       }}
       style={{
         padding: "12px 14px 12px 12px",
         borderBottom: `2px solid ${B}`,
-        borderLeft: `4px solid ${G}`,
+        borderLeft: `4px solid ${bulkSelected ? R : G}`,
         cursor: "pointer",
-        background: selected ? "#f0fdf0" : W,
+        background: bulkSelected ? "#fff0f0" : selected ? "#f0fdf0" : W,
         transition: "background 0.1s",
+        userSelect: "none",
       }}
     >
       {/* Topic + Score badge */}
@@ -149,6 +165,24 @@ export default function QuizCard({
           </>
         )}
       </div>
+
+      {/* Bulk mode checkbox */}
+      {bulkMode && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+          <input
+            type="checkbox"
+            checked={bulkSelected}
+            onChange={() => onToggleSelect?.(quiz.id!)}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              cursor: "pointer",
+              accentColor: R,
+              width: 14,
+              height: 14,
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

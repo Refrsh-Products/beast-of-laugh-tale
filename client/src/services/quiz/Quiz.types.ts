@@ -53,6 +53,7 @@ export interface QuizAnswerPayload {
 
 export interface QuizService {
   createQuizSession: (payload: QuizCreatePayload) => Promise<QuizSession>;
+  deleteQuizSession: (quizId: string) => Promise<void>;
   fetchQuizSession: (quizId: string) => Promise<QuizSession>;
   submitQuiz: (
     quizId: string,

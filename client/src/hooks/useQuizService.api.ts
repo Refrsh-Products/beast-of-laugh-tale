@@ -63,6 +63,17 @@ const useQuizServiceApi = (): QuizService => {
       }
     },
 
+    deleteQuizSession: async (quizId: string) => {
+      try {
+        await fetchData(
+          QuizServiceApiEndpoints.deleteQuizSession(quizId),
+          "DELETE",
+        );
+      } catch (err) {
+        throw err;
+      }
+    },
+
     fetchQuizSession: async (quizId: string) => {
       try {
         const response = await fetchData<QuizSession>(
