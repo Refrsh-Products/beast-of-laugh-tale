@@ -5,9 +5,10 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from asgiref.sync import async_to_sync
 from django.shortcuts import get_object_or_404
-from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
+from drf_spectacular.utils import extend_schema, inline_serializer
 
 from notebooks.models import Notebook
+from .models import NotebookTopic
 from .serializers import QueryInputSerializer
 from .services import query_notebook_rag
 
@@ -61,3 +62,29 @@ class QueryVectorDBAPIView(APIView):
             {"success": True, "results": results_data},
             status=status.HTTP_200_OK,
         )
+
+
+class NotebookTopicsAPIView(APIView):
+    """
+    GET /notebooks/<notebook_id>/topics
+    Returns all discovered topics for a notebook, ordered by creation time.
+    """
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        responses={
+            200: inline_serializer(
+                name="TopicListResponse",
+                fields={
+                    "id": serializers.UUIDField(),
+                    "name": serializers.CharField(),
+                },
+                many=True,
+            )
+        }
+    )
+    def get(self, request, notebook_id):
+        get_object_or_404(Notebook, id=notebook_id, user=request.user)
+        topics = NotebookTopic.objects.filter(notebook_id=notebook_id).order_by("created_at")
+        data = [{"id": str(t.id), "name": t.name} for t in topics]
+        return Response(data, status=status.HTTP_200_OK)

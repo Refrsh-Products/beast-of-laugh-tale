@@ -1,6 +1,8 @@
 import os
-from typing import List
 import json
+import asyncio
+from typing import List, Tuple
+import numpy as np
 from langchain_core.documents import Document
 from langchain_postgres import PGVectorStore, PGEngine
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -33,7 +35,7 @@ async def get_vector_store():
             )
         except ProgrammingError:
             pass  # Table already exists (created by another process)
-        
+
         _vectorstore_table_initialized = True
 
     return await PGVectorStore.create(
@@ -41,6 +43,7 @@ async def get_vector_store():
         embedding_service=embeddings,
         table_name="rag_embeddings",
     )
+
 
 async def ingest_note_to_rag(note_id):
     from unstructured.partition.pdf import partition_pdf
@@ -74,14 +77,14 @@ async def ingest_note_to_rag(note_id):
     print(f"Creating smart chunks...")
 
     chunks = chunk_by_title(
-        elements, # The parsed PDF elements from previous step
-        max_characters=3000, # Hard limit - never exceed 3000 characters per chunk
-        new_after_n_chars=2400, # Try to start a new chunk after 2400 characters
-        combine_text_under_n_chars=500 # Merge tiny chunks under 500 chars with neighbors
+        elements,
+        max_characters=3000,
+        new_after_n_chars=2400,
+        combine_text_under_n_chars=500
     )
 
     print(f"Created {len(chunks)} chunks")
-    
+
     # Step 3: AI Summarisation
     print("Processing chunks with AI Summaries...")
 
@@ -91,15 +94,12 @@ async def ingest_note_to_rag(note_id):
     for i, chunk in enumerate(chunks):
         current_chunk = i + 1
         print(f"   Processing chunk {current_chunk}/{total_chunks}")
-        
-        # Analyze chunk content
+
         content_data = separate_content_types(chunk)
-        
-        # Debug prints
+
         print(f"     Types found: {content_data['types']}")
         print(f"     Tables: {len(content_data['tables'])}, Images: {len(content_data['images'])}")
-        
-        # Create AI-enhanced summary if chunk has tables/images
+
         if content_data['tables'] or content_data['images']:
             print(f"     Creating AI summary for mixed content...")
             try:
@@ -116,8 +116,7 @@ async def ingest_note_to_rag(note_id):
         else:
             print(f"     Using raw text (no tables/images)")
             enhanced_content = content_data['text']
-        
-        # Create LangChain Document with rich metadata
+
         doc = Document(
             page_content=enhanced_content,
             metadata={
@@ -127,9 +126,9 @@ async def ingest_note_to_rag(note_id):
                 })
             }
         )
-        
+
         langchain_documents.append(doc)
-    
+
     print(f"Processed {len(langchain_documents)} chunks")
     summarised_chunks = langchain_documents
 
@@ -138,12 +137,147 @@ async def ingest_note_to_rag(note_id):
         doc.metadata["user_id"] = str(note.notebook.user.pk)
         doc.metadata["notebook_file_id"] = str(note.pk)
 
-    # Step 4: Vector Store
+    # Step 4: Topic Discovery + Chunk Embedding
+    print("Discovering topics and embedding chunks...")
+
+    embed_model = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+    chunk_texts = [doc.page_content for doc in summarised_chunks]
+    chunk_embeddings = await embed_model.aembed_documents(chunk_texts)
+
+    try:
+        topics, topic_embeddings = await discover_file_topics(
+            summarised_chunks, str(note.notebook.pk)
+        )
+        if topics:
+            assign_topics_by_similarity(summarised_chunks, chunk_embeddings, topic_embeddings, topics)
+            print(f"Assigned topics to {len(summarised_chunks)} chunks")
+    except Exception as e:
+        print(f"Topic discovery failed (non-fatal): {e}")
+
+    # Step 5: Vector Store — use pre-computed embeddings to avoid re-embedding
+    print("Upserting to vector store...")
     vector_store = await get_vector_store()
-    await vector_store.aadd_documents(summarised_chunks)
+    await vector_store.aadd_embeddings(
+        texts=chunk_texts,
+        embeddings=chunk_embeddings,
+        metadatas=[doc.metadata for doc in summarised_chunks],
+    )
 
     note.ingestion_status = NotebookFile.IngestionStatus.READY
     await note.asave(update_fields=["ingestion_status"])
+
+
+async def discover_file_topics(
+    langchain_documents: List[Document],
+    notebook_id: str,
+) -> Tuple[list, List[List[float]]]:
+    """
+    Build a document summary, ask Claude Haiku for 5 topics, then
+    deduplicate against existing NotebookTopic rows for this notebook.
+
+    Returns a tuple of (topic_objects, topic_embeddings) where topic_embeddings
+    is a list of float lists in the same order as topic_objects.
+    """
+    from rag.models import NotebookTopic
+    from notebooks.models import Notebook
+    from django.db import connection
+
+    # Build a concise summary from chunk page_content (cap at 6000 chars)
+    combined = " ".join(doc.page_content for doc in langchain_documents)
+    summary = combined[:6000]
+
+    # Ask LLM to generate topic list
+    raw_topics = await sync_to_async(_generate_topics_from_summary)(summary)
+    if not raw_topics:
+        return [], []
+
+    print(f"  LLM discovered topics: {raw_topics}")
+
+    embed_model = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+    topic_embeddings_raw = await embed_model.aembed_documents(raw_topics)
+
+    notebook = await Notebook.objects.aget(pk=notebook_id)
+
+    result_topics = []
+    result_embeddings = []
+
+    for topic_name, topic_emb in zip(raw_topics, topic_embeddings_raw):
+        matched_topic = await _find_similar_topic(notebook_id, topic_emb, threshold=0.9)
+
+        if matched_topic:
+            print(f"  Reusing existing topic: '{matched_topic.name}'")
+            result_topics.append(matched_topic)
+            # Fetch the stored embedding for this topic for later cosine comparison
+            result_embeddings.append(matched_topic.embedding.tolist())
+        else:
+            new_topic = await sync_to_async(NotebookTopic.objects.create)(
+                notebook=notebook,
+                name=topic_name,
+                embedding=topic_emb,
+            )
+            print(f"  Created new topic: '{topic_name}'")
+            result_topics.append(new_topic)
+            result_embeddings.append(topic_emb)
+
+    return result_topics, result_embeddings
+
+
+async def _find_similar_topic(notebook_id: str, query_embedding: List[float], threshold: float):
+    """
+    Return the closest NotebookTopic for this notebook if cosine similarity >= threshold,
+    otherwise return None.
+    """
+    from rag.models import NotebookTopic
+
+    existing = await sync_to_async(list)(
+        NotebookTopic.objects.filter(notebook_id=notebook_id)
+    )
+    if not existing:
+        return None
+
+    q = np.array(query_embedding, dtype=np.float32)
+    best_topic = None
+    best_sim = -1.0
+
+    for topic in existing:
+        t = np.array(topic.embedding, dtype=np.float32)
+        sim = float(np.dot(q, t) / (np.linalg.norm(q) * np.linalg.norm(t) + 1e-10))
+        if sim > best_sim:
+            best_sim = sim
+            best_topic = topic
+
+    if best_sim >= threshold:
+        return best_topic
+    return None
+
+
+def assign_topics_by_similarity(
+    docs: List[Document],
+    chunk_embeddings: List[List[float]],
+    topic_embeddings: List[List[float]],
+    topics: list,
+) -> None:
+    """
+    For each chunk, find the topic with the highest cosine similarity and
+    write its id into doc.metadata["topic_id"] and name into doc.metadata["topic_name"].
+    """
+    if not topics or not topic_embeddings:
+        return
+
+    topic_matrix = np.array(topic_embeddings, dtype=np.float32)
+    # Normalize rows
+    norms = np.linalg.norm(topic_matrix, axis=1, keepdims=True) + 1e-10
+    topic_matrix_normed = topic_matrix / norms
+
+    for doc, chunk_emb in zip(docs, chunk_embeddings):
+        c = np.array(chunk_emb, dtype=np.float32)
+        c_norm = c / (np.linalg.norm(c) + 1e-10)
+        sims = topic_matrix_normed @ c_norm
+        best_idx = int(np.argmax(sims))
+        best_topic = topics[best_idx]
+        doc.metadata["topic_id"] = str(best_topic.pk)
+        doc.metadata["topic_name"] = best_topic.name
+
 
 async def delete_file_vectors(notebook_file_id: str):
     """Delete all vector chunks belonging to a single NotebookFile."""
@@ -183,18 +317,44 @@ async def delete_notebook_vectors(notebook_id: str):
 
 async def query_notebook_rag(notebook_id, user_id, user_query):
     vector_store = await get_vector_store()
-    
-    # THE KEY STEP: Metadata Filter
-    # Only search chunks matching this specific notebook and user
+
     results = await vector_store.asimilarity_search(
-        user_query, 
-        k=5, 
+        user_query,
+        k=5,
         filter={"notebook_id": str(notebook_id), "user_id": str(user_id)}
     )
-    
+
     return results
 
+
+async def query_notebook_rag_by_topic(notebook_id: str, user_id: str, topic_name: str, topic_id: str, k: int = 10):
+    """
+    Retrieve chunks for a specific topic. Filters by notebook + topic_id metadata,
+    then ranks by semantic similarity to the topic name.
+    Falls back to notebook-level retrieval if the topic filter yields no results.
+    """
+    vector_store = await get_vector_store()
+
+    results = await vector_store.asimilarity_search(
+        topic_name,
+        k=k,
+        filter={"notebook_id": str(notebook_id), "user_id": str(user_id), "topic_id": str(topic_id)}
+    )
+
+    # Graceful fallback for old chunks that pre-date topic tagging
+    if not results:
+        print(f"  No topic-filtered results for topic_id={topic_id}, falling back to notebook-level retrieval")
+        results = await vector_store.asimilarity_search(
+            topic_name,
+            k=k,
+            filter={"notebook_id": str(notebook_id), "user_id": str(user_id)}
+        )
+
+    return results
+
+
 #=========================== HELPER FUNCTIONS ===========================#
+
 def separate_content_types(chunk):
     """Analyze what types of content are in a chunk"""
     content_data = {
@@ -203,35 +363,31 @@ def separate_content_types(chunk):
         'images': [],
         'types': ['text']
     }
-    
-    # Check for tables and images in original elements
+
     if hasattr(chunk, 'metadata') and hasattr(chunk.metadata, 'orig_elements'):
         for element in chunk.metadata.orig_elements:
             element_type = type(element).__name__
-            
-            # Handle tables
+
             if element_type == 'Table':
                 content_data['types'].append('table')
                 table_html = getattr(element.metadata, 'text_as_html', element.text)
                 content_data['tables'].append(table_html)
-            
-            # Handle images
+
             elif element_type == 'Image':
                 if hasattr(element, 'metadata') and hasattr(element.metadata, 'image_base64'):
                     content_data['types'].append('image')
                     content_data['images'].append(element.metadata.image_base64)
-    
+
     content_data['types'] = list(set(content_data['types']))
     return content_data
+
 
 def create_ai_enhanced_summary(text: str, tables: List[str], images: List[str]) -> str:
     """Create AI-enhanced summary for mixed content"""
 
-    # client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
     client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-    
+
     try:
-        # Build the text prompt
         prompt_text = f"""You are creating a searchable description for document content retrieval.
 
         CONTENT TO ANALYZE:
@@ -239,8 +395,7 @@ def create_ai_enhanced_summary(text: str, tables: List[str], images: List[str]) 
         {text}
 
         """
-        
-        # Add tables if present
+
         if tables:
             prompt_text += "TABLES:\n"
             for i, table in enumerate(tables):
@@ -260,19 +415,16 @@ def create_ai_enhanced_summary(text: str, tables: List[str], images: List[str]) 
 
         SEARCHABLE DESCRIPTION:"""
 
-        # Build content parts for Claude
         content_parts: list[TextBlockParam | ImageBlockParam] = [
             TextBlockParam(type="text", text=prompt_text)
         ]
 
-        # Add images as inline data
         for image_b64 in images:
             content_parts.append(ImageBlockParam(
                 type="image",
                 source={"type": "base64", "media_type": "image/jpeg", "data": image_b64}
             ))
 
-        # Send to AI and get response
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=1024,
@@ -285,13 +437,62 @@ def create_ai_enhanced_summary(text: str, tables: List[str], images: List[str]) 
         if not isinstance(block, TextBlock):
             raise ValueError("Claude returned a non-text response")
         return block.text
-        
+
     except Exception as e:
         print(f" AI summary failed: {e}")
-        # Fallback to simple summary
         summary = f"{text[:300]}..."
         if tables:
             summary += f" [Contains {len(tables)} table(s)]"
         if images:
             summary += f" [Contains {len(images)} image(s)]"
         return summary
+
+
+def _generate_topics_from_summary(summary: str) -> List[str]:
+    """
+    Call Claude Haiku with the document summary and return a list of up to 5 topic strings.
+    Returns an empty list on failure.
+    """
+    client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+    prompt = f"""You are a topic extraction system for academic lecture notes.
+
+Given the following document content, identify the 5 most specific and distinct topics covered.
+
+Rules:
+- Return ONLY a valid JSON array of strings, no explanation or markdown
+- Each topic should be 3-7 words, specific enough to be useful as a quiz category
+- Topics should be distinct from each other (no overlap)
+- If the document clearly covers fewer than 5 topics, return fewer
+- Good examples: ["Mitosis and Cell Division", "DNA Replication Mechanisms", "Protein Synthesis"]
+- Bad examples: ["Science", "Biology", "Chapter 1"]
+
+DOCUMENT CONTENT:
+{summary}
+
+JSON array:"""
+
+    try:
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=256,
+            temperature=0,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        block = response.content[0]
+        if not isinstance(block, TextBlock):
+            return []
+        raw_text = block.text.strip()
+        # Strip markdown code fences if present (```json ... ``` or ``` ... ```)
+        if raw_text.startswith("```"):
+            raw_text = raw_text.split("```")[1]
+            if raw_text.startswith("json"):
+                raw_text = raw_text[4:]
+            raw_text = raw_text.strip()
+        topics = json.loads(raw_text)
+        if isinstance(topics, list):
+            return [str(t).strip() for t in topics if t][:5]
+        return []
+    except Exception as e:
+        print(f"  Topic generation failed: {e}")
+        return []

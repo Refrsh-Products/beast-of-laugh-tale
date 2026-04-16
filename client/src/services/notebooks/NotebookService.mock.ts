@@ -57,6 +57,7 @@ const NotebookServiceMock: NotebookService = {
     renameNotebookFile(notebookId, fileId, newName);
     return Promise.resolve();
   },
+  listTopics: (_notebookId) => Promise.resolve([]),
   seed: () => {
     seedNotebooks();
     return Promise.resolve();

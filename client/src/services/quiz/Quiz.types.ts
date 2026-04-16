@@ -22,8 +22,13 @@ import type { QuizDifficulty } from "../../storage";
  * POST /quizzes/[quizID]/retake
  */
 
+export interface NotebookTopic {
+  id: string;
+  name: string;
+}
+
 export interface QuizGenerateOptions {
-  topics: string[];
+  topics: NotebookTopic[];
   prompt?: string;
   questionCount: number;
   difficulty: QuizDifficulty;
@@ -34,6 +39,7 @@ export interface QuizGenerateOptions {
 export interface QuizCreatePayload {
   notebook: string; // notebook UUID
   topic: string;
+  topic_id?: string; // UUID of the selected NotebookTopic
   difficulty: string;
   quiz_type: string;
   num_questions: number;
