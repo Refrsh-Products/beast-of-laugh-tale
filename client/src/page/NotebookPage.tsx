@@ -376,6 +376,18 @@ export default function NotebookPage() {
     setSelectedQuiz(null);
   }
 
+  async function handleDeleteQuizSessions(ids: string[]) {
+    try {
+      await Promise.all(ids.map((id) => quizService.deleteQuizSession(id)));
+      setPreviousQuizzes((prev) => prev.filter((q) => !ids.includes(q.id!)));
+      if (selectedQuiz && ids.includes(selectedQuiz.id!)) {
+        setSelectedQuiz(null);
+      }
+    } catch {
+      showToast("Failed to delete quiz sessions", "danger");
+    }
+  }
+
   async function handleRetakeQuiz() {
     if (!selectedQuiz) return;
     setIsGeneratingQuiz(true);
@@ -509,6 +521,7 @@ export default function NotebookPage() {
             quizzes={previousQuizzes}
             selectedQuizId={selectedQuiz?.id ?? null}
             onQuizClick={handleQuizClick}
+            onDeleteSelected={handleDeleteQuizSessions}
           />
         ) : (
           <FilesColumn
