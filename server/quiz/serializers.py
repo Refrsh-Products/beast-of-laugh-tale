@@ -74,10 +74,13 @@ class QuizSessionDetailSerializer(serializers.ModelSerializer):
 
 class QuizSessionCreateSerializer(serializers.ModelSerializer):
     """Write serializer — frontend provides quiz parameters, view handles generation."""
+    topic_id = serializers.UUIDField(required=False, allow_null=True, write_only=True)
+
     class Meta:
         model = QuizSession
         fields = [
             "topic",
+            "topic_id",
             "difficulty",
             "quiz_type",
             "num_questions",
@@ -95,6 +98,10 @@ class QuizSessionCreateSerializer(serializers.ModelSerializer):
         if value > 50:
             raise serializers.ValidationError("num_questions cannot exceed 50.")
         return value
+
+    def create(self, validated_data):
+        validated_data.pop("topic_id", None)
+        return super().create(validated_data)
 
 
 class QuizSessionUpdateSerializer(serializers.ModelSerializer):

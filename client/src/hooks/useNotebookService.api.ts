@@ -3,6 +3,7 @@ import createFreshrApiInstance, {
 } from "../services/freshr-api";
 import type { NotebookService } from "../services/notebooks/NotebookService.types";
 import type { NotebookFileCreateResponse } from "../services/notebooks/NotebookFile.types";
+import type { NotebookTopic } from "../services/quiz/Quiz.types";
 import type { Notebook } from "../storage";
 import useAxiosInterceptor from "./useAxiosInterceptor";
 import { useFetch } from "./useFetch";
@@ -136,6 +137,18 @@ const useNotebookServiceApi = (): NotebookService => {
 
     renameFile: async (_notebook_id, _file_id, _newName) => {
       // TODO: wire up rename endpoint when Safwan is ready
+    },
+
+    listTopics: async (notebookId) => {
+      try {
+        const response = await fetchData<NotebookTopic[]>(
+          NotebookServiceApiEndpoints.getNotebookTopics(notebookId),
+          "GET",
+        );
+        return response;
+      } catch (err) {
+        throw err;
+      }
     },
   };
 };

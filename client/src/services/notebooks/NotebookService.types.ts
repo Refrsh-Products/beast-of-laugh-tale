@@ -1,5 +1,6 @@
 import type { Notebook, NotebookFile } from "../../storage";
 import type { NotebookFileCreateResponse } from "./NotebookFile.types";
+import type { NotebookTopic } from "../quiz/Quiz.types";
 
 export interface NotebookService {
   list(): Promise<Notebook[]>; // List of all the notebooks for the user
@@ -21,5 +22,6 @@ export interface NotebookService {
     file_id: string,
     newName: string,
   ): Promise<void>;
+  listTopics(notebook_id: string): Promise<NotebookTopic[]>;
   seed(): Promise<void>;
 }

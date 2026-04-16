@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { QuizDifficulty } from "../../storage";
-import type { QuizGenerateOptions } from "../../services/quiz/Quiz.types";
+import type { QuizGenerateOptions, NotebookTopic } from "../../services/quiz/Quiz.types";
 import QuizTopicChip from "../quiz/QuizTopicChip";
 import QuizSelectDropdown from "../quiz/QuizSelectDropdown";
 import Divider from "../quiz/Divider";
@@ -21,7 +21,7 @@ const labelStyle: React.CSSProperties = {
 };
 
 interface QuizColumnProps {
-  topics: string[];
+  topics: NotebookTopic[];
   isLoadingTopics: boolean;
   onGenerate: (options: QuizGenerateOptions) => Promise<void>;
   isGenerating: boolean;
@@ -34,7 +34,7 @@ export default function QuizColumn({
   isGenerating,
 }: QuizColumnProps) {
   const [topicsExpanded, setTopicsExpanded] = useState(false);
-  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
+  const [selectedTopics, setSelectedTopics] = useState<NotebookTopic[]>([]);
   const [prompt, setPrompt] = useState("");
   const [questionCount, setQuestionCount] = useState<number | null>(null);
   const [difficulty, setDifficulty] = useState<QuizDifficulty | null>(null);
@@ -49,9 +49,11 @@ export default function QuizColumn({
     (quizType !== null || timeLimit !== null) &&
     !isGenerating;
 
-  function toggleTopic(topic: string) {
+  function toggleTopic(topic: NotebookTopic) {
     setSelectedTopics((prev) =>
-      prev.includes(topic) ? prev.filter((t) => t !== topic) : [...prev, topic],
+      prev.some((t) => t.id === topic.id)
+        ? prev.filter((t) => t.id !== topic.id)
+        : [...prev, topic],
     );
   }
 
@@ -74,9 +76,10 @@ export default function QuizColumn({
   }
 
   // Collapsed preview: selected topics first, then unselected, up to COLLAPSED_MAX
+  const selectedIds = new Set(selectedTopics.map((t) => t.id));
   const previewTopics = [
-    ...selectedTopics.filter((t) => topics.includes(t)),
-    ...topics.filter((t) => !selectedTopics.includes(t)),
+    ...topics.filter((t) => selectedIds.has(t.id)),
+    ...topics.filter((t) => !selectedIds.has(t.id)),
   ].slice(0, COLLAPSED_MAX);
 
   const hiddenCount = topics.length - COLLAPSED_MAX;
@@ -202,9 +205,9 @@ export default function QuizColumn({
               >
                 {topics.map((topic) => (
                   <QuizTopicChip
-                    key={topic}
-                    label={topic}
-                    selected={selectedTopics.includes(topic)}
+                    key={topic.id}
+                    label={topic.name}
+                    selected={selectedIds.has(topic.id)}
                     onToggle={() => toggleTopic(topic)}
                     compact={false}
                   />
@@ -222,9 +225,9 @@ export default function QuizColumn({
               >
                 {previewTopics.map((topic) => (
                   <QuizTopicChip
-                    key={topic}
-                    label={topic}
-                    selected={selectedTopics.includes(topic)}
+                    key={topic.id}
+                    label={topic.name}
+                    selected={selectedIds.has(topic.id)}
                     onToggle={() => toggleTopic(topic)}
                     compact={true}
                   />

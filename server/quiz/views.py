@@ -13,7 +13,7 @@ from notebooks.models import Notebook
 from accounts.models import Account, DailyUsage
 from accounts.services import quota
 from .models import QuizSession, QuizQuestion, QuizStatus
-from .services.quiz_generation import generate_quiz_mock
+from .services.quiz_generation import generate_quiz_from_rag
 from .serializers import (
     QuizSessionListSerializer,
     QuizSessionDetailSerializer,
@@ -56,8 +56,11 @@ class QuizSessionListCreateView(generics.ListCreateAPIView):
         notebook = get_object_or_404(Notebook, id=notebook_id, user=self.request.user)
 
         data = serializer.validated_data
-        generated = generate_quiz_mock(
+        generated = generate_quiz_from_rag(
             topic=data["topic"],
+            topic_id=str(data["topic_id"]) if data.get("topic_id") else None,
+            notebook_id=str(notebook.pk),
+            user_id=str(self.request.user.pk),
             num_questions=data["num_questions"],
             difficulty=data["difficulty"],
         )

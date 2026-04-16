@@ -47,6 +47,8 @@ export const NotebookServiceApiEndpoints = {
     `${NotebookServiceApiBase}/${notebook_id}/files`,
   deleteNotebookFiles: (notebook_id: string, file_id: string) =>
     `${NotebookServiceApiBase}/${notebook_id}/files/delete/${file_id}/`,
+  getNotebookTopics: (notebook_id: string) =>
+    `${NotebookServiceApiBase}/${notebook_id}/topics`,
 };
 
 // Chats

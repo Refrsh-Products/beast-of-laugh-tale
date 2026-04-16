@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'django_celery_results',
     "anymail",
 
+    'pgvector',
+
     # OUR APPS
     'corsheaders',
     'users',

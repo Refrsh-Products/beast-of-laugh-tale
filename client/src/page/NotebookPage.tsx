@@ -8,7 +8,10 @@ import {
 import useAuthService from "../services/auth";
 import useNotebookService from "../services/notebooks";
 import type { Notebook, NotebookFile } from "../storage";
-import type { QuizGenerateOptions } from "../services/quiz/Quiz.types";
+import type {
+  QuizGenerateOptions,
+  NotebookTopic,
+} from "../services/quiz/Quiz.types";
 
 import NotebookTitle from "../components/notebook/NotebookTitle";
 import FilesColumn, {
@@ -45,7 +48,7 @@ export default function NotebookPage() {
   const [files, setFiles] = useState<NotebookFile[]>([]);
   const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [activeView, setActiveView] = useState<ActiveView>("chat");
-  const [quizTopics, setQuizTopics] = useState<string[]>([]);
+  const [quizTopics, setQuizTopics] = useState<NotebookTopic[]>([]);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [previousQuizzes, setPreviousQuizzes] = useState<QuizSession[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizSession | null>(null);
@@ -114,15 +117,16 @@ export default function NotebookPage() {
       if (quizTopics.length === 0) {
         setIsLoadingTopics(true);
         try {
-          // to create topics: Make a AI call with chunks from RAG and generate different topics.
-          const topics = ["topic 1", "topic 2", "topic 3"]; // this is just a placeholder
+          const topics = await notebookService.listTopics(notebookId);
           setQuizTopics(topics);
+        } catch (err) {
+          console.error(err);
+          setQuizTopics([]);
         } finally {
           setIsLoadingTopics(false);
         }
       }
       const quizzes = await quizService.listQuizSessionsByNotebook(notebookId);
-      // const quizzes = await quizService.getPreviousQuizzes(notebookId);
       setPreviousQuizzes(quizzes);
     }
     loadQuizData();
@@ -284,17 +288,17 @@ export default function NotebookPage() {
   }
 
   async function handleGenerateQuiz(options: QuizGenerateOptions) {
-    // it will create a new quiz session, and automatically create the questions in the backend
     setIsGeneratingQuiz(true);
+    const primaryTopic = options.topics[0];
     const payload = {
       notebook: notebookId,
-      topic: options.topics.join(" "),
+      topic: options.topics.map((t) => t.name).join(", "),
+      topic_id: primaryTopic?.id,
       difficulty: options.difficulty,
       quiz_type: options.quizType,
       time_limit: options.timeLimit,
       num_questions: options.questionCount,
     };
-    console.log(`Payload for generating quiz: ${payload}`);
 
     try {
       const quiz = await quizService.createQuizSession(payload);
@@ -325,9 +329,14 @@ export default function NotebookPage() {
           user_answer: resolvedChoices[selectedIndex],
         };
       })
-      .filter((a): a is { question_id: string; user_answer: string } => a !== null);
+      .filter(
+        (a): a is { question_id: string; user_answer: string } => a !== null,
+      );
     try {
-      const completedQuiz = await quizService.submitQuiz(activeQuiz.id!, answers);
+      const completedQuiz = await quizService.submitQuiz(
+        activeQuiz.id!,
+        answers,
+      );
       const quizzes = await quizService.listQuizSessionsByNotebook(notebookId);
       setPreviousQuizzes(quizzes);
       setActiveQuiz(null);
