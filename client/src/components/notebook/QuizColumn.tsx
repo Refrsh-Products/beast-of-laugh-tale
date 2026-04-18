@@ -42,12 +42,12 @@ export default function QuizColumn({
   const [timeLimit, setTimeLimit] = useState<number | null>(null);
 
   const canGenerate =
-    (selectedTopics.length > 0 || prompt.trim().length > 0) &&
     questionCount !== null &&
     difficulty !== null &&
     quizType !== null &&
-    (quizType !== null || timeLimit !== null) &&
     !isGenerating;
+
+  const isAllTopicsMode = selectedTopics.length === 0 && prompt.trim().length === 0;
 
   function toggleTopic(topic: NotebookTopic) {
     setSelectedTopics((prev) =>
@@ -253,7 +253,7 @@ export default function QuizColumn({
               </div>
             )}
 
-            {selectedTopics.length > 0 && (
+            {selectedTopics.length > 0 ? (
               <p
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
@@ -264,6 +264,17 @@ export default function QuizColumn({
               >
                 {selectedTopics.length} topic
                 {selectedTopics.length > 1 ? "s" : ""} selected
+              </p>
+            ) : topics.length > 0 && (
+              <p
+                style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.62rem",
+                  color: "#888",
+                  margin: "8px 0 0",
+                }}
+              >
+                No topics selected — quiz will cover all topics
               </p>
             )}
           </div>
@@ -444,7 +455,11 @@ export default function QuizColumn({
             transition: "transform 0.15s, box-shadow 0.15s",
           }}
         >
-          {isGenerating ? "Generating..." : "Generate Quiz →"}
+          {isGenerating
+            ? "Generating..."
+            : isAllTopicsMode
+              ? "Generate from Entire Notebook →"
+              : "Generate Quiz →"}
         </button>
       </div>
     </div>

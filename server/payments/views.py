@@ -263,8 +263,8 @@ class StripeWebhookView(APIView):
             return Response({'detail': 'OK'}, status=status.HTTP_200_OK)
 
         session = event['data']['object']
-        metadata = session.get('metadata', {})
-        payment_id = metadata.get('payment_id')
+        metadata = getattr(session, 'metadata', {}) or {}
+        payment_id = metadata.get('payment_id') if isinstance(metadata, dict) else getattr(metadata, 'payment_id', None)
 
         if not payment_id:
             logger.warning("Stripe webhook received without payment_id in metadata.")
@@ -276,9 +276,9 @@ class StripeWebhookView(APIView):
             logger.warning("Stripe webhook: Payment %s not found.", payment_id)
             return Response({'detail': 'Payment not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        payment.transaction_id = session.get('subscription', '') or session.get('payment_intent', '')
-        payment.invoice_id = session.get('id', '')
-        payment.metadata = dict(session)
+        payment.transaction_id = getattr(session, 'subscription', '') or getattr(session, 'payment_intent', '') or ''
+        payment.invoice_id = getattr(session, 'id', '')
+        payment.metadata = session.to_dict() if hasattr(session, 'to_dict') else dict(session)
         payment.status = PaymentStatus.COMPLETED
 
         now = timezone.now()
