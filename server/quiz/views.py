@@ -13,7 +13,7 @@ from notebooks.models import Notebook
 from accounts.models import Account, DailyUsage
 from accounts.services import quota
 from .models import QuizSession, QuizQuestion, QuizStatus
-from .services.quiz_generation import generate_quiz_from_rag
+from .services.quiz_generation import generate_quiz_from_rag, generate_quiz_from_entire_notebook
 from .serializers import (
     QuizSessionListSerializer,
     QuizSessionDetailSerializer,
@@ -51,19 +51,40 @@ class QuizSessionListCreateView(generics.ListCreateAPIView):
             qs = qs.filter(notebook_id=notebook_id)
         return qs
 
+    def create(self, request, *_args, **_kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        quiz = self.perform_create(serializer)
+        detail_serializer = QuizSessionDetailSerializer(quiz)
+        return Response(detail_serializer.data, status=status.HTTP_201_CREATED)
+
     def perform_create(self, serializer):
         notebook_id = self.request.query_params.get("notebook") # type: ignore
         notebook = get_object_or_404(Notebook, id=notebook_id, user=self.request.user)
 
         data = serializer.validated_data
-        generated = generate_quiz_from_rag(
-            topic=data["topic"],
-            topic_id=str(data["topic_id"]) if data.get("topic_id") else None,
-            notebook_id=str(notebook.pk),
-            user_id=str(self.request.user.pk),
-            num_questions=data["num_questions"],
-            difficulty=data["difficulty"],
-        )
+        topic = data.get("topic", "")
+        topic_id = data.get("topic_id")
+
+        is_all_topics = not topic_id and (not topic or topic.strip() == "" or topic == "All Topics")
+
+        if is_all_topics:
+            serializer.validated_data["topic"] = "All Topics"
+            generated = generate_quiz_from_entire_notebook(
+                notebook_id=str(notebook.pk),
+                user_id=str(self.request.user.pk),
+                num_questions=data["num_questions"],
+                difficulty=data["difficulty"],
+            )
+        else:
+            generated = generate_quiz_from_rag(
+                topic=topic,
+                topic_id=str(topic_id) if topic_id else None,
+                notebook_id=str(notebook.pk),
+                user_id=str(self.request.user.pk),
+                num_questions=data["num_questions"],
+                difficulty=data["difficulty"],
+            )
 
         with transaction.atomic():
             account = Account.objects.select_for_update().get(user=self.request.user)
@@ -81,6 +102,8 @@ class QuizSessionListCreateView(generics.ListCreateAPIView):
 
             usage.quizzes_generated += 1
             usage.save()
+
+        return quiz
 
 
 class QuizSessionDetailView(generics.RetrieveUpdateDestroyAPIView):

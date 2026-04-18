@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   useParams,
   useNavigate,
@@ -25,6 +26,7 @@ import QuizReviewColumn from "../components/notebook/QuizReviewColumn";
 import QuizTakingScreen from "../components/notebook/QuizTakingScreen";
 import PastQuizColumn from "../components/notebook/PastQuizColumn";
 import QuizColumn from "../components/notebook/QuizColumn";
+import UpgradeModal from "../components/dashboard/UpgradeModal";
 import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
 import useChatService from "../services/chat";
@@ -54,6 +56,7 @@ export default function NotebookPage() {
   const [selectedQuiz, setSelectedQuiz] = useState<QuizSession | null>(null);
   const [activeQuiz, setActiveQuiz] = useState<QuizSession | null>(null);
   const [pendingChatInput, setPendingChatInput] = useState<string>("");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<FileUploadState[]>([]);
   const [chatSessions, setChatSessions] = useState<
@@ -289,11 +292,13 @@ export default function NotebookPage() {
 
   async function handleGenerateQuiz(options: QuizGenerateOptions) {
     setIsGeneratingQuiz(true);
-    const primaryTopic = options.topics[0];
+    const isAllTopics = options.topics.length === 0 && !options.prompt;
     const payload = {
       notebook: notebookId,
-      topic: options.topics.map((t) => t.name).join(", "),
-      topic_id: primaryTopic?.id,
+      topic: isAllTopics
+        ? "All Topics"
+        : options.topics.map((t) => t.name).join(", "),
+      topic_id: isAllTopics ? undefined : options.topics[0]?.id,
       difficulty: options.difficulty,
       quiz_type: options.quizType,
       time_limit: options.timeLimit,
@@ -304,8 +309,12 @@ export default function NotebookPage() {
       const quiz = await quizService.createQuizSession(payload);
       setSelectedQuiz(null);
       setActiveQuiz(quiz);
-    } catch {
-      showToast("Failed to generate quiz", "danger");
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        setShowUpgradeModal(true);
+      } else {
+        showToast("Failed to generate quiz", "danger");
+      }
     } finally {
       setIsGeneratingQuiz(false);
     }
@@ -536,6 +545,14 @@ export default function NotebookPage() {
       </div>
 
       <ToastContainer toasts={toasts} />
+
+      {showUpgradeModal && (
+        <UpgradeModal
+          onClose={() => setShowUpgradeModal(false)}
+          title="Daily quiz limit reached"
+          description="You've hit your daily quiz limit on the free plan. Upgrade to Pro for unlimited daily quizzes, more storage, and additional notebooks."
+        />
+      )}
 
       {/* Quiz-taking overlay — sits on top of everything */}
       {activeQuiz && (

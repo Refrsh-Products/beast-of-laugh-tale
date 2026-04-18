@@ -74,6 +74,7 @@ class QuizSessionDetailSerializer(serializers.ModelSerializer):
 
 class QuizSessionCreateSerializer(serializers.ModelSerializer):
     """Write serializer — frontend provides quiz parameters, view handles generation."""
+    topic = serializers.CharField(required=False, allow_blank=True, default="", max_length=255)
     topic_id = serializers.UUIDField(required=False, allow_null=True, write_only=True)
 
     class Meta:

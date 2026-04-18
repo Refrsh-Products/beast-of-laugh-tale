@@ -5,7 +5,15 @@ const B = "#000000";
 const W = "#FFFFFF";
 const G = "#84e487";
 
-export default function UpgradeModal({ onClose }: { onClose: () => void }) {
+export default function UpgradeModal({
+  onClose,
+  title,
+  description,
+}: {
+  onClose: () => void;
+  title?: string;
+  description?: string;
+}) {
   const navigate = useNavigate();
   return createPortal(
     <div
@@ -43,7 +51,7 @@ export default function UpgradeModal({ onClose }: { onClose: () => void }) {
               margin: "0 0 8px",
             }}
           >
-            Notebook limit reached
+            {title}
           </h2>
           <p
             style={{
@@ -54,9 +62,7 @@ export default function UpgradeModal({ onClose }: { onClose: () => void }) {
               lineHeight: 1.6,
             }}
           >
-            You've used all your notebook slots on the free plan. Upgrade to Pro
-            to create unlimited notebooks and unlock more storage and daily
-            quizzes.
+            {description}
           </p>
         </div>
 

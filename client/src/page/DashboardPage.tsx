@@ -284,7 +284,11 @@ export default function DashboardPage() {
       </div>
 
       {showUpgradeModal && (
-        <UpgradeModal onClose={() => setShowUpgradeModal(false)} />
+        <UpgradeModal
+          title="Notebook limit reached"
+          description="You've used all your notebook slots on the free plan. Upgrade to Pro to create unlimited notebooks and unlock more storage and daily quizzes."
+          onClose={() => setShowUpgradeModal(false)}
+        />
       )}
 
       {showCreateModal && (

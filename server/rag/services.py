@@ -344,11 +344,14 @@ async def query_notebook_rag_by_topic(notebook_id: str, user_id: str, topic_name
     # Graceful fallback for old chunks that pre-date topic tagging
     if not results:
         print(f"  No topic-filtered results for topic_id={topic_id}, falling back to notebook-level retrieval")
+        fallback_filter = {"notebook_id": str(notebook_id), "user_id": str(user_id)}
+        print(f"  Fallback filter: {fallback_filter}")
         results = await vector_store.asimilarity_search(
             topic_name,
             k=k,
-            filter={"notebook_id": str(notebook_id), "user_id": str(user_id)}
+            filter=fallback_filter,
         )
+        print(f"  Fallback results count: {len(results)}")
 
     return results
 
