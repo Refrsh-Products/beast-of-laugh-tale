@@ -2,9 +2,9 @@ import { useNavigate } from "react-router-dom";
 import useAccountService from "../../services/account";
 import useAuthService from "../../services/auth";
 import type { ProfileTab } from "./ProfileSidebar";
+import Button from "../ui/Button";
 
 const B = "#000000";
-const W = "#FFFFFF";
 
 interface AccountContentAreaProps {
   activeTab: ProfileTab;
@@ -100,33 +100,7 @@ export default function AccountContentArea({
             />
           </div>
 
-          <button
-            onClick={handleLogout}
-            style={{
-              width: "100%",
-              padding: "14px",
-              background: W,
-              border: `2px solid #cc0000`,
-              color: "#cc0000",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontWeight: 700,
-              fontSize: "0.78rem",
-              letterSpacing: "0.08em",
-              cursor: "pointer",
-              boxShadow: `3px 3px 0 ${B}`,
-              transition: "background 0.15s, color 0.15s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "#cc0000";
-              e.currentTarget.style.color = W;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = W;
-              e.currentTarget.style.color = "#cc0000";
-            }}
-          >
-            LOGOUT
-          </button>
+          <Button variant="danger" fullWidth onClick={handleLogout}>LOGOUT</Button>
         </>
       )}
     </>
