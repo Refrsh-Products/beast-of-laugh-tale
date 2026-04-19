@@ -14,6 +14,7 @@ import NotebookPage from "./page/NotebookPage";
 import NotFoundPage from "./page/NotFoundPage";
 import PaymentSuccessPage from "./page/PaymentSuccessPage";
 import PaymentCancelPage from "./page/PaymentCancelPage";
+import TestPage from "./page/TestPage";
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
           <Route path="/payment/success" element={<PaymentSuccessPage />} />
           <Route path="/payment/cancel" element={<PaymentCancelPage />} />
           <Route path="/notebook/:id" element={<NotebookPage />} />
+          <Route path="/test" element={<TestPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useAuthService from "../services/auth";
+import Button from "../components/ui/Button";
 
 const G = "#84e487";
 const B = "#000000";
@@ -303,38 +304,9 @@ export default function ResetPasswordPage() {
               </div>
 
               <div style={{ marginTop: 8 }}>
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  onMouseEnter={(e) => {
-                    if (!isLoading) {
-                      e.currentTarget.style.transform = "translate(-3px, -3px)";
-                      e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`;
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "none";
-                    e.currentTarget.style.boxShadow = `4px 4px 0 ${B}`;
-                  }}
-                  style={{
-                    width: "100%",
-                    background: G,
-                    color: B,
-                    border: `2px solid ${B}`,
-                    boxShadow: `4px 4px 0 ${B}`,
-                    padding: "12px 22px",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontWeight: 600,
-                    fontSize: "0.78rem",
-                    letterSpacing: "0.08em",
-                    cursor: isLoading ? "not-allowed" : "pointer",
-                    opacity: isLoading ? 0.6 : 1,
-                    lineHeight: 1,
-                    transition: "transform 0.15s, box-shadow 0.15s",
-                  }}
-                >
+                <Button variant="green" fullWidth type="submit" disabled={isLoading}>
                   {isLoading ? "Saving..." : "Set new password →"}
-                </button>
+                </Button>
               </div>
             </form>
           </>

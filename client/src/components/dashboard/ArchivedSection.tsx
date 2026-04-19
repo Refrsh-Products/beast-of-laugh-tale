@@ -63,11 +63,11 @@ export default function ArchivedSection({
               onClick={() => onUnarchive(nb.id)}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = "translate(-3px, -3px)";
-                e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
+                e.currentTarget.style.boxShadow = `4px 4px 0 ${B}`;
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "none";
-                e.currentTarget.style.boxShadow = "none";
+                e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`;
               }}
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
@@ -76,6 +76,7 @@ export default function ArchivedSection({
                 letterSpacing: "0.06em",
                 background: "none",
                 border: `2px solid ${B}`,
+                boxShadow: `2px 2px 0 ${B}`,
                 padding: "4px 10px",
                 cursor: "pointer",
                 flexShrink: 0,

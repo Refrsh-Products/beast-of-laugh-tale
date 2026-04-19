@@ -1,8 +1,5 @@
 import QuizTakingScreenModal from "./QuizTakingScreenModal";
-import QuizTakingScreenModalBtn from "./QuizTakingScreenModalBtn";
-
-const G = "#84e487";
-const B = "#000000";
+import Button from "../../ui/Button";
 
 export default function TimesUpModal({
   timeLimit,
@@ -39,14 +36,7 @@ export default function TimesUpModal({
         Your answers have been recorded.
       </p>
       <div style={{ display: "flex", justifyContent: "center" }}>
-        <QuizTakingScreenModalBtn
-          onClick={onSeeResults}
-          bg={G}
-          color={B}
-          border={`2px solid ${B}`}
-        >
-          See Results →
-        </QuizTakingScreenModalBtn>
+        <Button variant="green" onClick={onSeeResults}>See Results →</Button>
       </div>
     </QuizTakingScreenModal>
   );

@@ -4,6 +4,7 @@ import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
 import FreshrLogo from "../components/logo/FreshrLogo";
 import { getGoogleProfile, clearGoogleProfile } from "../storage";
+import Button from "../components/ui/Button";
 
 const G = "#84e487";
 const B = "#000000";
@@ -241,41 +242,9 @@ export default function OnboardingPage() {
           </div>
 
           <div style={{ marginTop: 8 }}>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              style={{
-                width: "100%",
-                background: G,
-                color: B,
-                border: `2px solid ${B}`,
-                boxShadow: `4px 4px 0 ${B}`,
-                padding: "14px 22px",
-                fontSize: "0.78rem",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontWeight: 600,
-                letterSpacing: "0.08em",
-                cursor: "pointer",
-                lineHeight: 1,
-              }}
-              onMouseDown={(e) => {
-                const el = e.currentTarget;
-                el.style.boxShadow = `2px 2px 0 ${B}`;
-                el.style.transform = "translate(2px, 2px)";
-              }}
-              onMouseUp={(e) => {
-                const el = e.currentTarget;
-                el.style.boxShadow = `4px 4px 0 ${B}`;
-                el.style.transform = "none";
-              }}
-              onMouseLeave={(e) => {
-                const el = e.currentTarget;
-                el.style.boxShadow = `4px 4px 0 ${B}`;
-                el.style.transform = "none";
-              }}
-            >
+            <Button variant="green" fullWidth onClick={handleSubmit}>
               Go to dashboard →
-            </button>
+            </Button>
           </div>
         </form>
       </div>
