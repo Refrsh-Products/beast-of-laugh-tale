@@ -2,12 +2,17 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ProfileTab } from "../profile-account/ProfileSidebar";
 import usePaymentService from "../../services/payment";
+import Button from "../ui/Button";
 
 type PaymentProvider = "zinipay" | "stripe";
 
 interface PaymentContentAreaProps {
   activeTab: ProfileTab;
 }
+
+const B = "#000000";
+const W = "#FFFFFF";
+const G = "#84e487";
 
 export default function PaymentContentArea({
   activeTab,
@@ -33,108 +38,337 @@ export default function PaymentContentArea({
     }
   };
 
+  if (activeTab !== "payment") return null;
+
   return (
-    <>
-      {activeTab === "payment" && (
-        <>
-          {error && (
-            <div className="mx-8 mt-6 p-3 border border-red-400 bg-red-50 text-red-700 text-sm rounded">
-              {error}
-            </div>
-          )}
-          <div className="flex justify-center mt-6 mx-8">
-            <div className="inline-flex rounded-lg border border-gray-200 bg-gray-100 p-1 gap-1">
-              <button
-                onClick={() => setProvider("stripe")}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  provider === "stripe"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Pay with Stripe
-              </button>
-              <button
-                onClick={() => setProvider("zinipay")}
-                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  provider === "zinipay"
-                    ? "bg-white text-gray-900 shadow-sm"
-                    : "text-gray-500 hover:text-gray-700"
-                }`}
-              >
-                Pay with ZiniPay
-              </button>
-            </div>
-          </div>
-          <div className="flex flex-col md:flex-row gap-6 p-8 justify-center">
-            {/* Free Plan Card */}
-            <div className="flex flex-col bg-white p-6 rounded-xl shadow-sm border border-gray-200 w-full max-w-sm">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Free</h2>
-              <div className="text-3xl font-extrabold text-gray-900 mb-4">
-                $0
-                <span className="text-sm font-normal text-gray-500">
-                  /forever
-                </span>
-              </div>
-              <p className="text-gray-600 mb-8 grow">
-                A great way to test out the basic features with no commitment
-                required.
-              </p>
-              <button
-                onClick={() => navigate("/dashboard")}
-                className="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-lg transition-colors border border-gray-300"
-              >
-                Use FRESHR for free
-              </button>
-            </div>
+    <div>
+      <h2
+        style={{
+          fontFamily: "'Syne', sans-serif",
+          fontWeight: 800,
+          fontSize: "1.5rem",
+          letterSpacing: "-0.02em",
+          marginBottom: 32,
+          lineHeight: 1.1,
+        }}
+      >
+        Upgrade Plan
+      </h2>
 
-            {/* Monthly Plan Card (Highlighted) */}
-            <div className="flex flex-col bg-white p-6 rounded-xl shadow-md border-2 border-blue-500 w-full max-w-sm relative">
-              <div className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-lg">
-                FLEXIBLE
-              </div>
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Monthly</h2>
-              <div className="text-3xl font-extrabold text-gray-900 mb-4">
-                $15
-                <span className="text-sm font-normal text-gray-500">
-                  /month
-                </span>
-              </div>
-              <p className="text-gray-600 mb-8 grow">
-                Full access to all premium features on a flexible month-to-month
-                basis.
-              </p>
-              <button
-                onClick={() => handlePayment("MONTHLY")}
-                disabled={loading !== null}
-                className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors shadow-sm"
-              >
-                {loading === "MONTHLY" ? "Redirecting..." : "Subscribe Monthly"}
-              </button>
-            </div>
+      {/* Provider toggle */}
+      <div
+        style={{
+          display: "inline-flex",
+          border: `2px solid ${B}`,
+          marginBottom: 32,
+          overflow: "hidden",
+        }}
+      >
+        {(["stripe", "zinipay"] as PaymentProvider[]).map((p, i) => (
+          <button
+            key={p}
+            onClick={() => setProvider(p)}
+            style={{
+              padding: "8px 20px",
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              cursor: "pointer",
+              background: provider === p ? B : W,
+              color: provider === p ? W : B,
+              border: "none",
+              borderLeft: i > 0 ? `2px solid ${B}` : "none",
+              transition: "background 0.12s, color 0.12s",
+            }}
+          >
+            {p === "stripe" ? "STRIPE" : "ZINIPAY"}
+          </button>
+        ))}
+      </div>
 
-            {/* Yearly Plan Card */}
-            <div className="flex flex-col bg-white p-6 rounded-xl shadow-sm border border-gray-200 w-full max-w-sm">
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Yearly</h2>
-              <div className="text-3xl font-extrabold text-gray-900 mb-4">
-                $120
-                <span className="text-sm font-normal text-gray-500">/year</span>
-              </div>
-              <p className="text-gray-600 mb-8 grow">
-                Best value. Get all features and save 33% by committing to an
-                annual plan.
-              </p>
-              <button
-                onClick={() => handlePayment("YEARLY")}
-                disabled={loading !== null}
-                className="w-full py-2.5 px-4 bg-gray-800 hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors shadow-sm"
-              >
-                {loading === "YEARLY" ? "Redirecting..." : "Subscribe Yearly"}
-              </button>
-            </div>
-          </div>
-        </>
+      {error && (
+        <div
+          style={{
+            border: `2px solid ${B}`,
+            background: "#ffe5e5",
+            padding: "12px 16px",
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: "0.75rem",
+            fontWeight: 700,
+            marginBottom: 24,
+          }}
+        >
+          {error}
+        </div>
       )}
-    </>
+
+      {/* Plan cards */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(3, 1fr)",
+          gap: 20,
+        }}
+      >
+        {/* Free */}
+        <div
+          style={{
+            background: W,
+            border: `2px solid ${B}`,
+            padding: 24,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              color: "#888",
+              marginBottom: 10,
+            }}
+          >
+            CURRENT PLAN
+          </div>
+          <div
+            style={{
+              fontFamily: "'Syne', sans-serif",
+              fontWeight: 800,
+              fontSize: "1.2rem",
+              marginBottom: 12,
+            }}
+          >
+            Free
+          </div>
+          <div
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontWeight: 700,
+              fontSize: "1.75rem",
+              lineHeight: 1,
+              marginBottom: 4,
+            }}
+          >
+            $0
+          </div>
+          <div
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.68rem",
+              color: "#888",
+              marginBottom: 20,
+            }}
+          >
+            /forever
+          </div>
+          <p
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.73rem",
+              color: "#555",
+              lineHeight: 1.65,
+              marginBottom: 24,
+              flex: 1,
+            }}
+          >
+            A great way to test out the basic features with no commitment
+            required.
+          </p>
+          <Button variant="default" fullWidth onClick={() => navigate("/dashboard")}>
+            CONTINUE FREE
+          </Button>
+        </div>
+
+        {/* Monthly — featured */}
+        <div
+          style={{
+            background: W,
+            border: `3px solid ${B}`,
+            boxShadow: `4px 4px 0 ${G}`,
+            padding: 24,
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: -3,
+              right: -3,
+              background: B,
+              color: W,
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.6rem",
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              padding: "4px 10px",
+            }}
+          >
+            POPULAR
+          </div>
+          <div
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              color: "#888",
+              marginBottom: 10,
+            }}
+          >
+            FLEXIBLE
+          </div>
+          <div
+            style={{
+              fontFamily: "'Syne', sans-serif",
+              fontWeight: 800,
+              fontSize: "1.2rem",
+              marginBottom: 12,
+            }}
+          >
+            Monthly
+          </div>
+          <div
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontWeight: 700,
+              fontSize: "1.75rem",
+              lineHeight: 1,
+              marginBottom: 4,
+            }}
+          >
+            $15
+          </div>
+          <div
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.68rem",
+              color: "#888",
+              marginBottom: 20,
+            }}
+          >
+            /month
+          </div>
+          <p
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.73rem",
+              color: "#555",
+              lineHeight: 1.65,
+              marginBottom: 24,
+              flex: 1,
+            }}
+          >
+            Full access to all premium features on a flexible month-to-month
+            basis.
+          </p>
+          <Button
+            variant="green"
+            fullWidth
+            disabled={loading !== null}
+            onClick={() => handlePayment("MONTHLY")}
+          >
+            {loading === "MONTHLY" ? "REDIRECTING..." : "SUBSCRIBE MONTHLY"}
+          </Button>
+        </div>
+
+        {/* Yearly */}
+        <div
+          style={{
+            background: W,
+            border: `2px solid ${B}`,
+            padding: 24,
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              top: -2,
+              right: -2,
+              background: B,
+              color: W,
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.6rem",
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              padding: "4px 10px",
+            }}
+          >
+            BEST VALUE
+          </div>
+          <div
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              color: "#888",
+              marginBottom: 10,
+            }}
+          >
+            SAVE 33%
+          </div>
+          <div
+            style={{
+              fontFamily: "'Syne', sans-serif",
+              fontWeight: 800,
+              fontSize: "1.2rem",
+              marginBottom: 12,
+            }}
+          >
+            Yearly
+          </div>
+          <div
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontWeight: 700,
+              fontSize: "1.75rem",
+              lineHeight: 1,
+              marginBottom: 4,
+            }}
+          >
+            $120
+          </div>
+          <div
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.68rem",
+              color: "#888",
+              marginBottom: 20,
+            }}
+          >
+            /year
+          </div>
+          <p
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.73rem",
+              color: "#555",
+              lineHeight: 1.65,
+              marginBottom: 24,
+              flex: 1,
+            }}
+          >
+            Best value. Get all features and save 33% by committing to an
+            annual plan.
+          </p>
+          <Button
+            variant="default"
+            fullWidth
+            disabled={loading !== null}
+            onClick={() => handlePayment("YEARLY")}
+          >
+            {loading === "YEARLY" ? "REDIRECTING..." : "SUBSCRIBE YEARLY"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -104,7 +104,7 @@ export default function ProfilePage() {
             justifyContent: "center",
           }}
         >
-          <div style={{ width: "100%", maxWidth: 420 }}>
+          <div style={{ width: "100%", maxWidth: activeTab === "payment" ? 800 : 420 }}>
             {/* ── Profile tab content area ── */}
             <ProfileContentArea activeTab={activeTab} />
 
