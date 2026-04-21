@@ -36,16 +36,12 @@ export default function QuizColumn({
   const [topicsExpanded, setTopicsExpanded] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState<NotebookTopic[]>([]);
   const [prompt, setPrompt] = useState("");
-  const [questionCount, setQuestionCount] = useState<number | null>(null);
-  const [difficulty, setDifficulty] = useState<QuizDifficulty | null>(null);
-  const [quizType, setQuizType] = useState<string | null>(null);
+  const [questionCount, setQuestionCount] = useState<number>(5);
+  const [difficulty, setDifficulty] = useState<QuizDifficulty>("EASY");
+  const [quizType, setQuizType] = useState<string>("PRACTICE");
   const [timeLimit, setTimeLimit] = useState<number | null>(null);
 
-  const canGenerate =
-    questionCount !== null &&
-    difficulty !== null &&
-    quizType !== null &&
-    !isGenerating;
+  const canGenerate = !isGenerating;
 
   const isAllTopicsMode = selectedTopics.length === 0 && prompt.trim().length === 0;
 
@@ -58,13 +54,7 @@ export default function QuizColumn({
   }
 
   async function handleGenerate() {
-    if (
-      !canGenerate ||
-      difficulty === null ||
-      questionCount === null ||
-      quizType === null
-    )
-      return;
+    if (!canGenerate) return;
     await onGenerate({
       topics: selectedTopics,
       prompt: prompt.trim() || undefined,
@@ -317,11 +307,11 @@ export default function QuizColumn({
 
           <Divider />
 
-          {/* Settings */}
+          {/* Settings — one row: Questions | Difficulty | Timer | Time Limit */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr",
+              gridTemplateColumns: "1fr 1fr 1fr 1fr",
               gap: 16,
             }}
           >
@@ -329,9 +319,9 @@ export default function QuizColumn({
             <div>
               <label style={labelStyle}>QUESTIONS</label>
               <QuizSelectDropdown
-                value={questionCount !== null ? String(questionCount) : ""}
-                onChange={(v) => setQuestionCount(v === "" ? null : Number(v))}
-                placeholder="Select..."
+                value={String(questionCount)}
+                onChange={(v) => setQuestionCount(Number(v))}
+                placeholder="5"
                 options={[
                   { value: "5", label: "5" },
                   { value: "10", label: "10" },
@@ -345,11 +335,9 @@ export default function QuizColumn({
             <div>
               <label style={labelStyle}>DIFFICULTY</label>
               <QuizSelectDropdown
-                value={difficulty ?? ""}
-                onChange={(v) =>
-                  setDifficulty(v === "" ? null : (v as QuizDifficulty))
-                }
-                placeholder="Select..."
+                value={difficulty}
+                onChange={(v) => setDifficulty(v as QuizDifficulty)}
+                placeholder="Easy"
                 options={[
                   { value: "EASY", label: "Easy" },
                   { value: "MEDIUM", label: "Medium" },
@@ -362,42 +350,39 @@ export default function QuizColumn({
             <div>
               <label style={labelStyle}>TIMER</label>
               <QuizSelectDropdown
-                value={
-                  quizType === "TIMED"
-                    ? "yes"
-                    : quizType === "PRACTICE"
-                      ? "no"
-                      : ""
-                }
+                value={quizType === "TIMED" ? "yes" : "no"}
                 onChange={(v) => {
                   if (v === "yes") setQuizType("TIMED");
-                  else if (v === "no") {
+                  else {
                     setQuizType("PRACTICE");
                     setTimeLimit(null);
-                  } else setQuizType(null);
+                  }
                 }}
-                placeholder="Select..."
+                placeholder="No"
                 options={[
                   { value: "yes", label: "Yes" },
                   { value: "no", label: "No" },
                 ]}
               />
-              {quizType === "TIMED" && (
-                <div style={{ marginTop: 12 }}>
-                  <label style={labelStyle}>TIME LIMIT</label>
-                  <QuizSelectDropdown
-                    value={timeLimit !== null ? String(timeLimit) : ""}
-                    onChange={(v) => setTimeLimit(v === "" ? null : Number(v))}
-                    placeholder="Select..."
-                    options={[
-                      { value: "5", label: "5 min" },
-                      { value: "10", label: "10 min" },
-                      { value: "15", label: "15 min" },
-                      { value: "20", label: "20 min" },
-                    ]}
-                  />
-                </div>
-              )}
+            </div>
+
+            {/* Time Limit — always visible, disabled when no timer */}
+            <div>
+              <label style={{ ...labelStyle, color: quizType === "TIMED" ? "#555" : "#bbb" }}>
+                TIME LIMIT
+              </label>
+              <QuizSelectDropdown
+                value={timeLimit !== null ? String(timeLimit) : ""}
+                onChange={(v) => setTimeLimit(v === "" ? null : Number(v))}
+                placeholder="Select..."
+                disabled={quizType !== "TIMED"}
+                options={[
+                  { value: "5", label: "5 min" },
+                  { value: "10", label: "10 min" },
+                  { value: "15", label: "15 min" },
+                  { value: "20", label: "20 min" },
+                ]}
+              />
             </div>
           </div>
         </div>
