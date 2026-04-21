@@ -1,21 +1,21 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { Navigate, useNavigate } from "react-router-dom";
-import useNotebookService from "../services/notebooks";
-import useAuthService from "../services/auth";
-import useAccountService from "../services/account";
-import type { Notebook, AccountUseage } from "../storage";
+import useNotebookService from "../../services/notebooks";
+import useAuthService from "../../services/auth";
+import useAccountService from "../../services/account";
+import type { Notebook, AccountUseage } from "../../storage";
 
-import TopNavbar from "../components/dashboard/TopNavbar";
-import NotebookCard from "../components/dashboard/NotebookCard";
-import NotebookRow from "../components/dashboard/NotebookRow";
-import CreateNotebookModal from "../components/dashboard/CreateNotebookModal";
-import DeleteNotebookModal from "../components/dashboard/DeleteNotebookModal";
-import ArchivedSection from "../components/dashboard/ArchivedSection";
-import NotebookMenu from "../components/dashboard/NotebookMenu";
-import { useToast } from "../hooks/useToast";
-import ToastContainer from "../components/ui/ToastContainer";
-import UpgradeModal from "../components/dashboard/UpgradeModal";
+import TopNavbar from "../../components/dashboard/TopNavbar";
+import NotebookCard from "../../components/dashboard/NotebookCard";
+import NotebookRow from "../../components/dashboard/NotebookRow";
+import CreateNotebookModal from "../../components/dashboard/CreateNotebookModal";
+import DeleteNotebookModal from "../../components/dashboard/DeleteNotebookModal";
+import ArchivedSection from "../../components/dashboard/ArchivedSection";
+import NotebookMenu from "../../components/dashboard/NotebookMenu";
+import { useToast } from "../../hooks/useToast";
+import ToastContainer from "../../components/ui/ToastContainer";
+import UpgradeModal from "../../components/dashboard/UpgradeModal";
 
 const G = "#84e487";
 const B = "#000000";
@@ -108,7 +108,7 @@ function NewNotebookButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-export default function DashboardPage() {
+export default function DashboardTopNavPage() {
   const authService = useAuthService();
   const accountService = useAccountService();
   const notebookService = useNotebookService();
@@ -333,7 +333,7 @@ export default function DashboardPage() {
         }}
         className="freshr-scroll"
       >
-        {/* Title + primary action */}
+        {/* 1 — Title + primary action */}
         <div
           style={{
             display: "flex",
@@ -375,7 +375,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Controls: search left, view toggle right */}
+        {/* 2 — Controls: search left, view toggle right */}
         <div
           style={{
             display: "flex",
@@ -447,7 +447,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Notebook grid / list */}
+        {/* 3 — Notebook grid / list */}
         {view === "grid" ? (
           <div
             className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
