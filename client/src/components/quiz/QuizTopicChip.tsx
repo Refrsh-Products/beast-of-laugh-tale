@@ -23,6 +23,7 @@ export default function QuizTopicChip({
       onClick={onToggle}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      title={compact ? label : undefined}
       style={{
         display: "inline-block",
         padding: "4px 10px",
