@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import Button from "../components/ui/Button";
 
 const G = "#84e487";
 const B = "#000000";
@@ -90,24 +91,11 @@ export default function PaymentCancelPage() {
 
         <div style={{ height: 3, background: B, marginBottom: 24 }} />
 
-        <button
-          onClick={() => navigate("/profile")}
-          style={{
-            width: "100%",
-            padding: "12px 0",
-            background: B,
-            color: W,
-            border: `2px solid ${B}`,
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontWeight: 700,
-            fontSize: "0.85rem",
-            cursor: "pointer",
-            letterSpacing: "0.04em",
-            marginBottom: 16,
-          }}
-        >
-          TRY AGAIN
-        </button>
+        <div style={{ marginBottom: 16 }}>
+          <Button variant="primary" fullWidth onClick={() => navigate("/profile")}>
+            TRY AGAIN
+          </Button>
+        </div>
 
         <p style={{ fontSize: "0.75rem", color: "#555" }}>
           <span

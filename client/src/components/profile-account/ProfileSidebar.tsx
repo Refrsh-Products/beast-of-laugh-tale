@@ -167,7 +167,7 @@ export default function ProfileSidebar({
           onClick={() => onTabChange("account")}
         />
         <NavItem
-          label="UPGADE PLAN"
+          label="UPGRADE PLAN"
           active={activeTab === "payment"}
           onClick={() => onTabChange("payment")}
         />

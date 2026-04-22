@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { ProfileTab } from "./ProfileSidebar";
 import type { StoredAccount } from "../../storage";
 import SettingsField from "../settings/SettingsField";
+import Button from "../ui/Button";
 import useAccountService from "../../services/account";
 
 const G = "#84e487";
@@ -247,80 +248,8 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
                     </p>
                   )}
                   <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-                    <button
-                      onClick={saveEdit}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform =
-                          "translate(-2px, -2px)";
-                        e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "none";
-                        e.currentTarget.style.boxShadow = `4px 4px 0 ${B}`;
-                      }}
-                      onMouseDown={(e) => {
-                        e.currentTarget.style.transform = "translate(2px, 2px)";
-                        e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`;
-                      }}
-                      onMouseUp={(e) => {
-                        e.currentTarget.style.transform =
-                          "translate(-2px, -2px)";
-                        e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
-                      }}
-                      style={{
-                        background: G,
-                        color: B,
-                        border: `2px solid ${B}`,
-                        boxShadow: `4px 4px 0 ${B}`,
-                        padding: "10px 22px",
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontWeight: 600,
-                        fontSize: "0.75rem",
-                        letterSpacing: "0.08em",
-                        cursor: "pointer",
-                        lineHeight: 1,
-                        transition: "transform 0.15s, box-shadow 0.15s",
-                      }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform =
-                          "translate(-2px, -2px)";
-                        e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "none";
-                        e.currentTarget.style.boxShadow = `4px 4px 0 ${B}`;
-                      }}
-                      onMouseDown={(e) => {
-                        e.currentTarget.style.transform = "translate(2px, 2px)";
-                        e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`;
-                      }}
-                      onMouseUp={(e) => {
-                        e.currentTarget.style.transform =
-                          "translate(-2px, -2px)";
-                        e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
-                      }}
-                      style={{
-                        background: W,
-                        color: B,
-                        border: `2px solid ${B}`,
-                        boxShadow: `4px 4px 0 ${B}`,
-                        padding: "10px 22px",
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontWeight: 600,
-                        fontSize: "0.75rem",
-                        letterSpacing: "0.08em",
-                        cursor: "pointer",
-                        lineHeight: 1,
-                        transition: "transform 0.15s, box-shadow 0.15s",
-                      }}
-                    >
-                      Cancel
-                    </button>
+                    <Button variant="green" onClick={saveEdit}>Save</Button>
+                    <Button variant="default" onClick={cancelEdit}>Cancel</Button>
                   </div>
                 </div>
               </div>
@@ -428,80 +357,8 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
                     }}
                   />
                   <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-                    <button
-                      onClick={saveEdit}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform =
-                          "translate(-2px, -2px)";
-                        e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "none";
-                        e.currentTarget.style.boxShadow = `4px 4px 0 ${B}`;
-                      }}
-                      onMouseDown={(e) => {
-                        e.currentTarget.style.transform = "translate(2px, 2px)";
-                        e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`;
-                      }}
-                      onMouseUp={(e) => {
-                        e.currentTarget.style.transform =
-                          "translate(-2px, -2px)";
-                        e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
-                      }}
-                      style={{
-                        background: G,
-                        color: B,
-                        border: `2px solid ${B}`,
-                        boxShadow: `4px 4px 0 ${B}`,
-                        padding: "10px 22px",
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontWeight: 600,
-                        fontSize: "0.75rem",
-                        letterSpacing: "0.08em",
-                        cursor: "pointer",
-                        lineHeight: 1,
-                        transition: "transform 0.15s, box-shadow 0.15s",
-                      }}
-                    >
-                      Save
-                    </button>
-                    <button
-                      onClick={cancelEdit}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform =
-                          "translate(-2px, -2px)";
-                        e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "none";
-                        e.currentTarget.style.boxShadow = `4px 4px 0 ${B}`;
-                      }}
-                      onMouseDown={(e) => {
-                        e.currentTarget.style.transform = "translate(2px, 2px)";
-                        e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`;
-                      }}
-                      onMouseUp={(e) => {
-                        e.currentTarget.style.transform =
-                          "translate(-2px, -2px)";
-                        e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
-                      }}
-                      style={{
-                        background: W,
-                        color: B,
-                        border: `2px solid ${B}`,
-                        boxShadow: `4px 4px 0 ${B}`,
-                        padding: "10px 22px",
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontWeight: 600,
-                        fontSize: "0.75rem",
-                        letterSpacing: "0.08em",
-                        cursor: "pointer",
-                        lineHeight: 1,
-                        transition: "transform 0.15s, box-shadow 0.15s",
-                      }}
-                    >
-                      Cancel
-                    </button>
+                    <Button variant="green" onClick={saveEdit}>Save</Button>
+                    <Button variant="default" onClick={cancelEdit}>Cancel</Button>
                   </div>
                 </div>
               </div>

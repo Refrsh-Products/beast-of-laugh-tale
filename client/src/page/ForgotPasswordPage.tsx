@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthService from "../services/auth";
+import Button from "../components/ui/Button";
 
 const G = "#84e487";
 const B = "#000000";
@@ -152,9 +153,9 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div style={{ marginTop: 8 }}>
-            <SubmitBtn disabled={isLoading}>
+            <Button variant="green" fullWidth type="submit" disabled={isLoading}>
               {isLoading ? "Sending..." : "Send reset link →"}
-            </SubmitBtn>
+            </Button>
           </div>
         </form>
 
@@ -179,45 +180,3 @@ export default function ForgotPasswordPage() {
   );
 }
 
-function SubmitBtn({
-  children,
-  disabled,
-}: {
-  children: React.ReactNode;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="submit"
-      disabled={disabled}
-      onMouseEnter={(e) => {
-        if (!disabled) {
-          e.currentTarget.style.transform = "translate(-3px, -3px)";
-          e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`;
-        }
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "none";
-        e.currentTarget.style.boxShadow = `4px 4px 0 ${B}`;
-      }}
-      style={{
-        width: "100%",
-        background: G,
-        color: B,
-        border: `2px solid ${B}`,
-        boxShadow: `4px 4px 0 ${B}`,
-        padding: "12px 22px",
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontWeight: 600,
-        fontSize: "0.78rem",
-        letterSpacing: "0.08em",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.6 : 1,
-        lineHeight: 1,
-        transition: "transform 0.15s, box-shadow 0.15s",
-      }}
-    >
-      {children}
-    </button>
-  );
-}

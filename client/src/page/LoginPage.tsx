@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import LoginBtn from "../components/login/LoginBtn";
+import Button from "../components/ui/Button";
 import Loading from "../components/loading/Loading";
 import useAuthService from "../services/auth";
 import GoogleAuthBtn from "../components/google-auth/GoogleAuthBtn";
@@ -232,9 +232,9 @@ export default function LoginPage() {
             </div>
 
             <div style={{ marginTop: 8 }}>
-              <LoginBtn variant="green" fullWidth type="submit">
+              <Button variant="green" fullWidth type="submit">
                 Log in →
-              </LoginBtn>
+              </Button>
             </div>
           </form>
 

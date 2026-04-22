@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import GoogleAuthBtn from "../components/google-auth/GoogleAuthBtn";
 import FreshrLogo from "../components/logo/FreshrLogo";
-import SignUpBtn from "../components/sign-up/SignUpBtn";
+import Button from "../components/ui/Button";
 import useAuthService from "../services/auth";
 import Loading from "../components/loading/Loading";
 
@@ -302,14 +302,14 @@ export default function SignupPage() {
             </div>
 
             <div style={{ marginTop: 8 }}>
-              <SignUpBtn
+              <Button
                 variant="green"
                 fullWidth
                 type="submit"
                 onClick={handleSubmit}
               >
                 Sign up →
-              </SignUpBtn>
+              </Button>
             </div>
           </form>
 

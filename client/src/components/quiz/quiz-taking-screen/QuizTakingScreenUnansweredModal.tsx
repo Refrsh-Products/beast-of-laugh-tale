@@ -1,9 +1,5 @@
 import QuizTakingScreenModal from "./QuizTakingScreenModal";
-import QuizTakingScreenModalBtn from "./QuizTakingScreenModalBtn";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import Button from "../../ui/Button";
 
 export default function UnansweredModal({
   count,
@@ -40,22 +36,8 @@ export default function UnansweredModal({
         Skipped questions will be marked as incorrect.
       </p>
       <div style={{ display: "flex", gap: 12, justifyContent: "flex-end" }}>
-        <QuizTakingScreenModalBtn
-          onClick={onGoBack}
-          bg={W}
-          color={B}
-          border={`2px solid ${B}`}
-        >
-          Go Back
-        </QuizTakingScreenModalBtn>
-        <QuizTakingScreenModalBtn
-          onClick={onSubmit}
-          bg={G}
-          color={B}
-          border={`2px solid ${B}`}
-        >
-          Submit Anyway →
-        </QuizTakingScreenModalBtn>
+        <Button variant="default" onClick={onGoBack}>Go Back</Button>
+        <Button variant="green" onClick={onSubmit}>Submit Anyway →</Button>
       </div>
     </QuizTakingScreenModal>
   );

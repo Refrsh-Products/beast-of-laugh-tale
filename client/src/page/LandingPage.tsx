@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Btn from "../components/landing/Btn";
+import Button from "../components/ui/Button";
 import FeatureCard from "../components/landing/FeatureCard";
 import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 
@@ -58,14 +58,14 @@ export default function LandingPage() {
             onClick={() => navigate("/signup")}
             style={{ cursor: "pointer" }}
           >
-            <Btn variant="green">Sign up</Btn>
+            <Button variant="green">Sign up</Button>
           </span>
           <span
             id="nav-log-in"
             onClick={() => navigate("/login")}
             style={{ cursor: "pointer" }}
           >
-            <Btn variant="outline">Log in</Btn>
+            <Button variant="default">Log in</Button>
           </span>
         </div>
       </nav>
@@ -540,9 +540,9 @@ export default function LandingPage() {
             onClick={() => navigate("/signup")}
             style={{ cursor: "pointer" }}
           >
-            <Btn variant="green" lg onDark>
+            <Button variant="green" large>
               Create your first notebook →
-            </Btn>
+            </Button>
           </span>
         </div>
       </section>

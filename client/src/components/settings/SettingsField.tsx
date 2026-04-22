@@ -1,3 +1,5 @@
+import Button from "../ui/Button";
+
 const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
@@ -70,61 +72,8 @@ export default function SettingsField({
               transition: "border-color 0.15s",
             }}
           />
-          <button
-            onClick={onSave}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translate(-3px, -3px)";
-              e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "none";
-              e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
-            }}
-            style={{
-              background: G,
-              color: B,
-              border: `2px solid ${B}`,
-              boxShadow: `3px 3px 0 ${B}`,
-              padding: "10px 16px",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontWeight: 700,
-              fontSize: "0.7rem",
-              letterSpacing: "0.06em",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-              lineHeight: 1,
-              transition: "transform 0.15s, box-shadow 0.15s",
-            }}
-          >
-            Save
-          </button>
-          <button
-            onClick={onCancel}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translate(-3px, -3px)";
-              e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "none";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-            style={{
-              background: W,
-              color: B,
-              border: `2px solid ${B}`,
-              padding: "10px 16px",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontWeight: 700,
-              fontSize: "0.7rem",
-              letterSpacing: "0.06em",
-              cursor: "pointer",
-              whiteSpace: "nowrap",
-              lineHeight: 1,
-              transition: "transform 0.15s, box-shadow 0.15s",
-            }}
-          >
-            Cancel
-          </button>
+          <Button variant="green" onClick={onSave}>Save</Button>
+          <Button variant="default" onClick={onCancel}>Cancel</Button>
         </div>
       ) : (
         /* View mode */

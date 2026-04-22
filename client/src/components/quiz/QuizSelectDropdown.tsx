@@ -11,31 +11,34 @@ export default function QuizSelectDropdown({
   onChange,
   placeholder,
   options,
+  disabled = false,
 }: {
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
   options: SelectOption[];
+  disabled?: boolean;
 }) {
   return (
     <div style={{ position: "relative" }}>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
         style={{
           width: "100%",
           appearance: "none",
-          border: `2px solid ${B}`,
+          border: `2px solid ${disabled ? "#ccc" : B}`,
           borderRadius: 0,
-          background: W,
+          background: disabled ? "#f5f5f5" : W,
           fontFamily: "'IBM Plex Mono', monospace",
           fontSize: "0.72rem",
           fontWeight: 600,
-          color: value ? B : "#999",
+          color: disabled ? "#aaa" : value ? B : "#999",
           padding: "9px 32px 9px 12px",
-          cursor: "pointer",
+          cursor: disabled ? "not-allowed" : "pointer",
           outline: "none",
-          boxShadow: `3px 3px 0 ${B}`,
+          boxShadow: disabled ? "none" : `3px 3px 0 ${B}`,
           boxSizing: "border-box",
         }}
       >
@@ -56,7 +59,7 @@ export default function QuizSelectDropdown({
           transform: "translateY(-50%)",
           pointerEvents: "none",
           fontSize: "0.6rem",
-          color: B,
+          color: disabled ? "#ccc" : B,
         }}
       >
         ▾

@@ -1,6 +1,6 @@
 import { createPortal } from 'react-dom'
+import Button from '../ui/Button'
 
-const G = '#84e487'
 const B = '#000000'
 const W = '#FFFFFF'
 
@@ -92,40 +92,8 @@ export default function CreateNotebookModal({
             )}
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                letterSpacing: '0.06em',
-                padding: '10px 20px',
-                background: W,
-                border: `2px solid ${B}`,
-                boxShadow: `3px 3px 0 ${B}`,
-                cursor: 'pointer',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                letterSpacing: '0.06em',
-                padding: '10px 20px',
-                background: G,
-                color: B,
-                border: `2px solid ${B}`,
-                boxShadow: `3px 3px 0 ${B}`,
-                cursor: 'pointer',
-              }}
-            >
-              Create →
-            </button>
+            <Button variant="default" type="button" onClick={onClose}>Cancel</Button>
+            <Button variant="green" type="submit">Create →</Button>
           </div>
         </form>
       </div>

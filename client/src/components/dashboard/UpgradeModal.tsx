@@ -1,5 +1,6 @@
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
+import Button from "../ui/Button";
 
 const B = "#000000";
 const W = "#FFFFFF";
@@ -125,41 +126,8 @@ export default function UpgradeModal({
         </div>
 
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.72rem",
-              fontWeight: 600,
-              letterSpacing: "0.06em",
-              padding: "10px 20px",
-              background: W,
-              border: `2px solid ${B}`,
-              boxShadow: `3px 3px 0 ${B}`,
-              cursor: "pointer",
-            }}
-          >
-            Not now
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/profile", { state: { tab: "payment" } })}
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.72rem",
-              fontWeight: 600,
-              letterSpacing: "0.06em",
-              padding: "10px 20px",
-              background: G,
-              color: B,
-              border: `2px solid ${B}`,
-              boxShadow: `3px 3px 0 ${B}`,
-              cursor: "pointer",
-            }}
-          >
-            Upgrade to Pro →
-          </button>
+          <Button variant="default" onClick={onClose}>Not now</Button>
+          <Button variant="green" onClick={() => navigate("/profile", { state: { tab: "payment" } })}>Upgrade to Pro →</Button>
         </div>
       </div>
     </div>,
