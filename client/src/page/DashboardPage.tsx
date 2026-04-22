@@ -31,47 +31,6 @@ function MiniBar({ used, limit }: { used: number; limit: number }) {
   );
 }
 
-function FreeUpgradeCard({ usage, onUpgrade }: { usage: AccountUseage; onUpgrade: () => void }) {
-  const [btnHovered, setBtnHovered] = useState(false);
-  const metrics = [
-    { label: "Notebooks", used: usage.notebooks.used, limit: usage.notebooks.limit, fmt: (n: number) => String(n) },
-    { label: "Quizzes", used: usage.daily_quizzes.used, limit: usage.daily_quizzes.limit, fmt: (n: number) => String(n) },
-    { label: "Storage", used: Number(usage.storage.used_bytes), limit: Number(usage.storage.limit_bytes), fmt: (n: number) => n >= 1_048_576 ? `${(n / 1_048_576).toFixed(0)}MB` : `${(n / 1_024).toFixed(0)}KB` },
-  ];
-  return (
-    <div style={{ border: `2px solid ${B}`, boxShadow: `3px 3px 0 ${B}`, background: W, padding: "14px 16px", width: 220, flexShrink: 0 }}>
-      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.57rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", background: B, color: W, padding: "2px 7px", display: "inline-block", marginBottom: 12 }}>
-        Free Plan
-      </span>
-      <div style={{ display: "flex", flexDirection: "column", gap: 7, marginBottom: 14 }}>
-        {metrics.map((item) => (
-          <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: "#777", width: 58, flexShrink: 0 }}>{item.label}</span>
-            <MiniBar used={item.used} limit={item.limit} />
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: B, fontWeight: 700 }}>
-              {item.fmt(item.used)}<span style={{ color: "#bbb", fontWeight: 400 }}>/{item.fmt(item.limit)}</span>
-            </span>
-          </div>
-        ))}
-      </div>
-      <button
-        onClick={onUpgrade}
-        onMouseEnter={() => setBtnHovered(true)}
-        onMouseLeave={() => setBtnHovered(false)}
-        style={{
-          width: "100%", background: G, color: B, border: `2px solid ${B}`,
-          padding: "8px 0", fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700,
-          fontSize: "0.64rem", letterSpacing: "0.05em", cursor: "pointer",
-          boxShadow: btnHovered ? `3px 3px 0 ${B}` : `2px 2px 0 ${B}`,
-          transform: btnHovered ? "translate(-1px, -1px)" : "none",
-          transition: "transform 0.1s, box-shadow 0.1s",
-        }}
-      >
-        UPGRADE TO PRO →
-      </button>
-    </div>
-  );
-}
 
 function NewNotebookButton({ onClick }: { onClick: () => void }) {
   const [hovered, setHovered] = useState(false);
@@ -287,8 +246,8 @@ export default function DashboardPage() {
         profilePictureUrl={account.profile_picture_url ?? ""}
       />
 
-      {/* Usage strip — Option A, paid users only */}
-      {usage && !isFreePlan && (
+      {/* Usage strip — all users */}
+      {usage && (
         <div
           style={{
             display: "flex",
@@ -299,6 +258,7 @@ export default function DashboardPage() {
             background: W,
             borderBottom: `2px solid ${B}`,
             flexShrink: 0,
+            position: "relative",
           }}
         >
           <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: B }}>
@@ -321,6 +281,30 @@ export default function DashboardPage() {
               {i < arr.length - 1 && <span style={{ color: "#ddd" }}>·</span>}
             </span>
           ))}
+          {isFreePlan && (
+            <button
+              onClick={() => setShowUpgradeModal(true)}
+              onMouseEnter={(e) => { e.currentTarget.style.background = G; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; e.currentTarget.style.transform = "translate(-1px, -1px)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = W; e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`; e.currentTarget.style.transform = "none"; }}
+              style={{
+                position: "absolute",
+                right: 64,
+                background: W,
+                color: B,
+                border: `2px solid ${B}`,
+                padding: "4px 12px",
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontWeight: 700,
+                fontSize: "0.6rem",
+                letterSpacing: "0.05em",
+                cursor: "pointer",
+                boxShadow: `2px 2px 0 ${B}`,
+                transition: "transform 0.1s, box-shadow 0.1s, background 0.1s",
+              }}
+            >
+              UPGRADE TO PRO →
+            </button>
+          )}
         </div>
       )}
 
@@ -369,9 +353,6 @@ export default function DashboardPage() {
           </div>
           <div style={{ display: "flex", alignItems: "flex-start", gap: 16, flexShrink: 0 }}>
             <NewNotebookButton onClick={handleCreateRequest} />
-            {usage && isFreePlan && (
-              <FreeUpgradeCard usage={usage} onUpgrade={() => setShowUpgradeModal(true)} />
-            )}
           </div>
         </div>
 
