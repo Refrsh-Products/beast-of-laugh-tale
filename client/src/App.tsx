@@ -14,6 +14,7 @@ import NotebookPage from "./page/NotebookPage";
 import NotFoundPage from "./page/NotFoundPage";
 import PaymentSuccessPage from "./page/PaymentSuccessPage";
 import PaymentCancelPage from "./page/PaymentCancelPage";
+
 export default function App() {
   return (
     <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_AUTH_CLIENT_ID}>
