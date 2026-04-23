@@ -398,7 +398,6 @@ export default function DashboardPage() {
             >
               UPGRADE TO PRO →
             </button>
-            //<Button variant="green" >Upgrade to Pro →</Button>
           )}
         </div>
       )}
