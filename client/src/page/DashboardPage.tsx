@@ -26,11 +26,17 @@ function MiniBar({ used, limit }: { used: number; limit: number }) {
   const fill = pct >= 80 ? "#e53e3e" : pct >= 55 ? "#d97706" : B;
   return (
     <div style={{ width: 52, height: 4, background: "#e0e0e0", flexShrink: 0 }}>
-      <div style={{ width: `${pct}%`, height: "100%", background: fill, transition: "width 0.3s" }} />
+      <div
+        style={{
+          width: `${pct}%`,
+          height: "100%",
+          background: fill,
+          transition: "width 0.3s",
+        }}
+      />
     </div>
   );
 }
-
 
 function NewNotebookButton({ onClick }: { onClick: () => void }) {
   const [hovered, setHovered] = useState(false);
@@ -39,7 +45,10 @@ function NewNotebookButton({ onClick }: { onClick: () => void }) {
     <button
       onClick={onClick}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setPressed(false); }}
+      onMouseLeave={() => {
+        setHovered(false);
+        setPressed(false);
+      }}
       onMouseDown={() => setPressed(true)}
       onMouseUp={() => setPressed(false)}
       style={{
@@ -55,8 +64,16 @@ function NewNotebookButton({ onClick }: { onClick: () => void }) {
         fontSize: "0.75rem",
         letterSpacing: "0.04em",
         cursor: "pointer",
-        boxShadow: pressed ? `1px 1px 0 ${B}` : hovered ? `5px 5px 0 ${B}` : `3px 3px 0 ${B}`,
-        transform: pressed ? "translate(2px, 2px)" : hovered ? "translate(-2px, -2px)" : "none",
+        boxShadow: pressed
+          ? `1px 1px 0 ${B}`
+          : hovered
+            ? `5px 5px 0 ${B}`
+            : `3px 3px 0 ${B}`,
+        transform: pressed
+          ? "translate(2px, 2px)"
+          : hovered
+            ? "translate(-2px, -2px)"
+            : "none",
         transition: "transform 0.1s, box-shadow 0.1s",
         flexShrink: 0,
       }}
@@ -81,7 +98,10 @@ export default function DashboardPage() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [menuAnchor, setMenuAnchor] = useState<{ top: number; right: number } | null>(null);
+  const [menuAnchor, setMenuAnchor] = useState<{
+    top: number;
+    right: number;
+  } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -90,13 +110,18 @@ export default function DashboardPage() {
   const [createTitle, setCreateTitle] = useState("");
   const [createError, setCreateError] = useState("");
   const { toasts, showToast } = useToast();
-  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
+  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(
+    null,
+  );
   const [usage, setUsage] = useState<AccountUseage | null>(null);
 
   useEffect(() => {
     if (!authService.isLoggedIn()) return;
     accountService.hasCompletedOnboarding().then(setOnboardingComplete);
-    accountService.getAccountUsage().then(setUsage).catch(() => {});
+    accountService
+      .getAccountUsage()
+      .then(setUsage)
+      .catch(() => {});
   }, []);
 
   async function refreshNotebooks() {
@@ -144,7 +169,10 @@ export default function DashboardPage() {
     }
   }
 
-  function handleMenuOpen(id: string | null, anchor?: { top: number; right: number }) {
+  function handleMenuOpen(
+    id: string | null,
+    anchor?: { top: number; right: number },
+  ) {
     setOpenMenuId(id);
     setMenuAnchor(anchor ?? null);
   }
@@ -229,7 +257,8 @@ export default function DashboardPage() {
     nb.title.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  const confirmDeleteNotebook = notebooks.find((n) => n.id === confirmDeleteId) ?? null;
+  const confirmDeleteNotebook =
+    notebooks.find((n) => n.id === confirmDeleteId) ?? null;
   const openMenuNotebook = notebooks.find((n) => n.id === openMenuId) ?? null;
 
   const userName =
@@ -239,7 +268,14 @@ export default function DashboardPage() {
   const isFreePlan = !usage || usage.plan?.toLowerCase() === "free";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" }}>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100vh",
+        overflow: "hidden",
+      }}
+    >
       <TopNavbar
         userEmail={user.email ?? ""}
         userName={userName}
@@ -261,21 +297,69 @@ export default function DashboardPage() {
             position: "relative",
           }}
         >
-          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: B }}>
+          <span
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.6rem",
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: B,
+            }}
+          >
             {usage.plan}
           </span>
           <span style={{ color: "#ddd" }}>·</span>
           {[
-            { label: "Notebooks", used: usage.notebooks.used, limit: usage.notebooks.limit, fmt: (n: number) => String(n) },
-            { label: "Storage", used: Number(usage.storage.used_bytes), limit: Number(usage.storage.limit_bytes), fmt: (n: number) => n >= 1_048_576 ? `${(n / 1_048_576).toFixed(0)}MB` : `${(n / 1_024).toFixed(0)}KB` },
-            { label: "Quizzes", used: usage.daily_quizzes.used, limit: usage.daily_quizzes.limit, fmt: (n: number) => String(n) },
+            {
+              label: "Notebooks",
+              used: usage.notebooks.used,
+              limit: usage.notebooks.limit,
+              fmt: (n: number) => String(n),
+            },
+            {
+              label: "Storage",
+              used: Number(usage.storage.used_bytes),
+              limit: Number(usage.storage.limit_bytes),
+              fmt: (n: number) =>
+                n >= 1_048_576
+                  ? `${(n / 1_048_576).toFixed(0)}MB`
+                  : `${(n / 1_024).toFixed(0)}KB`,
+            },
+            {
+              label: "Quizzes",
+              used: usage.daily_quizzes.used,
+              limit: usage.daily_quizzes.limit,
+              fmt: (n: number) => String(n),
+            },
           ].map((item, i, arr) => (
-            <span key={item.label} style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <span
+              key={item.label}
+              style={{ display: "flex", alignItems: "center", gap: 20 }}
+            >
               <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: "#777" }}>{item.label}</span>
+                <span
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.6rem",
+                    color: "#777",
+                  }}
+                >
+                  {item.label}
+                </span>
                 <MiniBar used={item.used} limit={item.limit} />
-                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: B, fontWeight: 700 }}>
-                  {item.fmt(item.used)}<span style={{ color: "#bbb", fontWeight: 400 }}>/{item.fmt(item.limit)}</span>
+                <span
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.6rem",
+                    color: B,
+                    fontWeight: 700,
+                  }}
+                >
+                  {item.fmt(item.used)}
+                  <span style={{ color: "#bbb", fontWeight: 400 }}>
+                    /{item.fmt(item.limit)}
+                  </span>
                 </span>
               </span>
               {i < arr.length - 1 && <span style={{ color: "#ddd" }}>·</span>}
@@ -283,9 +367,19 @@ export default function DashboardPage() {
           ))}
           {isFreePlan && (
             <button
-              onClick={() => setShowUpgradeModal(true)}
-              onMouseEnter={(e) => { e.currentTarget.style.background = G; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; e.currentTarget.style.transform = "translate(-1px, -1px)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = W; e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`; e.currentTarget.style.transform = "none"; }}
+              onClick={() =>
+                navigate("/profile", { state: { tab: "payment" } })
+              }
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = G;
+                e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
+                e.currentTarget.style.transform = "translate(-1px, -1px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = W;
+                e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`;
+                e.currentTarget.style.transform = "none";
+              }}
               style={{
                 position: "absolute",
                 right: 64,
@@ -348,10 +442,18 @@ export default function DashboardPage() {
                 margin: "6px 0 0",
               }}
             >
-              {notebooks.length} {notebooks.length === 1 ? "notebook" : "notebooks"}
+              {notebooks.length}{" "}
+              {notebooks.length === 1 ? "notebook" : "notebooks"}
             </p>
           </div>
-          <div style={{ display: "flex", alignItems: "flex-start", gap: 16, flexShrink: 0 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: 16,
+              flexShrink: 0,
+            }}
+          >
             <NewNotebookButton onClick={handleCreateRequest} />
           </div>
         </div>
@@ -392,36 +494,88 @@ export default function DashboardPage() {
               }}
             />
             <svg
-              width="13" height="13" viewBox="0 0 14 14" fill="none"
-              style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
+              width="13"
+              height="13"
+              viewBox="0 0 14 14"
+              fill="none"
+              style={{
+                position: "absolute",
+                left: 10,
+                top: "50%",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
+              }}
             >
               <circle cx="6" cy="6" r="4.5" stroke="#aaa" strokeWidth="1.5" />
-              <path d="M10 10l2.5 2.5" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M10 10l2.5 2.5"
+                stroke="#aaa"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
           </div>
 
           <div style={{ display: "flex", border: `2px solid ${B}` }}>
             <button
               onClick={() => setView("grid")}
-              onMouseEnter={(e) => { if (view !== "grid") e.currentTarget.style.background = "#eee"; }}
-              onMouseLeave={(e) => { if (view !== "grid") e.currentTarget.style.background = W; }}
-              style={{ background: view === "grid" ? B : W, color: view === "grid" ? W : B, border: "none", padding: "8px 10px", cursor: "pointer", lineHeight: 1, transition: "background 0.12s" }}
+              onMouseEnter={(e) => {
+                if (view !== "grid") e.currentTarget.style.background = "#eee";
+              }}
+              onMouseLeave={(e) => {
+                if (view !== "grid") e.currentTarget.style.background = W;
+              }}
+              style={{
+                background: view === "grid" ? B : W,
+                color: view === "grid" ? W : B,
+                border: "none",
+                padding: "8px 10px",
+                cursor: "pointer",
+                lineHeight: 1,
+                transition: "background 0.12s",
+              }}
               title="Grid view"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-                <rect x="0" y="0" width="6" height="6" /><rect x="8" y="0" width="6" height="6" />
-                <rect x="0" y="8" width="6" height="6" /><rect x="8" y="8" width="6" height="6" />
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="currentColor"
+              >
+                <rect x="0" y="0" width="6" height="6" />
+                <rect x="8" y="0" width="6" height="6" />
+                <rect x="0" y="8" width="6" height="6" />
+                <rect x="8" y="8" width="6" height="6" />
               </svg>
             </button>
             <button
               onClick={() => setView("list")}
-              onMouseEnter={(e) => { if (view !== "list") e.currentTarget.style.background = "#eee"; }}
-              onMouseLeave={(e) => { if (view !== "list") e.currentTarget.style.background = W; }}
-              style={{ background: view === "list" ? B : W, color: view === "list" ? W : B, border: "none", borderLeft: `1px solid ${B}`, padding: "8px 10px", cursor: "pointer", lineHeight: 1, transition: "background 0.12s" }}
+              onMouseEnter={(e) => {
+                if (view !== "list") e.currentTarget.style.background = "#eee";
+              }}
+              onMouseLeave={(e) => {
+                if (view !== "list") e.currentTarget.style.background = W;
+              }}
+              style={{
+                background: view === "list" ? B : W,
+                color: view === "list" ? W : B,
+                border: "none",
+                borderLeft: `1px solid ${B}`,
+                padding: "8px 10px",
+                cursor: "pointer",
+                lineHeight: 1,
+                transition: "background 0.12s",
+              }}
               title="List view"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-                <rect x="0" y="0" width="14" height="2.5" /><rect x="0" y="5.75" width="14" height="2.5" />
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="currentColor"
+              >
+                <rect x="0" y="0" width="14" height="2.5" />
+                <rect x="0" y="5.75" width="14" height="2.5" />
                 <rect x="0" y="11.5" width="14" height="2.5" />
               </svg>
             </button>
