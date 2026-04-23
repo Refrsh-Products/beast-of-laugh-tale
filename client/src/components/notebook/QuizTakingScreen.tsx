@@ -9,7 +9,7 @@ const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
 const R = "#FF4D4D";
-const AMBER = "#FCD34D";
+const GREY = "#b0b0b0";
 
 // ── Footer nav button (Prev / Next / Submit) ──────────────────────
 // Uses React state for hover/press — avoids imperative DOM style mutation
@@ -263,7 +263,7 @@ export default function QuizTakingScreen({
               <button
                 onClick={toggleFlag}
                 style={{
-                  background: isFlagged ? AMBER : "transparent",
+                  background: isFlagged ? GREY : "transparent",
                   border: `1.5px solid ${isFlagged ? B : "#bbb"}`,
                   color: isFlagged ? B : "#888",
                   fontFamily: "'IBM Plex Mono', monospace",
@@ -456,14 +456,14 @@ export default function QuizTakingScreen({
           </div>
         </div>
 
-        {/* Dot indicators — no border, sits naturally between content and footer */}
+        {/* Question navigator */}
         {numQuestions > 1 && (
           <div
             style={{
-              padding: "14px 32px",
+              padding: "12px 32px",
               background: "#f5f5f0",
               display: "flex",
-              gap: 8,
+              gap: 6,
               justifyContent: "center",
               flexWrap: "wrap",
               flexShrink: 0,
@@ -474,17 +474,8 @@ export default function QuizTakingScreen({
               const isAnswered = userAnswers[qi] !== null;
               const isQFlagged = flaggedQuestions.includes(qi);
 
-              // Color: current = green, flagged = amber, answered = black, unanswered = transparent
-              const dotBg = isCurrent
-                ? G
-                : isQFlagged
-                  ? AMBER
-                  : isAnswered
-                    ? B
-                    : "transparent";
-              const dotBorder = isQFlagged && !isCurrent ? AMBER : B;
-              const dotOutline =
-                isCurrent && isQFlagged ? `2px solid ${AMBER}` : "none";
+              const bg = isCurrent ? G : isQFlagged ? GREY : isAnswered ? B : W;
+              const numberColor = isAnswered && !isCurrent ? W : B;
 
               return (
                 <div
@@ -492,18 +483,25 @@ export default function QuizTakingScreen({
                   onClick={() => setCurrentQ(qi)}
                   title={`Q${qi + 1}${isQFlagged ? " (flagged)" : ""}`}
                   style={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    border: `2px solid ${dotBorder}`,
-                    background: dotBg,
-                    outline: dotOutline,
-                    outlineOffset: 2,
+                    width: 32,
+                    height: 32,
+                    border: `2px solid ${B}`,
+                    background: bg,
                     cursor: "pointer",
                     flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.62rem",
+                    fontWeight: 700,
+                    color: numberColor,
                     transition: "background 0.1s",
+                    userSelect: "none",
                   }}
-                />
+                >
+                  {qi + 1}
+                </div>
               );
             })}
           </div>

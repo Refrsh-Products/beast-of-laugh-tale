@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { QuizSession } from "../../hooks/useQuizService.api";
 
 const G = "#84e487";
@@ -17,13 +18,26 @@ interface QuizReviewColumnProps {
   quiz: QuizSession;
   onBack: () => void;
   onRetake: () => void;
+  onTakeToChat?: (questionText: string, options: string[], topic: string) => void;
 }
 
 export default function QuizReviewColumn({
   quiz,
   onBack,
   onRetake,
+  onTakeToChat,
 }: QuizReviewColumnProps) {
+  const [openExplanations, setOpenExplanations] = useState<Set<number>>(new Set());
+
+  function toggleExplanation(index: number) {
+    setOpenExplanations((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
+
   const numQuestions = quiz.num_questions ?? 0;
   const scoreCount = Math.round((quiz.score ?? 0) * numQuestions);
   const scorePercent = Math.round((quiz.score ?? 0) * 100);
@@ -211,7 +225,7 @@ export default function QuizReviewColumn({
           {/* Questions */}
           <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
             {questions.map((q, qi) => {
-              const correct = q.is_correct ?? false;
+              const correct = q.is_correct ?? (q.user_answer != null && q.user_answer === q.correct_answer);
 
               return (
                 <div
@@ -340,6 +354,107 @@ export default function QuizReviewColumn({
                       );
                     })}
                   </div>
+
+                  {/* Explanation + Take to Chat */}
+                  {(q.explanation || onTakeToChat) && (
+                    <div style={{ marginTop: 14 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          marginBottom: openExplanations.has(qi) ? 10 : 0,
+                        }}
+                      >
+                        {q.explanation ? (
+                          <button
+                            onClick={() => toggleExplanation(qi)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              padding: 0,
+                              cursor: "pointer",
+                              fontFamily: "'IBM Plex Mono', monospace",
+                              fontSize: "0.72rem",
+                              fontWeight: 600,
+                              color: "#555",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 6,
+                            }}
+                          >
+                            <span
+                              style={{
+                                display: "inline-block",
+                                transition: "transform 0.2s",
+                                transform: openExplanations.has(qi) ? "rotate(90deg)" : "rotate(0deg)",
+                                fontSize: "0.65rem",
+                              }}
+                            >
+                              ▶
+                            </span>
+                            {openExplanations.has(qi) ? "Hide Explanation" : "Show Explanation"}
+                          </button>
+                        ) : (
+                          <span />
+                        )}
+
+                        {onTakeToChat && (
+                          <button
+                            onClick={() => {
+                              const choices = q.choices?.length > 0 ? q.choices : ["True", "False"];
+                              onTakeToChat(q.question_text, choices, topicLabel);
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.color = B;
+                              e.currentTarget.style.borderColor = B;
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.color = "#555";
+                              e.currentTarget.style.borderColor = "#bbb";
+                            }}
+                            style={{
+                              background: "transparent",
+                              border: "1.5px solid #bbb",
+                              color: "#555",
+                              fontFamily: "'IBM Plex Mono', monospace",
+                              fontSize: "0.68rem",
+                              fontWeight: 600,
+                              letterSpacing: "0.04em",
+                              padding: "6px 14px",
+                              cursor: "pointer",
+                              transition: "color 0.15s, border-color 0.15s",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            💬 Take to Chat →
+                          </button>
+                        )}
+                      </div>
+
+                      {openExplanations.has(qi) && q.explanation && (
+                        <div
+                          style={{
+                            background: "#f0fdf4",
+                            border: `2px solid ${G}`,
+                            padding: "14px 18px",
+                          }}
+                        >
+                          <p
+                            style={{
+                              fontFamily: "'IBM Plex Mono', monospace",
+                              fontSize: "0.78rem",
+                              color: "#444",
+                              margin: 0,
+                              lineHeight: 1.7,
+                            }}
+                          >
+                            {q.explanation}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

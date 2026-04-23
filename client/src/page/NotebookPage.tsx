@@ -514,6 +514,7 @@ export default function NotebookPage() {
             quiz={selectedQuiz}
             onBack={handleBackToGenerator}
             onRetake={handleRetakeQuiz}
+            onTakeToChat={handleTakeToChat}
           />
         ) : (
           <QuizColumn
