@@ -93,10 +93,18 @@ export default function DashboardPage() {
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(null);
   const [usage, setUsage] = useState<AccountUseage | null>(null);
 
+  async function refreshUsage() {
+    try {
+      setUsage(await accountService.getAccountUsage());
+    } catch {}
+  }
+
   useEffect(() => {
     if (!authService.isLoggedIn()) return;
     accountService.hasCompletedOnboarding().then(setOnboardingComplete);
-    accountService.getAccountUsage().then(setUsage).catch(() => {});
+    refreshUsage();
+    const interval = setInterval(refreshUsage, 30_000);
+    return () => clearInterval(interval);
   }, []);
 
   async function refreshNotebooks() {
@@ -177,6 +185,7 @@ export default function DashboardPage() {
     await notebookService.archive(id);
     await refreshNotebooks();
     await refreshArchived();
+    refreshUsage();
     showToast("Notebook archived", "neutral");
   }
 
@@ -184,6 +193,7 @@ export default function DashboardPage() {
     await notebookService.unarchive(id);
     await refreshNotebooks();
     await refreshArchived();
+    refreshUsage();
     showToast("Notebook restored", "neutral");
   }
 
@@ -198,6 +208,7 @@ export default function DashboardPage() {
     setCreateError("");
     setShowCreateModal(false);
     refreshNotebooks();
+    refreshUsage();
     showToast("Notebook created");
   }
 
@@ -211,6 +222,7 @@ export default function DashboardPage() {
     await notebookService.delete(confirmDeleteId);
     setConfirmDeleteId(null);
     refreshNotebooks();
+    refreshUsage();
     showToast("Notebook deleted", "danger");
   }
 
