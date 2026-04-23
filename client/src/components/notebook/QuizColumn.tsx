@@ -346,9 +346,9 @@ export default function QuizColumn({
               />
             </div>
 
-            {/* Timer */}
+            {/* Mode */}
             <div>
-              <label style={labelStyle}>TIMER</label>
+              <label style={labelStyle}>MODE</label>
               <QuizSelectDropdown
                 value={quizType === "TIMED" ? "yes" : "no"}
                 onChange={(v) => {
@@ -358,10 +358,10 @@ export default function QuizColumn({
                     setTimeLimit(null);
                   }
                 }}
-                placeholder="No"
+                placeholder="Practice"
                 options={[
-                  { value: "yes", label: "Yes" },
-                  { value: "no", label: "No" },
+                  { value: "yes", label: "Timed" },
+                  { value: "no", label: "Practice" },
                 ]}
               />
             </div>

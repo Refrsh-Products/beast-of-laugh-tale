@@ -18,20 +18,33 @@ function makeChoices(topic: string): string[] {
   ];
 }
 
-function generateFakeQuestions(topic: string, count: number): QuizQuestion[] {
+function generateFakeQuestions(topic: string, count: number, score?: number): QuizQuestion[] {
+  const correctCount = score !== undefined ? Math.round(score * count) : 0;
+  const correctIndices = new Set<number>();
+  while (correctIndices.size < correctCount) {
+    correctIndices.add(Math.floor(Math.random() * count));
+  }
+
   const questions: QuizQuestion[] = [];
   for (let i = 0; i < count; i++) {
     const choices = makeChoices(topic);
     const correctIndex = Math.floor(Math.random() * 4);
+    const correctAnswer = choices[correctIndex];
+    const isCorrect = correctIndices.has(i);
+    const wrongChoices = choices.filter((_, ci) => ci !== correctIndex);
+    const userAnswer = isCorrect
+      ? correctAnswer
+      : wrongChoices[Math.floor(Math.random() * wrongChoices.length)];
+
     questions.push({
       id: crypto.randomUUID(),
       question_text: `Sample question ${i + 1}: Which best describes a key concept in ${topic}?`,
       question_type: "multiple_choice",
       choices,
-      correct_answer: choices[correctIndex],
-      explanation: `The correct answer is "${choices[correctIndex]}". This is the most accurate description of the core principle in ${topic}.`,
-      user_answer: "",
-      is_correct: false,
+      correct_answer: correctAnswer,
+      explanation: `The correct answer is "${correctAnswer}". This is the most accurate description of the core principle in ${topic}.`,
+      user_answer: userAnswer,
+      is_correct: isCorrect,
       time_taken: 0,
       order_index: i,
     });
@@ -55,7 +68,7 @@ function makeSeedSession(
   generatedAt: string,
 ): QuizSession {
   const id = crypto.randomUUID();
-  const questions = generateFakeQuestions(topic, numQuestions);
+  const questions = generateFakeQuestions(topic, numQuestions, score);
   return {
     id,
     notebook: notebookId,
