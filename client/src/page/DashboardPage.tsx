@@ -115,13 +115,18 @@ export default function DashboardPage() {
   );
   const [usage, setUsage] = useState<AccountUseage | null>(null);
 
+  async function fetchUsage() {
+    try {
+      setUsage(await accountService.getAccountUsage());
+    } catch (err) {
+      console.error("Failed to fetch usage:", err);
+    }
+  }
+
   useEffect(() => {
     if (!authService.isLoggedIn()) return;
     accountService.hasCompletedOnboarding().then(setOnboardingComplete);
-    accountService
-      .getAccountUsage()
-      .then(setUsage)
-      .catch(() => {});
+    fetchUsage();
   }, []);
 
   async function refreshNotebooks() {
@@ -205,6 +210,7 @@ export default function DashboardPage() {
     await notebookService.archive(id);
     await refreshNotebooks();
     await refreshArchived();
+    fetchUsage();
     showToast("Notebook archived", "neutral");
   }
 
@@ -212,6 +218,7 @@ export default function DashboardPage() {
     await notebookService.unarchive(id);
     await refreshNotebooks();
     await refreshArchived();
+    fetchUsage();
     showToast("Notebook restored", "neutral");
   }
 
@@ -226,6 +233,7 @@ export default function DashboardPage() {
     setCreateError("");
     setShowCreateModal(false);
     refreshNotebooks();
+    fetchUsage();
     showToast("Notebook created");
   }
 
@@ -239,6 +247,7 @@ export default function DashboardPage() {
     await notebookService.delete(confirmDeleteId);
     setConfirmDeleteId(null);
     refreshNotebooks();
+    fetchUsage();
     showToast("Notebook deleted", "danger");
   }
 
