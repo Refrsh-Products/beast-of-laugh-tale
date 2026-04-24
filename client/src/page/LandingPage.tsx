@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import FeatureCard from "../components/landing/FeatureCard";
+import TestimonialSection from "../components/landing/TestimonialSection";
 import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 
 /* ─── Design tokens ───────────────────────────────────────── */
@@ -498,6 +499,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── TESTIMONIALS ── */}
+      <TestimonialSection />
 
       {/* ── CTA ── */}
       <section
