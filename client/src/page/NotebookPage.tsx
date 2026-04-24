@@ -26,6 +26,8 @@ import QuizReviewColumn from "../components/notebook/QuizReviewColumn";
 import QuizTakingScreen from "../components/notebook/QuizTakingScreen";
 import PastQuizColumn from "../components/notebook/PastQuizColumn";
 import QuizColumn from "../components/notebook/QuizColumn";
+import PresentationColumn, { type PresentationGenerateOptions } from "../components/notebook/PresentationColumn";
+import PastPresentationsColumn from "../components/notebook/PastPresentationsColumn";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
 import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
@@ -53,6 +55,9 @@ export default function NotebookPage() {
   const [quizTopics, setQuizTopics] = useState<NotebookTopic[]>([]);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [previousQuizzes, setPreviousQuizzes] = useState<QuizSession[]>([]);
+  const [presentationTopics, setPresentationTopics] = useState<NotebookTopic[]>([]);
+  const [isLoadingPresentationTopics, setIsLoadingPresentationTopics] = useState(false);
+  const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizSession | null>(null);
   const [activeQuiz, setActiveQuiz] = useState<QuizSession | null>(null);
   const [pendingChatInput, setPendingChatInput] = useState<string>("");
@@ -133,6 +138,25 @@ export default function NotebookPage() {
       setPreviousQuizzes(quizzes);
     }
     loadQuizData();
+  }, [activeView, notebookId]);
+
+  useEffect(() => {
+    if (activeView !== "presentation") return;
+    async function loadPresentationData() {
+      if (presentationTopics.length === 0) {
+        setIsLoadingPresentationTopics(true);
+        try {
+          const topics = await notebookService.listTopics(notebookId);
+          setPresentationTopics(topics);
+        } catch (err) {
+          console.error(err);
+          setPresentationTopics([]);
+        } finally {
+          setIsLoadingPresentationTopics(false);
+        }
+      }
+    }
+    loadPresentationData();
   }, [activeView, notebookId]);
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
@@ -320,6 +344,13 @@ export default function NotebookPage() {
     }
   }
 
+  async function handleGeneratePresentation(_options: PresentationGenerateOptions) {
+    // TODO: wire to presentation service when backend is ready
+    setIsGeneratingPresentation(true);
+    await new Promise((r) => setTimeout(r, 1500));
+    setIsGeneratingPresentation(false);
+  }
+
   async function handleQuizComplete(
     userAnswers: (number | null)[],
     _timeTaken: number,
@@ -493,7 +524,7 @@ export default function NotebookPage() {
         {/* Options/Tools nav column (left) */}
         <OptionsColumn activeView={activeView} onViewChange={setActiveView} />
 
-        {/* Dynamic main window (Chat or Quiz) */}
+        {/* Dynamic main window (Chat, Quiz, or Presentation) */}
         {activeView === "chat" ? (
           <ChatColumn
             onSend={handleSendMessage}
@@ -508,6 +539,13 @@ export default function NotebookPage() {
             chatDisabled={files.length > 0 && !hasReadyFiles}
             initialInput={pendingChatInput}
             onInitialInputConsumed={() => setPendingChatInput("")}
+          />
+        ) : activeView === "presentation" ? (
+          <PresentationColumn
+            topics={presentationTopics}
+            isLoadingTopics={isLoadingPresentationTopics}
+            onGenerate={handleGeneratePresentation}
+            isGenerating={isGeneratingPresentation}
           />
         ) : selectedQuiz ? (
           <QuizReviewColumn
@@ -525,7 +563,7 @@ export default function NotebookPage() {
           />
         )}
 
-        {/* Right column — Files on chat tab, Previous Quizzes on quiz tab */}
+        {/* Right column — Files on chat, Previous Quizzes on quiz, Previous Slides on presentation */}
         {activeView === "quiz" ? (
           <PastQuizColumn
             quizzes={previousQuizzes}
@@ -533,6 +571,8 @@ export default function NotebookPage() {
             onQuizClick={handleQuizClick}
             onDeleteSelected={handleDeleteQuizSessions}
           />
+        ) : activeView === "presentation" ? (
+          <PastPresentationsColumn />
         ) : (
           <FilesColumn
             files={files}

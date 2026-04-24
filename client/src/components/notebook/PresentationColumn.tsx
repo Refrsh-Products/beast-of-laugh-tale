@@ -1,6 +1,5 @@
 import { useState } from "react";
-import type { QuizDifficulty } from "../../storage";
-import type { QuizGenerateOptions, NotebookTopic } from "../../services/quiz/Quiz.types";
+import type { NotebookTopic } from "../../services/quiz/Quiz.types";
 import QuizTopicChip from "../quiz/QuizTopicChip";
 import QuizSelectDropdown from "../quiz/QuizSelectDropdown";
 import Divider from "../quiz/Divider";
@@ -8,7 +7,7 @@ import Divider from "../quiz/Divider";
 const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
-const COLLAPSED_MAX = 8; // Number of topics to show when topic chip is collapsed
+const COLLAPSED_MAX = 8;
 
 const labelStyle: React.CSSProperties = {
   display: "block",
@@ -20,30 +19,34 @@ const labelStyle: React.CSSProperties = {
   marginBottom: 6,
 };
 
-interface QuizColumnProps {
+export interface PresentationGenerateOptions {
+  topics: NotebookTopic[];
+  customTopic: string;
+  numSlides: number;
+  textLength: "brief" | "balanced" | "detailed";
+}
+
+interface PresentationColumnProps {
   topics: NotebookTopic[];
   isLoadingTopics: boolean;
-  onGenerate: (options: QuizGenerateOptions) => Promise<void>;
+  onGenerate: (options: PresentationGenerateOptions) => Promise<void>;
   isGenerating: boolean;
 }
 
-export default function QuizColumn({
+export default function PresentationColumn({
   topics,
   isLoadingTopics,
   onGenerate,
   isGenerating,
-}: QuizColumnProps) {
+}: PresentationColumnProps) {
   const [topicsExpanded, setTopicsExpanded] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState<NotebookTopic[]>([]);
-  const [prompt, setPrompt] = useState("");
-  const [questionCount, setQuestionCount] = useState<number>(5);
-  const [difficulty, setDifficulty] = useState<QuizDifficulty>("EASY");
-  const [quizType, setQuizType] = useState<string>("PRACTICE");
-  const [timeLimit, setTimeLimit] = useState<number | null>(null);
+  const [customTopic, setCustomTopic] = useState("");
+  const [numSlides, setNumSlides] = useState(10);
+  const [textLength, setTextLength] = useState<"brief" | "balanced" | "detailed">("balanced");
 
   const canGenerate = !isGenerating;
-
-  const isAllTopicsMode = selectedTopics.length === 0 && prompt.trim().length === 0;
+  const isAllTopicsMode = selectedTopics.length === 0 && customTopic.trim().length === 0;
 
   function toggleTopic(topic: NotebookTopic) {
     setSelectedTopics((prev) =>
@@ -55,20 +58,11 @@ export default function QuizColumn({
 
   async function handleGenerate() {
     if (!canGenerate) return;
-    await onGenerate({
-      topics: selectedTopics,
-      prompt: prompt.trim() || undefined,
-      questionCount,
-      difficulty,
-      quizType,
-      timeLimit: timeLimit ?? undefined,
-    });
+    await onGenerate({ topics: selectedTopics, customTopic: customTopic.trim(), numSlides, textLength });
   }
 
-  // Collapsed preview: selected topics first, then unselected, up to COLLAPSED_MAX
   const selectedIds = new Set(selectedTopics.map((t) => t.id));
   const previewTopics = topics.slice(0, COLLAPSED_MAX);
-
   const hiddenCount = topics.length - COLLAPSED_MAX;
 
   return (
@@ -102,14 +96,13 @@ export default function QuizColumn({
             color: "#555",
           }}
         >
-          QUIZ GENERATOR
+          PRESENTATION GENERATOR
         </span>
       </div>
 
       {/* Scrollable content */}
       <div style={{ flex: 1, overflowY: "auto", padding: "36px 32px 24px" }}>
         <div style={{ maxWidth: 580, margin: "0 auto" }}>
-          {/* Title */}
           <h2
             style={{
               fontFamily: "'Syne', sans-serif",
@@ -120,12 +113,11 @@ export default function QuizColumn({
               letterSpacing: "-0.02em",
             }}
           >
-            Generate a Quiz
+            Generate a Presentation
           </h2>
 
-          {/* Topics section */}
+          {/* Topics */}
           <div style={{ marginBottom: 4 }}>
-            {/* Label row — shows × Collapse only when expanded */}
             <div
               style={{
                 display: "flex",
@@ -154,30 +146,14 @@ export default function QuizColumn({
             </div>
 
             {isLoadingTopics ? (
-              <p
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.7rem",
-                  color: "#aaa",
-                  margin: 0,
-                }}
-              >
+              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.7rem", color: "#aaa", margin: 0 }}>
                 Loading topics...
               </p>
             ) : topics.length === 0 ? (
-              <p
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.7rem",
-                  color: "#aaa",
-                  margin: 0,
-                  lineHeight: 1.6,
-                }}
-              >
+              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.7rem", color: "#aaa", margin: 0, lineHeight: 1.6 }}>
                 No topics found. Upload files to your notebook first.
               </p>
             ) : topicsExpanded ? (
-              // Expanded: scrollable box, full chip labels, no max-width
               <div
                 style={{
                   border: `2px solid ${B}`,
@@ -201,15 +177,7 @@ export default function QuizColumn({
                 ))}
               </div>
             ) : (
-              // Collapsed: up to 8 compact chips, then +x more button
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 6,
-                  alignItems: "center",
-                }}
-              >
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
                 {previewTopics.map((topic) => (
                   <QuizTopicChip
                     key={topic.id}
@@ -241,42 +209,25 @@ export default function QuizColumn({
             )}
 
             {selectedTopics.length > 0 ? (
-              <p
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.62rem",
-                  color: "#888",
-                  margin: "8px 0 0",
-                }}
-              >
-                {selectedTopics.length} topic
-                {selectedTopics.length > 1 ? "s" : ""} selected
+              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.62rem", color: "#888", margin: "8px 0 0" }}>
+                {selectedTopics.length} topic{selectedTopics.length > 1 ? "s" : ""} selected
               </p>
             ) : topics.length > 0 && (
-              <p
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.62rem",
-                  color: "#888",
-                  margin: "8px 0 0",
-                }}
-              >
-                No topics selected — quiz will cover all topics
+              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.62rem", color: "#888", margin: "8px 0 0" }}>
+                No topics selected — presentation will cover all topics
               </p>
             )}
           </div>
 
           <Divider />
 
-          {/* Prompt section */}
+          {/* Custom topic */}
           <div>
-            <label style={labelStyle}>
-              OR DESCRIBE WHAT YOU WANT TO BE QUIZZED ON
-            </label>
+            <label style={labelStyle}>OR DESCRIBE YOUR OWN TOPIC</label>
             <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="e.g. Focus on the differences between mitosis and meiosis..."
+              value={customTopic}
+              onChange={(e) => setCustomTopic(e.target.value)}
+              placeholder="e.g. Compare the causes and effects of WWI and WWII..."
               rows={3}
               onMouseEnter={(e) => {
                 if (document.activeElement !== e.currentTarget)
@@ -304,80 +255,33 @@ export default function QuizColumn({
 
           <Divider />
 
-          {/* Settings — one row: Questions | Difficulty | Timer | Time Limit */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr 1fr",
-              gap: 16,
-            }}
-          >
-            {/* Questions */}
+          {/* Options */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             <div>
-              <label style={labelStyle}>QUESTIONS</label>
+              <label style={labelStyle}>NUMBER OF SLIDES</label>
               <QuizSelectDropdown
-                value={String(questionCount)}
-                onChange={(v) => setQuestionCount(Number(v))}
-                placeholder="5"
+                value={String(numSlides)}
+                onChange={(v) => setNumSlides(Number(v))}
+                placeholder="10"
                 options={[
                   { value: "5", label: "5" },
+                  { value: "8", label: "8" },
                   { value: "10", label: "10" },
                   { value: "15", label: "15" },
                   { value: "20", label: "20" },
                 ]}
               />
             </div>
-
-            {/* Difficulty */}
             <div>
-              <label style={labelStyle}>DIFFICULTY</label>
+              <label style={labelStyle}>TEXT LENGTH</label>
               <QuizSelectDropdown
-                value={difficulty}
-                onChange={(v) => setDifficulty(v as QuizDifficulty)}
-                placeholder="Easy"
+                value={textLength}
+                onChange={(v) => setTextLength(v as "brief" | "balanced" | "detailed")}
+                placeholder="Balanced"
                 options={[
-                  { value: "EASY", label: "Easy" },
-                  { value: "MEDIUM", label: "Medium" },
-                  { value: "HARD", label: "Hard" },
-                ]}
-              />
-            </div>
-
-            {/* Mode */}
-            <div>
-              <label style={labelStyle}>MODE</label>
-              <QuizSelectDropdown
-                value={quizType === "TIMED" ? "yes" : "no"}
-                onChange={(v) => {
-                  if (v === "yes") setQuizType("TIMED");
-                  else {
-                    setQuizType("PRACTICE");
-                    setTimeLimit(null);
-                  }
-                }}
-                placeholder="Practice"
-                options={[
-                  { value: "yes", label: "Timed" },
-                  { value: "no", label: "Practice" },
-                ]}
-              />
-            </div>
-
-            {/* Time Limit — always visible, disabled when no timer */}
-            <div>
-              <label style={{ ...labelStyle, color: quizType === "TIMED" ? "#555" : "#bbb" }}>
-                TIME LIMIT
-              </label>
-              <QuizSelectDropdown
-                value={timeLimit !== null ? String(timeLimit) : ""}
-                onChange={(v) => setTimeLimit(v === "" ? null : Number(v))}
-                placeholder="Select..."
-                disabled={quizType !== "TIMED"}
-                options={[
-                  { value: "5", label: "5 min" },
-                  { value: "10", label: "10 min" },
-                  { value: "15", label: "15 min" },
-                  { value: "20", label: "20 min" },
+                  { value: "brief", label: "Brief" },
+                  { value: "balanced", label: "Balanced" },
+                  { value: "detailed", label: "Detailed" },
                 ]}
               />
             </div>
@@ -385,7 +289,7 @@ export default function QuizColumn({
         </div>
       </div>
 
-      {/* Bottom bar — pinned Generate button */}
+      {/* Bottom bar */}
       <div
         style={{
           borderTop: `2px solid ${B}`,
@@ -407,9 +311,7 @@ export default function QuizColumn({
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "none";
-            e.currentTarget.style.boxShadow = canGenerate
-              ? `4px 4px 0 ${B}`
-              : "none";
+            e.currentTarget.style.boxShadow = canGenerate ? `4px 4px 0 ${B}` : "none";
           }}
           onMouseDown={(e) => {
             if (canGenerate) {
@@ -441,7 +343,7 @@ export default function QuizColumn({
             ? "Generating..."
             : isAllTopicsMode
               ? "Generate from Entire Notebook →"
-              : "Generate Quiz →"}
+              : "Generate Presentation →"}
         </button>
       </div>
     </div>
