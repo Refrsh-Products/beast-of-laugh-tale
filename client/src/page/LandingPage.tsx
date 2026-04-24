@@ -86,7 +86,6 @@ export default function LandingPage() {
                 display: "inline-block",
                 background: G,
                 border: `2px solid ${B}`,
-                boxShadow: `3px 3px 0 ${B}`,
                 padding: "6px 14px",
                 fontSize: "0.65rem",
                 fontWeight: 700,
@@ -386,7 +385,6 @@ export default function LandingPage() {
                 display: "inline-block",
                 background: G,
                 border: `2px solid ${B}`,
-                boxShadow: `3px 3px 0 ${B}`,
                 padding: "6px 14px",
                 fontSize: "0.65rem",
                 fontWeight: 700,
@@ -456,7 +454,6 @@ export default function LandingPage() {
                 style={{
                   background: W,
                   border: `3px solid ${B}`,
-                  boxShadow: `6px 6px 0 ${B}`,
                   padding: "36px 28px",
                 }}
               >
@@ -567,30 +564,6 @@ export default function LandingPage() {
         >
           FRESHR
         </span>
-
-        <div
-          id="footer-links"
-          className="flex gap-7"
-          style={{ fontSize: "0.7rem" }}
-        >
-          {["Privacy", "Terms", "Contact"].map((l) => (
-            <a
-              key={l}
-              href="#"
-              style={{ color: "#888", textDecoration: "none" }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = B;
-                e.currentTarget.style.textDecoration = "underline";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#888";
-                e.currentTarget.style.textDecoration = "none";
-              }}
-            >
-              {l}
-            </a>
-          ))}
-        </div>
 
         <span
           id="footer-copyright"

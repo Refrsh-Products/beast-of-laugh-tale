@@ -121,7 +121,7 @@ export default function TestimonialSection() {
   return (
     <section
       className="py-20 px-6 md:px-16"
-      style={{ borderBottom: `3px solid ${B}` }}
+      style={{ background: "#f5f5f0", borderBottom: `3px solid ${B}` }}
     >
       <div className="max-w-7xl mx-auto">
         {/* Header */}
@@ -131,7 +131,6 @@ export default function TestimonialSection() {
               display: "inline-block",
               background: G,
               border: `2px solid ${B}`,
-              boxShadow: `3px 3px 0 ${B}`,
               padding: "6px 14px",
               fontSize: "0.65rem",
               fontWeight: 700,
@@ -172,7 +171,6 @@ export default function TestimonialSection() {
               key={i}
               style={{
                 border: `3px solid ${B}`,
-                boxShadow: `6px 6px 0 ${B}`,
                 padding: "28px 24px",
                 background: W,
                 display: "flex",
