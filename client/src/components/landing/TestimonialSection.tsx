@@ -1,23 +1,42 @@
-import { useState } from "react";
-
 const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
 
-const CARDS_PER_PAGE = 3;
-
-const PLACEHOLDERS = [
-  { stars: 5 },
-  { stars: 4 },
-  { stars: 4 },
-  { stars: 4 },
-  { stars: 5 },
+const TESTIMONIALS = [
+  {
+    name: "Mushfiqur Rahman Zaed",
+    university: "Independent University, Bangladesh",
+    quote: "It saved me so much time. Whether I'm preparing a presentation or getting ready for a quiz, FRESHR has me completely covered.",
+    stars: 5,
+  },
+  {
+    name: "Mushfika Zerin Zemima",
+    university: "Independent University, Bangladesh",
+    quote: "It gives you a proper online quiz and shows you the answers — that's exactly what I needed.",
+    stars: 4,
+  },
+  {
+    name: "Adnan Shihab",
+    university: "Independent University, Bangladesh",
+    quote: "Even though it's still in development with just two features, both of them are genuinely helpful for saving students' time.",
+    stars: 4,
+  },
+  {
+    name: "Humaira Afnan Rowza",
+    university: "Independent University, Bangladesh",
+    quote: "It helped me with my MCQs and gave me a much clearer understanding of my lecture material.",
+    stars: 4,
+  },
+  {
+    name: "Sababa Shornil",
+    university: "Independent University, Bangladesh",
+    quote: "I used it right before my exams and it worked really well. It helped me cover most of the syllabus efficiently — something I always struggled with since I tend to only start studying the day before.",
+    stars: 5,
+  },
 ];
 
-const LOREM =
-  "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua ut enim ad minim veniam.";
-
-const TOTAL_PAGES = Math.ceil(PLACEHOLDERS.length / CARDS_PER_PAGE);
+// Row 1: columns 1-2, 3-4, 5-6. Row 2: columns 2-3, 4-5 (centered).
+const GRID_COLUMNS = ["1 / span 2", "3 / span 2", "5 / span 2", "2 / span 2", "4 / span 2"];
 
 function Stars({ count }: { count: number }) {
   return (
@@ -38,86 +57,7 @@ function Stars({ count }: { count: number }) {
   );
 }
 
-function ArrowBtn({
-  children,
-  onClick,
-  disabled,
-}: {
-  children: string;
-  onClick: () => void;
-  disabled: boolean;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const [down, setDown] = useState(false);
-
-  const transform = disabled
-    ? "none"
-    : down
-      ? "translate(2px, 2px)"
-      : hovered
-        ? "translate(-3px, -3px)"
-        : "none";
-
-  const shadow = disabled
-    ? "none"
-    : down
-      ? `2px 2px 0 ${B}`
-      : hovered
-        ? `6px 6px 0 ${B}`
-        : `4px 4px 0 ${B}`;
-
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      onMouseEnter={() => !disabled && setHovered(true)}
-      onMouseLeave={() => {
-        setHovered(false);
-        setDown(false);
-      }}
-      onMouseDown={() => !disabled && setDown(true)}
-      onMouseUp={() => setDown(false)}
-      style={{
-        background: disabled ? "#f0f0f0" : hovered ? G : W,
-        color: disabled ? "#bbb" : B,
-        border: `2px solid ${disabled ? "#ddd" : B}`,
-        boxShadow: shadow,
-        transform,
-        padding: "11px 22px",
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: "0.85rem",
-        fontWeight: 700,
-        letterSpacing: "0.08em",
-        cursor: disabled ? "not-allowed" : "pointer",
-        transition: "transform 0.12s, box-shadow 0.12s, background 0.12s",
-        lineHeight: 1,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
 export default function TestimonialSection() {
-  const [page, setPage] = useState(0);
-  const [visible, setVisible] = useState(true);
-
-  const changePage = (newPage: number) => {
-    setVisible(false);
-    setTimeout(() => {
-      setPage(newPage);
-      setVisible(true);
-    }, 200);
-  };
-
-  const prev = () => page > 0 && changePage(page - 1);
-  const next = () => page < TOTAL_PAGES - 1 && changePage(page + 1);
-
-  const currentCards = PLACEHOLDERS.slice(
-    page * CARDS_PER_PAGE,
-    page * CARDS_PER_PAGE + CARDS_PER_PAGE
-  );
-
   return (
     <section
       className="py-20 px-6 md:px-16"
@@ -155,21 +95,19 @@ export default function TestimonialSection() {
           </h2>
         </div>
 
-        {/* Cards */}
+        {/* Single 6-column grid — row 1: 3 cards, row 2: 2 cards centered */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
+            gridTemplateColumns: "repeat(6, 1fr)",
             gap: 20,
-            opacity: visible ? 1 : 0,
-            transform: visible ? "translateY(0)" : "translateY(10px)",
-            transition: "opacity 0.2s ease, transform 0.2s ease",
           }}
         >
-          {currentCards.map((p, i) => (
+          {TESTIMONIALS.map((t, i) => (
             <div
-              key={i}
+              key={t.name}
               style={{
+                gridColumn: GRID_COLUMNS[i],
                 border: `3px solid ${B}`,
                 padding: "28px 24px",
                 background: W,
@@ -178,7 +116,6 @@ export default function TestimonialSection() {
                 gap: 10,
               }}
             >
-              {/* Name */}
               <div
                 style={{
                   fontFamily: "'Syne', sans-serif",
@@ -187,10 +124,8 @@ export default function TestimonialSection() {
                   letterSpacing: "-0.01em",
                 }}
               >
-                Full Name
+                {t.name}
               </div>
-
-              {/* University */}
               <div
                 style={{
                   fontSize: "0.72rem",
@@ -199,10 +134,8 @@ export default function TestimonialSection() {
                   marginTop: -4,
                 }}
               >
-                University Name
+                {t.university}
               </div>
-
-              {/* Quote */}
               <p
                 style={{
                   fontSize: "0.78rem",
@@ -212,42 +145,13 @@ export default function TestimonialSection() {
                   flex: 1,
                 }}
               >
-                {LOREM}
+                {t.quote}
               </p>
-
-              {/* Stars */}
               <div style={{ marginTop: 8 }}>
-                <Stars count={p.stars} />
+                <Stars count={t.stars} />
               </div>
             </div>
           ))}
-        </div>
-
-        {/* Arrows + page indicator */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            marginTop: 32,
-          }}
-        >
-          <ArrowBtn disabled={page === 0} onClick={prev}>
-            ←
-          </ArrowBtn>
-          <ArrowBtn disabled={page >= TOTAL_PAGES - 1} onClick={next}>
-            →
-          </ArrowBtn>
-          <span
-            style={{
-              fontSize: "0.7rem",
-              color: "#999",
-              letterSpacing: "0.1em",
-              marginLeft: 4,
-            }}
-          >
-            {page + 1} / {TOTAL_PAGES}
-          </span>
         </div>
       </div>
     </section>
