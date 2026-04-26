@@ -61,6 +61,7 @@ class AccountUsageAPIView(APIView):
 
         usage_today, _ = DailyUsage.objects.get_or_create(account=account, date=date.today())
         max_quizzes = limits["max_quizzes_per_notebook"]
+        max_presentations = limits["max_presentations_per_day"]
 
         storage_limit_bytes = limits["storage_mega_bytes"] * 1024 * 1024
 
@@ -77,5 +78,9 @@ class AccountUsageAPIView(APIView):
             "daily_quizzes": {
                 "used": usage_today.quizzes_generated,
                 "limit": max_quizzes,
+            },
+            "daily_presentations": {
+                "used": usage_today.presentations_generated,
+                "limit": max_presentations,
             },
         })
