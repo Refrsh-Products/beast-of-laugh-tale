@@ -84,7 +84,8 @@ export default function LandingPage() {
               id="hero-badge"
               style={{
                 display: "inline-block",
-                background: G,
+                background: B,
+                color: W,
                 border: `2px solid ${B}`,
                 padding: "6px 14px",
                 fontSize: "0.65rem",
@@ -383,7 +384,8 @@ export default function LandingPage() {
               id="features-badge"
               style={{
                 display: "inline-block",
-                background: G,
+                background: B,
+                color: W,
                 border: `2px solid ${B}`,
                 padding: "6px 14px",
                 fontSize: "0.65rem",
@@ -425,7 +427,7 @@ export default function LandingPage() {
       <section
         id="how-it-works"
         className="py-20 px-6 md:px-16"
-        style={{ background: G, borderBottom: `3px solid ${B}` }}
+        style={{ background: B, borderBottom: `3px solid ${B}` }}
       >
         <div className="max-w-7xl mx-auto">
           <h2
@@ -437,6 +439,7 @@ export default function LandingPage() {
               lineHeight: 1.05,
               letterSpacing: "-0.02em",
               marginBottom: 52,
+              color: W,
             }}
           >
             Three steps.

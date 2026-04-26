@@ -69,7 +69,8 @@ export default function TestimonialSection() {
           <div
             style={{
               display: "inline-block",
-              background: G,
+              background: B,
+              color: W,
               border: `2px solid ${B}`,
               padding: "6px 14px",
               fontSize: "0.65rem",
