@@ -6,21 +6,14 @@ interface FeatureCardProps {
   icon: string;
   title: string;
   desc: string;
-  accent: boolean;
 }
 
-export default function FeatureCard({
-  accent,
-  title,
-  icon,
-  desc,
-}: FeatureCardProps) {
+export default function FeatureCard({ title, icon, desc }: FeatureCardProps) {
   return (
     <div
       style={{
-        background: accent ? G : W,
+        background: W,
         border: `2px solid ${B}`,
-        boxShadow: `4px 4px 0 ${B}`,
         padding: "28px 24px",
       }}
     >

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import FeatureCard from "../components/landing/FeatureCard";
+import TestimonialSection from "../components/landing/TestimonialSection";
 import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 
 /* ─── Design tokens ───────────────────────────────────────── */
@@ -83,9 +84,9 @@ export default function LandingPage() {
               id="hero-badge"
               style={{
                 display: "inline-block",
-                background: G,
+                background: B,
+                color: W,
                 border: `2px solid ${B}`,
-                boxShadow: `3px 3px 0 ${B}`,
                 padding: "6px 14px",
                 fontSize: "0.65rem",
                 fontWeight: 700,
@@ -383,9 +384,9 @@ export default function LandingPage() {
               id="features-badge"
               style={{
                 display: "inline-block",
-                background: G,
+                background: B,
+                color: W,
                 border: `2px solid ${B}`,
-                boxShadow: `3px 3px 0 ${B}`,
                 padding: "6px 14px",
                 fontSize: "0.65rem",
                 fontWeight: 700,
@@ -426,7 +427,7 @@ export default function LandingPage() {
       <section
         id="how-it-works"
         className="py-20 px-6 md:px-16"
-        style={{ background: G, borderBottom: `3px solid ${B}` }}
+        style={{ background: B, borderBottom: `3px solid ${B}` }}
       >
         <div className="max-w-7xl mx-auto">
           <h2
@@ -438,6 +439,7 @@ export default function LandingPage() {
               lineHeight: 1.05,
               letterSpacing: "-0.02em",
               marginBottom: 52,
+              color: W,
             }}
           >
             Three steps.
@@ -455,7 +457,6 @@ export default function LandingPage() {
                 style={{
                   background: W,
                   border: `3px solid ${B}`,
-                  boxShadow: `6px 6px 0 ${B}`,
                   padding: "36px 28px",
                 }}
               >
@@ -498,6 +499,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* ── TESTIMONIALS ── */}
+      <TestimonialSection />
 
       {/* ── CTA ── */}
       <section
@@ -563,30 +567,6 @@ export default function LandingPage() {
         >
           FRESHR
         </span>
-
-        <div
-          id="footer-links"
-          className="flex gap-7"
-          style={{ fontSize: "0.7rem" }}
-        >
-          {["Privacy", "Terms", "Contact"].map((l) => (
-            <a
-              key={l}
-              href="#"
-              style={{ color: "#888", textDecoration: "none" }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = B;
-                e.currentTarget.style.textDecoration = "underline";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = "#888";
-                e.currentTarget.style.textDecoration = "none";
-              }}
-            >
-              {l}
-            </a>
-          ))}
-        </div>
 
         <span
           id="footer-copyright"
