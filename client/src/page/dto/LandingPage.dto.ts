@@ -3,37 +3,31 @@ export const FEATURES = [
     icon: "📁",
     title: "Upload anything",
     desc: "PDFs, notes, slides, research papers — drop them into a notebook and let FRESHR handle the extraction.",
-    accent: true,
   },
   {
     icon: "⚡",
     title: "Instant indexing",
     desc: "Documents are parsed, chunked, and embedded into your personal PGVector database automatically.",
-    accent: false,
   },
   {
     icon: "🧠",
     title: "Plain English queries",
     desc: "No query syntax needed. Ask questions naturally and get answers cited from your own materials.",
-    accent: false,
   },
   {
     icon: "🔒",
     title: "Private by default",
     desc: "Notebooks are scoped to your account only. Cross-user data leakage is architecturally impossible.",
-    accent: false,
   },
   {
     icon: "📓",
     title: "Organized notebooks",
     desc: "Group documents by subject, course, or project. Each notebook is its own isolated knowledge base.",
-    accent: false,
   },
   {
     icon: "✦",
     title: "AI summaries",
     desc: "Tables and images are summarized by Claude before indexing so nothing in your notes gets lost.",
-    accent: true,
   },
 ];
 

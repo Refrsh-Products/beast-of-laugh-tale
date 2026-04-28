@@ -182,12 +182,14 @@ FRESHR_TIER_LIMITS = {
         "max_notebooks": 3,
         "max_files_per_notebook": 2,
         "max_quizzes_per_notebook": 5,
+        "max_presentations_per_day": 2,
         "storage_mega_bytes": 500,
     },
     "PAID": {
         "max_notebooks": "unlimited",
         "max_files_per_notebook": "unlimited",
         "max_quizzes_per_notebook": "unlimited",
+        "max_presentations_per_day": "unlimited",
         "storage_mega_bytes": 5000,
     },
 }

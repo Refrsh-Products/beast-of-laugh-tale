@@ -57,3 +57,14 @@ def check_daily_quiz_quota(account: Account):
     today = date.today()
     usage, _ = DailyUsage.objects.get_or_create(account=account, date=today)
     return usage.quizzes_generated < max_quizzes
+
+
+def check_daily_presentation_quota(account: Account):
+    plan = get_effective_plan(account)
+    limits = get_limits(plan)
+    max_presentations = limits["max_presentations_per_day"]
+    if max_presentations == "unlimited":
+        return True
+    today = date.today()
+    usage, _ = DailyUsage.objects.get_or_create(account=account, date=today)
+    return usage.presentations_generated < max_presentations

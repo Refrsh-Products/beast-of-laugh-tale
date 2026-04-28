@@ -71,6 +71,7 @@ class DailyUsage(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     date = models.DateField()
     quizzes_generated = models.IntegerField(default=0)
+    presentations_generated = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ("account", "date")
