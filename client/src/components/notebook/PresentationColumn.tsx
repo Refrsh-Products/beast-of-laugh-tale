@@ -9,6 +9,39 @@ const B = "#000000";
 const W = "#FFFFFF";
 const COLLAPSED_MAX = 8;
 
+type PresentationTheme = "minimal" | "dark" | "academic" | "serif";
+
+const THEMES: Record<PresentationTheme, { label: string; bg: string; text: string; accent: string; description: string }> = {
+  minimal: {
+    label: "Minimal",
+    bg: "#ffffff",
+    text: "#000000",
+    accent: "#000000",
+    description: "Clean and minimal. White background, sharp sans-serif typography. Best for professional or academic content.",
+  },
+  dark: {
+    label: "Dark",
+    bg: "#1a1a1a",
+    text: "#ffffff",
+    accent: "#84e487",
+    description: "High contrast dark theme. Bold and modern. Great for technical or impactful presentations.",
+  },
+  academic: {
+    label: "Academic",
+    bg: "#eef3f8",
+    text: "#1e3a5f",
+    accent: "#2a72b5",
+    description: "Professional blue-tinted theme. Suited for research, reports, and academic work.",
+  },
+  serif: {
+    label: "Serif",
+    bg: "#faf7f2",
+    text: "#3b2f1e",
+    accent: "#8b6a1f",
+    description: "Warm and editorial. Elegant serif typography for a polished, refined presentation.",
+  },
+};
+
 const labelStyle: React.CSSProperties = {
   display: "block",
   fontFamily: "'IBM Plex Mono', monospace",
@@ -24,6 +57,7 @@ export interface PresentationGenerateOptions {
   customTopic: string;
   numSlides: number;
   textLength: "brief" | "balanced" | "detailed";
+  theme: PresentationTheme;
 }
 
 interface PresentationColumnProps {
@@ -44,6 +78,7 @@ export default function PresentationColumn({
   const [customTopic, setCustomTopic] = useState("");
   const [numSlides, setNumSlides] = useState(10);
   const [textLength, setTextLength] = useState<"brief" | "balanced" | "detailed">("balanced");
+  const [theme, setTheme] = useState<PresentationTheme>("minimal");
 
   const canGenerate = !isGenerating;
   const isAllTopicsMode = selectedTopics.length === 0 && customTopic.trim().length === 0;
@@ -58,7 +93,7 @@ export default function PresentationColumn({
 
   async function handleGenerate() {
     if (!canGenerate) return;
-    await onGenerate({ topics: selectedTopics, customTopic: customTopic.trim(), numSlides, textLength });
+    await onGenerate({ topics: selectedTopics, customTopic: customTopic.trim(), numSlides, textLength, theme });
   }
 
   const selectedIds = new Set(selectedTopics.map((t) => t.id));
@@ -285,6 +320,77 @@ export default function PresentationColumn({
                 ]}
               />
             </div>
+          </div>
+
+          <Divider />
+
+          {/* Style */}
+          <div>
+            <label style={labelStyle}>STYLE</label>
+            <QuizSelectDropdown
+              value={theme}
+              onChange={(v) => setTheme(v as PresentationTheme)}
+              placeholder="Minimal"
+              options={Object.entries(THEMES).map(([value, t]) => ({ value, label: t.label }))}
+            />
+          </div>
+
+          {/* Preview placeholder */}
+          <div style={{ marginTop: 16 }}>
+            <label style={labelStyle}>PREVIEW</label>
+            <div
+              style={{
+                border: `2px solid ${B}`,
+                background: THEMES[theme].bg,
+                padding: "28px 32px",
+                display: "flex",
+                flexDirection: "column",
+                gap: 12,
+                minHeight: 160,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: theme === "serif" ? "'Georgia', serif" : "'IBM Plex Mono', monospace",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  color: THEMES[theme].text,
+                  letterSpacing: theme === "serif" ? "0" : "-0.01em",
+                }}
+              >
+                Sample Slide Title
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {["This is what a bullet point looks like", "Another point shown here", "Style applied: " + THEMES[theme].label].map((bullet, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      fontFamily: theme === "serif" ? "'Georgia', serif" : "'IBM Plex Mono', monospace",
+                      fontSize: "0.72rem",
+                      color: THEMES[theme].text,
+                      opacity: 0.85,
+                      display: "flex",
+                      gap: 8,
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <span style={{ color: THEMES[theme].accent, flexShrink: 0 }}>•</span>
+                    {bullet}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <p
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "0.65rem",
+                color: "#888",
+                margin: "8px 0 0",
+                lineHeight: 1.6,
+              }}
+            >
+              {THEMES[theme].description}
+            </p>
           </div>
         </div>
       </div>
