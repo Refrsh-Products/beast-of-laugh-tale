@@ -325,7 +325,7 @@ export default function NotebookPage() {
       topic_id: isAllTopics ? undefined : options.topics[0]?.id,
       difficulty: options.difficulty,
       quiz_type: options.quizType,
-      time_limit: options.timeLimit,
+      time_limit: options.timeLimit ? options.timeLimit * 60 : undefined,
       num_questions: options.questionCount,
     };
 
@@ -387,7 +387,7 @@ export default function NotebookPage() {
   }
 
   function handleQuizExit() {
-    setActiveQuiz(null);
+    navigate(`/notebook/${notebookId}`, { replace: true });
   }
 
   function handleTakeToChat(

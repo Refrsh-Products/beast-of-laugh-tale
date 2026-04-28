@@ -349,8 +349,10 @@ export default function QuizColumn({
               <QuizSelectDropdown
                 value={quizType === "TIMED" ? "yes" : "no"}
                 onChange={(v) => {
-                  if (v === "yes") setQuizType("TIMED");
-                  else {
+                  if (v === "yes") {
+                    setQuizType("TIMED");
+                    setTimeLimit(5);
+                  } else {
                     setQuizType("PRACTICE");
                     setTimeLimit(null);
                   }
