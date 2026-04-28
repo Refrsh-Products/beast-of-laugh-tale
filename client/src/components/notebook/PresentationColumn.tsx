@@ -9,7 +9,7 @@ const B = "#000000";
 const W = "#FFFFFF";
 const COLLAPSED_MAX = 8;
 
-type PresentationTheme = "minimal" | "dark" | "academic" | "serif";
+type PresentationTheme = "minimal" | "dark" | "academic" | "serif" | "freshr";
 
 const THEMES: Record<PresentationTheme, { label: string; bg: string; text: string; accent: string; description: string }> = {
   minimal: {
@@ -39,6 +39,13 @@ const THEMES: Record<PresentationTheme, { label: string; bg: string; text: strin
     text: "#3b2f1e",
     accent: "#8b6a1f",
     description: "Warm and editorial. Elegant serif typography for a polished, refined presentation.",
+  },
+  freshr: {
+    label: "Freshr",
+    bg: "#ffffff",
+    text: "#000000",
+    accent: "#84e487",
+    description: "Freshr's own neo-brutalist style. Bold black borders, white background, and signature green accents.",
   },
 };
 
@@ -347,15 +354,19 @@ export default function PresentationColumn({
                 flexDirection: "column",
                 gap: 12,
                 minHeight: 160,
+                boxShadow: theme === "freshr" ? `4px 4px 0 ${B}` : "none",
               }}
             >
               <div
                 style={{
                   fontFamily: theme === "serif" ? "'Georgia', serif" : "'IBM Plex Mono', monospace",
-                  fontSize: "1rem",
-                  fontWeight: 700,
+                  fontSize: theme === "freshr" ? "1.1rem" : "1rem",
+                  fontWeight: theme === "freshr" ? 800 : 700,
                   color: THEMES[theme].text,
-                  letterSpacing: theme === "serif" ? "0" : "-0.01em",
+                  letterSpacing: theme === "serif" ? "0" : theme === "freshr" ? "-0.03em" : "-0.01em",
+                  borderBottom: theme === "freshr" ? `2px solid ${B}` : "none",
+                  paddingBottom: theme === "freshr" ? 10 : 0,
+                  marginBottom: theme === "freshr" ? 4 : 0,
                 }}
               >
                 Sample Slide Title
@@ -374,7 +385,7 @@ export default function PresentationColumn({
                       alignItems: "flex-start",
                     }}
                   >
-                    <span style={{ color: THEMES[theme].accent, flexShrink: 0 }}>•</span>
+                    <span style={{ color: THEMES[theme].accent, flexShrink: 0, fontWeight: 700 }}>•</span>
                     {bullet}
                   </div>
                 ))}
