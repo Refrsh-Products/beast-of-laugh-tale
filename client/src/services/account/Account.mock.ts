@@ -19,6 +19,8 @@ const AccountServiceMock: AccountService = {
     return Promise.resolve();
   },
 
+  refreshAccount: () => Promise.resolve(),
+
   hasCompletedOnboarding: () => Promise.resolve(hasCompletedOnboarding()),
 
   getAccountUsage: () => {
