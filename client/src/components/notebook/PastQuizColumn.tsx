@@ -76,7 +76,7 @@ export default function PreviousQuizzesColumn({
             color: "#555",
           }}
         >
-          PREVIOUS QUIZZES
+          YOUR QUIZZES
         </span>
 
         {/* Bulk controls — only shown when quizzes exist */}
@@ -185,8 +185,9 @@ export default function PreviousQuizzesColumn({
       {showConfirm && (
         <div
           style={{
-            position: "absolute",
+            position: "fixed",
             inset: 0,
+            zIndex: 2000,
             background: "rgba(0,0,0,0.4)",
             display: "flex",
             alignItems: "center",

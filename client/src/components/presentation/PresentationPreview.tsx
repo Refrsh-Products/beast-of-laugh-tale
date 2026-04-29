@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 import { Deck, Slide } from "@revealjs/react";
-import "reveal.js/reset.css";
-import "reveal.js/reveal.css";
+import resetCssUrl from "reveal.js/reset.css?url";
+import revealCssUrl from "reveal.js/reveal.css?url";
 
 const B = "#000000";
 
@@ -21,6 +21,17 @@ export default function PresentationPreview({ theme, themeConfig }: Presentation
   const containerRef = useRef<HTMLDivElement>(null);
   const deckRef = useRef<any>(null);
   const fontFamily = theme === "serif" ? "'Georgia', serif" : "'IBM Plex Mono', monospace";
+
+  useEffect(() => {
+    const links = [resetCssUrl, revealCssUrl].map((href) => {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = href;
+      document.head.appendChild(link);
+      return link;
+    });
+    return () => links.forEach((l) => l.remove());
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;
