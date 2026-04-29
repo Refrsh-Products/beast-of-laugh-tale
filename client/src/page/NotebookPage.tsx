@@ -33,7 +33,9 @@ import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
 import useChatService from "../services/chat";
 import useQuizService from "../services/quiz";
+import usePresentationService from "../services/presentation";
 import type { QuizSession } from "../hooks/useQuizService.api";
+import type { PresentationSession } from "../services/presentation/Presentation.types";
 
 const B = "#000000";
 const W = "#FFFFFF";
@@ -45,6 +47,7 @@ export default function NotebookPage() {
   const notebookService = useNotebookService();
   const chatService = useChatService();
   const quizService = useQuizService();
+  const presentationService = usePresentationService();
   const navigate = useNavigate();
   const { toasts, showToast } = useToast();
 
@@ -58,6 +61,7 @@ export default function NotebookPage() {
   const [presentationTopics, setPresentationTopics] = useState<NotebookTopic[]>([]);
   const [isLoadingPresentationTopics, setIsLoadingPresentationTopics] = useState(false);
   const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false);
+  const [presentations, setPresentations] = useState<PresentationSession[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizSession | null>(null);
   const [activeQuiz, setActiveQuiz] = useState<QuizSession | null>(null);
   const [pendingChatInput, setPendingChatInput] = useState<string>("");
@@ -154,6 +158,12 @@ export default function NotebookPage() {
         } finally {
           setIsLoadingPresentationTopics(false);
         }
+      }
+      try {
+        const existing = await presentationService.listPresentations(notebookId);
+        setPresentations(existing);
+      } catch (err) {
+        console.error(err);
       }
     }
     loadPresentationData();
@@ -344,11 +354,50 @@ export default function NotebookPage() {
     }
   }
 
-  async function handleGeneratePresentation(_options: PresentationGenerateOptions) {
-    // TODO: wire to presentation service when backend is ready
+  async function handleGeneratePresentation(options: PresentationGenerateOptions) {
     setIsGeneratingPresentation(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setIsGeneratingPresentation(false);
+    const isAllTopics = options.topics.length === 0 && !options.customTopic;
+    const payload = {
+      notebook: notebookId,
+      topic: isAllTopics ? "All Topics" : options.topics.map((t) => t.name).join(", "),
+      topic_id: isAllTopics ? undefined : options.topics[0]?.id,
+      custom_prompt: options.customTopic || undefined,
+      slide_count: options.numSlides,
+      text_length: options.textLength.toUpperCase() as "BRIEF" | "BALANCED" | "DETAILED",
+    };
+
+    try {
+      const session = await presentationService.createPresentation(payload);
+      setPresentations((prev) => [session, ...prev]);
+
+      const intervalId = setInterval(async () => {
+        try {
+          const updated = await presentationService.getPresentation(session.id);
+          setPresentations((prev) =>
+            prev.map((p) => (p.id === session.id ? updated : p))
+          );
+          if (updated.status === "COMPLETED") {
+            clearInterval(intervalId);
+            setIsGeneratingPresentation(false);
+            showToast("Presentation ready", "neutral");
+          } else if (updated.status === "FAILED") {
+            clearInterval(intervalId);
+            setIsGeneratingPresentation(false);
+            showToast("Presentation generation failed", "danger");
+          }
+        } catch {
+          clearInterval(intervalId);
+          setIsGeneratingPresentation(false);
+        }
+      }, 2000);
+    } catch (err) {
+      showToast("Failed to generate presentation", "danger");
+      setIsGeneratingPresentation(false);
+    }
+  }
+
+  function handlePresentationClick(_presentation: PresentationSession) {
+    // Step 4: open presentation viewer
   }
 
   async function handleQuizComplete(
@@ -572,7 +621,10 @@ export default function NotebookPage() {
             onDeleteSelected={handleDeleteQuizSessions}
           />
         ) : activeView === "presentation" ? (
-          <PastPresentationsColumn />
+          <PastPresentationsColumn
+            presentations={presentations}
+            onPresentationClick={handlePresentationClick}
+          />
         ) : (
           <FilesColumn
             files={files}
