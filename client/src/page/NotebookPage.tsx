@@ -36,7 +36,7 @@ import useChatService from "../services/chat";
 import useQuizService from "../services/quiz";
 import usePresentationService from "../services/presentation";
 import type { QuizSession } from "../hooks/useQuizService.api";
-import type { PresentationSession } from "../services/presentation/Presentation.types";
+import type { PresentationSession, PresentationSlide } from "../services/presentation/Presentation.types";
 
 const B = "#000000";
 const W = "#FFFFFF";
@@ -402,6 +402,17 @@ export default function NotebookPage() {
     setActivePresentation(presentation);
   }
 
+  function handlePresentationUpdate(updatedSlides: PresentationSlide[]) {
+    setPresentations((prev) =>
+      prev.map((p) =>
+        p.id === activePresentation?.id ? { ...p, slides: updatedSlides } : p,
+      ),
+    );
+    setActivePresentation((prev) =>
+      prev ? { ...prev, slides: updatedSlides } : null,
+    );
+  }
+
   async function handleQuizComplete(
     userAnswers: (number | null)[],
     _timeTaken: number,
@@ -664,6 +675,7 @@ export default function NotebookPage() {
         <PresentationViewer
           presentation={activePresentation}
           onClose={() => setActivePresentation(null)}
+          onUpdate={handlePresentationUpdate}
         />
       )}
     </div>
