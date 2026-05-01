@@ -28,6 +28,7 @@ import PastQuizColumn from "../components/notebook/PastQuizColumn";
 import QuizColumn from "../components/notebook/QuizColumn";
 import PresentationColumn, { type PresentationGenerateOptions } from "../components/notebook/PresentationColumn";
 import PastPresentationsColumn from "../components/notebook/PastPresentationsColumn";
+import PresentationViewer from "../components/presentation/PresentationViewer";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
 import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
@@ -64,6 +65,7 @@ export default function NotebookPage() {
   const [presentations, setPresentations] = useState<PresentationSession[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizSession | null>(null);
   const [activeQuiz, setActiveQuiz] = useState<QuizSession | null>(null);
+  const [activePresentation, setActivePresentation] = useState<PresentationSession | null>(null);
   const [pendingChatInput, setPendingChatInput] = useState<string>("");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -396,8 +398,8 @@ export default function NotebookPage() {
     }
   }
 
-  function handlePresentationClick(_presentation: PresentationSession) {
-    // Step 4: open presentation viewer
+  function handlePresentationClick(presentation: PresentationSession) {
+    setActivePresentation(presentation);
   }
 
   async function handleQuizComplete(
@@ -654,6 +656,14 @@ export default function NotebookPage() {
           onComplete={handleQuizComplete}
           onExit={handleQuizExit}
           onTakeToChat={handleTakeToChat}
+        />
+      )}
+
+      {/* Presentation viewer overlay */}
+      {activePresentation && (
+        <PresentationViewer
+          presentation={activePresentation}
+          onClose={() => setActivePresentation(null)}
         />
       )}
     </div>
