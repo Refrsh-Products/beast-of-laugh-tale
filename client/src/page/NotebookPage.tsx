@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import {
   useParams,
@@ -73,6 +73,7 @@ export default function NotebookPage() {
   const [chatSessions, setChatSessions] = useState<
     Awaited<ReturnType<typeof chatService.listChatSessions>>
   >([]);
+  const presentationPollRefs = useRef<Set<ReturnType<typeof setInterval>>>(new Set());
 
   const notebookId = id ?? "";
 
@@ -81,6 +82,13 @@ export default function NotebookPage() {
       f.ingestion_status === "pending" || f.ingestion_status === "processing",
   );
   const hasReadyFiles = files.some((f) => f.ingestion_status === "ready");
+
+  // Clear any active presentation poll intervals on unmount
+  useEffect(() => {
+    return () => {
+      presentationPollRefs.current.forEach(clearInterval);
+    };
+  }, []);
 
   // Poll file list every 3s while any file is still being ingested
   useEffect(() => {
@@ -380,18 +388,22 @@ export default function NotebookPage() {
           );
           if (updated.status === "COMPLETED") {
             clearInterval(intervalId);
+            presentationPollRefs.current.delete(intervalId);
             setIsGeneratingPresentation(false);
             showToast("Presentation ready", "neutral");
           } else if (updated.status === "FAILED") {
             clearInterval(intervalId);
+            presentationPollRefs.current.delete(intervalId);
             setIsGeneratingPresentation(false);
             showToast("Presentation generation failed", "danger");
           }
         } catch {
           clearInterval(intervalId);
+          presentationPollRefs.current.delete(intervalId);
           setIsGeneratingPresentation(false);
         }
       }, 2000);
+      presentationPollRefs.current.add(intervalId);
     } catch (err) {
       showToast("Failed to generate presentation", "danger");
       setIsGeneratingPresentation(false);

@@ -162,7 +162,7 @@ export default function PresentationPreview({ theme, themeConfig }: Presentation
                 alignItems: "center",
               }}
             >
-              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.42em", fontWeight: 700, letterSpacing: "0.1em", color: themeConfig.accent, opacity: 2.5 }}>
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.42em", fontWeight: 700, letterSpacing: "0.1em", color: themeConfig.accent }}>
                 FOOTER
               </div>
               <div style={{ fontFamily, fontSize: "0.42em", color: themeConfig.text }}>
