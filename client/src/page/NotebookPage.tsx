@@ -402,7 +402,7 @@ export default function NotebookPage() {
           presentationPollRefs.current.delete(intervalId);
           setIsGeneratingPresentation(false);
         }
-      }, 2000);
+      }, 5000);
       presentationPollRefs.current.add(intervalId);
     } catch (err) {
       showToast("Failed to generate presentation", "danger");
