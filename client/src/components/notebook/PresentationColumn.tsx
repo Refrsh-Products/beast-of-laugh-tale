@@ -6,7 +6,7 @@ import QuizSelectDropdown from "../quiz/QuizSelectDropdown";
 const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
-const COLLAPSED_MAX = 8;
+const COLLAPSED_MAX = 4;
 
 type PresentationTheme = "freshr" | "minimal" | "dark" | "academic" | "serif";
 

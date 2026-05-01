@@ -8,7 +8,7 @@ import Divider from "../quiz/Divider";
 const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
-const COLLAPSED_MAX = 8; // Number of topics to show when topic chip is collapsed
+const COLLAPSED_MAX = 4; // Number of topics to show when topic chip is collapsed
 
 const labelStyle: React.CSSProperties = {
   display: "block",
