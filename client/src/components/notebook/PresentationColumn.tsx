@@ -1,52 +1,21 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import type { NotebookTopic } from "../../services/quiz/Quiz.types";
 import QuizTopicChip from "../quiz/QuizTopicChip";
 import QuizSelectDropdown from "../quiz/QuizSelectDropdown";
-import PresentationPreview from "../presentation/PresentationPreview";
 
 const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
 const COLLAPSED_MAX = 8;
 
-type PresentationTheme = "minimal" | "dark" | "academic" | "serif" | "freshr";
+type PresentationTheme = "freshr" | "minimal" | "dark" | "academic" | "serif";
 
-const THEMES: Record<PresentationTheme, { label: string; bg: string; text: string; accent: string; description: string }> = {
-  minimal: {
-    label: "Minimal",
-    bg: "#ffffff",
-    text: "#000000",
-    accent: "#000000",
-    description: "Clean and minimal. White background, sharp sans-serif typography. Best for professional or academic content.",
-  },
-  dark: {
-    label: "Dark",
-    bg: "#1a1a1a",
-    text: "#ffffff",
-    accent: "#84e487",
-    description: "High contrast dark theme. Bold and modern. Great for technical or impactful presentations.",
-  },
-  academic: {
-    label: "Academic",
-    bg: "#eef3f8",
-    text: "#1e3a5f",
-    accent: "#2a72b5",
-    description: "Professional blue-tinted theme. Suited for research, reports, and academic work.",
-  },
-  serif: {
-    label: "Serif",
-    bg: "#faf7f2",
-    text: "#3b2f1e",
-    accent: "#8b6a1f",
-    description: "Warm and editorial. Elegant serif typography for a polished, refined presentation.",
-  },
-  freshr: {
-    label: "Freshr",
-    bg: "#ffffff",
-    text: "#000000",
-    accent: "#84e487",
-    description: "Freshr's own neo-brutalist style. Bold black borders, white background, and signature green accents.",
-  },
+const THEMES: Record<PresentationTheme, { label: string; bg: string; text: string; accent: string }> = {
+  freshr:   { label: "Freshr",   bg: "#ffffff", text: "#000000", accent: "#84e487" },
+  minimal:  { label: "Minimal",  bg: "#ffffff", text: "#333333", accent: "#cccccc" },
+  dark:     { label: "Dark",     bg: "#1a1a1a", text: "#ffffff", accent: "#84e487" },
+  academic: { label: "Academic", bg: "#eef3f8", text: "#1e3a5f", accent: "#2a72b5" },
+  serif:    { label: "Serif",    bg: "#faf7f2", text: "#3b2f1e", accent: "#8b6a1f" },
 };
 
 const labelStyle: React.CSSProperties = {
@@ -58,6 +27,88 @@ const labelStyle: React.CSSProperties = {
   color: "#555",
   marginBottom: 6,
 };
+
+function ThemeCard({
+  themeKey,
+  selected,
+  onClick,
+}: {
+  themeKey: PresentationTheme;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const t = THEMES[themeKey];
+  const isFreshr = themeKey === "freshr";
+  const isDark = themeKey === "dark";
+
+  const shadow = selected
+    ? hovered ? `6px 6px 0 ${B}` : `4px 4px 0 ${B}`
+    : hovered ? `4px 4px 0 ${B}` : "none";
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ cursor: "pointer", userSelect: "none" }}
+    >
+      <div
+        style={{
+          width: "100%",
+          aspectRatio: "16 / 9",
+          border: `2px solid ${selected || hovered ? B : "#d0d0d0"}`,
+          background: t.bg,
+          boxSizing: "border-box",
+          display: "flex",
+          overflow: "hidden",
+          boxShadow: shadow,
+          transform: hovered ? "translate(-2px, -2px)" : "none",
+          transition: "transform 0.1s, box-shadow 0.1s, border-color 0.1s",
+        }}
+      >
+        {isFreshr && (
+          <div style={{ width: 7, background: t.accent, flexShrink: 0 }} />
+        )}
+        <div style={{ flex: 1, padding: "8px 10px", display: "flex", flexDirection: "column", gap: 4 }}>
+          <div
+            style={{
+              height: 4,
+              width: "55%",
+              background: isDark ? t.accent : isFreshr ? B : t.accent,
+              borderRadius: 1,
+            }}
+          />
+          {[78, 62, 70].map((w, i) => (
+            <div
+              key={i}
+              style={{
+                height: 3,
+                width: `${w}%`,
+                background: t.text,
+                opacity: isDark ? 0.5 : 0.22,
+                borderRadius: 1,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <span
+        style={{
+          display: "block",
+          marginTop: 6,
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: "0.62rem",
+          fontWeight: selected ? 700 : 400,
+          color: B,
+        }}
+      >
+        {t.label}
+      </span>
+    </div>
+  );
+}
 
 export interface PresentationGenerateOptions {
   topics: NotebookTopic[];
@@ -85,35 +136,7 @@ export default function PresentationColumn({
   const [customTopic, setCustomTopic] = useState("");
   const [numSlides, setNumSlides] = useState(10);
   const [textLength, setTextLength] = useState<"brief" | "balanced" | "detailed">("balanced");
-  const [theme, setTheme] = useState<PresentationTheme>("minimal");
-  const [leftWidth, setLeftWidth] = useState(300);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const isDragging = useRef(false);
-
-  function handleDividerMouseDown(e: React.MouseEvent) {
-    e.preventDefault();
-    isDragging.current = true;
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-
-    function onMouseMove(ev: MouseEvent) {
-      if (!isDragging.current || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const newWidth = ev.clientX - rect.left;
-      setLeftWidth(Math.max(300, Math.min(500, newWidth)));
-    }
-
-    function onMouseUp() {
-      isDragging.current = false;
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-    }
-
-    document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
-  }
+  const [theme, setTheme] = useState<PresentationTheme>("freshr");
 
   const canGenerate = !isGenerating;
   const isAllTopicsMode = selectedTopics.length === 0 && customTopic.trim().length === 0;
@@ -136,8 +159,15 @@ export default function PresentationColumn({
   const hiddenCount = topics.length - COLLAPSED_MAX;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        background: "#f5f5f0",
+        overflow: "hidden",
+      }}
+    >
       {/* Header */}
       <div
         style={{
@@ -163,26 +193,26 @@ export default function PresentationColumn({
         </span>
       </div>
 
-      {/* Two-panel body */}
-      <div ref={containerRef} style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+      {/* Scrollable content */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "28px 32px 24px" }}>
+        <div style={{ maxWidth: 580, margin: "0 auto" }}>
 
-        {/* LEFT — Options */}
-        <div
-          style={{
-            width: leftWidth,
-            minWidth: 300,
-            maxWidth: 500,
-            flexShrink: 0,
-            background: W,
-            overflowY: "auto",
-            display: "flex",
-            flexDirection: "column",
-            padding: "24px 20px",
-            gap: 20,
-          }}
-        >
+          {/* Title */}
+          <h2
+            style={{
+              fontFamily: "'Syne', sans-serif",
+              fontWeight: 800,
+              fontSize: "1.4rem",
+              color: B,
+              margin: "0 0 24px",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Generate a Presentation
+          </h2>
+
           {/* Topics */}
-          <div>
+          <div style={{ marginBottom: 20 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
               <span style={labelStyle}>TOPICS</span>
               {topicsExpanded && (
@@ -272,14 +302,13 @@ export default function PresentationColumn({
               </p>
             ) : topics.length > 0 && (
               <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: "#888", margin: "6px 0 0" }}>
-                All topics — full notebook
+                No topics selected — presentation will cover all topics
               </p>
             )}
           </div>
 
-
           {/* Custom topic */}
-          <div>
+          <div style={{ marginBottom: 20 }}>
             <label style={labelStyle}>OR DESCRIBE YOUR OWN TOPIC</label>
             <textarea
               value={customTopic}
@@ -310,9 +339,8 @@ export default function PresentationColumn({
             />
           </div>
 
-
-          {/* Slides + Text length */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          {/* Slides + Length */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
             <div>
               <label style={labelStyle}>SLIDES</label>
               <QuizSelectDropdown
@@ -320,8 +348,8 @@ export default function PresentationColumn({
                 onChange={(v) => setNumSlides(Number(v))}
                 placeholder="10"
                 options={[
-                  { value: "5", label: "5" },
-                  { value: "8", label: "8" },
+                  { value: "5",  label: "5"  },
+                  { value: "8",  label: "8"  },
                   { value: "10", label: "10" },
                   { value: "15", label: "15" },
                   { value: "20", label: "20" },
@@ -335,105 +363,37 @@ export default function PresentationColumn({
                 onChange={(v) => setTextLength(v as "brief" | "balanced" | "detailed")}
                 placeholder="Balanced"
                 options={[
-                  { value: "brief", label: "Brief" },
+                  { value: "brief",    label: "Brief"    },
                   { value: "balanced", label: "Balanced" },
                   { value: "detailed", label: "Detailed" },
                 ]}
               />
             </div>
           </div>
-        </div>
 
-        {/* Draggable divider */}
-        <div
-          onMouseDown={handleDividerMouseDown}
-          style={{
-            width: 4,
-            flexShrink: 0,
-            background: B,
-            cursor: "col-resize",
-            position: "relative",
-            transition: "background 0.15s",
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "#444")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = B)}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              display: "flex",
-              flexDirection: "column",
-              gap: 3,
-              pointerEvents: "none",
-            }}
-          >
-            {[0, 1, 2].map((i) => (
-              <div key={i} style={{ width: 2, height: 2, borderRadius: "50%", background: W, opacity: 0.6 }} />
-            ))}
-          </div>
-        </div>
-
-        {/* RIGHT — Preview stage */}
-        <div
-          style={{
-            flex: 1,
-            background: "#e8e5de",
-            backgroundImage: "radial-gradient(circle, #c8c4bc 1px, transparent 1px)",
-            backgroundSize: "22px 22px",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
-        >
-          {/* Style selector bar */}
-          <div
-            style={{
-              padding: "10px 20px",
-              borderBottom: `2px solid ${B}`,
-              background: "rgba(255,255,255,0.92)",
-              display: "flex",
-              alignItems: "center",
-              gap: 14,
-              flexShrink: 0,
-            }}
-          >
+          {/* Style cards */}
+          <div>
             <span style={labelStyle}>STYLE</span>
-            <div style={{ flex: 1, maxWidth: 200 }}>
-              <QuizSelectDropdown
-                value={theme}
-                onChange={(v) => setTheme(v as PresentationTheme)}
-                placeholder="Minimal"
-                options={Object.entries(THEMES).map(([value, t]) => ({ value, label: t.label }))}
-              />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+              {(Object.keys(THEMES) as PresentationTheme[]).map((key) => (
+                <ThemeCard
+                  key={key}
+                  themeKey={key}
+                  selected={theme === key}
+                  onClick={() => setTheme(key)}
+                />
+              ))}
             </div>
           </div>
 
-          {/* Preview — fills available space */}
-          <div
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "24px",
-              overflow: "hidden",
-            }}
-          >
-            <div style={{ width: "100%", boxShadow: `8px 8px 0 ${B}` }}>
-              <PresentationPreview theme={theme} themeConfig={THEMES[theme]} />
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Bottom bar */}
+      {/* Pinned footer — Generate button */}
       <div
         style={{
           borderTop: `2px solid ${B}`,
-          padding: "14px 32px",
+          padding: "16px 32px",
           background: W,
           display: "flex",
           justifyContent: "center",
@@ -470,7 +430,7 @@ export default function PresentationColumn({
             color: canGenerate ? B : "#aaa",
             border: `2px solid ${canGenerate ? B : "#ccc"}`,
             boxShadow: canGenerate ? `4px 4px 0 ${B}` : "none",
-            padding: "14px 48px",
+            padding: "14px 40px",
             fontFamily: "'IBM Plex Mono', monospace",
             fontWeight: 700,
             fontSize: "0.82rem",

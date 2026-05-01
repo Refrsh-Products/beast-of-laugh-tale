@@ -192,7 +192,6 @@ export default function PreviousQuizzesColumn({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            zIndex: 100,
           }}
         >
           <div
