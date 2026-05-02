@@ -7,7 +7,7 @@ import {
 import type { AccountService } from "./Account.types";
 
 const AccountServiceMock: AccountService = {
-  getAccount: () => getAccount(),
+  getAccount: async () => getAccount(),
 
   saveAccount: (account) => {
     saveAccount(account);
@@ -18,8 +18,6 @@ const AccountServiceMock: AccountService = {
     saveAccount(account);
     return Promise.resolve();
   },
-
-  refreshAccount: () => Promise.resolve(),
 
   hasCompletedOnboarding: () => Promise.resolve(hasCompletedOnboarding()),
 

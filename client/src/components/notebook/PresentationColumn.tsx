@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { NotebookTopic } from "../../services/quiz/Quiz.types";
 import QuizTopicChip from "../quiz/QuizTopicChip";
-import QuizSelectDropdown from "../quiz/QuizSelectDropdown";
+import Dropdown from "../ui/Dropdown";
 
 const G = "#84e487";
 const B = "#000000";
@@ -343,7 +343,7 @@ export default function PresentationColumn({
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
             <div>
               <label style={labelStyle}>SLIDES</label>
-              <QuizSelectDropdown
+              <Dropdown
                 value={String(numSlides)}
                 onChange={(v) => setNumSlides(Number(v))}
                 placeholder="10"
@@ -358,7 +358,7 @@ export default function PresentationColumn({
             </div>
             <div>
               <label style={labelStyle}>LENGTH</label>
-              <QuizSelectDropdown
+              <Dropdown
                 value={textLength}
                 onChange={(v) => setTextLength(v as "brief" | "balanced" | "detailed")}
                 placeholder="Balanced"

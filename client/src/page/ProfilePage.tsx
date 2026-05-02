@@ -29,8 +29,8 @@ export default function ProfilePage() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    accountService.refreshAccount()
-      .then(() => setAccount(accountService.getAccount()))
+    accountService.getAccount()
+      .then((acc) => { if (acc) setAccount(acc); })
       .catch(() => {});
   }, []);
 

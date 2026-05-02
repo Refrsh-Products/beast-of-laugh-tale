@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { QuizDifficulty } from "../../storage";
 import type { QuizGenerateOptions, NotebookTopic } from "../../services/quiz/Quiz.types";
 import QuizTopicChip from "../quiz/QuizTopicChip";
-import QuizSelectDropdown from "../quiz/QuizSelectDropdown";
+import Dropdown from "../ui/Dropdown";
 import Divider from "../quiz/Divider";
 
 const G = "#84e487";
@@ -315,7 +315,7 @@ export default function QuizColumn({
             {/* Questions */}
             <div>
               <label style={labelStyle}>QUESTIONS</label>
-              <QuizSelectDropdown
+              <Dropdown
                 value={String(questionCount)}
                 onChange={(v) => setQuestionCount(Number(v))}
                 placeholder="5"
@@ -331,7 +331,7 @@ export default function QuizColumn({
             {/* Difficulty */}
             <div>
               <label style={labelStyle}>DIFFICULTY</label>
-              <QuizSelectDropdown
+              <Dropdown
                 value={difficulty}
                 onChange={(v) => setDifficulty(v as QuizDifficulty)}
                 placeholder="Easy"
@@ -346,7 +346,7 @@ export default function QuizColumn({
             {/* Mode */}
             <div>
               <label style={labelStyle}>MODE</label>
-              <QuizSelectDropdown
+              <Dropdown
                 value={quizType === "TIMED" ? "yes" : "no"}
                 onChange={(v) => {
                   if (v === "yes") {
@@ -370,7 +370,7 @@ export default function QuizColumn({
               <label style={{ ...labelStyle, color: quizType === "TIMED" ? "#555" : "#bbb" }}>
                 TIME LIMIT
               </label>
-              <QuizSelectDropdown
+              <Dropdown
                 value={timeLimit !== null ? String(timeLimit) : ""}
                 onChange={(v) => setTimeLimit(v === "" ? null : Number(v))}
                 placeholder="Select..."

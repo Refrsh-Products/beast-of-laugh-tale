@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { ProfileTab } from "./ProfileSidebar";
 import type { StoredAccount } from "../../storage";
+import { getAccount as getCachedAccount } from "../../storage";
 import SettingsField from "../settings/SettingsField";
 import Button from "../ui/Button";
 import useAccountService from "../../services/account";
@@ -17,9 +18,10 @@ type EditableField = "name" | "phone" | "address" | "city" | "postal_code";
 
 export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
   const accountService = useAccountService();
-  const account = accountService.getAccount();
+  const cached = getCachedAccount();
+  const [account, setAccount] = useState<StoredAccount | null>(cached);
   const [name, setName] = useState(
-    account ? `${account.first_name} ${account.last_name}`.trim() : "",
+    cached ? `${cached.first_name} ${cached.last_name}`.trim() : "",
   );
   const [editingField, setEditingField] = useState<EditableField | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -27,12 +29,25 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
   const [editLastName, setEditLastName] = useState("");
   const [editAddress2, setEditAddress2] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
-  const [phone, setPhone] = useState(account?.phone ?? "");
-  const [address, setAddress] = useState(account?.address1 ?? "");
-  const [address2, setAddress2] = useState(account?.address2 ?? "");
-  const [city, setCity] = useState(account?.city ?? "");
-  const [postalCode, setPostalCode] = useState(account?.postal_code ?? "");
+  const [phone, setPhone] = useState(cached?.phone ?? "");
+  const [address, setAddress] = useState(cached?.address1 ?? "");
+  const [address2, setAddress2] = useState(cached?.address2 ?? "");
+  const [city, setCity] = useState(cached?.city ?? "");
+  const [postalCode, setPostalCode] = useState(cached?.postal_code ?? "");
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    accountService.getAccount().then((acc) => {
+      if (!acc) return;
+      setAccount(acc);
+      setName(`${acc.first_name} ${acc.last_name}`.trim());
+      setPhone(acc.phone ?? "");
+      setAddress(acc.address1 ?? "");
+      setAddress2(acc.address2 ?? "");
+      setCity(acc.city ?? "");
+      setPostalCode(acc.postal_code ?? "");
+    }).catch(() => {});
+  }, []);
 
   function startEdit(field: EditableField) {
     setEditingField(field);

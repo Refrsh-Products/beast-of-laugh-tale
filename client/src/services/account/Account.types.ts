@@ -1,10 +1,9 @@
 import type { AccountUseage, StoredAccount } from "../../storage";
 
 export interface AccountService {
-  getAccount(): StoredAccount | null;
+  getAccount(): Promise<StoredAccount | null>;
   saveAccount(account: StoredAccount): Promise<void>;
   updateAccount(account: StoredAccount): Promise<void>;
-  refreshAccount(): Promise<void>;
   hasCompletedOnboarding(): Promise<boolean>;
   getAccountUsage(): Promise<AccountUseage>;
 }
