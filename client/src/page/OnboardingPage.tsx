@@ -51,7 +51,7 @@ export default function OnboardingPage() {
       return;
     }
     try {
-      const existingAccount = accountService.getAccount();
+      const existingAccount = await accountService.getAccount();
       await accountService.saveAccount({
         id: existingAccount?.id ?? sessionStorage.getItem("userId") ?? "",
         first_name: firstName.trim(),

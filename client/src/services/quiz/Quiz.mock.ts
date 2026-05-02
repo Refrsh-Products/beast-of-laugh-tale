@@ -218,6 +218,11 @@ export const QuizServiceMock: QuizService = {
     return [...mockStore.values()].filter((s) => s.is_favourite);
   },
 
+  async deleteQuizSession(quizId: string): Promise<void> {
+    await delay(200);
+    mockStore.delete(quizId);
+  },
+
   async retakePastQuiz(quizId: string): Promise<QuizSession> {
     await delay(800);
     const original = mockStore.get(quizId);

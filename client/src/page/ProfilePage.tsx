@@ -17,7 +17,7 @@ export default function ProfilePage() {
   const accountService = useAccountService();
   const navigate = useNavigate();
   const user = authService.getUser();
-  const account = accountService.getAccount();
+  const [account, setAccount] = useState(accountService.getAccount());
 
   const name = account
     ? `${account.first_name} ${account.last_name}`.trim()
@@ -27,6 +27,12 @@ export default function ProfilePage() {
     (location.state as { tab?: ProfileTab } | null)?.tab ?? "profile";
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    accountService.getAccount()
+      .then((acc) => { if (acc) setAccount(acc); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!success) return;

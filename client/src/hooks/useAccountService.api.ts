@@ -14,9 +14,23 @@ const useAccountServiceApi = (): AccountService => {
   const { fetchData } = useFetch(apiWithInterceptor);
 
   return {
-    getAccount: () => {
-      const raw = localStorage.getItem("freshr_account");
-      return raw ? JSON.parse(raw) : null;
+    getAccount: async () => {
+      const resp = await fetchData<AccountMeResponse>(UserServiceApiEndpoints.accountMe);
+      const account = {
+        id: resp.id,
+        first_name: resp.first_name,
+        last_name: resp.last_name,
+        profile_picture_url: resp.profile_picture_url,
+        address1: resp.address1,
+        address2: resp.address2,
+        city: resp.city,
+        postal_code: resp.postal_code,
+        phone: resp.phone,
+        tier_plan: resp.tier_plan,
+        onboarding_completed: String(resp.onboarding_completed),
+      };
+      saveAccount(account);
+      return account;
     },
 
     saveAccount: async (account) => {

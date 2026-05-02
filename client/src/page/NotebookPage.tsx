@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import {
   useParams,
@@ -26,12 +26,17 @@ import QuizReviewColumn from "../components/notebook/QuizReviewColumn";
 import QuizTakingScreen from "../components/notebook/QuizTakingScreen";
 import PastQuizColumn from "../components/notebook/PastQuizColumn";
 import QuizColumn from "../components/notebook/QuizColumn";
+import PresentationColumn, { type PresentationGenerateOptions } from "../components/notebook/PresentationColumn";
+import PastPresentationsColumn from "../components/notebook/PastPresentationsColumn";
+import PresentationViewer from "../components/presentation/PresentationViewer";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
 import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
 import useChatService from "../services/chat";
 import useQuizService from "../services/quiz";
+import usePresentationService from "../services/presentation";
 import type { QuizSession } from "../hooks/useQuizService.api";
+import type { PresentationSession, PresentationSlide } from "../services/presentation/Presentation.types";
 
 const B = "#000000";
 const W = "#FFFFFF";
@@ -43,6 +48,7 @@ export default function NotebookPage() {
   const notebookService = useNotebookService();
   const chatService = useChatService();
   const quizService = useQuizService();
+  const presentationService = usePresentationService();
   const navigate = useNavigate();
   const { toasts, showToast } = useToast();
 
@@ -53,8 +59,13 @@ export default function NotebookPage() {
   const [quizTopics, setQuizTopics] = useState<NotebookTopic[]>([]);
   const [isLoadingTopics, setIsLoadingTopics] = useState(false);
   const [previousQuizzes, setPreviousQuizzes] = useState<QuizSession[]>([]);
+  const [presentationTopics, setPresentationTopics] = useState<NotebookTopic[]>([]);
+  const [isLoadingPresentationTopics, setIsLoadingPresentationTopics] = useState(false);
+  const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false);
+  const [presentations, setPresentations] = useState<PresentationSession[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizSession | null>(null);
   const [activeQuiz, setActiveQuiz] = useState<QuizSession | null>(null);
+  const [activePresentation, setActivePresentation] = useState<PresentationSession | null>(null);
   const [pendingChatInput, setPendingChatInput] = useState<string>("");
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -62,6 +73,7 @@ export default function NotebookPage() {
   const [chatSessions, setChatSessions] = useState<
     Awaited<ReturnType<typeof chatService.listChatSessions>>
   >([]);
+  const presentationPollRefs = useRef<Set<ReturnType<typeof setInterval>>>(new Set());
 
   const notebookId = id ?? "";
 
@@ -70,6 +82,13 @@ export default function NotebookPage() {
       f.ingestion_status === "pending" || f.ingestion_status === "processing",
   );
   const hasReadyFiles = files.some((f) => f.ingestion_status === "ready");
+
+  // Clear any active presentation poll intervals on unmount
+  useEffect(() => {
+    return () => {
+      presentationPollRefs.current.forEach(clearInterval);
+    };
+  }, []);
 
   // Poll file list every 3s while any file is still being ingested
   useEffect(() => {
@@ -133,6 +152,31 @@ export default function NotebookPage() {
       setPreviousQuizzes(quizzes);
     }
     loadQuizData();
+  }, [activeView, notebookId]);
+
+  useEffect(() => {
+    if (activeView !== "presentation") return;
+    async function loadPresentationData() {
+      if (presentationTopics.length === 0) {
+        setIsLoadingPresentationTopics(true);
+        try {
+          const topics = await notebookService.listTopics(notebookId);
+          setPresentationTopics(topics);
+        } catch (err) {
+          console.error(err);
+          setPresentationTopics([]);
+        } finally {
+          setIsLoadingPresentationTopics(false);
+        }
+      }
+      try {
+        const existing = await presentationService.listPresentations(notebookId);
+        setPresentations(existing);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadPresentationData();
   }, [activeView, notebookId]);
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
@@ -301,7 +345,7 @@ export default function NotebookPage() {
       topic_id: isAllTopics ? undefined : options.topics[0]?.id,
       difficulty: options.difficulty,
       quiz_type: options.quizType,
-      time_limit: options.timeLimit,
+      time_limit: options.timeLimit ? options.timeLimit * 60 : undefined,
       num_questions: options.questionCount,
     };
 
@@ -318,6 +362,67 @@ export default function NotebookPage() {
     } finally {
       setIsGeneratingQuiz(false);
     }
+  }
+
+  async function handleGeneratePresentation(options: PresentationGenerateOptions) {
+    setIsGeneratingPresentation(true);
+    const isAllTopics = options.topics.length === 0 && !options.customTopic;
+    const payload = {
+      notebook: notebookId,
+      topic: isAllTopics ? "All Topics" : options.topics.map((t) => t.name).join(", "),
+      topic_id: isAllTopics ? undefined : options.topics[0]?.id,
+      custom_prompt: options.customTopic || undefined,
+      slide_count: options.numSlides,
+      text_length: options.textLength.toUpperCase() as "BRIEF" | "BALANCED" | "DETAILED",
+    };
+
+    try {
+      const session = await presentationService.createPresentation(payload);
+      setPresentations((prev) => [session, ...prev]);
+
+      const intervalId = setInterval(async () => {
+        try {
+          const updated = await presentationService.getPresentation(session.id);
+          setPresentations((prev) =>
+            prev.map((p) => (p.id === session.id ? updated : p))
+          );
+          if (updated.status === "COMPLETED") {
+            clearInterval(intervalId);
+            presentationPollRefs.current.delete(intervalId);
+            setIsGeneratingPresentation(false);
+            showToast("Presentation ready", "neutral");
+          } else if (updated.status === "FAILED") {
+            clearInterval(intervalId);
+            presentationPollRefs.current.delete(intervalId);
+            setIsGeneratingPresentation(false);
+            showToast("Presentation generation failed", "danger");
+          }
+        } catch {
+          clearInterval(intervalId);
+          presentationPollRefs.current.delete(intervalId);
+          setIsGeneratingPresentation(false);
+        }
+      }, 5000);
+      presentationPollRefs.current.add(intervalId);
+    } catch (err) {
+      showToast("Failed to generate presentation", "danger");
+      setIsGeneratingPresentation(false);
+    }
+  }
+
+  function handlePresentationClick(presentation: PresentationSession) {
+    setActivePresentation(presentation);
+  }
+
+  function handlePresentationUpdate(updatedSlides: PresentationSlide[]) {
+    setPresentations((prev) =>
+      prev.map((p) =>
+        p.id === activePresentation?.id ? { ...p, slides: updatedSlides } : p,
+      ),
+    );
+    setActivePresentation((prev) =>
+      prev ? { ...prev, slides: updatedSlides } : null,
+    );
   }
 
   async function handleQuizComplete(
@@ -356,7 +461,7 @@ export default function NotebookPage() {
   }
 
   function handleQuizExit() {
-    setActiveQuiz(null);
+    navigate(`/notebook/${notebookId}`, { replace: true });
   }
 
   function handleTakeToChat(
@@ -493,7 +598,7 @@ export default function NotebookPage() {
         {/* Options/Tools nav column (left) */}
         <OptionsColumn activeView={activeView} onViewChange={setActiveView} />
 
-        {/* Dynamic main window (Chat or Quiz) */}
+        {/* Dynamic main window (Chat, Quiz, or Presentation) */}
         {activeView === "chat" ? (
           <ChatColumn
             onSend={handleSendMessage}
@@ -508,6 +613,13 @@ export default function NotebookPage() {
             chatDisabled={files.length > 0 && !hasReadyFiles}
             initialInput={pendingChatInput}
             onInitialInputConsumed={() => setPendingChatInput("")}
+          />
+        ) : activeView === "presentation" ? (
+          <PresentationColumn
+            topics={presentationTopics}
+            isLoadingTopics={isLoadingPresentationTopics}
+            onGenerate={handleGeneratePresentation}
+            isGenerating={isGeneratingPresentation}
           />
         ) : selectedQuiz ? (
           <QuizReviewColumn
@@ -525,13 +637,18 @@ export default function NotebookPage() {
           />
         )}
 
-        {/* Right column — Files on chat tab, Previous Quizzes on quiz tab */}
+        {/* Right column — Files on chat, Previous Quizzes on quiz, Previous Slides on presentation */}
         {activeView === "quiz" ? (
           <PastQuizColumn
             quizzes={previousQuizzes}
             selectedQuizId={selectedQuiz?.id ?? null}
             onQuizClick={handleQuizClick}
             onDeleteSelected={handleDeleteQuizSessions}
+          />
+        ) : activeView === "presentation" ? (
+          <PastPresentationsColumn
+            presentations={presentations}
+            onPresentationClick={handlePresentationClick}
           />
         ) : (
           <FilesColumn
@@ -562,6 +679,15 @@ export default function NotebookPage() {
           onComplete={handleQuizComplete}
           onExit={handleQuizExit}
           onTakeToChat={handleTakeToChat}
+        />
+      )}
+
+      {/* Presentation viewer overlay */}
+      {activePresentation && (
+        <PresentationViewer
+          presentation={activePresentation}
+          onClose={() => setActivePresentation(null)}
+          onUpdate={handlePresentationUpdate}
         />
       )}
     </div>

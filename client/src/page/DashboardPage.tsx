@@ -4,7 +4,8 @@ import { Navigate, useNavigate } from "react-router-dom";
 import useNotebookService from "../services/notebooks";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
-import type { Notebook, AccountUseage } from "../storage";
+import type { Notebook, AccountUseage, StoredAccount } from "../storage";
+import { getAccount as getCachedAccount } from "../storage";
 
 import TopNavbar from "../components/dashboard/TopNavbar";
 import NotebookCard from "../components/dashboard/NotebookCard";
@@ -90,7 +91,7 @@ export default function DashboardPage() {
   const notebookService = useNotebookService();
   const navigate = useNavigate();
   const user = authService.getUser();
-  const account = accountService.getAccount();
+  const [account, setAccount] = useState<StoredAccount | null>(getCachedAccount());
 
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [archivedNotebooks, setArchivedNotebooks] = useState<Notebook[]>([]);
@@ -122,6 +123,10 @@ export default function DashboardPage() {
       console.error("Failed to fetch usage:", err);
     }
   }
+
+  useEffect(() => {
+    accountService.getAccount().then((acc) => { if (acc) setAccount(acc); }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!authService.isLoggedIn()) return;

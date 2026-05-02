@@ -90,4 +90,13 @@ export const QuizServiceApiEndpoints = {
   retakeQuiz: (quizId: string) => `${QuizServiceApiBase}/${quizId}/retake/`,
 };
 
+// Presentations
+export const PresentationServiceApiBase = "/presentation";
+export const PresentationServiceApiEndpoints = {
+  list: (notebookId: string) => `${PresentationServiceApiBase}/?notebook=${notebookId}`,
+  create: (notebookId: string) => `${PresentationServiceApiBase}/?notebook=${notebookId}`,
+  get: (id: string) => `${PresentationServiceApiBase}/${id}/`,
+  delete: (id: string) => `${PresentationServiceApiBase}/${id}/`,
+};
+
 export default createFreshrApiInstance;

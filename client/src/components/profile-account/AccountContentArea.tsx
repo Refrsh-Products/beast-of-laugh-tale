@@ -1,7 +1,10 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useAccountService from "../../services/account";
 import useAuthService from "../../services/auth";
 import type { ProfileTab } from "./ProfileSidebar";
+import type { StoredAccount } from "../../storage";
+import { getAccount as getCachedAccount } from "../../storage";
 import Button from "../ui/Button";
 
 const B = "#000000";
@@ -56,7 +59,11 @@ export default function AccountContentArea({
   const accountService = useAccountService();
   const navigate = useNavigate();
   const user = authService.getUser();
-  const account = accountService.getAccount();
+  const [account, setAccount] = useState<StoredAccount | null>(getCachedAccount());
+
+  useEffect(() => {
+    accountService.getAccount().then((acc) => { if (acc) setAccount(acc); }).catch(() => {});
+  }, []);
 
   const planLabel = account?.tier_plan ?? "FREE";
 
