@@ -332,7 +332,7 @@ function SlideThumbnail({
               lineHeight: 1.2,
             }}
           >
-            {slide.title || "Untitled"}
+            {slide.title || slide.caption || slide.quote || "Untitled"}
           </div>
           {slide.bullets.slice(0, 3).map((bullet, i) => (
             <div key={i} style={{ display: "flex", gap: 3, alignItems: "flex-start" }}>
