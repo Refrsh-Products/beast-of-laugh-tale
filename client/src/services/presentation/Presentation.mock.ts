@@ -7,85 +7,128 @@ import type {
 
 const mockStore = new Map<string, PresentationSession>();
 
-function makeFakeSlides(topic: string, count: number): PresentationSlide[] {
-  const templates = [
+const img = (seed: number, w = 800, h = 500) =>
+  `https://picsum.photos/seed/${seed}/${w}/${h}`;
+
+function makeFakeSlides(topic: string): PresentationSlide[] {
+  return [
     {
+      id: crypto.randomUUID(),
+      order_index: 0,
+      layout: "bullets",
       title: `Introduction to ${topic}`,
       bullets: [
         `Overview of key concepts in ${topic}`,
         "Why this topic matters",
         "What you will learn in this presentation",
       ],
-      speaker_notes: `Start by engaging the audience with a question about ${topic}.`,
+      speaker_notes: "Engage the audience with a question.",
+      images: [],
     },
     {
-      title: `Core Concepts`,
-      bullets: [
-        `Foundational principles of ${topic}`,
-        "Key terminology and definitions",
-        "Historical context and development",
-      ],
-      speaker_notes: "Spend extra time on definitions — these underpin everything that follows.",
+      id: crypto.randomUUID(),
+      order_index: 1,
+      layout: "title-only",
+      title: `${topic} Changed Everything`,
+      bullets: [],
+      speaker_notes: "Let this land — pause before continuing.",
+      images: [],
     },
     {
-      title: `Key Findings`,
-      bullets: [
-        `Research highlights in ${topic}`,
-        "Statistical evidence and data points",
-        "Expert consensus on the subject",
-      ],
-      speaker_notes: "Reference primary sources where possible.",
+      id: crypto.randomUUID(),
+      order_index: 2,
+      layout: "body-text",
+      title: "Background",
+      bullets: [],
+      body_text: `${topic} has been a subject of intense study for decades. Researchers have found that understanding its core principles leads to better outcomes across multiple disciplines and industries worldwide.`,
+      speaker_notes: "Give historical context here.",
+      images: [],
     },
     {
-      title: `Practical Applications`,
+      id: crypto.randomUUID(),
+      order_index: 3,
+      layout: "two-col",
+      title: "Traditional vs Modern Approach",
       bullets: [
-        `Real-world use cases of ${topic}`,
-        "Industry adoption and impact",
-        "Case study walkthrough",
+        "Relies on manual processes",
+        "Limited scalability",
+        "Higher operational cost",
+        "Automated and data-driven",
+        "Scales with demand",
+        "Lower long-term overhead",
       ],
-      speaker_notes: "Audience engagement moment — ask if anyone has personal experience.",
+      speaker_notes: "First 3 bullets = left column, last 3 = right column.",
+      images: [],
     },
     {
-      title: `Challenges & Limitations`,
+      id: crypto.randomUUID(),
+      order_index: 4,
+      layout: "image-right",
+      title: "Key Visual Evidence",
       bullets: [
-        `Common obstacles in ${topic}`,
-        "Current research gaps",
-        "Ongoing debates in the field",
+        "Supporting point one",
+        "Supporting point two",
+        "Supporting point three",
       ],
-      speaker_notes: "Acknowledge complexity — avoid oversimplifying.",
+      speaker_notes: "Reference the image directly.",
+      images: [img(42)],
     },
     {
-      title: `Future Directions`,
+      id: crypto.randomUUID(),
+      order_index: 5,
+      layout: "image-left",
+      title: "Another Perspective",
       bullets: [
-        `Emerging trends in ${topic}`,
-        "Upcoming research opportunities",
-        "What to watch in the next 5 years",
+        "Key insight from this view",
+        "What it implies for the field",
+        "How practitioners apply it",
       ],
-      speaker_notes: "End on a forward-looking note to inspire curiosity.",
+      speaker_notes: "Contrast with previous slide.",
+      images: [img(83)],
     },
     {
-      title: `Summary & Takeaways`,
+      id: crypto.randomUUID(),
+      order_index: 6,
+      layout: "full-image",
+      title: "",
+      bullets: [],
+      caption: `The landscape of ${topic} today`,
+      speaker_notes: "Let the image speak — minimal narration.",
+      images: [img(1, 1280, 720)],
+    },
+    {
+      id: crypto.randomUUID(),
+      order_index: 7,
+      layout: "image-top",
+      title: "Real World Application",
       bullets: [
-        `Key points covered today`,
-        "Actionable next steps",
-        "Resources for further reading",
+        "How it works in practice",
+        "Why it matters at scale",
       ],
-      speaker_notes: "Recap the three most important points before Q&A.",
+      speaker_notes: "Tie back to opening context.",
+      images: [img(20)],
+    },
+    {
+      id: crypto.randomUUID(),
+      order_index: 8,
+      layout: "quote",
+      title: "",
+      bullets: [],
+      quote: `The study of ${topic} is not just academic — it fundamentally shapes how we approach every challenge we face.`,
+      quote_source: "Leading Researcher, 2024",
+      speaker_notes: "Read the quote slowly.",
+      images: [],
+    },
+    {
+      id: crypto.randomUUID(),
+      order_index: 9,
+      layout: "two-images",
+      title: "Before & After",
+      bullets: ["The old approach", "The modern standard"],
+      speaker_notes: "Contrast the two images side by side.",
+      images: [img(55), img(99)],
     },
   ];
-
-  return Array.from({ length: count }, (_, i) => {
-    const template = templates[i % templates.length];
-    return {
-      id: crypto.randomUUID(),
-      order_index: i,
-      layout: i === 0 ? "title" : "content",
-      title: template.title,
-      bullets: template.bullets,
-      speaker_notes: template.speaker_notes,
-      images: [],
-    };
-  });
 }
 
 export const PresentationServiceMock: PresentationService = {
@@ -120,7 +163,7 @@ export const PresentationServiceMock: PresentationService = {
         ...existing,
         status: "COMPLETED",
         completed_at: new Date().toISOString(),
-        slides: makeFakeSlides(existing.topic, existing.slide_count),
+        slides: makeFakeSlides(existing.topic),
       });
     }, 3000);
 

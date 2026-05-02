@@ -7,14 +7,30 @@ export interface PresentationCreatePayload {
   text_length: "BRIEF" | "BALANCED" | "DETAILED";
 }
 
+export type PresentationLayout =
+  | "bullets"
+  | "title-only"
+  | "body-text"
+  | "two-col"
+  | "image-right"
+  | "image-left"
+  | "full-image"
+  | "image-top"
+  | "quote"
+  | "two-images";
+
 export interface PresentationSlide {
   id: string;
   order_index: number;
-  layout: string;
+  layout: PresentationLayout;
   title: string;
   bullets: string[];
+  body_text?: string;
+  quote?: string;
+  quote_source?: string;
+  caption?: string;
   speaker_notes: string;
-  images: never[];
+  images: string[];
 }
 
 export interface PresentationSession {

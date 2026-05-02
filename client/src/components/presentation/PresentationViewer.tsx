@@ -4,10 +4,8 @@ import resetCssUrl from "reveal.js/reset.css?url";
 import revealCssUrl from "reveal.js/reveal.css?url";
 import type { PresentationSession, PresentationSlide } from "../../services/presentation/Presentation.types";
 import SlideEditor from "./SlideEditor";
-
-const B = "#000000";
-const W = "#FFFFFF";
-const G = "#84e487";
+import { renderSlideContent, B, G, W } from "./SlideLayouts";
+import { exportAsPdf, exportAsPptx } from "./exportPresentation";
 
 interface AiMessage {
   role: "user" | "ai";
@@ -84,7 +82,7 @@ function SlideThumbnail({
               lineHeight: 1.2,
             }}
           >
-            {slide.title || "Untitled"}
+            {slide.title || slide.caption || slide.quote || "Untitled"}
           </div>
           {slide.bullets.slice(0, 3).map((bullet, i) => (
             <div key={i} style={{ display: "flex", gap: 3, alignItems: "flex-start" }}>
@@ -151,6 +149,9 @@ export default function PresentationViewer({
   const [aiPanelCollapsed, setAiPanelCollapsed] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [deckKey, setDeckKey] = useState(0);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const exportRef = useRef<HTMLDivElement>(null);
 
   // Inject / remove reveal.js CSS in normal mode
   useEffect(() => {
@@ -177,6 +178,29 @@ export default function PresentationViewer({
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [aiMessages]);
+
+  // Close export dropdown on outside click
+  useEffect(() => {
+    if (!exportOpen) return;
+    function handleClick(e: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setExportOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [exportOpen]);
+
+  async function handleExport(format: "pdf" | "pptx") {
+    setExportOpen(false);
+    setExporting(true);
+    try {
+      if (format === "pdf") await exportAsPdf(presentation);
+      else await exportAsPptx(presentation);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const slides = presentation.slides ?? [];
 
@@ -323,53 +347,81 @@ export default function PresentationViewer({
           </>
         ) : (
           <>
+            {/* Export dropdown */}
+            <div ref={exportRef} style={{ position: "relative" }}>
+              <button
+                onClick={() => setExportOpen((o) => !o)}
+                disabled={exporting}
+                onMouseEnter={(e) => { if (!exporting) { e.currentTarget.style.borderColor = W; e.currentTarget.style.color = W; } }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#aaa"; }}
+                style={{
+                  background: "transparent",
+                  border: "1.5px solid #555",
+                  color: "#aaa",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  padding: "5px 14px",
+                  cursor: exporting ? "not-allowed" : "pointer",
+                  letterSpacing: "0.06em",
+                  transition: "border-color 0.1s, color 0.1s",
+                }}
+              >
+                {exporting ? "Exporting..." : "Export ▾"}
+              </button>
+
+              {exportOpen && (
+                <div style={{
+                  position: "absolute",
+                  top: "calc(100% + 6px)",
+                  right: 0,
+                  background: "#111",
+                  border: "1.5px solid #333",
+                  minWidth: 150,
+                  zIndex: 10,
+                }}>
+                  {(["pdf", "pptx"] as const).map((fmt) => (
+                    <button
+                      key={fmt}
+                      onClick={() => handleExport(fmt)}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#222")}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                      style={{
+                        display: "block",
+                        width: "100%",
+                        background: "transparent",
+                        border: "none",
+                        color: "#ccc",
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        padding: "10px 16px",
+                        cursor: "pointer",
+                        textAlign: "left",
+                        letterSpacing: "0.06em",
+                        transition: "background 0.1s",
+                      }}
+                    >
+                      {fmt === "pdf" ? "Export as PDF" : "Export as PPTX"}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <button
               onClick={enterEditMode}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = W;
-                e.currentTarget.style.color = W;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#555";
-                e.currentTarget.style.color = "#aaa";
-              }}
-              style={{
-                background: "transparent",
-                border: "1.5px solid #555",
-                color: "#aaa",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
-                fontWeight: 700,
-                padding: "5px 14px",
-                cursor: "pointer",
-                letterSpacing: "0.06em",
-                transition: "border-color 0.1s, color 0.1s",
-              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = W; e.currentTarget.style.color = W; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#aaa"; }}
+              style={{ background: "transparent", border: "1.5px solid #555", color: "#aaa", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: 700, padding: "5px 14px", cursor: "pointer", letterSpacing: "0.06em", transition: "border-color 0.1s, color 0.1s" }}
             >
               Edit
             </button>
             <button
               onClick={onClose}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = W;
-                e.currentTarget.style.color = W;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "#555";
-                e.currentTarget.style.color = "#aaa";
-              }}
-              style={{
-                background: "transparent",
-                border: "1.5px solid #555",
-                color: "#aaa",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
-                fontWeight: 700,
-                padding: "5px 14px",
-                cursor: "pointer",
-                letterSpacing: "0.06em",
-                transition: "border-color 0.1s, color 0.1s",
-              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = W; e.currentTarget.style.color = W; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#aaa"; }}
+              style={{ background: "transparent", border: "1.5px solid #555", color: "#aaa", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: 700, padding: "5px 14px", cursor: "pointer", letterSpacing: "0.06em", transition: "border-color 0.1s, color 0.1s" }}
             >
               × Close
             </button>
@@ -414,101 +466,15 @@ export default function PresentationViewer({
             {slides.length > 0 ? (
               slides.map((slide) => (
                 <Slide key={slide.id} background={W}>
-                  <div
-                    style={{
-                      textAlign: "left",
-                      display: "flex",
-                      flexDirection: "column",
-                      height: "100%",
-                      padding: "0.8em 0.8em 0.6em",
-                      boxSizing: "border-box",
-                    }}
-                  >
+                  <div style={{ textAlign: "left", display: "flex", flexDirection: "column", height: "100%", padding: "0.8em 0.8em 0.6em", boxSizing: "border-box" }}>
                     <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-                      <div
-                        style={{
-                          width: 10,
-                          background: G,
-                          flexShrink: 0,
-                          marginRight: "0.8em",
-                          borderRadius: 2,
-                        }}
-                      />
-                      <div
-                        style={{
-                          flex: 1,
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "center",
-                          gap: "0.6em",
-                          overflow: "hidden",
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontFamily: "'IBM Plex Mono', monospace",
-                            fontSize: "2em",
-                            fontWeight: 800,
-                            color: B,
-                            letterSpacing: "-0.03em",
-                            lineHeight: 1.1,
-                            borderBottom: `3px solid ${B}`,
-                            paddingBottom: "0.2em",
-                            marginBottom: "0.2em",
-                          }}
-                        >
-                          {slide.title}
-                        </div>
-                        {slide.bullets && slide.bullets.length > 0 && (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "0.45em" }}>
-                            {slide.bullets.map((bullet, i) => (
-                              <div
-                                key={i}
-                                style={{
-                                  display: "flex",
-                                  gap: "0.55em",
-                                  alignItems: "flex-start",
-                                  fontFamily: "'IBM Plex Mono', monospace",
-                                  fontSize: "1em",
-                                  color: B,
-                                  lineHeight: 1.55,
-                                }}
-                              >
-                                <span style={{ color: G, fontWeight: 700, flexShrink: 0 }}>•</span>
-                                {bullet}
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      {renderSlideContent(slide)}
                     </div>
-                    <div
-                      style={{
-                        borderTop: "1px solid #ddd",
-                        marginTop: "0.6em",
-                        paddingTop: "0.4em",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontFamily: "'IBM Plex Mono', monospace",
-                          fontSize: "0.55em",
-                          color: "#999",
-                          letterSpacing: "0.1em",
-                        }}
-                      >
+                    <div style={{ borderTop: "1px solid #ddd", marginTop: "0.6em", paddingTop: "0.4em", display: "flex", justifyContent: "space-between", flexShrink: 0 }}>
+                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.55em", color: "#999", letterSpacing: "0.1em" }}>
                         {presentation.topic?.toUpperCase()}
                       </span>
-                      <span
-                        style={{
-                          fontFamily: "'IBM Plex Mono', monospace",
-                          fontSize: "0.55em",
-                          color: "#999",
-                        }}
-                      >
+                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.55em", color: "#999" }}>
                         {slide.order_index + 1} / {slides.length}
                       </span>
                     </div>
