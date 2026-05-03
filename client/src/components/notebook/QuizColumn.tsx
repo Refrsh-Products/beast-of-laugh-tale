@@ -37,7 +37,7 @@ export default function QuizColumn({
   const [selectedTopics, setSelectedTopics] = useState<NotebookTopic[]>([]);
   const [prompt, setPrompt] = useState("");
   const [questionCount, setQuestionCount] = useState<number>(5);
-  const [difficulty, setDifficulty] = useState<QuizDifficulty>("EASY");
+  const [difficulty, setDifficulty] = useState<QuizDifficulty>("easy");
   const [quizType, setQuizType] = useState<string>("PRACTICE");
   const [timeLimit, setTimeLimit] = useState<number | null>(null);
 

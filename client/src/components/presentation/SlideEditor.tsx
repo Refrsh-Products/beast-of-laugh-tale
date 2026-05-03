@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { PresentationSlide } from "../../services/presentation/Presentation.types";
+import type { PresentationSlide, SlideImage } from "../../services/presentation/Presentation.types";
 
 const B = "#000000";
 const G = "#84e487";
@@ -18,7 +18,7 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
   const [localQuote, setLocalQuote]           = useState(slide.quote ?? "");
   const [localQuoteSource, setLocalQuoteSource] = useState(slide.quote_source ?? "");
   const [localCaption, setLocalCaption]       = useState(slide.caption ?? "");
-  const [localImages, setLocalImages]         = useState<string[]>([...slide.images]);
+  const [localImages, setLocalImages]         = useState<SlideImage[]>([...slide.images]);
 
   function emit(overrides: Partial<PresentationSlide> = {}) {
     onChange({
@@ -57,8 +57,8 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
     emit({ bullets });
   }
   function setImage(index: number, url: string) {
-    const images = localImages.map((img, i) => (i === index ? url : img));
-    if (index >= images.length) images.push(url);
+    const images = localImages.map((img, i) => (i === index ? { ...img, url } : img));
+    if (index >= images.length) images.push({ url, query: "", attribution: "", source_page: "" });
     setLocalImages(images);
     emit({ images });
   }
@@ -140,16 +140,16 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
       <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", color: "#888" }}>
         {label}
       </span>
-      {localImages[index] && (
+      {localImages[index]?.url && (
         <img
-          src={localImages[index]}
+          src={localImages[index].url}
           alt=""
           style={{ width: "100%", maxHeight: 120, objectFit: "cover", border: `2px solid ${B}` }}
         />
       )}
       <input
         type="text"
-        value={localImages[index] ?? ""}
+        value={localImages[index]?.url ?? ""}
         onChange={(e) => setImage(index, e.target.value)}
         placeholder="https://..."
         style={{

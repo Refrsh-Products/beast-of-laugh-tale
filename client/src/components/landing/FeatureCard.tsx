@@ -1,4 +1,3 @@
-const G = "#84e487"; // green accent
 const B = "#000000"; // black
 const W = "#FFFFFF"; // white
 

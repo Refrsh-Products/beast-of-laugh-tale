@@ -170,7 +170,7 @@ export default function NotebookPage() {
         }
       }
       try {
-        const existing = await presentationService.listPresentations(notebookId);
+        const existing = await presentationService.listPresentationsByNotebook(notebookId);
         setPresentations(existing);
       } catch (err) {
         console.error(err);
