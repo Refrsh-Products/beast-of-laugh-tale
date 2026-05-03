@@ -93,10 +93,21 @@ export const QuizServiceApiEndpoints = {
 // Presentations
 export const PresentationServiceApiBase = "/presentation";
 export const PresentationServiceApiEndpoints = {
-  list: (notebookId: string) => `${PresentationServiceApiBase}/?notebook=${notebookId}`,
-  create: (notebookId: string) => `${PresentationServiceApiBase}/?notebook=${notebookId}`,
-  get: (id: string) => `${PresentationServiceApiBase}/${id}/`,
-  delete: (id: string) => `${PresentationServiceApiBase}/${id}/`,
+  listPresentationsByNotebook: (notebookId: string) =>
+    `${PresentationServiceApiBase}/?notebook=${notebookId}`,
+  createPresentation: (notebookId: string) =>
+    `${PresentationServiceApiBase}/?notebook=${notebookId}`,
+  getPresentation: (presentationId: string) =>
+    `${PresentationServiceApiBase}/${presentationId}/`,
+  updatePresentation: (presentationId: string) =>
+    `${PresentationServiceApiBase}/${presentationId}/`,
+  deletePresentation: (presentationId: string) =>
+    `${PresentationServiceApiBase}/${presentationId}/`,
+  listFavouritePresentations: `${PresentationServiceApiBase}/favourites/`,
+  updateSlide: (presentationId: string, slideId: string) =>
+    `${PresentationServiceApiBase}/${presentationId}/slides/${slideId}/`,
+  refineSlide: (presentationId: string, slideId: string) =>
+    `${PresentationServiceApiBase}/${presentationId}/slides/${slideId}/refine/`,
 };
 
 export default createFreshrApiInstance;

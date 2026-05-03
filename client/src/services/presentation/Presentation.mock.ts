@@ -3,12 +3,18 @@ import type {
   PresentationService,
   PresentationSession,
   PresentationSlide,
+  SlideImage,
+  SlideUpdatePayload,
 } from "./Presentation.types";
 
 const mockStore = new Map<string, PresentationSession>();
 
-const img = (seed: number, w = 800, h = 500) =>
-  `https://picsum.photos/seed/${seed}/${w}/${h}`;
+const img = (seed: number, w = 800, h = 500): SlideImage => ({
+  query: `seed-${seed}`,
+  url: `https://picsum.photos/seed/${seed}/${w}/${h}`,
+  attribution: "picsum.photos",
+  source_page: `https://picsum.photos/seed/${seed}`,
+});
 
 function makeFakeSlides(topic: string): PresentationSlide[] {
   return [
@@ -101,10 +107,7 @@ function makeFakeSlides(topic: string): PresentationSlide[] {
       order_index: 7,
       layout: "image-top",
       title: "Real World Application",
-      bullets: [
-        "How it works in practice",
-        "Why it matters at scale",
-      ],
+      bullets: ["How it works in practice", "Why it matters at scale"],
       speaker_notes: "Tie back to opening context.",
       images: [img(20)],
     },
@@ -132,11 +135,9 @@ function makeFakeSlides(topic: string): PresentationSlide[] {
 }
 
 export const PresentationServiceMock: PresentationService = {
-  async listPresentations(notebookId: string): Promise<PresentationSession[]> {
-    return [...mockStore.values()].filter((p) => p.notebook === notebookId);
-  },
-
-  async createPresentation(payload: PresentationCreatePayload): Promise<PresentationSession> {
+  async createPresentation(
+    payload: PresentationCreatePayload,
+  ): Promise<PresentationSession> {
     const id = crypto.randomUUID();
     const session: PresentationSession = {
       id,
@@ -155,7 +156,6 @@ export const PresentationServiceMock: PresentationService = {
     };
     mockStore.set(id, session);
 
-    // Simulate async generation — updates store after 3s
     setTimeout(() => {
       const existing = mockStore.get(id);
       if (!existing) return;
@@ -176,15 +176,71 @@ export const PresentationServiceMock: PresentationService = {
     return { ...session };
   },
 
+  async listPresentationsByNotebook(
+    notebookId: string,
+  ): Promise<PresentationSession[]> {
+    return [...mockStore.values()].filter((p) => p.notebook === notebookId);
+  },
+
+  async updatePresentation(
+    presentationId: string,
+    payload: { title?: string; is_favourite?: boolean },
+  ): Promise<PresentationSession> {
+    const session = mockStore.get(presentationId);
+    if (!session) throw new Error(`Presentation ${presentationId} not found`);
+    const updated: PresentationSession = {
+      ...session,
+      ...(payload.title !== undefined ? { title: payload.title } : {}),
+      ...(payload.is_favourite !== undefined
+        ? { is_favourite: payload.is_favourite }
+        : {}),
+    };
+    mockStore.set(presentationId, updated);
+    return updated;
+  },
+
   async deletePresentation(presentationId: string): Promise<void> {
     mockStore.delete(presentationId);
   },
 
-  async toggleFavourite(presentationId: string, value: boolean): Promise<PresentationSession> {
+  async updateSlide(
+    presentationId: string,
+    slideId: string,
+    payload: SlideUpdatePayload,
+  ): Promise<PresentationSlide> {
     const session = mockStore.get(presentationId);
     if (!session) throw new Error(`Presentation ${presentationId} not found`);
-    const updated = { ...session, is_favourite: value };
-    mockStore.set(presentationId, updated);
-    return updated;
+    const slides = session.slides ?? [];
+    const idx = slides.findIndex((s) => s.id === slideId);
+    if (idx === -1) throw new Error(`Slide ${slideId} not found`);
+    const updatedSlide: PresentationSlide = { ...slides[idx], ...payload };
+    const nextSlides = [...slides];
+    nextSlides[idx] = updatedSlide;
+    mockStore.set(presentationId, { ...session, slides: nextSlides });
+    return updatedSlide;
+  },
+
+  async refineSlide(
+    presentationId: string,
+    slideId: string,
+    feedback: string,
+  ): Promise<PresentationSlide> {
+    const session = mockStore.get(presentationId);
+    if (!session) throw new Error(`Presentation ${presentationId} not found`);
+    const slides = session.slides ?? [];
+    const idx = slides.findIndex((s) => s.id === slideId);
+    if (idx === -1) throw new Error(`Slide ${slideId} not found`);
+    const refined: PresentationSlide = {
+      ...slides[idx],
+      speaker_notes: `${slides[idx].speaker_notes}\n\n[Refined: ${feedback}]`,
+    };
+    const nextSlides = [...slides];
+    nextSlides[idx] = refined;
+    mockStore.set(presentationId, { ...session, slides: nextSlides });
+    return refined;
+  },
+
+  async listFavouritePresentations(): Promise<PresentationSession[]> {
+    return [...mockStore.values()].filter((p) => p.is_favourite);
   },
 };

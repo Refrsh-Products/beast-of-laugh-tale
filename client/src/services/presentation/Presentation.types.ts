@@ -1,12 +1,3 @@
-export interface PresentationCreatePayload {
-  notebook: string;
-  topic: string;
-  topic_id?: string;
-  custom_prompt?: string;
-  slide_count: number;
-  text_length: "BRIEF" | "BALANCED" | "DETAILED";
-}
-
 export type PresentationLayout =
   | "bullets"
   | "title-only"
@@ -19,6 +10,30 @@ export type PresentationLayout =
   | "quote"
   | "two-images";
 
+export type PresentationStatus =
+  | "QUEUED"
+  | "GENERATING"
+  | "COMPLETED"
+  | "FAILED";
+
+export type TextLength = "BRIEF" | "BALANCED" | "DETAILED";
+
+export interface PresentationCreatePayload {
+  notebook: string;
+  topic: string;
+  topic_id?: string;
+  custom_prompt?: string;
+  slide_count: number;
+  text_length: TextLength;
+}
+
+export interface SlideImage {
+  query: string;
+  url: string;
+  attribution: string;
+  source_page: string;
+}
+
 export interface PresentationSlide {
   id: string;
   order_index: number;
@@ -30,7 +45,7 @@ export interface PresentationSlide {
   quote_source?: string;
   caption?: string;
   speaker_notes: string;
-  images: string[];
+  images: SlideImage[];
 }
 
 export interface PresentationSession {
@@ -38,21 +53,51 @@ export interface PresentationSession {
   notebook: string;
   title: string;
   topic: string;
-  custom_prompt: string;
+  custom_prompt?: string;
   slide_count: number;
-  text_length: string;
-  status: "QUEUED" | "GENERATING" | "COMPLETED" | "FAILED";
-  error_message: string;
+  text_length: TextLength;
+  status: PresentationStatus;
+  error_message?: string;
   is_favourite: boolean;
   generated_at: string;
-  completed_at: string | null;
+  completed_at?: string | null;
   slides?: PresentationSlide[];
 }
 
+export interface SlideUpdatePayload {
+  title?: string;
+  layout?: PresentationLayout;
+  bullets?: string[];
+  body_text?: string;
+  quote?: string;
+  quote_source?: string;
+  caption?: string;
+  speaker_notes?: string;
+  images?: SlideImage[];
+}
+
 export interface PresentationService {
-  listPresentations(notebookId: string): Promise<PresentationSession[]>;
-  createPresentation(payload: PresentationCreatePayload): Promise<PresentationSession>;
-  getPresentation(presentationId: string): Promise<PresentationSession>;
-  deletePresentation(presentationId: string): Promise<void>;
-  toggleFavourite(presentationId: string, value: boolean): Promise<PresentationSession>;
+  createPresentation: (
+    payload: PresentationCreatePayload,
+  ) => Promise<PresentationSession>;
+  getPresentation: (presentationId: string) => Promise<PresentationSession>;
+  listPresentationsByNotebook: (
+    notebookId: string,
+  ) => Promise<PresentationSession[]>;
+  updatePresentation: (
+    presentationId: string,
+    payload: { title?: string; is_favourite?: boolean },
+  ) => Promise<PresentationSession>;
+  deletePresentation: (presentationId: string) => Promise<void>;
+  updateSlide: (
+    presentationId: string,
+    slideId: string,
+    payload: SlideUpdatePayload,
+  ) => Promise<PresentationSlide>;
+  refineSlide: (
+    presentationId: string,
+    slideId: string,
+    feedback: string,
+  ) => Promise<PresentationSlide>;
+  listFavouritePresentations: () => Promise<PresentationSession[]>;
 }

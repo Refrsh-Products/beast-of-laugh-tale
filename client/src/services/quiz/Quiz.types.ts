@@ -1,27 +1,6 @@
 import type { QuizSession } from "../../hooks/useQuizService.api";
 import type { QuizDifficulty } from "../../storage";
 
-/**
- * createQuizSession() - Take {topic, #ofQuestions, difficulty, quizType, timeLim} send to
- * POST /quizzes/ to generate a quiz session
- *
- * fetchQuizSession(quizID) - Get the information with questions for a specific quiz
- * GET /quizzes/[quizID], use this info to generate quiz modal
- *
- * submitQuiz(quizID) - Submit the quiz with quiz id, get the result and display it in the
- * results page
- * POST /quizzes/[quizID]/submit
- *
- * listFavoriteQuizzes(notebookID?) - List all the favourite quiz, optionally filter by NB
- * GET /quizzes/favourite
- *
- * listQuizSessions() - List all the quiz sessions
- * GET /quizzes/
- *
- * retakePastQuiz(quizID) - Retake a specific past quiz with id: quizID
- * POST /quizzes/[quizID]/retake
- */
-
 export interface NotebookTopic {
   id: string;
   name: string;

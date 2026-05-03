@@ -116,7 +116,7 @@ export function renderSlideContent(slide: PresentationSlide): React.ReactNode {
           <div style={{ display: "flex", flex: 1, gap: "1.5em", overflow: "hidden" }}>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>{bullets}</div>
             <div style={{ width: "42%", flexShrink: 0 }}>
-              {slide.images[0] && <img src={slide.images[0]} alt="" style={imgStyle} />}
+              {slide.images[0] && <img src={slide.images[0].url} alt="" style={imgStyle} />}
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ export function renderSlideContent(slide: PresentationSlide): React.ReactNode {
           <div style={{ display: "flex", marginBottom: "0.5em" }}>{strip}{title}</div>
           <div style={{ display: "flex", flex: 1, gap: "1.5em", overflow: "hidden" }}>
             <div style={{ width: "42%", flexShrink: 0 }}>
-              {slide.images[0] && <img src={slide.images[0]} alt="" style={imgStyle} />}
+              {slide.images[0] && <img src={slide.images[0].url} alt="" style={imgStyle} />}
             </div>
             <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>{bullets}</div>
           </div>
@@ -139,7 +139,7 @@ export function renderSlideContent(slide: PresentationSlide): React.ReactNode {
       return (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.4em", overflow: "hidden" }}>
           <div style={{ flex: 1, overflow: "hidden" }}>
-            {slide.images[0] && <img src={slide.images[0]} alt="" style={{ ...imgStyle, height: "100%" }} />}
+            {slide.images[0] && <img src={slide.images[0].url} alt="" style={{ ...imgStyle, height: "100%" }} />}
           </div>
           {(slide.caption || slide.title) && (
             <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75em", color: "#555", fontStyle: "italic", paddingLeft: "0.3em", flexShrink: 0 }}>
@@ -153,7 +153,7 @@ export function renderSlideContent(slide: PresentationSlide): React.ReactNode {
       return (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.6em", overflow: "hidden" }}>
           <div style={{ flex: "0 0 50%", overflow: "hidden" }}>
-            {slide.images[0] && <img src={slide.images[0]} alt="" style={{ ...imgStyle, height: "100%" }} />}
+            {slide.images[0] && <img src={slide.images[0].url} alt="" style={{ ...imgStyle, height: "100%" }} />}
           </div>
           <div style={{ display: "flex", overflow: "hidden" }}>
             {strip}
@@ -196,7 +196,7 @@ export function renderSlideContent(slide: PresentationSlide): React.ReactNode {
             {[0, 1].map((idx) => (
               <div key={idx} style={{ flex: 1, display: "flex", flexDirection: "column", gap: "0.3em", overflow: "hidden" }}>
                 <div style={{ flex: 1, overflow: "hidden" }}>
-                  {slide.images[idx] && <img src={slide.images[idx]} alt="" style={{ ...imgStyle, height: "100%" }} />}
+                  {slide.images[idx] && <img src={slide.images[idx].url} alt="" style={{ ...imgStyle, height: "100%" }} />}
                 </div>
                 {slide.bullets[idx] && (
                   <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.65em", color: "#555", textAlign: "center", flexShrink: 0 }}>

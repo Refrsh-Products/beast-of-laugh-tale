@@ -1,6 +1,8 @@
 import QuizTakingScreenModal from "./QuizTakingScreenModal";
 import Button from "../../ui/Button";
 
+const B = "#000000"
+
 export default function UnansweredModal({
   count,
   onGoBack,

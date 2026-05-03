@@ -36,8 +36,7 @@ export default function OnboardingPage() {
   if (onboardingComplete === null) return null;
   if (onboardingComplete) return <Navigate to="/dashboard" replace />;
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleSubmit() {
     setError("");
     if (
       !firstName.trim() ||
@@ -157,7 +156,13 @@ export default function OnboardingPage() {
           </p>
         )}
 
-        <form style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <form
+          style={{ display: "flex", flexDirection: "column", gap: 20 }}
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleSubmit();
+          }}
+        >
           <div style={{ display: "flex", gap: 12 }}>
             <div style={{ flex: 1 }}>
               <label style={labelStyle}>FIRST NAME</label>
@@ -242,7 +247,7 @@ export default function OnboardingPage() {
           </div>
 
           <div style={{ marginTop: 8 }}>
-            <Button variant="green" fullWidth onClick={handleSubmit}>
+            <Button variant="green" fullWidth type="submit">
               Go to dashboard →
             </Button>
           </div>

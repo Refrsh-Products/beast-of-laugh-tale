@@ -179,22 +179,22 @@ async function buildPptxSlide(
     case "image-right":
       titleBlock(0.2, 0.25, 9.5);
       bulletsBlock(0.2, 1.15, 5.2, 4.0, slide.bullets);
-      if (slide.images[0]) await imageBlock(5.6, 1.15, 4.2, 4.0, slide.images[0]);
+      if (slide.images[0]) await imageBlock(5.6, 1.15, 4.2, 4.0, slide.images[0].url);
       break;
 
     case "image-left":
       titleBlock(0.2, 0.25, 9.5);
-      if (slide.images[0]) await imageBlock(0.2, 1.15, 4.2, 4.0, slide.images[0]);
+      if (slide.images[0]) await imageBlock(0.2, 1.15, 4.2, 4.0, slide.images[0].url);
       bulletsBlock(4.6, 1.15, 5.2, 4.0, slide.bullets);
       break;
 
     case "full-image":
-      if (slide.images[0]) await imageBlock(0.2, 0.2, 9.6, 4.8, slide.images[0]);
+      if (slide.images[0]) await imageBlock(0.2, 0.2, 9.6, 4.8, slide.images[0].url);
       if (slide.caption) s.addText(slide.caption, { x: 0.2, y: 5.05, w: 9.6, h: 0.3, fontSize: 10, color: "555555", italic: true, fontFace: FONT });
       break;
 
     case "image-top":
-      if (slide.images[0]) await imageBlock(0.2, 0.2, 9.6, 2.8, slide.images[0]);
+      if (slide.images[0]) await imageBlock(0.2, 0.2, 9.6, 2.8, slide.images[0].url);
       s.addText(slide.title || "", { x: 0.2, y: 3.1, w: 9.6, h: 0.65, fontSize: 18, bold: true, color: BLACK, fontFace: FONT });
       bulletsBlock(0.2, 3.8, 9.6, 1.5, slide.bullets.slice(0, 2), 12);
       break;
@@ -207,8 +207,8 @@ async function buildPptxSlide(
 
     case "two-images":
       titleBlock(0.2, 0.25, 9.5);
-      if (slide.images[0]) await imageBlock(0.2, 1.15, 4.6, 3.5, slide.images[0]);
-      if (slide.images[1]) await imageBlock(5.0, 1.15, 4.6, 3.5, slide.images[1]);
+      if (slide.images[0]) await imageBlock(0.2, 1.15, 4.6, 3.5, slide.images[0].url);
+      if (slide.images[1]) await imageBlock(5.0, 1.15, 4.6, 3.5, slide.images[1].url);
       if (slide.bullets[0]) s.addText(slide.bullets[0], { x: 0.2, y: 4.7, w: 4.6, h: 0.3, fontSize: 9, color: "555555", italic: true, fontFace: FONT, align: "center" });
       if (slide.bullets[1]) s.addText(slide.bullets[1], { x: 5.0, y: 4.7, w: 4.6, h: 0.3, fontSize: 9, color: "555555", italic: true, fontFace: FONT, align: "center" });
       break;

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
+import type { StoredAccount } from "../storage";
 import ProfileSidebar, {
   type ProfileTab,
 } from "../components/profile-account/ProfileSidebar";
@@ -17,7 +18,7 @@ export default function ProfilePage() {
   const accountService = useAccountService();
   const navigate = useNavigate();
   const user = authService.getUser();
-  const [account, setAccount] = useState(accountService.getAccount());
+  const [account, setAccount] = useState<StoredAccount | null>(null);
 
   const name = account
     ? `${account.first_name} ${account.last_name}`.trim()

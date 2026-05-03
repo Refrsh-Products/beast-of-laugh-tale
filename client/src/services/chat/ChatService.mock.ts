@@ -31,6 +31,10 @@ const ChatServiceMock: ChatServices = {
 
   createChatSessionMessage: (chatId, content) =>
     Promise.resolve(createChatMessage(chatId, "user", content)),
+
+  streamChatReply: () => {
+    return Promise.reject(new Error("Not implemented"));
+  },
 };
 
 export default ChatServiceMock;
