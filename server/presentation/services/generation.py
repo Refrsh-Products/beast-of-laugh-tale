@@ -15,23 +15,80 @@ FAILED with an appropriate error_message.
 import os
 import json
 import asyncio
+import concurrent.futures
 from typing import TypedDict
+import logging
 
 from anthropic import Anthropic
 from anthropic.types import TextBlock
 
+logger = logging.getLogger(__name__)
 
 MODEL = "claude-haiku-4-5-20251001"
 
-LAYOUT_IMAGE_COUNT = {
-    "title": 0,
-    "content": 0,
-    "quote": 0,
-    "image-left": 1,
-    "image-right": 1,
-    "two-column": 2,
-    "image-grid": 4,
+LAYOUTS = {
+    "bullets": {
+        "image_count": 0,
+        "purpose": "Standard text-only slide: a title with a list of supporting bullets.",
+        "use_when": "The point is best conveyed as 2-5 discrete, parallel ideas AND no visual meaningfully reinforces them.",
+        "avoid_when": "Default to image-bearing layouts ('image-right', 'image-left', 'image-top') whenever a relevant visual exists for the content. Use 'bullets' only when no image meaningfully reinforces the points. Also avoid when the content is a single dominant idea ('title-only'), flows as prose ('body-text'), or splits into two parallel groups ('two-col').",
+    },
+    "title-only": {
+        "image_count": 0,
+        "purpose": "A single large title with no body — section break or punchy statement.",
+        "use_when": "Introducing a new section, posing a rhetorical question, or making one bold standalone statement that needs no supporting visual.",
+        "avoid_when": "Any supporting detail is needed — use 'bullets' or 'body-text' instead. Also avoid when a striking visual could carry the slide more powerfully ('full-image' or 'image-top').",
+    },
+    "body-text": {
+        "image_count": 0,
+        "purpose": "Title plus a paragraph of flowing prose — for narrative or explanatory text that doesn't decompose into bullets.",
+        "use_when": "The idea is a continuous explanation, definition, or story that loses meaning when fragmented into bullets AND no relevant visual exists.",
+        "avoid_when": "Prefer image-bearing layouts ('image-right', 'image-left') when a relevant visual exists — pairing prose with an anchoring image is more engaging. Also avoid when the content is genuinely list-like (use 'bullets') or comparative (use 'two-col').",
+    },
+    "two-col": {
+        "image_count": 0,
+        "purpose": "Compare or contrast two related groups of points side by side. Bullets are split evenly into left and right columns.",
+        "use_when": "Content naturally splits into two parallel groupings (pros/cons, before/after, theory/practice, type-A/type-B) AND no visual meaningfully captures the comparison.",
+        "avoid_when": "Prefer 'two-images' when each side has a corresponding visual, or 'image-right'/'image-left' when one side could be illustrated. Also avoid when there's only one set of ideas (use 'bullets') or three+ groupings.",
+    },
+    "image-right": {
+        "image_count": 1,
+        "purpose": "Title and bullets on the left, supporting image on the right.",
+        "use_when": "An image meaningfully reinforces the bullets — a diagram, photograph of the named entity, or visual example.",
+        "avoid_when": "No relevant image exists, or the image is the main point (use 'full-image').",
+    },
+    "image-left": {
+        "image_count": 1,
+        "purpose": "Image on the left, title and bullets on the right — same as 'image-right' with reversed visual emphasis.",
+        "use_when": "You want the eye to land on the image first before reading the bullets, or to vary visual rhythm across consecutive slides.",
+        "avoid_when": "No relevant image exists, or the image is the main point (use 'full-image').",
+    },
+    "full-image": {
+        "image_count": 1,
+        "purpose": "A single dominant image filling the slide, with a small caption beneath. High visual impact.",
+        "use_when": "One striking visual carries the meaning on its own; the caption is just a label or short attribution.",
+        "avoid_when": "The point requires multiple bullets or detailed explanation — use 'image-right'/'image-left' instead.",
+    },
+    "image-top": {
+        "image_count": 1,
+        "purpose": "Image fills the top half; title and up to 2 bullets sit below.",
+        "use_when": "The image is the lede and 1-2 short takeaways frame it. Good for case studies or example-driven slides.",
+        "avoid_when": "You need 3+ bullets (use 'image-right'/'image-left') or the image needs to dominate without text ('full-image').",
+    },
+    "quote": {
+        "image_count": 0,
+        "purpose": "A centered pull-quote with attribution — emphasizes a single memorable statement.",
+        "use_when": "A direct quotation from a named source anchors the slide's meaning.",
+        "avoid_when": "The content is your own paraphrase or analysis, not a sourced quotation.",
+    },
+    "two-images": {
+        "image_count": 2,
+        "purpose": "Title across the top, two images side by side, each with a short caption from the bullets list.",
+        "use_when": "Two visuals must be seen together — comparison, before/after, two examples of the same concept.",
+        "avoid_when": "Only one image is needed (use 'image-right'/'image-left') or the images need explanatory bullets rather than captions.",
+    },
 }
+
 
 TEXT_LENGTH_GUIDANCE = {
     "BRIEF": "Each bullet should be ~8 words. Concise, punchy, scannable.",
@@ -48,13 +105,20 @@ class OutlineSlide(TypedDict):
     image_queries: list[str]
 
 
-class DraftedSlide(TypedDict):
+class _DraftedSlideRequired(TypedDict):
     order_index: int
     title: str
     layout: str
     bullets: list[str]
     speaker_notes: str
     image_queries: list[str]
+
+
+class DraftedSlide(_DraftedSlideRequired, total=False):
+    body_text: str
+    quote: str
+    quote_source: str
+    caption: str
 
 
 class GeneratedPresentation(TypedDict):
@@ -103,11 +167,12 @@ def generate_outline(
     slide_count: int,
     text_length: str,
     context: str,
-) -> list[OutlineSlide]:
-    layouts = ", ".join(LAYOUT_IMAGE_COUNT.keys())
+) -> tuple[str, list[OutlineSlide]]:
+    layouts = ", ".join(LAYOUTS.keys())
     layout_rules = "\n".join(
-        f"  - {name}: {n} image{'s' if n != 1 else ''}"
-        for name, n in LAYOUT_IMAGE_COUNT.items()
+        f"  - {name}: {spec['image_count']} image{'s' if spec['image_count'] != 1 else ''}"
+        f" — {spec['purpose']} Use when: {spec['use_when']} Avoid when: {spec['avoid_when']}"
+        for name, spec in LAYOUTS.items()
     )
 
     custom_prompt_block = (
@@ -126,19 +191,22 @@ LECTURE CONTENT:
 
 Plan a {slide_count}-slide deck. Each slide must reference a specific named entity from the source content — avoid generic titles like "Introduction" or "Conclusion" unless the content genuinely warrants them. Slide 1 should be a title slide; the rest should progressively cover the topic.
 
+VISUAL DENSITY TARGET: Aim for roughly 50-70% of the {slide_count} slides to use an image-bearing layout ('image-right', 'image-left', 'full-image', 'image-top', 'two-images'). Visuals make presentations more engaging — only fall back to a text-only layout when the content genuinely doesn't have a visual that could anchor it. Before finalizing, count your image-bearing slides and confirm the ratio is in this range; if it isn't, reconsider whether a text-only slide could be paired with a relevant image.
+
 For each slide pick a layout from: {layouts}.
 Image counts per layout (the image_queries array MUST have this many entries):
 {layout_rules}
 
-Each image_query is a short search phrase (3-8 words) suitable for Wikimedia Commons. Use specific named entities, not abstract concepts. If no good image fits, use the 'content' or 'quote' layout (zero images).
+Each image_query is a short search phrase (3-8 words) suitable for Wikimedia Commons. Use specific named entities, not abstract concepts. Prefer to find a visual rather than default to a text-only layout — only choose a zero-image layout ('bullets', 'title-only', 'body-text', 'two-col', 'quote') when you genuinely cannot identify a relevant image.
 
 Return ONLY a valid JSON object — no markdown, no explanation:
 {{
+  "presentation_title": "...",
   "slides": [
     {{
       "order_index": 0,
       "title": "...",
-      "layout": "title",
+      "layout": "title-only",
       "bullet_seeds": ["short phrase to expand into a bullet later", "..."],
       "image_queries": []
     }},
@@ -147,6 +215,7 @@ Return ONLY a valid JSON object — no markdown, no explanation:
 }}
 
 Rules:
+- presentation_title: a polished, concise deck title (max 80 characters) derived from the topic and content. Avoid generic phrasings like "Overview of X" — make it specific and engaging.
 - Exactly {slide_count} slides
 - order_index is 0-based and sequential
 - Every layout must be one of the listed values
@@ -158,12 +227,14 @@ Rules:
     if not slides:
         raise ValueError("Outline LLM returned no slides")
 
+    deck_title = (raw.get("presentation_title") or topic).strip()[:80]
+
     cleaned: list[OutlineSlide] = []
     for i, s in enumerate(slides[:slide_count]):
-        layout = s.get("layout", "content")
-        if layout not in LAYOUT_IMAGE_COUNT:
-            layout = "content"
-        expected_imgs = LAYOUT_IMAGE_COUNT[layout]
+        layout = s.get("layout", "bullets")
+        if layout not in LAYOUTS:
+            layout = "bullets"
+        expected_imgs = LAYOUTS[layout]["image_count"]
         image_queries = list(s.get("image_queries", []) or [])[:expected_imgs]
         while len(image_queries) < expected_imgs:
             image_queries.append(s.get("title", topic))
@@ -174,78 +245,144 @@ Rules:
             "bullet_seeds": list(s.get("bullet_seeds", []) or []),
             "image_queries": image_queries,
         })
-    return cleaned
+    return deck_title, cleaned
 
 
 # ── Stage 2: draft slides ────────────────────────────────────────────────────
 
-def draft_slides(
-    outline: list[OutlineSlide],
+_LAYOUT_DRAFT_INSTRUCTIONS: dict[str, dict[str, str]] = {
+    "bullets": {
+        "instruction": 'Expand bullet_seeds into 2-5 full bullets (matching the text length guidance).',
+        "schema": '"bullets": ["...", "..."], "speaker_notes": "..."',
+    },
+    "title-only": {
+        "instruction": 'This layout has only a title — return empty bullets.',
+        "schema": '"bullets": [], "speaker_notes": "..."',
+    },
+    "body-text": {
+        "instruction": 'Write a single flowing paragraph (3-6 sentences) in body_text — narrative prose, not a list. Return an empty bullets array.',
+        "schema": '"bullets": [], "body_text": "...", "speaker_notes": "..."',
+    },
+    "two-col": {
+        "instruction": (
+            'Produce 4-6 bullets that split into two parallel groups: '
+            'the first half goes to the left column, the second half to the right. '
+            'Order them so adjacent pairs (bullets[0] vs bullets[half], etc.) are the comparison points.'
+        ),
+        "schema": '"bullets": ["...", "..."], "speaker_notes": "..."',
+    },
+    "image-right": {
+        "instruction": 'Expand bullet_seeds into 2-4 full bullets that read alongside an image.',
+        "schema": '"bullets": ["...", "..."], "speaker_notes": "..."',
+    },
+    "image-left": {
+        "instruction": 'Expand bullet_seeds into 2-4 full bullets that read alongside an image.',
+        "schema": '"bullets": ["...", "..."], "speaker_notes": "..."',
+    },
+    "full-image": {
+        "instruction": (
+            'Write a short caption (under 15 words) labeling the image. '
+            'Return an empty bullets array — this layout shows only the image and caption.'
+        ),
+        "schema": '"bullets": [], "caption": "...", "speaker_notes": "..."',
+    },
+    "image-top": {
+        "instruction": 'Write 1-2 short bullets (renderer only displays the first two) that frame the image above.',
+        "schema": '"bullets": ["...", "..."], "speaker_notes": "..."',
+    },
+    "quote": {
+        "instruction": (
+            'Extract the quotation text into "quote" and the speaker/source into "quote_source". '
+            'Both must come from the source content. Return an empty bullets array.'
+        ),
+        "schema": '"bullets": [], "quote": "...", "quote_source": "...", "speaker_notes": "..."',
+    },
+    "two-images": {
+        "instruction": (
+            'Produce exactly 2 bullets — bullets[0] is the caption for the left image, '
+            'bullets[1] is the caption for the right image. Keep each under 12 words.'
+        ),
+        "schema": '"bullets": ["left caption", "right caption"], "speaker_notes": "..."',
+    },
+}
+
+
+def draft_single_slide(
+    slide_index: int,
+    target_outline_slide: OutlineSlide,
+    full_outline: list[OutlineSlide],
     context: str,
     text_length: str,
-) -> tuple[list[DraftedSlide], str]:
+) -> DraftedSlide:
     text_guidance = TEXT_LENGTH_GUIDANCE.get(text_length, TEXT_LENGTH_GUIDANCE["BALANCED"])
-    outline_summary = json.dumps(outline, indent=2)
+    layout = target_outline_slide["layout"]
+    layout_spec = LAYOUTS[layout]
+    draft_spec = _LAYOUT_DRAFT_INSTRUCTIONS[layout]
 
-    prompt = f"""You are expanding a presentation outline into full slide content.
+    # lightweight summary of the full outline so the LLM knows the narrative flow
+    # without eating up too many tokens.
+    outline_summary = json.dumps(
+        [
+            {
+                "slide_number": i + 1,
+                "title": s["title"],
+                "topics_covered": s["bullet_seeds"],
+            }
+            for i, s in enumerate(full_outline)
+        ],
+        indent=2,
+    )
 
-LECTURE CONTENT (source of truth — every claim must be grounded here):
+    target_slide_json = json.dumps(target_outline_slide, indent=2)
+
+    prompt = f"""You are an expert presentation writer expanding a single slide from a larger outline.
+
+CONTENT (source of truth — every claim must be grounded here):
 {context}
 
-OUTLINE TO EXPAND:
+FULL PRESENTATION OUTLINE (For context and narrative flow):
 {outline_summary}
 
+YOUR TASK: Expand Slide number {slide_index + 1}
+TARGET SLIDE DETAILS:
+{target_slide_json}
+
+LAYOUT: {layout} — {layout_spec['purpose']}
 TEXT LENGTH: {text_length} — {text_guidance}
 
-For each slide:
-- Expand bullet_seeds into 2-5 full bullets (matching the text length guidance)
-- Write speaker_notes (2-4 sentences) the presenter would say to elaborate
-- Keep title and layout EXACTLY as given
-- Keep image_queries EXACTLY as given
-
-Title slides (layout="title") may have 0-1 bullets (subtitle) and minimal speaker notes.
+For this specific slide:
+- {draft_spec['instruction']}
+- Write speaker_notes (2-4 sentences) the presenter would say to elaborate.
 
 Return ONLY a valid JSON object — no markdown, no explanation:
 {{
-  "title": "Overall presentation title (max 80 chars, derived from the topic)",
-  "slides": [
-    {{
-      "order_index": 0,
-      "title": "...",
-      "layout": "title",
-      "bullets": ["..."],
-      "speaker_notes": "...",
-      "image_queries": []
-    }},
-    ...
-  ]
+  {draft_spec['schema']}
 }}
 
 Rules:
-- Slide count must equal the outline count
-- Every bullet must be grounded in the lecture content above
-- Do NOT introduce facts, names, or numbers absent from the lecture content"""
+- Focus ONLY on the Target Slide. Do not write content meant for subsequent slides.
+- Every claim must be grounded in the provided content above.
+- Do NOT introduce facts, names, or numbers absent from the provided content."""
 
-    raw = _call_llm_json(prompt, max_tokens=12000)
-    raw_slides = raw.get("slides", [])
-    if len(raw_slides) != len(outline):
-        # Pad/truncate to match outline length
-        raw_slides = (raw_slides + outline)[:len(outline)]  # type: ignore[list-item]
+    raw = _call_llm_json(prompt, max_tokens=1500)
 
-    drafted: list[DraftedSlide] = []
-    for i, (outline_slide, drafted_slide) in enumerate(zip(outline, raw_slides)):
-        drafted.append({
-            "order_index": i,
-            "title": drafted_slide.get("title", outline_slide["title"])[:255],
-            "layout": outline_slide["layout"],
-            "bullets": list(drafted_slide.get("bullets", []) or []),
-            "speaker_notes": drafted_slide.get("speaker_notes", ""),
-            "image_queries": outline_slide["image_queries"],
-        })
-
-    title = raw.get("title") or f"Presentation: {outline[0]['title'] if outline else 'Untitled'}"
-    return drafted, title
-
+    drafted: DraftedSlide = {
+        "order_index": slide_index,
+        "title": target_outline_slide.get("title", f"Slide {slide_index + 1}")[:255],
+        "layout": layout,
+        "bullets": list(raw.get("bullets", []) or []),
+        "speaker_notes": raw.get("speaker_notes", ""),
+        "image_queries": target_outline_slide.get("image_queries", []),
+    }
+    if "body_text" in raw:
+        drafted["body_text"] = raw.get("body_text", "") or ""
+    if "quote" in raw:
+        drafted["quote"] = raw.get("quote", "") or ""
+    if "quote_source" in raw:
+        drafted["quote_source"] = raw.get("quote_source", "") or ""
+    if "caption" in raw:
+        drafted["caption"] = raw.get("caption", "") or ""
+    return drafted
 
 # ── Orchestrator ─────────────────────────────────────────────────────────────
 
@@ -280,9 +417,46 @@ def generate_presentation_from_rag(
         )
 
     context = "\n\n---\n\n".join(doc.page_content for doc in chunks)
-    outline = generate_outline(topic, custom_prompt, slide_count, text_length, context)
-    drafted, title = draft_slides(outline, context, text_length)
-    return {"title": title, "slides": drafted}
+
+    # Step 1: Generate the full outline (LLM also picks a polished deck title)
+    deck_title, outline = generate_outline(topic, custom_prompt, slide_count, text_length, context)
+    
+    # Step 2: Draft slides concurrently
+    drafted_slides: list[DraftedSlide | None] = [None] * len(outline)  # Pre-allocate list to maintain correct slide order
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {
+            executor.submit(
+                draft_single_slide, 
+                i, 
+                slide, 
+                outline, 
+                context, 
+                text_length
+            ): i
+            for i, slide in enumerate(outline)
+        }
+
+        # As each task finishes, place it in the correct index
+        for future in concurrent.futures.as_completed(futures):
+            original_index = futures[future]
+            try:
+                drafted_slides[original_index] = future.result()
+            except Exception as e:
+                # Handle potential LLM failures gracefully for individual slides
+                logger.exception(f"Error generating slide {original_index}: {e}")
+                drafted_slides[original_index] = {
+                    "order_index": original_index,
+                    "title": outline[original_index].get("title", "Error generating slide"),
+                    "layout": outline[original_index].get("layout", "bullets"),
+                    "bullets": ["Failed to generate content. Please retry."],
+                    "speaker_notes": "",
+                    "image_queries": outline[original_index].get("image_queries", [])
+                }
+
+    # Narrow the optional list to a list of DraftedSlide for return
+    final_slides: list[DraftedSlide] = [s for s in drafted_slides if s is not None]
+    return {"title": deck_title, "slides": final_slides}
 
 
 # ── Per-slide refinement ─────────────────────────────────────────────────────
@@ -295,12 +469,19 @@ def refine_slide(
 ) -> dict:
     """
     Single Claude call to apply user feedback to one slide. Receives the slide's
-    current state plus its neighbours for context. Returns the updated slide
-    fields (title, bullets, speaker_notes, layout). image_queries are preserved
-    from the input — if the user wants to change images they use the manual
-    edit endpoint.
+    current state (including any layout-specific fields) plus its neighbours for
+    context, and returns the updated slide. image_queries are preserved from the
+    input — if the user wants to change images they use the manual edit endpoint.
+
+    The LLM may change the layout, so the returned dict always carries all
+    layout-specific fields. Fields irrelevant to the new layout are blanked so
+    stale content from the previous layout doesn't leak through.
     """
-    layouts = ", ".join(LAYOUT_IMAGE_COUNT.keys())
+    layout_schema_lines = "\n".join(
+        f"  - {name}: return {spec['schema']}"
+        for name, spec in _LAYOUT_DRAFT_INSTRUCTIONS.items()
+    )
+
     neighbours_summary = json.dumps(
         [{"order_index": n.get("order_index"), "title": n.get("title", ""), "bullets": n.get("bullets", [])}
          for n in neighbor_slides],
@@ -308,8 +489,12 @@ def refine_slide(
     )
     current_summary = json.dumps({
         "title": slide.get("title", ""),
-        "layout": slide.get("layout", "content"),
+        "layout": slide.get("layout", "bullets"),
         "bullets": slide.get("bullets", []),
+        "body_text": slide.get("body_text", ""),
+        "quote": slide.get("quote", ""),
+        "quote_source": slide.get("quote_source", ""),
+        "caption": slide.get("caption", ""),
         "speaker_notes": slide.get("speaker_notes", ""),
     }, indent=2)
 
@@ -326,23 +511,34 @@ CURRENT SLIDE:
 USER FEEDBACK:
 {feedback}
 
-Apply the feedback. Keep the slide focused and self-contained. You may change the layout if the feedback warrants it (allowed: {layouts}).
+Apply the feedback. Keep the slide focused and self-contained. You may change the layout if the feedback warrants it. Allowed layouts and the fields each one expects:
+{layout_schema_lines}
+
+Always return "title", "layout", and "speaker_notes". For the chosen layout, return ONLY the body fields listed above for that layout — omit fields belonging to other layouts.
 
 Return ONLY a valid JSON object — no markdown, no explanation:
 {{
   "title": "...",
   "layout": "...",
-  "bullets": ["..."],
+  ...layout-specific fields...,
   "speaker_notes": "..."
 }}"""
 
     raw = _call_llm_json(prompt, max_tokens=2048, temperature=0.5)
-    layout = raw.get("layout", slide.get("layout", "content"))
-    if layout not in LAYOUT_IMAGE_COUNT:
-        layout = slide.get("layout", "content")
+
+    layout = raw.get("layout") or slide.get("layout", "bullets")
+    if layout not in LAYOUTS:
+        layout = slide.get("layout", "bullets")
+    if layout not in LAYOUTS:
+        layout = "bullets"
+
     return {
-        "title": raw.get("title", slide.get("title", ""))[:255],
+        "title": (raw.get("title") or slide.get("title", ""))[:255],
         "layout": layout,
         "bullets": list(raw.get("bullets", []) or []),
-        "speaker_notes": raw.get("speaker_notes", ""),
+        "body_text": raw.get("body_text", "") or "",
+        "quote": raw.get("quote", "") or "",
+        "quote_source": (raw.get("quote_source", "") or "")[:255],
+        "caption": (raw.get("caption", "") or "")[:500],
+        "speaker_notes": raw.get("speaker_notes", "") or "",
     }

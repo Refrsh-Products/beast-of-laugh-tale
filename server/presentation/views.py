@@ -181,6 +181,10 @@ class SlideRefineView(APIView):
                 "title": slide.title,
                 "layout": slide.layout,
                 "bullets": slide.bullets,
+                "body_text": slide.body_text,
+                "quote": slide.quote,
+                "quote_source": slide.quote_source,
+                "caption": slide.caption,
                 "speaker_notes": slide.speaker_notes,
             },
             feedback=body.validated_data["feedback"],  # type: ignore[index]
@@ -191,7 +195,15 @@ class SlideRefineView(APIView):
         slide.title = updated["title"]
         slide.layout = updated["layout"]
         slide.bullets = updated["bullets"]
+        slide.body_text = updated["body_text"]
+        slide.quote = updated["quote"]
+        slide.quote_source = updated["quote_source"]
+        slide.caption = updated["caption"]
         slide.speaker_notes = updated["speaker_notes"]
-        slide.save(update_fields=["title", "layout", "bullets", "speaker_notes"])
+        slide.save(update_fields=[
+            "title", "layout", "bullets",
+            "body_text", "quote", "quote_source", "caption",
+            "speaker_notes",
+        ])
 
         return Response(PresentationSlideSerializer(slide).data, status=status.HTTP_200_OK)
