@@ -405,7 +405,11 @@ export default function NotebookPage() {
       }, 5000);
       presentationPollRefs.current.add(intervalId);
     } catch (err) {
-      showToast("Failed to generate presentation", "danger");
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        setShowUpgradeModal(true);
+      } else {
+        showToast("Failed to generate presentation", "danger");
+      }
       setIsGeneratingPresentation(false);
     }
   }

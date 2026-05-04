@@ -92,6 +92,7 @@ export default function UpgradeModal({
             "Unlimited notebooks",
             "50 GB storage",
             "Unlimited daily quizzes",
+            "Unlimited presentations",
             "Priority support",
           ].map((feature) => (
             <div
