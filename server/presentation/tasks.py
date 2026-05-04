@@ -10,7 +10,7 @@ from .services.generation import (
     InsufficientContextError,
     generate_presentation_from_rag,
 )
-from .services.images import fetch_wikimedia_image
+from .services.images import fallback_image, fetch_wikimedia_image
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +32,9 @@ def generate_presentation_task(self, presentation_id: str, topic_id: str | None 
             text_length=presentation.text_length,
         )
 
-        # Flatten image queries across slides, fetch in parallel, regroup per slide
+        # Flatten image queries across slides, fetch in parallel, regroup per slide.
+        # Dedupe identical queries so we hit Wikimedia once per unique phrase
+        # (multiple slides often request similar images).
         flat_queries: list[tuple[int, str]] = [
             (i, q)
             for i, s in enumerate(gen["slides"])
@@ -41,16 +43,18 @@ def generate_presentation_task(self, presentation_id: str, topic_id: str | None 
         per_slide_images: list[list[dict]] = [[] for _ in gen["slides"]]
 
         if flat_queries:
-            with ThreadPoolExecutor(max_workers=6) as pool:
-                results = list(pool.map(fetch_wikimedia_image, [q for _, q in flat_queries]))
-            for (slide_idx, query), result in zip(flat_queries, results):
-                if result:
-                    per_slide_images[slide_idx].append({
-                        "query": query,
-                        "url": result["url"],
-                        "attribution": result["attribution"],
-                        "source_page": result["source_page"],
-                    })
+            unique_queries = list({q for _, q in flat_queries})
+            # Wikimedia rate-limits aggressive concurrency at the CDN — keep this small.
+            with ThreadPoolExecutor(max_workers=3) as pool:
+                fetched = dict(zip(unique_queries, pool.map(fetch_wikimedia_image, unique_queries)))
+            for slide_idx, query in flat_queries:
+                img = fetched.get(query) or fallback_image(query)
+                per_slide_images[slide_idx].append({
+                    "query": query,
+                    "url": img["url"],
+                    "attribution": img["attribution"],
+                    "source_page": img["source_page"],
+                })
 
         with transaction.atomic():
             presentation.title = gen["title"][:255]
@@ -64,6 +68,10 @@ def generate_presentation_task(self, presentation_id: str, topic_id: str | None 
                     layout=s["layout"],
                     title=s.get("title", "")[:255],
                     bullets=s.get("bullets", []),
+                    body_text=s.get("body_text", ""),
+                    quote=s.get("quote", ""),
+                    quote_source=s.get("quote_source", "")[:255],
+                    caption=s.get("caption", "")[:500],
                     speaker_notes=s.get("speaker_notes", ""),
                     images=per_slide_images[i],
                 )

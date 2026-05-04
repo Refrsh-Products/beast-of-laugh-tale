@@ -15,6 +15,10 @@ class PresentationSlideSerializer(serializers.ModelSerializer):
             "layout",
             "title",
             "bullets",
+            "body_text",
+            "quote",
+            "quote_source",
+            "caption",
             "speaker_notes",
             "images",
         ]
@@ -29,6 +33,10 @@ class SlideUpdateSerializer(serializers.ModelSerializer):
             "title",
             "layout",
             "bullets",
+            "body_text",
+            "quote",
+            "quote_source",
+            "caption",
             "speaker_notes",
             "images",
         ]
