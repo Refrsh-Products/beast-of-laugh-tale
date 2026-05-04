@@ -28,6 +28,10 @@ export interface AccountUseage {
     used: number;
     limit: number;
   };
+  daily_presentations: {
+    used: number;
+    limit: number;
+  };
 }
 
 export interface StoredAccount {

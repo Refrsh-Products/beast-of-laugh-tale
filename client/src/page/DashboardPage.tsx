@@ -346,6 +346,12 @@ export default function DashboardPage() {
               limit: usage.daily_quizzes.limit,
               fmt: (n: number) => String(n),
             },
+            {
+              label: "Presentations",
+              used: usage.daily_presentations.used,
+              limit: usage.daily_presentations.limit,
+              fmt: (n: number) => String(n),
+            },
           ].map((item, i, arr) => (
             <span
               key={item.label}
