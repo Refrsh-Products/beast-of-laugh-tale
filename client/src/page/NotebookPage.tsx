@@ -418,6 +418,20 @@ export default function NotebookPage() {
     setActivePresentation(presentation);
   }
 
+  async function handleDeletePresentations(ids: string[]) {
+    try {
+      await Promise.all(
+        ids.map((id) => presentationService.deletePresentation(id)),
+      );
+      setPresentations((prev) => prev.filter((p) => !ids.includes(p.id)));
+      if (activePresentation && ids.includes(activePresentation.id)) {
+        setActivePresentation(null);
+      }
+    } catch {
+      showToast("Failed to delete presentations", "danger");
+    }
+  }
+
   function handlePresentationUpdate(updatedSlides: PresentationSlide[]) {
     setPresentations((prev) =>
       prev.map((p) =>
@@ -653,6 +667,7 @@ export default function NotebookPage() {
           <PastPresentationsColumn
             presentations={presentations}
             onPresentationClick={handlePresentationClick}
+            onDeleteSelected={handleDeletePresentations}
           />
         ) : (
           <FilesColumn
