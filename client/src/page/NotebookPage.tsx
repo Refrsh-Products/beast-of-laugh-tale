@@ -103,8 +103,12 @@ export default function NotebookPage() {
   }, [hasProcessingFiles, notebookId]);
 
   useEffect(() => {
+    // SHOULD I MODE THIS FUNCTION to A NEW FILE??? 
+    // function name is load() really, tf is load, load what load who!!
     async function load() {
       try {
+        // found really - do better man
+        // something like foundNotebook
         const found = await notebookService.getNotebook(notebookId);
         if (!found) {
           setNotFound(true);
@@ -135,6 +139,7 @@ export default function NotebookPage() {
 
   useEffect(() => {
     if (activeView !== "quiz") return;
+    // SHOULD I MODE THIS FUNCTION to A NEW FILE???
     async function loadQuizData() {
       if (quizTopics.length === 0) {
         setIsLoadingTopics(true);
@@ -156,6 +161,7 @@ export default function NotebookPage() {
 
   useEffect(() => {
     if (activeView !== "presentation") return;
+    // SHOULD I MODE THIS FUNCTION to A NEW FILE???
     async function loadPresentationData() {
       if (presentationTopics.length === 0) {
         setIsLoadingPresentationTopics(true);
@@ -181,6 +187,8 @@ export default function NotebookPage() {
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
 
+  // notFound what? your mom? 
+  // try something like notebookNotFound
   if (notFound) return <Navigate to="/dashboard" replace />;
 
   async function handleTitleSave(newTitle: string) {
@@ -190,6 +198,7 @@ export default function NotebookPage() {
     showToast("Notebook renamed", "neutral");
   }
 
+  // this function needs comments and can be refactored better
   async function handleUpload(uploaded: File[]) {
     setUploadProgress(
       uploaded.map((f) => ({ name: f.name, status: "uploading" })),
@@ -260,8 +269,10 @@ export default function NotebookPage() {
         `${ids.length} file${ids.length > 1 ? "s" : ""} deleted`,
         "danger",
       );
-    } catch {}
+    } catch {} // WHY IS THIS EMPTY!! This will silently consume the error
   }
+
+  /** ------------------------- CHAT STUFF STARTS ------------------------------------ */
 
   async function handleSendMessage(
     message: string,
@@ -304,14 +315,17 @@ export default function NotebookPage() {
 
   const activeSessionId = searchParams.get("session");
 
+  // CHAT STUFF - rename function to have the word chat in it
   function handleSessionSelect(sessionId: string) {
     setSearchParams({ session: sessionId });
   }
 
+  // CHAT STUFF - rename function to have the word chat in it
   function handleSessionCreated(sessionId: string) {
     setSearchParams({ session: sessionId }, { replace: true });
   }
 
+  // CHAT STUFF - rename function to have the word chat in it
   async function handleNewSession(title?: string): Promise<string> {
     const session = await chatService.createChatSession(notebookId, title);
     setChatSessions((prev) => [...prev, session]);
@@ -319,6 +333,7 @@ export default function NotebookPage() {
     // URL update is intentionally left to ChatColumn via onSessionCreated
   }
 
+  // CHAT STUFF - rename function to have the word chat in it
   async function handleRenameSession(chatId: string, title: string) {
     await chatService.updateChatSession(chatId, title);
     setChatSessions((prev) =>
@@ -326,6 +341,7 @@ export default function NotebookPage() {
     );
   }
 
+  // CHAT STUFF - rename function to have the word chat in it
   async function handleDeleteSession(chatId: string) {
     await chatService.deleteChatSession(chatId);
     setChatSessions((prev) => prev.filter((s) => s.id !== chatId));
@@ -333,6 +349,10 @@ export default function NotebookPage() {
       setSearchParams({});
     }
   }
+
+  /** ------------------------- CHAT STUFF ENDS ------------------------------------ */
+
+  /** ------------------------- QUIZ STUFF STARTS ------------------------------------ */
 
   async function handleGenerateQuiz(options: QuizGenerateOptions) {
     setIsGeneratingQuiz(true);
@@ -362,85 +382,6 @@ export default function NotebookPage() {
     } finally {
       setIsGeneratingQuiz(false);
     }
-  }
-
-  async function handleGeneratePresentation(options: PresentationGenerateOptions) {
-    setIsGeneratingPresentation(true);
-    const isAllTopics = options.topics.length === 0 && !options.customTopic;
-    const payload = {
-      notebook: notebookId,
-      topic: isAllTopics ? "All Topics" : options.topics.map((t) => t.name).join(", "),
-      topic_id: isAllTopics ? undefined : options.topics[0]?.id,
-      custom_prompt: options.customTopic || undefined,
-      slide_count: options.numSlides,
-      text_length: options.textLength.toUpperCase() as "BRIEF" | "BALANCED" | "DETAILED",
-    };
-
-    try {
-      const session = await presentationService.createPresentation(payload);
-      setPresentations((prev) => [session, ...prev]);
-
-      const intervalId = setInterval(async () => {
-        try {
-          const updated = await presentationService.getPresentation(session.id);
-          setPresentations((prev) =>
-            prev.map((p) => (p.id === session.id ? updated : p))
-          );
-          if (updated.status === "COMPLETED") {
-            clearInterval(intervalId);
-            presentationPollRefs.current.delete(intervalId);
-            setIsGeneratingPresentation(false);
-            showToast("Presentation ready", "neutral");
-          } else if (updated.status === "FAILED") {
-            clearInterval(intervalId);
-            presentationPollRefs.current.delete(intervalId);
-            setIsGeneratingPresentation(false);
-            showToast("Presentation generation failed", "danger");
-          }
-        } catch {
-          clearInterval(intervalId);
-          presentationPollRefs.current.delete(intervalId);
-          setIsGeneratingPresentation(false);
-        }
-      }, 5000);
-      presentationPollRefs.current.add(intervalId);
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 403) {
-        setShowUpgradeModal(true);
-      } else {
-        showToast("Failed to generate presentation", "danger");
-      }
-      setIsGeneratingPresentation(false);
-    }
-  }
-
-  function handlePresentationClick(presentation: PresentationSession) {
-    setActivePresentation(presentation);
-  }
-
-  async function handleDeletePresentations(ids: string[]) {
-    try {
-      await Promise.all(
-        ids.map((id) => presentationService.deletePresentation(id)),
-      );
-      setPresentations((prev) => prev.filter((p) => !ids.includes(p.id)));
-      if (activePresentation && ids.includes(activePresentation.id)) {
-        setActivePresentation(null);
-      }
-    } catch {
-      showToast("Failed to delete presentations", "danger");
-    }
-  }
-
-  function handlePresentationUpdate(updatedSlides: PresentationSlide[]) {
-    setPresentations((prev) =>
-      prev.map((p) =>
-        p.id === activePresentation?.id ? { ...p, slides: updatedSlides } : p,
-      ),
-    );
-    setActivePresentation((prev) =>
-      prev ? { ...prev, slides: updatedSlides } : null,
-    );
   }
 
   async function handleQuizComplete(
@@ -534,14 +475,118 @@ export default function NotebookPage() {
     }
   }
 
-  if (!notebook) return null;
+  /** ------------------------- QUIZ STUFF ENDS -------------------------------------- */
 
+  /** ------------------------- PRESENTATION STUFF STARTS -------------------------------------- */
+
+  async function handleGeneratePresentation(options: PresentationGenerateOptions) {
+    setIsGeneratingPresentation(true);
+    const isAllTopics = options.topics.length === 0 && !options.customTopic;
+    const payload = {
+      notebook: notebookId,
+      topic: isAllTopics ? "All Topics" : options.topics.map((t) => t.name).join(", "),
+      topic_id: isAllTopics ? undefined : options.topics[0]?.id,
+      custom_prompt: options.customTopic || undefined,
+      slide_count: options.numSlides,
+      text_length: options.textLength.toUpperCase() as "BRIEF" | "BALANCED" | "DETAILED",
+    };
+
+    try {
+      const session = await presentationService.createPresentation(payload);
+      setPresentations((prev) => [session, ...prev]);
+
+      const intervalId = setInterval(async () => {
+        try {
+          const updated = await presentationService.getPresentation(session.id);
+          setPresentations((prev) =>
+            prev.map((p) => (p.id === session.id ? updated : p))
+          );
+          if (updated.status === "COMPLETED") {
+            clearInterval(intervalId);
+            presentationPollRefs.current.delete(intervalId);
+            setIsGeneratingPresentation(false);
+            showToast("Presentation ready", "neutral");
+          } else if (updated.status === "FAILED") {
+            clearInterval(intervalId);
+            presentationPollRefs.current.delete(intervalId);
+            setIsGeneratingPresentation(false);
+            showToast("Presentation generation failed", "danger");
+          }
+        } catch {
+          clearInterval(intervalId);
+          presentationPollRefs.current.delete(intervalId);
+          setIsGeneratingPresentation(false);
+        }
+      }, 5000);
+      presentationPollRefs.current.add(intervalId);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        setShowUpgradeModal(true);
+      } else {
+        showToast("Failed to generate presentation", "danger");
+      }
+      setIsGeneratingPresentation(false);
+    }
+  }
+
+  async function handlePresentationClick(presentation: PresentationSession) {
+    try {
+      const full = await presentationService.getPresentation(presentation.id);
+      setActivePresentation(full);
+    } catch {
+      setActivePresentation(presentation);
+    }
+  }
+
+  async function handleDeletePresentations(ids: string[]) {
+    try {
+      await Promise.all(
+        ids.map((id) => presentationService.deletePresentation(id)),
+      );
+      setPresentations((prev) => prev.filter((p) => !ids.includes(p.id)));
+      if (activePresentation && ids.includes(activePresentation.id)) {
+        setActivePresentation(null);
+      }
+    } catch {
+      showToast("Failed to delete presentations", "danger");
+    }
+  }
+
+  function handlePresentationUpdate(updatedSlides: PresentationSlide[]) {
+    setPresentations((prev) =>
+      prev.map((p) =>
+        p.id === activePresentation?.id ? { ...p, slides: updatedSlides } : p,
+      ),
+    );
+    setActivePresentation((prev) =>
+      prev ? { ...prev, slides: updatedSlides } : null,
+    );
+  }
+
+  /** ------------------------- PRESENTATION STUFF ENDS -------------------------------------- */
+
+  if (!notebook) return null; // need to replace this with a loading skeleton screen
+  /**
+   * Something like so:
+   * Option 1: Show a loading state (best UX)
+      Add an explicit isLoading boolean state, set it true before the fetch and false after. Then replace return null with a spinner or skeleton screen so the user knows something is happening.
+
+      const [isLoading, setIsLoading] = useState(true);
+      // in load():
+      // setIsLoading(false) in finally block
+      if (isLoading) return <LoadingSpinner />;
+   */
+
+  /** ------------------------- NOTEBOOKFILE STUFF STARTS -------------------------------------- */
+  // Notebookfile stuff can stay as this is part of the notebook technically - according to backend model
+
+  // RENAME THIS TO handleDeleteOneFile
   async function handleDeleteOne(id: string) {
     try {
       await notebookService.deleteFile(notebookId, id);
       setFiles((prev) => prev.filter((f) => f.id !== id));
       showToast("File deleted", "danger");
-    } catch {}
+    } catch {} // WHY IS THIS EMPTY - T.T
   }
 
   async function handleRenameFile(id: string, newName: string) {
@@ -551,8 +596,10 @@ export default function NotebookPage() {
         prev.map((f) => (f.id === id ? { ...f, name: newName } : f)),
       );
       showToast("File renamed", "neutral");
-    } catch {}
+    } catch {} // WHY IS THIS EMPTY - T.T
   }
+
+  /** ------------------------- NOTEBOOKFILE STUFF ENDS -------------------------------------- */
 
   return (
     <div
@@ -712,3 +759,24 @@ export default function NotebookPage() {
     </div>
   );
 }
+
+/**
+ * The JSX itself is actually reasonably clean — the structure is clear and the components are well-named. There are two spots that could be tightened:
+  1. The nested ternary chains for the center and right panels — these are the biggest readability issue. Pulling them into small named functions just before the return makes the JSX much more scannable:
+  function renderCenterPanel() {
+    if (activeView === "chat") return <ChatColumn ... />;
+    if (activeView === "presentation") return <PresentationColumn ... />;
+    if (selectedQuiz) return <QuizReviewColumn ... />;
+    return <QuizColumn ... />;
+  }
+  function renderRightPanel() {
+    if (activeView === "quiz") return <PastQuizColumn ... />;
+    if (activeView === "presentation") return <PastPresentationsColumn ... />;
+    return <FilesColumn ... />;
+  }
+  Then the JSX becomes just {renderCenterPanel()} and {renderRightPanel()} — much cleaner.
+  2. The inline style objects on the wrapper divs — they're verbose but consistent with the rest of the file's style. Extracting them to named constants above the return (const topBarStyle = {...}) reduces visual noise without changing the approach.
+  That said, the current version isn't bad — it's just that those ternary chains are the one thing that makes you have to slow down and parse. The renderX function approach is the highest-value cleanup here.
+ * 
+ * 
+ */
