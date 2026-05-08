@@ -75,10 +75,10 @@ export default function LandingPage() {
       {/* ── HERO ── */}
       <section
         id="hero"
-        className="px-6 md:px-16 pt-16 pb-20"
-        style={{ borderBottom: `3px solid ${B}` }}
+        className="px-[4.5rem] md:px-48 pt-16 pb-20"
+        style={{ borderBottom: `3px solid ${B}`, minHeight: "calc(100vh - 65px - 44px)", display: "flex", flexDirection: "column", justifyContent: "center" }}
       >
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-40 items-center w-full">
           {/* Copy */}
           <div style={fadeIn(0)}>
             <div
@@ -103,11 +103,10 @@ export default function LandingPage() {
               style={{
                 fontFamily: "'Syne', sans-serif",
                 fontWeight: 800,
-                fontSize: "clamp(2.8rem, 5.5vw, 5.5rem)",
+                fontSize: "clamp(4rem, 8vw, 8.5rem)",
                 lineHeight: 1.0,
                 letterSpacing: "-0.03em",
                 marginBottom: 24,
-                minHeight: "3em",
               }}
             >
               Your
