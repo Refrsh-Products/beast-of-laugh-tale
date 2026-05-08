@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import FeatureCard from "../components/landing/FeatureCard";
 import TestimonialSection from "../components/landing/TestimonialSection";
+import RotatingText from "../components/landing/RotatingText";
 import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 
 /* ─── Design tokens ───────────────────────────────────────── */
@@ -106,20 +107,21 @@ export default function LandingPage() {
                 lineHeight: 1.0,
                 letterSpacing: "-0.03em",
                 marginBottom: 24,
+                minHeight: "3em",
               }}
             >
-              Your notes.
-              <br />
-              Your AI.
+              Your
               <br />
               <span
                 style={{
                   background: G,
                   padding: "2px 10px",
                   border: `2px solid ${B}`,
+                  display: "inline-block",
+                  marginTop: 8,
                 }}
               >
-                Your edge.
+                <RotatingText words={["notes.", "AI.", "edge."]} />
               </span>
             </h1>
 
