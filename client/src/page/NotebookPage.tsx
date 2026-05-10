@@ -410,7 +410,8 @@ export default function NotebookPage() {
         <PresentationViewer
           presentation={presentationSession.activePresentation}
           onClose={presentationSession.handleClosePresentation}
-          onUpdate={presentationSession.handlePresentationUpdate}
+          onUpdate={presentationSession.handleUpdatePresentation}
+          onRefineSlide={presentationSession.handleRefineSlide}
         />
       )}
     </div>

@@ -156,7 +156,7 @@ const usePresentationSessions = (
         showToast("Failed to delete presentations", "danger");
       }
     },
-    handlePresentationUpdate: (updatedSlides) => {
+    handleUpdatePresentation: (updatedSlides) => {
       setPresentations((prev) =>
         prev.map((p) =>
           p.id === activePresentation?.id ? { ...p, slides: updatedSlides } : p,
@@ -165,6 +165,10 @@ const usePresentationSessions = (
       setActivePresentation((prev) =>
         prev ? { ...prev, slides: updatedSlides } : null,
       );
+    },
+    handleRefineSlide: async (slideId, feedback) => {
+      if (!activePresentation) throw new Error("No active presentation");
+      return await presentationService.refineSlide(activePresentation.id, slideId, feedback);
     },
     handleClosePresentation: () => setActivePresentation(null),
   };
