@@ -16,6 +16,7 @@ const PLANS = [
     label: "BASIC",
     tagline: "For students just getting started.",
     price: "0",
+    originalPrice: null,
     unit: "forever",
     badge: null,
     saving: null,
@@ -36,6 +37,7 @@ const PLANS = [
     label: "PRO",
     tagline: "For students who are serious.",
     price: "350",
+    originalPrice: null,
     unit: "/ month",
     badge: "POPULAR",
     saving: null,
@@ -56,6 +58,7 @@ const PLANS = [
     label: "SCHOLAR",
     tagline: "For students going all in.",
     price: "1,200",
+    originalPrice: "1,400",
     unit: "/ 4 months",
     badge: "BEST VALUE",
     saving: "Save 200 BDT vs monthly",
@@ -231,6 +234,20 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
                 marginBottom: 2,
               }}
             >
+              {plan.originalPrice && (
+                <div
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.85rem",
+                    fontWeight: 700,
+                    color: "#666",
+                    textDecoration: "line-through",
+                    marginBottom: 2,
+                  }}
+                >
+                  ৳{plan.originalPrice}
+                </div>
+              )}
               ৳{plan.price}
             </div>
             <div

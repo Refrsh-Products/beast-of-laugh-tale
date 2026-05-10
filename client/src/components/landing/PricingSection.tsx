@@ -1,11 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { GREEN as G, BLACK as B, WHITE as W } from "../../constants/theme";
+import LineWaves from "./LineWaves";
 
 const PLANS = [
   {
     id: "free",
     label: "BASIC",
     price: "0",
+    originalPrice: null,
     unit: "forever",
     outcome: "Start learning smarter.",
     detail: "No credit card. No commitment. Just better studying.",
@@ -19,6 +21,7 @@ const PLANS = [
     id: "monthly",
     label: "PRO",
     price: "350",
+    originalPrice: null,
     unit: "/ month",
     outcome: "Study without limits.",
     detail: "Full access. Cancel any time.",
@@ -32,6 +35,7 @@ const PLANS = [
     id: "semester",
     label: "SCHOLAR",
     price: "1,200",
+    originalPrice: "1,400",
     unit: "/ 4 months",
     outcome: "Own the whole semester.",
     detail: "One payment. One less thing to think about.",
@@ -53,10 +57,27 @@ export default function PricingSection() {
         background: B,
         borderBottom: `3px solid ${B}`,
         padding: "80px 0 64px",
+        position: "relative",
+        overflow: "hidden",
       }}
     >
+      {/* Line Waves background */}
+      <div style={{ position: "absolute", inset: 0, zIndex: 0, opacity: 0.4 }}>
+        <LineWaves
+          color1="#84e487"
+          color2="#84e487"
+          color3="#84e487"
+          brightness={0.28}
+          speed={0.3}
+          warpIntensity={1}
+          rotation={-45}
+          edgeFadeWidth={0}
+          innerLineCount={32}
+          outerLineCount={36}
+        />
+      </div>
       {/* Header */}
-      <div style={{ padding: "0 48px", maxWidth: 1200, margin: "0 auto" }}>
+      <div style={{ padding: "0 48px", maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
         <div
           style={{
             display: "inline-block",
@@ -161,6 +182,20 @@ export default function PricingSection() {
               </div>
 
               {/* Price */}
+              {plan.originalPrice && (
+                <div
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.9rem",
+                    fontWeight: 700,
+                    color: "#444",
+                    textDecoration: "line-through",
+                    marginBottom: 2,
+                  }}
+                >
+                  ৳{plan.originalPrice}
+                </div>
+              )}
               <div
                 style={{
                   fontFamily: "'Syne', sans-serif",
