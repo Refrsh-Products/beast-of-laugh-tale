@@ -6,7 +6,6 @@ import FreshrLogo from "../components/logo/FreshrLogo";
 import { getGoogleProfile, clearGoogleProfile } from "../storage";
 import Button from "../components/ui/Button";
 
-const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
 

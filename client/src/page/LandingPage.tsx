@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
 import FeatureCard from "../components/landing/FeatureCard";
 import TestimonialSection from "../components/landing/TestimonialSection";
+import RotatingText from "../components/landing/RotatingText";
 import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 
 /* ─── Design tokens ───────────────────────────────────────── */
@@ -74,10 +75,10 @@ export default function LandingPage() {
       {/* ── HERO ── */}
       <section
         id="hero"
-        className="px-6 md:px-16 pt-16 pb-20"
-        style={{ borderBottom: `3px solid ${B}` }}
+        className="px-[4.5rem] md:px-48 pt-16 pb-20"
+        style={{ borderBottom: `3px solid ${B}`, minHeight: "calc(100vh - 65px - 44px)", display: "flex", flexDirection: "column", justifyContent: "center" }}
       >
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-40 items-center w-full">
           {/* Copy */}
           <div style={fadeIn(0)}>
             <div
@@ -102,24 +103,24 @@ export default function LandingPage() {
               style={{
                 fontFamily: "'Syne', sans-serif",
                 fontWeight: 800,
-                fontSize: "clamp(2.8rem, 5.5vw, 5.5rem)",
+                fontSize: "clamp(4rem, 8vw, 8.5rem)",
                 lineHeight: 1.0,
                 letterSpacing: "-0.03em",
                 marginBottom: 24,
               }}
             >
-              Your notes.
-              <br />
-              Your AI.
+              Your
               <br />
               <span
                 style={{
                   background: G,
                   padding: "2px 10px",
                   border: `2px solid ${B}`,
+                  display: "inline-block",
+                  marginTop: 8,
                 }}
               >
-                Your edge.
+                <RotatingText words={["notes.", "AI.", "edge."]} />
               </span>
             </h1>
 
@@ -427,7 +428,7 @@ export default function LandingPage() {
       <section
         id="how-it-works"
         className="py-20 px-6 md:px-16"
-        style={{ background: B, borderBottom: `3px solid ${B}` }}
+        style={{ background: G, borderBottom: `3px solid ${B}` }}
       >
         <div className="max-w-7xl mx-auto">
           <h2
@@ -439,7 +440,7 @@ export default function LandingPage() {
               lineHeight: 1.05,
               letterSpacing: "-0.02em",
               marginBottom: 52,
-              color: W,
+              color: B,
             }}
           >
             Three steps.
