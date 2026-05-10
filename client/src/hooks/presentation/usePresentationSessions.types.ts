@@ -10,5 +10,6 @@ export interface UsePresentationSessions {
   ): Promise<void>;
   handlePresentationClick(presentation: PresentationSession): Promise<void>;
   handleDeletePresentations(ids: string[]): Promise<void>;
-  handlePresentationUpdate(updatedSlides: PresentationSlide[]): void;
+  handleUpdatePresentation(updatedSlides: PresentationSlide[]): void;
+  handleRefineSlide(slideId: string, feedback: string): Promise<PresentationSlide>;
 }
