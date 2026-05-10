@@ -81,7 +81,7 @@ export default function TopNavbar({
             height: 28,
             background: hasAvatar ? "transparent" : G,
             color: B,
-            borderRadius: "50%",
+            borderRadius: 0,
             border: `2px solid ${B}`,
             display: "flex",
             alignItems: "center",

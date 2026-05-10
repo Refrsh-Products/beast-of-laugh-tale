@@ -76,7 +76,7 @@ export default function ProfileSidebar({
           height: 60,
           background: G,
           border: `3px solid ${B}`,
-          borderRadius: "50%",
+          borderRadius: 0,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",

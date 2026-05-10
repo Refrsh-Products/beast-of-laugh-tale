@@ -209,7 +209,7 @@ export default function Sidebar({
               height: 28,
               background: hasAvatarImage ? "transparent" : G,
               color: B,
-              borderRadius: "50%",
+              borderRadius: 0,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

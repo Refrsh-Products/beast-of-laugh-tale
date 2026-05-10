@@ -4,6 +4,7 @@ import Button from "../components/ui/Button";
 import FeatureCard from "../components/landing/FeatureCard";
 import TestimonialSection from "../components/landing/TestimonialSection";
 import RotatingText from "../components/landing/RotatingText";
+import PricingSection from "../components/landing/PricingSection";
 import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 
 import { GREEN as G, BLACK as B, WHITE as W } from "../constants/theme";
@@ -501,53 +502,8 @@ export default function LandingPage() {
       {/* ── TESTIMONIALS ── */}
       <TestimonialSection />
 
-      {/* ── CTA ── */}
-      <section
-        id="cta"
-        className="py-24 px-6 md:px-16"
-        style={{ background: B }}
-      >
-        <div className="max-w-3xl mx-auto text-center">
-          <h2
-            id="cta-heading"
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "clamp(2.5rem, 6vw, 5rem)",
-              color: W,
-              lineHeight: 1.0,
-              letterSpacing: "-0.03em",
-              marginBottom: 24,
-            }}
-          >
-            Your notes are
-            <br />
-            <span style={{ color: G }}>waiting to teach you.</span>
-          </h2>
-          <p
-            id="cta-text"
-            style={{
-              color: "#666",
-              fontSize: "0.85rem",
-              lineHeight: 1.85,
-              maxWidth: 440,
-              margin: "0 auto 48px",
-            }}
-          >
-            Stop rereading the same pages. Start asking questions. FRESHR turns
-            passive notes into an active learning engine.
-          </p>
-          <span
-            id="cta-button"
-            onClick={() => navigate("/signup")}
-            style={{ cursor: "pointer" }}
-          >
-            <Button variant="green" large>
-              Create your first notebook →
-            </Button>
-          </span>
-        </div>
-      </section>
+      {/* ── PRICING ── */}
+      <PricingSection />
 
       {/* ── FOOTER ── */}
       <footer

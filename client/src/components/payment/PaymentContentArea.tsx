@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ProfileTab } from "../profile-account/ProfileSidebar";
 import usePaymentService from "../../services/payment";
-import Button from "../ui/Button";
+import { BLACK as B, WHITE as W, GREEN as G } from "../../constants/theme";
 
 type PaymentProvider = "zinipay" | "stripe";
 
@@ -10,13 +10,71 @@ interface PaymentContentAreaProps {
   activeTab: ProfileTab;
 }
 
-const B = "#000000";
-const W = "#FFFFFF";
-const G = "#84e487";
+const PLANS = [
+  {
+    id: "free",
+    label: "BASIC",
+    tagline: "For students just getting started.",
+    price: "0",
+    unit: "forever",
+    badge: null,
+    saving: null,
+    featured: false,
+    features: [
+      "3 notebooks",
+      "500 MB storage",
+      "5 AI queries / day",
+      "5 quizzes / day",
+      "3 presentations / day",
+      "Community support",
+    ],
+    cta: "Current Plan",
+    billingInterval: null,
+  },
+  {
+    id: "monthly",
+    label: "MONTHLY",
+    tagline: "For students who are serious.",
+    price: "350",
+    unit: "/ month",
+    badge: "POPULAR",
+    saving: null,
+    featured: true,
+    features: [
+      "Unlimited notebooks",
+      "5 GB storage",
+      "Unlimited AI queries",
+      "Unlimited quizzes",
+      "Unlimited presentations",
+      "Priority support",
+    ],
+    cta: "Subscribe Monthly →",
+    billingInterval: "MONTHLY" as const,
+  },
+  {
+    id: "semester",
+    label: "SEMESTER",
+    tagline: "For students going all in.",
+    price: "1,200",
+    unit: "/ 4 months",
+    badge: "BEST VALUE",
+    saving: "Save 200 BDT vs monthly",
+    featured: false,
+    features: [
+      "Everything in Monthly",
+      "10 GB storage",
+      "Unlimited notebooks",
+      "Unlimited AI queries",
+      "Unlimited quizzes",
+      "Unlimited presentations",
+      "Priority support",
+    ],
+    cta: "Subscribe — One Semester →",
+    billingInterval: "YEARLY" as const,
+  },
+];
 
-export default function PaymentContentArea({
-  activeTab,
-}: PaymentContentAreaProps) {
+export default function PaymentContentArea({ activeTab }: PaymentContentAreaProps) {
   const paymentService = usePaymentService();
   const navigate = useNavigate();
   const [loading, setLoading] = useState<"MONTHLY" | "YEARLY" | null>(null);
@@ -48,12 +106,22 @@ export default function PaymentContentArea({
           fontWeight: 800,
           fontSize: "1.5rem",
           letterSpacing: "-0.02em",
-          marginBottom: 32,
+          marginBottom: 8,
           lineHeight: 1.1,
         }}
       >
-        Upgrade Plan
+        Pick your edge.
       </h2>
+      <p
+        style={{
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: "0.78rem",
+          color: "#666",
+          marginBottom: 24,
+        }}
+      >
+        One semester can change everything. Priced like it.
+      </p>
 
       {/* Provider toggle */}
       <div
@@ -103,272 +171,169 @@ export default function PaymentContentArea({
         </div>
       )}
 
-      {/* Plan cards */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
-          gap: 20,
+          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+          gap: 16,
         }}
       >
-        {/* Free */}
-        <div
-          style={{
-            background: W,
-            border: `2px solid ${B}`,
-            padding: 24,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
+        {PLANS.map((plan) => (
           <div
+            key={plan.id}
             style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.65rem",
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              color: "#888",
-              marginBottom: 10,
+              border: `3px solid ${B}`,
+              padding: "28px 24px",
+              display: "flex",
+              flexDirection: "column",
+              background: plan.id === "semester" ? G : W,
+              boxShadow: plan.id === "semester" ? `4px 4px 0 ${B}` : "none",
+              position: "relative",
             }}
           >
-            CURRENT PLAN
-          </div>
-          <div
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "1.2rem",
-              marginBottom: 12,
-            }}
-          >
-            Free
-          </div>
-          <div
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontWeight: 700,
-              fontSize: "1.75rem",
-              lineHeight: 1,
-              marginBottom: 4,
-            }}
-          >
-            $0
-          </div>
-          <div
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.68rem",
-              color: "#888",
-              marginBottom: 20,
-            }}
-          >
-            /forever
-          </div>
-          <p
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.73rem",
-              color: "#555",
-              lineHeight: 1.65,
-              marginBottom: 24,
-              flex: 1,
-            }}
-          >
-            A great way to test out the basic features with no commitment
-            required.
-          </p>
-          <Button variant="default" fullWidth onClick={() => navigate("/dashboard")}>
-            CONTINUE FREE
-          </Button>
-        </div>
+            {plan.badge && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: -13,
+                  left: 20,
+                  background: B,
+                  color: W,
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.6rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  padding: "4px 10px",
+                }}
+              >
+                {plan.badge}
+              </div>
+            )}
 
-        {/* Monthly — featured */}
-        <div
-          style={{
-            background: W,
-            border: `3px solid ${B}`,
-            boxShadow: `4px 4px 0 ${G}`,
-            padding: 24,
-            display: "flex",
-            flexDirection: "column",
-            position: "relative",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: -3,
-              right: -3,
-              background: B,
-              color: W,
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.6rem",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              padding: "4px 10px",
-            }}
-          >
-            POPULAR
-          </div>
-          <div
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.65rem",
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              color: "#888",
-              marginBottom: 10,
-            }}
-          >
-            FLEXIBLE
-          </div>
-          <div
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "1.2rem",
-              marginBottom: 12,
-            }}
-          >
-            Monthly
-          </div>
-          <div
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontWeight: 700,
-              fontSize: "1.75rem",
-              lineHeight: 1,
-              marginBottom: 4,
-            }}
-          >
-            $15
-          </div>
-          <div
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.68rem",
-              color: "#888",
-              marginBottom: 20,
-            }}
-          >
-            /month
-          </div>
-          <p
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.73rem",
-              color: "#555",
-              lineHeight: 1.65,
-              marginBottom: 24,
-              flex: 1,
-            }}
-          >
-            Full access to all premium features on a flexible month-to-month
-            basis.
-          </p>
-          <Button
-            variant="green"
-            fullWidth
-            disabled={loading !== null}
-            onClick={() => handlePayment("MONTHLY")}
-          >
-            {loading === "MONTHLY" ? "REDIRECTING..." : "SUBSCRIBE MONTHLY"}
-          </Button>
-        </div>
+            <div
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "0.65rem",
+                fontWeight: 700,
+                letterSpacing: "0.14em",
+                marginBottom: 8,
+              }}
+            >
+              {plan.label}
+            </div>
 
-        {/* Yearly */}
-        <div
-          style={{
-            background: W,
-            border: `2px solid ${B}`,
-            padding: 24,
-            display: "flex",
-            flexDirection: "column",
-            position: "relative",
-          }}
-        >
-          <div
-            style={{
-              position: "absolute",
-              top: -2,
-              right: -2,
-              background: B,
-              color: W,
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.6rem",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              padding: "4px 10px",
-            }}
-          >
-            BEST VALUE
+            <div
+              style={{
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: 800,
+                fontSize: "2rem",
+                lineHeight: 1,
+                marginBottom: 2,
+              }}
+            >
+              ৳{plan.price}
+            </div>
+            <div
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "0.7rem",
+                color: "#555",
+                marginBottom: 6,
+              }}
+            >
+              {plan.unit}
+            </div>
+
+            {plan.saving && (
+              <div
+                style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  marginBottom: 8,
+                  color: "#1a6e1a",
+                }}
+              >
+                ↓ {plan.saving}
+              </div>
+            )}
+
+            <p
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "0.72rem",
+                color: "#444",
+                marginBottom: 20,
+                lineHeight: 1.6,
+              }}
+            >
+              {plan.tagline}
+            </p>
+
+            <div
+              style={{
+                borderTop: `2px solid ${B}`,
+                paddingTop: 16,
+                marginBottom: 24,
+                display: "flex",
+                flexDirection: "column",
+                gap: 8,
+                flex: 1,
+              }}
+            >
+              {plan.features.map((f) => (
+                <div
+                  key={f}
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.72rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <span style={{ fontWeight: 700 }}>◆</span> {f}
+                </div>
+              ))}
+            </div>
+
+            <button
+              disabled={!plan.billingInterval || loading !== null}
+              onClick={() => {
+                if (plan.billingInterval) handlePayment(plan.billingInterval);
+                else navigate("/dashboard");
+              }}
+              style={{
+                background: !plan.billingInterval ? "#eee" : B,
+                color: !plan.billingInterval ? "#999" : W,
+                border: `2px solid ${!plan.billingInterval ? "#ccc" : B}`,
+                padding: "10px 16px",
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                letterSpacing: "0.06em",
+                cursor: !plan.billingInterval ? "default" : "pointer",
+                width: "100%",
+                textAlign: "center",
+              }}
+            >
+              {loading === plan.billingInterval ? "REDIRECTING..." : plan.cta}
+            </button>
           </div>
-          <div
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.65rem",
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              color: "#888",
-              marginBottom: 10,
-            }}
-          >
-            SAVE 33%
-          </div>
-          <div
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "1.2rem",
-              marginBottom: 12,
-            }}
-          >
-            Yearly
-          </div>
-          <div
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontWeight: 700,
-              fontSize: "1.75rem",
-              lineHeight: 1,
-              marginBottom: 4,
-            }}
-          >
-            $120
-          </div>
-          <div
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.68rem",
-              color: "#888",
-              marginBottom: 20,
-            }}
-          >
-            /year
-          </div>
-          <p
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.73rem",
-              color: "#555",
-              lineHeight: 1.65,
-              marginBottom: 24,
-              flex: 1,
-            }}
-          >
-            Best value. Get all features and save 33% by committing to an
-            annual plan.
-          </p>
-          <Button
-            variant="default"
-            fullWidth
-            disabled={loading !== null}
-            onClick={() => handlePayment("YEARLY")}
-          >
-            {loading === "YEARLY" ? "REDIRECTING..." : "SUBSCRIBE YEARLY"}
-          </Button>
-        </div>
+        ))}
       </div>
+
+      <p
+        style={{
+          fontFamily: "'IBM Plex Mono', monospace",
+          fontSize: "0.68rem",
+          color: "#888",
+          marginTop: 24,
+          textAlign: "center",
+        }}
+      >
+        * Pricing in Bangladeshi Taka (BDT). Features are placeholders — final limits subject to change.
+      </p>
     </div>
   );
 }
