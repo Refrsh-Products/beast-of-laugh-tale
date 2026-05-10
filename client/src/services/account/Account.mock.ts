@@ -28,6 +28,7 @@ const AccountServiceMock: AccountService = {
       notebooks: { used: notebooks.length, limit: 3 },
       storage: { used_bytes: BigInt(0), limit_bytes: BigInt(500 * 1024 * 1024) },
       daily_quizzes: { used: 0, limit: 5 },
+      daily_presentations: { used: 0, limit: 3 },
     });
   },
 };

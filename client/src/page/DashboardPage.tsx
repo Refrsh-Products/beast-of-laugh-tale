@@ -602,6 +602,39 @@ export default function DashboardPage() {
           </div>
         </div>
 
+        {/* Empty state */}
+        {notebooks.length === 0 && (
+          <div
+            style={{
+              border: `2px dashed ${B}`,
+              padding: "64px 32px",
+              textAlign: "center",
+              marginBottom: 24,
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: 800,
+                fontSize: "1.2rem",
+                marginBottom: 8,
+              }}
+            >
+              No notebooks yet.
+            </p>
+            <p
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: "0.78rem",
+                color: "#666",
+                margin: 0,
+              }}
+            >
+              Hit <strong>+ New Notebook</strong> to get started.
+            </p>
+          </div>
+        )}
+
         {/* Notebook grid / list */}
         {view === "grid" ? (
           <div

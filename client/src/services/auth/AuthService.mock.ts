@@ -1,11 +1,23 @@
 import {
   isLoggedIn,
   getUser,
+  saveUser,
   startSession,
   endSession,
   getPassword,
 } from "../../storage";
 import type { AuthService } from "./AuthService.types";
+
+// Auto-seed dev session so login is never required in mock mode
+if (!isLoggedIn() || !getUser()) {
+  saveUser({
+    id: "dev-user",
+    email: "dev@freshr.com",
+    is_active: true,
+    created_at: new Date().toISOString(),
+  });
+  startSession();
+}
 
 const AuthServiceMock: AuthService = {
   isLoggedIn: () => isLoggedIn(),

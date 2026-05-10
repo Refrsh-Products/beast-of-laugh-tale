@@ -23,6 +23,7 @@ export default function OnboardingPage() {
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [error, setError] = useState("");
+  const [showErrors, setShowErrors] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(
     null,
   );
@@ -46,9 +47,11 @@ export default function OnboardingPage() {
       !city.trim() ||
       !postalCode.trim()
     ) {
+      setShowErrors(true);
       setError("Please fill in all required fields.");
       return;
     }
+    setShowErrors(false);
     try {
       const existingAccount = await accountService.getAccount();
       await accountService.saveAccount({
@@ -165,47 +168,47 @@ export default function OnboardingPage() {
         >
           <div style={{ display: "flex", gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>FIRST NAME</label>
+              <label style={labelStyle}>FIRST NAME <span style={{ color: "#cc0000" }}>*</span></label>
               <input
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="Jane"
-                style={inputStyle}
+                style={{ ...inputStyle, borderColor: showErrors && !firstName.trim() ? "#cc0000" : B }}
                 autoFocus
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>LAST NAME</label>
+              <label style={labelStyle}>LAST NAME <span style={{ color: "#cc0000" }}>*</span></label>
               <input
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Smith"
-                style={inputStyle}
+                style={{ ...inputStyle, borderColor: showErrors && !lastName.trim() ? "#cc0000" : B }}
               />
             </div>
           </div>
 
           <div>
-            <label style={labelStyle}>PHONE NUMBER</label>
+            <label style={labelStyle}>PHONE NUMBER <span style={{ color: "#cc0000" }}>*</span></label>
             <input
               type="tel"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(e.target.value.replace(/[^\d+\-\s().]/g, ""))}
               placeholder="+1 (555) 000-0000"
-              style={inputStyle}
+              style={{ ...inputStyle, borderColor: showErrors && !phone.trim() ? "#cc0000" : B }}
             />
           </div>
 
           <div>
-            <label style={labelStyle}>ADDRESS LINE 1</label>
+            <label style={labelStyle}>ADDRESS LINE 1 <span style={{ color: "#cc0000" }}>*</span></label>
             <input
               type="text"
               value={address1}
               onChange={(e) => setAddress1(e.target.value)}
               placeholder="123 Main St"
-              style={inputStyle}
+              style={{ ...inputStyle, borderColor: showErrors && !address1.trim() ? "#cc0000" : B }}
             />
           </div>
 
@@ -225,23 +228,23 @@ export default function OnboardingPage() {
 
           <div style={{ display: "flex", gap: 12 }}>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>CITY</label>
+              <label style={labelStyle}>CITY <span style={{ color: "#cc0000" }}>*</span></label>
               <input
                 type="text"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="New York"
-                style={inputStyle}
+                style={{ ...inputStyle, borderColor: showErrors && !city.trim() ? "#cc0000" : B }}
               />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={labelStyle}>POSTAL CODE</label>
+              <label style={labelStyle}>POSTAL CODE <span style={{ color: "#cc0000" }}>*</span></label>
               <input
                 type="text"
                 value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
-                placeholder="10001"
-                style={inputStyle}
+                onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                placeholder="1234"
+                style={{ ...inputStyle, borderColor: showErrors && !postalCode.trim() ? "#cc0000" : B }}
               />
             </div>
           </div>
