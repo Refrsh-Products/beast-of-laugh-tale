@@ -1,14 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Loading from "../components/loading/Loading";
 import useAuthService from "../services/auth";
 import GoogleAuthBtn from "../components/google-auth/GoogleAuthBtn";
 import FreshrLogo from "../components/logo/FreshrLogo";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { BLACK as B, WHITE as W } from "../constants/theme";
+import { inputStyle, labelStyle, inputHandlers } from "../styles/form";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -19,40 +17,6 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    border: `3px solid ${B}`,
-    borderRadius: 0,
-    padding: "12px 14px",
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.82rem",
-    background: W,
-    outline: "none",
-    boxSizing: "border-box",
-    transition: "border-color 0.15s",
-  };
-
-  const inputHandlers = {
-    onMouseEnter: (e: React.MouseEvent<HTMLInputElement>) => {
-      if (document.activeElement !== e.currentTarget)
-        e.currentTarget.style.borderColor = G;
-    },
-    onMouseLeave: (e: React.MouseEvent<HTMLInputElement>) => {
-      e.currentTarget.style.borderColor = B;
-    },
-    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
-      e.currentTarget.style.borderColor = B;
-    },
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.68rem",
-    fontWeight: 700,
-    letterSpacing: "0.12em",
-    marginBottom: 6,
-  };
 
   const handleLogin = async () => {
     if (!email || !password) {

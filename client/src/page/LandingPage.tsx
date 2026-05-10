@@ -6,10 +6,7 @@ import TestimonialSection from "../components/landing/TestimonialSection";
 import RotatingText from "../components/landing/RotatingText";
 import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 
-/* ─── Design tokens ───────────────────────────────────────── */
-const G = "#84e487"; // green accent
-const B = "#000000"; // black
-const W = "#FFFFFF"; // white
+import { GREEN as G, BLACK as B, WHITE as W } from "../constants/theme";
 
 /* ─── Main page ───────────────────────────────────────────── */
 export default function LandingPage() {

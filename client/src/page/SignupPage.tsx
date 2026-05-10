@@ -5,10 +5,8 @@ import FreshrLogo from "../components/logo/FreshrLogo";
 import Button from "../components/ui/Button";
 import useAuthService from "../services/auth";
 import Loading from "../components/loading/Loading";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { BLACK as B, WHITE as W } from "../constants/theme";
+import { inputStyle, labelStyle, inputHandlers } from "../styles/form";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -58,40 +56,6 @@ export default function SignupPage() {
     }
   };
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    border: `3px solid ${B}`,
-    borderRadius: 0,
-    padding: "12px 14px",
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.82rem",
-    background: W,
-    outline: "none",
-    boxSizing: "border-box",
-    transition: "border-color 0.15s",
-  };
-
-  const inputHandlers = {
-    onMouseEnter: (e: React.MouseEvent<HTMLInputElement>) => {
-      if (document.activeElement !== e.currentTarget)
-        e.currentTarget.style.borderColor = G;
-    },
-    onMouseLeave: (e: React.MouseEvent<HTMLInputElement>) => {
-      e.currentTarget.style.borderColor = B;
-    },
-    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
-      e.currentTarget.style.borderColor = B;
-    },
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.68rem",
-    fontWeight: 700,
-    letterSpacing: "0.12em",
-    marginBottom: 6,
-  };
 
   if (isLoading) return <Loading />;
 
