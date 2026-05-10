@@ -33,7 +33,7 @@ const PLANS = [
   },
   {
     id: "monthly",
-    label: "MONTHLY",
+    label: "PRO",
     tagline: "For students who are serious.",
     price: "350",
     unit: "/ month",
@@ -53,7 +53,7 @@ const PLANS = [
   },
   {
     id: "semester",
-    label: "SEMESTER",
+    label: "SCHOLAR",
     tagline: "For students going all in.",
     price: "1,200",
     unit: "/ 4 months",

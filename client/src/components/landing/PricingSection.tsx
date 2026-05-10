@@ -17,7 +17,7 @@ const PLANS = [
   },
   {
     id: "monthly",
-    label: "MONTHLY",
+    label: "PRO",
     price: "350",
     unit: "/ month",
     outcome: "Study without limits.",
@@ -30,7 +30,7 @@ const PLANS = [
   },
   {
     id: "semester",
-    label: "SEMESTER",
+    label: "SCHOLAR",
     price: "1,200",
     unit: "/ 4 months",
     outcome: "Own the whole semester.",
