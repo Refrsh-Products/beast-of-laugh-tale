@@ -87,7 +87,7 @@ export default function NotebookPage() {
       } catch {}
     }, 3000);
     return () => clearInterval(interval);
-  }, [hasProcessingFiles, notebookId, notebookService]);
+  }, [hasProcessingFiles, notebookId]);
 
   useEffect(() => {
     async function loadNotebooksAndFiles() {
@@ -111,7 +111,7 @@ export default function NotebookPage() {
       }
     }
     loadNotebooksAndFiles();
-  }, [notebookId, notebookService, showToast]);
+  }, [notebookId]);
 
   /** Notebook Stuff */
   async function handleNotebookTitleSave(newTitle: string) {

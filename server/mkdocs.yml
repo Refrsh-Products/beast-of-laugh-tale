@@ -13,4 +13,5 @@ nav:
   - Payment Flow: payment-flow.md
   - Test Plan: test-plan.md
   - Testing Conventions: testing-conventions.md
+  - Deployment Workflow: deployment-workflow.md
 theme: readthedocs
