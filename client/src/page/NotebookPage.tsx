@@ -43,7 +43,10 @@ export default function NotebookPage() {
   const [files, setFiles] = useState<NotebookFile[]>([]);
   const [activeView, setActiveView] = useState<ActiveView>("chat");
   const [pendingChatInput, setPendingChatInput] = useState<string>("");
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState<{
+    title: string;
+    description: string;
+  } | null>(null);
   const [notebookNotFound, setNotebookNotFound] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<FileUploadState[]>([]);
 
@@ -64,7 +67,12 @@ export default function NotebookPage() {
     notebookId,
     showToast,
     activeView,
-    () => setShowUpgradeModal(true),
+    () =>
+      setUpgradeModal({
+        title: "Daily quiz limit reached",
+        description:
+          "You've hit your daily quiz limit on the free plan. Upgrade to Pro for unlimited daily quizzes, more storage, and additional notebooks.",
+      }),
     (msg) => {
       setPendingChatInput(msg);
       setActiveView("chat");
@@ -74,7 +82,12 @@ export default function NotebookPage() {
     notebookId,
     showToast,
     activeView,
-    () => setShowUpgradeModal(true),
+    () =>
+      setUpgradeModal({
+        title: "Daily presentation limit reached",
+        description:
+          "You've hit your daily presentation limit on the free plan. Upgrade to Pro for unlimited presentations, more storage, and additional notebooks.",
+      }),
   );
 
   // Poll file list every 3s while any file is still being ingested
@@ -154,12 +167,21 @@ export default function NotebookPage() {
           const errMsg =
             (err as any)?.response?.data?.detail ??
             (err instanceof Error ? err.message : "Upload failed");
+          const isFileSizeError =
+            typeof errMsg === "string" && errMsg.startsWith("File size exceeded");
           setUploadProgress((prev) =>
             prev.map((p, idx) =>
               idx === i ? { ...p, status: "error", error: errMsg } : p,
             ),
           );
-          showToast(errMsg, "danger");
+          if (isFileSizeError) {
+            setUpgradeModal({
+              title: "File too large",
+              description: `${errMsg} Upgrade to Pro for larger uploads, more storage, and unlimited notebooks.`,
+            });
+          } else {
+            showToast(errMsg, "danger");
+          }
         }
       }),
     );
@@ -387,11 +409,11 @@ export default function NotebookPage() {
 
       <ToastContainer toasts={toasts} />
 
-      {showUpgradeModal && (
+      {upgradeModal && (
         <UpgradeModal
-          onClose={() => setShowUpgradeModal(false)}
-          title="Daily quiz limit reached"
-          description="You've hit your daily quiz limit on the free plan. Upgrade to Pro for unlimited daily quizzes, more storage, and additional notebooks."
+          onClose={() => setUpgradeModal(null)}
+          title={upgradeModal.title}
+          description={upgradeModal.description}
         />
       )}
 

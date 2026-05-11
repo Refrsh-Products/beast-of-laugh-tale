@@ -28,7 +28,7 @@ export interface AccountUseage {
     used: number;
     limit: number;
   };
-  daily_presentations: {
+  presentations: {
     used: number;
     limit: number;
   };
