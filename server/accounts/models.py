@@ -57,6 +57,7 @@ class Account(models.Model):
     subscription_end_date = models.DateTimeField(null=True, blank=True)
     onboarding_completed = models.BooleanField(default=False)
     storage_bytes_used = models.BigIntegerField(default=0)
+    presentations_generated = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -71,7 +72,6 @@ class DailyUsage(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     date = models.DateField()
     quizzes_generated = models.IntegerField(default=0)
-    presentations_generated = models.IntegerField(default=0)
 
     class Meta:
         unique_together = ("account", "date")

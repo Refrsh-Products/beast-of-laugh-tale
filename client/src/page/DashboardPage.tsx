@@ -348,8 +348,8 @@ export default function DashboardPage() {
             },
             {
               label: "Presentations",
-              used: usage.daily_presentations.used,
-              limit: usage.daily_presentations.limit,
+              used: usage.presentations.used,
+              limit: usage.presentations.limit,
               fmt: (n: number) => String(n),
             },
           ].map((item, i, arr) => (

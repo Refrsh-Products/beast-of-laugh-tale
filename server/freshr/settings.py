@@ -181,16 +181,18 @@ FRESHR_TIER_LIMITS = {
     "FREE": {
         "max_notebooks": 3,
         "max_files_per_notebook": 2,
-        "max_quizzes_per_notebook": 5,
-        "max_presentations_per_day": 2,
-        "storage_mega_bytes": 500,
+        "max_size_per_file_mega_bytes": 10,
+        "max_quizzes_per_day": 5,
+        "max_presentations_total": 2,
+        "storage_mega_bytes": 60,
     },
     "PAID": {
         "max_notebooks": "unlimited",
         "max_files_per_notebook": "unlimited",
-        "max_quizzes_per_notebook": "unlimited",
-        "max_presentations_per_day": "unlimited",
-        "storage_mega_bytes": 5000,
+        "max_size_per_file_mega_bytes": 50,
+        "max_quizzes_per_day": "unlimited",
+        "max_presentations_total": "unlimited",
+        "storage_mega_bytes": 2000,
     },
 }
 

@@ -1,5 +1,3 @@
-from datetime import date
-
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
@@ -9,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.models import Account, DailyUsage
+from accounts.models import Account
 from accounts.services import quota
 from notebooks.models import Notebook
 
@@ -78,19 +76,16 @@ class PresentationListCreateView(generics.ListCreateAPIView):
 
         with transaction.atomic():
             account = Account.objects.select_for_update().get(user=self.request.user)
-            usage, _ = DailyUsage.objects.select_for_update().get_or_create(
-                account=account, date=date.today()
-            )
-            if not quota.check_daily_presentation_quota(account):
-                raise PermissionDenied("Daily presentation limit reached for your plan.")
+            if not quota.check_presentation_quota(account):
+                raise PermissionDenied("Presentation limit reached for your plan.")
 
             presentation = serializer.save(
                 notebook=notebook,
                 title=f"Generating: {serializer.validated_data['topic']}"[:255],
                 status=PresentationStatus.QUEUED,
             )
-            usage.presentations_generated += 1
-            usage.save()
+            account.presentations_generated += 1
+            account.save(update_fields=["presentations_generated"])
 
         return presentation, topic_id
 

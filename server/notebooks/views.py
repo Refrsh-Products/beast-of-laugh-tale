@@ -70,6 +70,12 @@ class NotebookFileCreateAPIView(APIView):
             account = Account.objects.select_for_update().get(user=self.request.user)
             if not quota.check_file_per_notebook_quota(account, notebook):
                 raise PermissionDenied("File limit per notebook reached for your plan.")
+            if not quota.check_size_per_file(account, uploaded_file.size):
+                plan = quota.get_effective_plan(account)
+                if plan == "PAID":
+                    raise PermissionDenied("File size exceeded. Maximum file size is 50MB.")
+                else:
+                    raise PermissionDenied("File size exceeded. Maximum file size is 10MB.")
             if not quota.check_storage_quota(account, uploaded_file.size):
                 raise PermissionDenied("Storage limit reached for your plan.")
 
