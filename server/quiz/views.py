@@ -5,13 +5,15 @@ from django.db import transaction
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from notebooks.models import Notebook
+from notebooks.errors import DailyQuizQuotaExceededError
 from accounts.models import Account, DailyUsage
 from accounts.services import quota
+from notebooks.services.activity import touch_notebook_activity
+from notebooks.services.archive import assert_notebook_writable
 from .models import QuizSession, QuizQuestion, QuizStatus
 from .services.quiz_generation import generate_quiz_from_rag, generate_quiz_from_entire_notebook
 from .serializers import (
@@ -61,6 +63,7 @@ class QuizSessionListCreateView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         notebook_id = self.request.query_params.get("notebook") # type: ignore
         notebook = get_object_or_404(Notebook, id=notebook_id, user=self.request.user)
+        assert_notebook_writable(notebook)
 
         data = serializer.validated_data
         topic = data.get("topic", "")
@@ -92,7 +95,9 @@ class QuizSessionListCreateView(generics.ListCreateAPIView):
                 account=account, date=date.today()
             )
             if not quota.check_daily_quiz_quota(account):
-                raise PermissionDenied("Daily quiz limit reached for your plan.")
+                plan = quota.get_effective_plan(account)
+                limits = quota.get_limits(plan)
+                raise DailyQuizQuotaExceededError(limit=limits["max_quizzes_per_day"])
 
             # Generate quiz
             quiz = serializer.save(notebook=notebook, title=generated["title"])
@@ -102,6 +107,8 @@ class QuizSessionListCreateView(generics.ListCreateAPIView):
 
             usage.quizzes_generated += 1
             usage.save()
+
+            touch_notebook_activity(notebook_id=notebook_id)
 
         return quiz
 
@@ -178,6 +185,8 @@ class QuizSessionSubmitView(APIView):
         quiz.completed_at = timezone.now()
         quiz.save()
 
+        touch_notebook_activity(notebook_id=quiz.notebook_id) # type: ignore
+
         return Response(QuizSessionDetailSerializer(quiz).data, status=status.HTTP_200_OK)
 
 
@@ -188,7 +197,12 @@ class QuizSessionRetakeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, quiz_id):
-        source = get_object_or_404(QuizSession, id=quiz_id, notebook__user=request.user)
+        source = get_object_or_404(
+            QuizSession.objects.select_related("notebook"),
+            id=quiz_id,
+            notebook__user=request.user,
+        )
+        assert_notebook_writable(source.notebook)
 
         root_id = source.source_session_id or source.id  # type: ignore[attr-defined]
         new_session = QuizSession.objects.create(
@@ -217,5 +231,7 @@ class QuizSessionRetakeView(APIView):
             )
             for q in source_questions
         ])
+
+        touch_notebook_activity(notebook_id=new_session.notebook_id) # type: ignore
 
         return Response(QuizSessionDetailSerializer(new_session).data, status=status.HTTP_201_CREATED)

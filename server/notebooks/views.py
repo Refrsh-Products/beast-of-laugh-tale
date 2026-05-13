@@ -2,8 +2,20 @@ from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.parsers import MultiPartParser, FormParser
+
+from notebooks.services.activity import touch_notebook_activity
+from notebooks.services.archive import (
+    archive_notebook,
+    assert_notebook_writable,
+    unarchive_notebook,
+)
+from .errors import (
+    FileQuotaExceededError,
+    FileSizeExceededError,
+    NotebookQuotaExceededError,
+    StorageQuotaExceededError,
+)
 from .models import Notebook, NotebookFile
 from accounts.models import Account
 from accounts.services import quota
@@ -23,22 +35,52 @@ class NotebookDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     def get_object(self): # type: ignore
         return get_object_or_404(Notebook, pk=self.kwargs["pk"], user=self.request.user)
 
+    def perform_update(self, serializer):
+        assert_notebook_writable(serializer.instance)
+        super().perform_update(serializer)
+        notebook_id = serializer.instance.id
+        touch_notebook_activity(notebook_id)
+
 class NotebookListAPIView(generics.ListCreateAPIView):
     queryset = Notebook.objects.none()
     serializer_class = NotebookSerializer
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self): # type: ignore
-        return Notebook.objects.filter(user=self.request.user)
+        queryset = Notebook.objects.filter(user=self.request.user)
+        archived_param = self.request.query_params.get('archived', 'false').lower() # type: ignore
+        if archived_param == "true":
+            return queryset.filter(is_archived=True)
+        return queryset.filter(is_archived=False)
 
     def perform_create(self, serializer):
         with transaction.atomic():
             account = Account.objects.select_for_update().get(user=self.request.user)
             if not quota.check_notebook_quota(account):
-                raise PermissionDenied("Notebook limit reached for your plan.")
+                active_count, limit = quota.get_notebook_quota_counts(account)
+                raise NotebookQuotaExceededError(active_count=active_count, limit=limit)
             serializer.save(user=self.request.user)
 
-# TODO: Create Archive View - show list of all archived notebooks, change an archived notebook to unarchived
+class NotebookArchiveAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = NotebookSerializer
+
+    def post(self, request, pk):
+        notebook = get_object_or_404(Notebook, pk=pk, user=request.user)
+        archive_notebook(notebook)
+        return Response(NotebookSerializer(notebook).data, status=status.HTTP_200_OK)
+
+
+class NotebookUnarchiveAPIView(APIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = NotebookSerializer
+
+    def post(self, request, pk):
+        with transaction.atomic():
+            account = Account.objects.select_for_update().get(user=request.user)
+            notebook = get_object_or_404(Notebook, pk=pk, user=request.user)
+            unarchive_notebook(notebook, account)
+        return Response(NotebookSerializer(notebook).data, status=status.HTTP_200_OK)
 
 class NotebookFileCreateAPIView(APIView):
     permission_classes = (IsAuthenticated,)
@@ -55,6 +97,7 @@ class NotebookFileCreateAPIView(APIView):
     )
     def post(self, request, notebook_id):
         notebook = get_object_or_404(Notebook, id=notebook_id, user=request.user)
+        assert_notebook_writable(notebook)
         serializer = NotebookFileInputSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
@@ -69,15 +112,17 @@ class NotebookFileCreateAPIView(APIView):
         with transaction.atomic():
             account = Account.objects.select_for_update().get(user=self.request.user)
             if not quota.check_file_per_notebook_quota(account, notebook):
-                raise PermissionDenied("File limit per notebook reached for your plan.")
+                plan = quota.get_effective_plan(account)
+                limits = quota.get_limits(plan)
+                raise FileQuotaExceededError(limit=limits["max_files_per_notebook"])
             if not quota.check_size_per_file(account, uploaded_file.size):
                 plan = quota.get_effective_plan(account)
-                if plan == "PAID":
-                    raise PermissionDenied("File size exceeded. Maximum file size is 50MB.")
-                else:
-                    raise PermissionDenied("File size exceeded. Maximum file size is 10MB.")
+                limits = quota.get_limits(plan)
+                raise FileSizeExceededError(max_mb=limits["max_size_per_file_mega_bytes"])
             if not quota.check_storage_quota(account, uploaded_file.size):
-                raise PermissionDenied("Storage limit reached for your plan.")
+                plan = quota.get_effective_plan(account)
+                limits = quota.get_limits(plan)
+                raise StorageQuotaExceededError(limit_bytes=limits["storage_mega_bytes"] * 1024 * 1024)
 
             notebook_file = NotebookFileService.add_notebook_file(
                     notebook=notebook,
@@ -85,6 +130,7 @@ class NotebookFileCreateAPIView(APIView):
                     )
             account.storage_bytes_used += uploaded_file.size
             account.save()
+            touch_notebook_activity(notebook_id=notebook.id)
             
         if notebook_file:
             ingest_note_task.delay(notebook_file.pk)  # type: ignore[attr-defined]
@@ -121,6 +167,12 @@ class NotebookFileDeleteAPIView(generics.DestroyAPIView):
     def get_queryset(self): # type: ignore
         notebook_id = self.kwargs.get('notebook_id')
         return NotebookFile.objects.filter(
-            notebook__user=self.request.user, 
+            notebook__user=self.request.user,
             notebook_id=notebook_id
-        )
+        ).select_related("notebook")
+
+    def perform_destroy(self, instance):
+        assert_notebook_writable(instance.notebook)
+        notebook_id = instance.notebook_id
+        super().perform_destroy(instance)
+        touch_notebook_activity(notebook_id)

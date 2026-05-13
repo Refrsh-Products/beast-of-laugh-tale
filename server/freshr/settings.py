@@ -14,6 +14,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -79,6 +80,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'accounts.middleware.SubscriptionExpiryMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -201,6 +203,8 @@ FRESHR_TIER_LIMITS = {
 CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
 CELERY_TIMEZONE = "Asia/Dhaka"
+
+CELERY_BEAT_SCHEDULE = {"expire-subscriptions": {"task": "accounts.tasks.expire_subscriptions", "schedule": crontab(minute=0)}}
 
 # Email Configuration (console backend for development)
 EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'

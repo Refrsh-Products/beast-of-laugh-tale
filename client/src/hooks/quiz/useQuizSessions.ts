@@ -15,6 +15,7 @@ const useQuizSessions = (
   activeView: ActiveView,
   onUpgradeRequired: () => void,
   onTakeToChat: (formattedMessage: string) => void,
+  onNotebookArchived: () => void,
 ): UseQuizSessions & {
   quizTopics: NotebookTopic[];
   isLoadingTopics: boolean;
@@ -83,7 +84,11 @@ const useQuizSessions = (
         setActiveQuiz(quiz);
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.status === 403) {
-          onUpgradeRequired();
+          if (err.response.data?.code === "notebook_archived") {
+            onNotebookArchived();
+          } else {
+            onUpgradeRequired();
+          }
         } else {
           showToast("Failed to generate quiz", "danger");
         }

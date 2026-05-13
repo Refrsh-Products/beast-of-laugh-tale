@@ -12,6 +12,7 @@ export interface Notebook {
   updated_at: string;
   pinned: boolean;
   file_count?: number;
+  is_archived: boolean;
 }
 
 export interface AccountUseage {
@@ -167,6 +168,7 @@ export function createNotebook(title: string): Notebook {
     updated_at: new Date().toISOString(),
     pinned: false,
     file_count: 0,
+    is_archived: false,
   };
   saveNotebooks([...getNotebooks(), nb]);
   return nb;
@@ -486,6 +488,7 @@ export function seedNotebooks(): void {
       updated_at: "2026-01-14T10:00:00Z",
       pinned: true,
       file_count: 6,
+      is_archived: false,
     },
     {
       id: "00000000-0000-0000-0000-000000000002",
@@ -494,6 +497,7 @@ export function seedNotebooks(): void {
       updated_at: "2026-01-14T10:00:00Z",
       pinned: false,
       file_count: 11,
+      is_archived: false,
     },
     {
       id: "00000000-0000-0000-0000-000000000003",
@@ -502,6 +506,7 @@ export function seedNotebooks(): void {
       updated_at: "2026-01-14T10:00:00Z",
       pinned: false,
       file_count: 4,
+      is_archived: false,
     },
     {
       id: "00000000-0000-0000-0000-000000000004",
@@ -510,6 +515,7 @@ export function seedNotebooks(): void {
       updated_at: "2026-01-14T10:00:00Z",
       pinned: true,
       file_count: 8,
+      is_archived: false,
     },
     {
       id: "00000000-0000-0000-0000-000000000005",
@@ -518,6 +524,7 @@ export function seedNotebooks(): void {
       updated_at: "2026-01-14T10:00:00Z",
       pinned: false,
       file_count: 3,
+      is_archived: false,
     },
   ];
   saveNotebooks(seed);

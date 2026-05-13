@@ -107,7 +107,7 @@ export default function DashboardPage() {
   const [editValue, setEditValue] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState<{ title: string; description: string } | null>(null);
   const [createTitle, setCreateTitle] = useState("");
   const [createError, setCreateError] = useState("");
   const { toasts, showToast } = useToast();
@@ -173,7 +173,10 @@ export default function DashboardPage() {
 
   function handleCreateRequest() {
     if (usage && usage.notebooks.used >= usage.notebooks.limit) {
-      setShowUpgradeModal(true);
+      setUpgradeModal({
+        title: "Notebook limit reached",
+        description: "You've used all your notebook slots on the free plan. Upgrade to Pro to create unlimited notebooks and unlock more storage and daily quizzes.",
+      });
     } else {
       setShowCreateModal(true);
     }
@@ -220,11 +223,23 @@ export default function DashboardPage() {
   }
 
   async function handleUnarchive(id: string) {
-    await notebookService.unarchive(id);
-    await refreshNotebooks();
-    await refreshArchived();
-    fetchUsage();
-    showToast("Notebook restored", "neutral");
+    try {
+      await notebookService.unarchive(id);
+      await refreshNotebooks();
+      await refreshArchived();
+      fetchUsage();
+      showToast("Notebook restored", "neutral");
+    } catch (err) {
+      const code = (err as any)?.response?.data?.code;
+      if (code === "notebook_quota_exceeded") {
+        setUpgradeModal({
+          title: "Notebook limit reached",
+          description: "You've reached your active notebook limit. Archive another notebook or upgrade to Pro for unlimited notebooks.",
+        });
+      } else {
+        showToast("Failed to restore notebook", "danger");
+      }
+    }
   }
 
   async function handleCreateSubmit() {
@@ -233,13 +248,28 @@ export default function DashboardPage() {
       setCreateError("Please enter a title.");
       return;
     }
-    await notebookService.create(trimmed);
-    setCreateTitle("");
-    setCreateError("");
-    setShowCreateModal(false);
-    refreshNotebooks();
-    fetchUsage();
-    showToast("Notebook created");
+    try {
+      await notebookService.create(trimmed);
+      setCreateTitle("");
+      setCreateError("");
+      setShowCreateModal(false);
+      refreshNotebooks();
+      fetchUsage();
+      showToast("Notebook created");
+    } catch (err) {
+      const code = (err as any)?.response?.data?.code;
+      if (code === "notebook_quota_exceeded") {
+        setShowCreateModal(false);
+        setCreateTitle("");
+        setCreateError("");
+        setUpgradeModal({
+          title: "Notebook limit reached",
+          description: "You've used all your notebook slots on the free plan. Upgrade to Pro to create unlimited notebooks and unlock more storage and daily quizzes.",
+        });
+      } else {
+        setCreateError("Failed to create notebook. Please try again.");
+      }
+    }
   }
 
   function handleDeleteRequest(id: string) {
@@ -650,11 +680,11 @@ export default function DashboardPage() {
         />
       </div>
 
-      {showUpgradeModal && (
+      {upgradeModal && (
         <UpgradeModal
-          title="Notebook limit reached"
-          description="You've used all your notebook slots on the free plan. Upgrade to Pro to create unlimited notebooks and unlock more storage and daily quizzes."
-          onClose={() => setShowUpgradeModal(false)}
+          title={upgradeModal.title}
+          description={upgradeModal.description}
+          onClose={() => setUpgradeModal(null)}
         />
       )}
 

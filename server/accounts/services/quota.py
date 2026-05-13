@@ -22,14 +22,20 @@ def get_limits(plan: str):
     return settings.FRESHR_TIER_LIMITS.get(plan, settings.FRESHR_TIER_LIMITS["FREE"])
 
 
-def check_notebook_quota(account: Account):
+def get_notebook_quota_counts(account: Account) -> tuple[int, int | str]:
+    """Return (active_count, limit) for the account's notebook quota."""
     plan = get_effective_plan(account)
     limits = get_limits(plan)
-    max_notebooks = limits["max_notebooks"]
-    if max_notebooks == "unlimited":
+    limit = limits["max_notebooks"]
+    active_count = Notebook.objects.filter(user=account.user, is_archived=False).count()
+    return active_count, limit
+
+
+def check_notebook_quota(account: Account):
+    active_count, limit = get_notebook_quota_counts(account)
+    if limit == "unlimited":
         return True
-    notebook_count = Notebook.objects.filter(user=account.user).count()
-    return notebook_count < max_notebooks
+    return active_count < limit
 
 def check_file_per_notebook_quota(account: Account, notebook: Notebook):
     plan = get_effective_plan(account)

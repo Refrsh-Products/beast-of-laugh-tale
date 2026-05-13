@@ -20,7 +20,15 @@ class NotebookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notebook
         fields = '__all__'
-        read_only_fields = ["id", "user", "created_at", "updated_at"]
+        read_only_fields = [
+            "id",
+            "user",
+            "created_at",
+            "updated_at",
+            "is_archived",
+            "archived_at",
+            "last_activity_at",
+        ]
 
 
 
