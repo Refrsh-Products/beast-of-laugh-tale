@@ -2,7 +2,6 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import generics, status
-from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,6 +9,9 @@ from rest_framework.views import APIView
 from accounts.models import Account
 from accounts.services import quota
 from notebooks.models import Notebook
+from notebooks.errors import PresentationQuotaExceededError
+from notebooks.services.activity import touch_notebook_activity
+from notebooks.services.archive import assert_notebook_writable
 
 from .models import Presentation, PresentationSlide, PresentationStatus
 from .serializers import (
@@ -66,6 +68,7 @@ class PresentationListCreateView(generics.ListCreateAPIView):
     def _create_with_quota(self, serializer):
         notebook_id = self.request.query_params.get("notebook")  # type: ignore[attr-defined]
         notebook = get_object_or_404(Notebook, id=notebook_id, user=self.request.user)
+        assert_notebook_writable(notebook)
 
         data = serializer.validated_data
         topic = data.get("topic", "") or ""
@@ -77,7 +80,9 @@ class PresentationListCreateView(generics.ListCreateAPIView):
         with transaction.atomic():
             account = Account.objects.select_for_update().get(user=self.request.user)
             if not quota.check_presentation_quota(account):
-                raise PermissionDenied("Presentation limit reached for your plan.")
+                plan = quota.get_effective_plan(account)
+                limits = quota.get_limits(plan)
+                raise PresentationQuotaExceededError(limit=limits["max_presentations_total"])
 
             presentation = serializer.save(
                 notebook=notebook,
@@ -86,6 +91,8 @@ class PresentationListCreateView(generics.ListCreateAPIView):
             )
             account.presentations_generated += 1
             account.save(update_fields=["presentations_generated"])
+
+            touch_notebook_activity(notebook_id=notebook_id)
 
         return presentation, topic_id
 
@@ -141,6 +148,9 @@ class SlideUpdateView(APIView):
         serializer = SlideUpdateSerializer(slide, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+
+        touch_notebook_activity(slide.presentation.notebook_id) # type: ignore
+        
         return Response(PresentationSlideSerializer(slide).data, status=status.HTTP_200_OK)
 
 
@@ -159,6 +169,7 @@ class SlideRefineView(APIView):
             presentation_id=presentation_id,
             presentation__notebook__user=request.user,
         )
+        assert_notebook_writable(slide.presentation.notebook_id) # type: ignore
         body = SlideRefineSerializer(data=request.data)
         body.is_valid(raise_exception=True)
 
@@ -200,5 +211,7 @@ class SlideRefineView(APIView):
             "body_text", "quote", "quote_source", "caption",
             "speaker_notes",
         ])
+
+        touch_notebook_activity(presentation.notebook_id) # type: ignore
 
         return Response(PresentationSlideSerializer(slide).data, status=status.HTTP_200_OK)

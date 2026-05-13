@@ -57,12 +57,19 @@ export default function NotebookPage() {
   );
   const hasReadyFiles = files.some((f) => f.ingestion_status === "ready");
 
+  const notebookArchivedModal = {
+    title: "Notebook is archived",
+    description: "This notebook is read-only. Go back to the dashboard and unarchive it to make changes.",
+  };
+
   const chatSessions = useChatSessions(
     notebookId,
     showToast,
     files,
     hasReadyFiles,
+    () => setUpgradeModal(notebookArchivedModal),
   );
+
   const quizSessions = useQuizSessions(
     notebookId,
     showToast,
@@ -77,6 +84,7 @@ export default function NotebookPage() {
       setPendingChatInput(msg);
       setActiveView("chat");
     },
+    () => setUpgradeModal(notebookArchivedModal),
   );
   const presentationSession = usePresentationSessions(
     notebookId,
@@ -88,6 +96,7 @@ export default function NotebookPage() {
         description:
           "You've hit your daily presentation limit on the free plan. Upgrade to Pro for unlimited presentations, more storage, and additional notebooks.",
       }),
+    () => setUpgradeModal(notebookArchivedModal),
   );
 
   // Poll file list every 3s while any file is still being ingested
@@ -164,20 +173,33 @@ export default function NotebookPage() {
             );
           }
         } catch (err) {
+          const data = (err as any)?.response?.data;
+          const code = data?.code;
           const errMsg =
-            (err as any)?.response?.data?.detail ??
+            data?.message ??
+            data?.detail ??
             (err instanceof Error ? err.message : "Upload failed");
-          const isFileSizeError =
-            typeof errMsg === "string" && errMsg.startsWith("File size exceeded");
           setUploadProgress((prev) =>
             prev.map((p, idx) =>
               idx === i ? { ...p, status: "error", error: errMsg } : p,
             ),
           );
-          if (isFileSizeError) {
+          if (code === "notebook_archived") {
+            setUpgradeModal(notebookArchivedModal);
+          } else if (code === "file_size_exceeded") {
             setUpgradeModal({
               title: "File too large",
               description: `${errMsg} Upgrade to Pro for larger uploads, more storage, and unlimited notebooks.`,
+            });
+          } else if (code === "storage_quota_exceeded") {
+            setUpgradeModal({
+              title: "Storage limit reached",
+              description: "You've hit your storage limit on the free plan. Upgrade to Pro for more storage, larger files, and unlimited notebooks.",
+            });
+          } else if (code === "file_quota_exceeded") {
+            setUpgradeModal({
+              title: "File limit reached",
+              description: "You've hit the file limit for this notebook on the free plan. Upgrade to Pro for more files per notebook.",
             });
           } else {
             showToast(errMsg, "danger");
@@ -348,6 +370,34 @@ export default function NotebookPage() {
         fontFamily: "'IBM Plex Mono', monospace",
       }}
     >
+      {/* Archived banner */}
+      {notebook.is_archived && (
+        <div
+          style={{
+            background: "#f5f0e0",
+            borderBottom: `2px solid ${B}`,
+            padding: "8px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 12,
+            flexShrink: 0,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.68rem",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              color: "#7a5c00",
+            }}
+          >
+            ARCHIVED — this notebook is read-only. Go to the dashboard to unarchive it.
+          </span>
+        </div>
+      )}
+
       {/* Top bar */}
       <div
         style={{

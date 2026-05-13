@@ -13,6 +13,7 @@ const usePresentationSessions = (
   showToast: (msg: string, variant: ToastVariant) => void,
   activeView: ActiveView,
   onUpgradeRequired: () => void,
+  onNotebookArchived: () => void,
 ): UsePresentationSessions & {
   presentations: PresentationSession[];
   activePresentation: PresentationSession | null;
@@ -128,7 +129,11 @@ const usePresentationSessions = (
         presentationPollRefs.current.add(intervalId);
       } catch (err) {
         if (axios.isAxiosError(err) && err.response?.status === 403) {
-          onUpgradeRequired();
+          if ((err.response.data as any)?.code === "notebook_archived") {
+            onNotebookArchived();
+          } else {
+            onUpgradeRequired();
+          }
         } else {
           showToast("Failed to generate presentation", "danger");
         }

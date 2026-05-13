@@ -5,12 +5,14 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { NotebookFile } from "../../storage";
 import type { ToastVariant } from "../useToast";
+import axios from "axios";
 
 const useChatSessions = (
   notebookId: string,
   showToast: (msg: string, variant: ToastVariant) => void,
   files: NotebookFile[],
   hasReadyFiles: boolean,
+  onNotebookArchived: () => void,
 ): UseChatSessions & {
   chatSessions: ChatSession[];
   activeSessionId: string | null;
@@ -49,26 +51,33 @@ const useChatSessions = (
       let sessionId = activeSessionId;
       const sessionExists = chatSessions.some((s) => s.id === sessionId);
 
-      if (!sessionId || !sessionExists) {
-        const session = await chatService.createChatSession(notebookId);
-        sessionId = session.id;
-        setChatSessions((prev) => [...prev, session]);
-        // URL update is intentionally left to ChatColumn via onSessionCreated
+      try {
+        if (!sessionId || !sessionExists) {
+          const session = await chatService.createChatSession(notebookId);
+          sessionId = session.id;
+          setChatSessions((prev) => [...prev, session]);
+          // URL update is intentionally left to ChatColumn via onSessionCreated
+        }
+
+        await chatService.createChatSessionMessage(sessionId, message);
+
+        // Stream AI response
+        let fullReply = "";
+        await chatService.streamChatReply(sessionId, (chunk) => {
+          fullReply += chunk;
+          onChunk?.(chunk);
+        });
+
+        return {
+          reply: fullReply,
+          sessionId,
+        };
+      } catch (err) {
+        if (axios.isAxiosError(err) && err.response?.status === 403 && err.response.data?.code === "notebook_archived") {
+          onNotebookArchived();
+        }
+        throw err;
       }
-
-      await chatService.createChatSessionMessage(sessionId, message);
-
-      // Stream AI response
-      let fullReply = "";
-      await chatService.streamChatReply(sessionId, (chunk) => {
-        fullReply += chunk;
-        onChunk?.(chunk);
-      });
-
-      return {
-        reply: fullReply,
-        sessionId,
-      };
     },
     handleSessionSelect: (sessionId) => {
       setSearchParams({ session: sessionId });
