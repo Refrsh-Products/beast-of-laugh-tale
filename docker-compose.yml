@@ -75,6 +75,29 @@ services:
       redis:
         condition: service_healthy
 
+  celery-beat:
+    build:
+      context: ./server
+    command: celery -A freshr beat -l info
+    volumes:
+      - ./server:/app
+      - media:/app/media
+    env_file:
+      - ./server/.env
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: freshr
+      DB_USER: freshr
+      DB_PASSWORD: freshr
+      REDIS_URL: redis://redis:6379/0
+      CONNECTION_STRING: postgresql+psycopg://freshr:freshr@postgres:5432/freshr
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
   mkdocs:
     image: squidfunk/mkdocs-material
     volumes:
