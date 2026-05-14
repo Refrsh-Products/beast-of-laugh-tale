@@ -280,3 +280,14 @@ All protected endpoints require the `Authorization: Bearer <access_token>` heade
 ## License
 
 This project is licensed under the terms of the [LICENSE](LICENSE) file included in this repository.
+
+## How to access Dozzle
+
+### The SSH Tunnel (Most Secure / Recommended)
+
+On your laptop, run this command:
+ssh -L 8888:localhost:8888 deploy@163.61.236.102
+
+Now, open your browser and go to http://localhost:8888.
+
+Your computer thinks Dozzle is running locally, but it’s actually securely pulling the data through your encrypted SSH connection.
