@@ -102,11 +102,16 @@ services:
   # React SPA served by Nginx.
   # VITE_API_BASE_URL is baked in at build time. To change the API URL,
   # update the PROD_API_URL secret in GitHub, push to main, and promote the new SHA.
+  # No host port: the shared Caddy (docker-compose.caddy.yml) reaches this
+  # container over the `edge` network via the `frontend-prod` alias.
   frontend:
     image: ghcr.io/${GHCR_ORG}/freshr-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    ports:
-      - "80:80"
+    networks:
+      default:
+      edge:
+        aliases:
+          - frontend-prod
 
   dozzle:
     image: amir20/dozzle:latest
@@ -116,6 +121,10 @@ services:
       - dozzle_data:/data
     ports:
       - "8888:8080" # Maps internal 8080 to VPS port 8888
+
+networks:
+  edge:
+    external: true
 
 volumes:
   dozzle_data:

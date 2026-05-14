@@ -98,26 +98,16 @@ services:
         condition: service_healthy
 
   # React SPA served by Nginx — staging build, always tagged :staging.
-  # No host port: Caddy terminates TLS on 80/443 and reverse-proxies to this
-  # container over the internal Docker network.
+  # No host port: the shared Caddy (docker-compose.caddy.yml) reaches this
+  # container over the `edge` network via the `frontend-staging` alias.
   frontend:
     image: ghcr.io/${GHCR_ORG}/freshr-web:staging
     restart: unless-stopped
-
-  # Public entrypoint. Caddy auto-provisions a Let's Encrypt cert for
-  # staging.freshr.cc on first boot (HTTP-01 challenge on :80).
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - frontend
+    networks:
+      default:
+      edge:
+        aliases:
+          - frontend-staging
 
   dozzle:
     image: amir20/dozzle:latest
@@ -128,9 +118,11 @@ services:
     ports:
       - "8889:8080" # Maps internal 8080 to VPS port 8889
 
+networks:
+  edge:
+    external: true
+
 volumes:
   dozzle_data:
   postgres_data:
   media:
-  caddy_data:
-  caddy_config:

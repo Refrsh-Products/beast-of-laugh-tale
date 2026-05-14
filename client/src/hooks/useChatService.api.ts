@@ -109,7 +109,7 @@ const useChatServiceApi = (): ChatServices => {
       onChunk: (text: string) => void,
     ): Promise<void> => {
       const token = sessionStorage.getItem("accessToken");
-      const url = `${import.meta.env.VITE_API_BASE_URL}/chats/${chatId}/messages/stream/`;
+      const url = `${import.meta.env.VITE_API_BASE_URL}${ChatServiceApiEndpoints.chatMessageStream(chatId)}`;
 
       const response = await fetch(url, {
         method: "GET",
