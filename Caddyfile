@@ -1,0 +1,7 @@
+staging.freshr.cc {
+	reverse_proxy frontend:80
+}
+
+freshr.cc, www.freshr.cc {
+    reverse_proxy frontend-prod:80
+}
