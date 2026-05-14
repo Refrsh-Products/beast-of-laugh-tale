@@ -11,7 +11,7 @@ const createFreshrApiInstance = () => {
 };
 
 // Users
-export const UserServiceApiBase = "/users";
+export const UserServiceApiBase = "/api/users";
 export const UserServiceApiEndpoints = {
   accounts: `${UserServiceApiBase}/accounts/`,
   accountMe: `${UserServiceApiBase}/accounts/me/`,
@@ -19,7 +19,7 @@ export const UserServiceApiEndpoints = {
 };
 
 // Auth
-export const AuthServiceApiBase = "/auth";
+export const AuthServiceApiBase = "/api/auth";
 export const AuthServiceApiEndpoints = {
   login: `${AuthServiceApiBase}/login/`,
   googleLogin: `${AuthServiceApiBase}/google-login/`,
@@ -31,7 +31,7 @@ export const AuthServiceApiEndpoints = {
 };
 
 // Notebooks
-export const NotebookServiceApiBase = "/notebooks";
+export const NotebookServiceApiBase = "/api/notebooks";
 export const NotebookServiceApiEndpoints = {
   getNotebooks: `${NotebookServiceApiBase}/`,
   createNotebook: `${NotebookServiceApiBase}/`,
@@ -56,7 +56,7 @@ export const NotebookServiceApiEndpoints = {
 };
 
 // Chats
-export const ChatServiceApiBase = "/chats";
+export const ChatServiceApiBase = "/api/chats";
 export const ChatServiceApiEndpoints = {
   getChatSessions: `${ChatServiceApiBase}/`,
   createChatSession: `${ChatServiceApiBase}/`,
@@ -73,7 +73,7 @@ export const ChatServiceApiEndpoints = {
 };
 
 // Payments
-export const PaymentServiceApiBase = "/payments";
+export const PaymentServiceApiBase = "/api/payments";
 export const PaymentServiceApiEndpoints = {
   getPayments: `${PaymentServiceApiBase}/`,
   initiatePayment: `${PaymentServiceApiBase}/initiate/`,
@@ -81,7 +81,7 @@ export const PaymentServiceApiEndpoints = {
 };
 
 // Quizzes
-export const QuizServiceApiBase = "/quizzes";
+export const QuizServiceApiBase = "/api/quizzes";
 export const QuizServiceApiEndpoints = {
   listQuizSessionsByNotebook: (notebookId: string) =>
     `${QuizServiceApiBase}/?notebook=${notebookId}`,
@@ -95,7 +95,7 @@ export const QuizServiceApiEndpoints = {
 };
 
 // Presentations
-export const PresentationServiceApiBase = "/presentation";
+export const PresentationServiceApiBase = "/api/presentation";
 export const PresentationServiceApiEndpoints = {
   listPresentationsByNotebook: (notebookId: string) =>
     `${PresentationServiceApiBase}/?notebook=${notebookId}`,

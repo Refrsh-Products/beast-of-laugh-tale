@@ -21,8 +21,7 @@ from drf_spectacular.views import SpectacularSwaggerView
 from drf_spectacular.views import SpectacularRedocView
 from rest_framework_simplejwt import views as jwt_views
 
-urlpatterns = [
-    path('admin/', admin.site.urls),
+api_urlpatterns = [
     path('users/', include('accounts.urls')),
     path('notebooks/', include(("notebooks.urls", "notebooks"), namespace="notebooks")),
     path('rag/', include(("rag.urls", "rag"), namespace="rag")),
@@ -36,9 +35,15 @@ urlpatterns = [
     # authentication endpoints
     path('auth/', include('users.urls')),
     path('auth/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
+]
 
-    # swagger stuffs
-    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
-    path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
-    path("api/redocs/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
+urlpatterns = [
+    path('api/', include(api_urlpatterns)),
+
+    # Kept outside /api/ so nginx's SPA fallback hides them in production —
+    # only reachable when hitting Django directly (i.e. local dev on :8000).
+    path('admin/', admin.site.urls),
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
+    path("redocs/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
 ]
