@@ -6,9 +6,8 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
-    initial = True
-
     dependencies = [
+        ("rag", "0001_pgvector_extension"),
         ("notebooks", "0002_alter_notebookfile_name"),
     ]
 
