@@ -26,16 +26,18 @@ load_dotenv()
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-w@hqs_0!7r_)6on$(cs(c*5_mbr3)=y9%2p-b5_=8cjm0wda^='
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-w@hqs_0!7r_)6on$(cs(c*5_mbr3)=y9%2p-b5_=8cjm0wda^=')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost", "web"]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '0.0.0.0,127.0.0.1,localhost,web').split(',')
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "http://163.61.236.102",        # Production React (port 80)
+    "http://163.61.236.102:8080",   # Staging React
 ]
 
 
@@ -155,6 +157,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_ROOT = BASE_DIR / "media"
 
@@ -215,7 +218,7 @@ DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'
 FRONTEND_URL = os.getenv("FRONTEND_URL", 'http://localhost:3000')
 
 # Google OAuth2.0
-GOOGLE_OAUTH_CLIENT_SECET = os.getenv('GOOGLE_OAUTH_CLIENT_SECET')
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
 
 # ZiniPay
 ZINIPAY_API_KEY = os.getenv('ZINIPAY_API_KEY', '')

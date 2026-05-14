@@ -1,0 +1,120 @@
+name: Build & Deploy to Staging
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta-server.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── 1. Django server image ─────────────────────────────────────────────
+      - name: Extract metadata (server)
+        id: meta-server
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/freshr-server
+          tags: |
+            type=sha,prefix=,format=short
+            type=raw,value=latest
+
+      - name: Build and push server image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          push: true
+          tags: ${{ steps.meta-server.outputs.tags }}
+          labels: ${{ steps.meta-server.outputs.labels }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/freshr-server:latest
+          cache-to: type=inline
+
+      # ── 2. React web image — staging build ────────────────────────────────
+      # Baked with STAGING_API_URL (e.g. http://YOUR_IP:8001).
+      # Tagged :staging — always points to the latest staging build.
+      - name: Build and push web image (staging)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/freshr-web:staging
+          build-args: |
+            VITE_API_BASE_URL=${{ secrets.STAGING_API_URL }}
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/freshr-web:staging
+          cache-to: type=inline
+
+      # ── 3. React web image — production build ─────────────────────────────
+      # Baked with PROD_API_URL (e.g. http://YOUR_IP:8000 now, https://api.domain.com later).
+      # Tagged with the short SHA so it can be promoted to prod by exact tag.
+      # This image sits in GHCR until you run the "Deploy to Production" workflow.
+      - name: Extract metadata (web prod)
+        id: meta-web-prod
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/freshr-web
+          tags: |
+            type=sha,prefix=,format=short
+
+      - name: Build and push web image (production)
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          push: true
+          tags: ${{ steps.meta-web-prod.outputs.tags }}
+          build-args: |
+            VITE_API_BASE_URL=${{ secrets.PROD_API_URL }}
+          # Re-use layers from the staging build — same deps, only the env arg differs
+          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/freshr-web:staging
+          cache-to: type=inline
+
+  deploy-staging:
+    name: Deploy to Staging
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    environment: staging
+
+    steps:
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_SSH_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: GHCR_TOKEN,GHCR_ORG,IMAGE_TAG
+          script: |
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ORG" --password-stdin
+
+            cd /opt/freshr
+
+            # IMAGE_TAG used by docker-compose for the server image.
+            # The staging web image is always pulled as :staging (hardcoded in compose).
+            export IMAGE_TAG=$IMAGE_TAG
+            docker compose --env-file .env.staging -p freshr-staging -f docker-compose.staging.yml pull
+            docker compose --env-file .env.staging -p freshr-staging -f docker-compose.staging.yml up -d --remove-orphans
+
+            docker image prune -f
+
+            echo "✅ Staging deployed — server & web tag: $IMAGE_TAG"
+            echo "🌐 App (staging):  http://$(curl -s ifconfig.me):8080"
+            echo "🌐 API (staging):  http://$(curl -s ifconfig.me):8001"
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_ORG: ${{ github.repository_owner }}
+          IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
