@@ -36,8 +36,8 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '0.0.0.0,127.0.0.1,localhost,web').sp
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://163.61.236.102",        # Production React (port 80)
-    "http://163.61.236.102:8080",   # Staging React
+    "https://freshr.cc",        # Production React (port 80)
+    "https://staging.freshr.cc",   # Staging React
 ]
 
 

@@ -62,6 +62,7 @@ jobs:
           tags: ghcr.io/${{ steps.org.outputs.name }}/freshr-web:staging
           build-args: |
             VITE_API_BASE_URL=${{ secrets.STAGING_API_URL }}
+            VITE_GOOGLE_AUTH_CLIENT_ID=${{ secrets.GOOGLE_AUTH_CLIENT_ID }}
           cache-from: type=registry,ref=ghcr.io/${{ steps.org.outputs.name }}/freshr-web:staging
           cache-to: type=inline
 
@@ -85,6 +86,7 @@ jobs:
           tags: ${{ steps.meta-web-prod.outputs.tags }}
           build-args: |
             VITE_API_BASE_URL=${{ secrets.PROD_API_URL }}
+            VITE_GOOGLE_AUTH_CLIENT_ID=${{ secrets.GOOGLE_AUTH_CLIENT_ID }}
           # Re-use layers from the staging build — same deps, only the env arg differs
           cache-from: type=registry,ref=ghcr.io/${{ steps.org.outputs.name }}/freshr-web:staging
           cache-to: type=inline
