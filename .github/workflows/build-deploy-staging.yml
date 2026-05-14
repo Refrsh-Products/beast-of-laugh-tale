@@ -14,10 +14,15 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.meta-server.outputs.version }}
+      org_name: ${{ steps.org.outputs.name }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Set lowercase org name
+        id: org
+        run: echo "name=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -31,7 +36,7 @@ jobs:
         id: meta-server
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/freshr-server
+          images: ghcr.io/${{ steps.org.outputs.name }}/freshr-server
           tags: |
             type=sha,prefix=,format=short
             type=raw,value=latest
@@ -43,7 +48,7 @@ jobs:
           push: true
           tags: ${{ steps.meta-server.outputs.tags }}
           labels: ${{ steps.meta-server.outputs.labels }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/freshr-server:latest
+          cache-from: type=registry,ref=ghcr.io/${{ steps.org.outputs.name }}/freshr-server:latest
           cache-to: type=inline
 
       # ── 2. React web image — staging build ────────────────────────────────
@@ -54,10 +59,10 @@ jobs:
         with:
           context: ./client
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/freshr-web:staging
+          tags: ghcr.io/${{ steps.org.outputs.name }}/freshr-web:staging
           build-args: |
             VITE_API_BASE_URL=${{ secrets.STAGING_API_URL }}
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/freshr-web:staging
+          cache-from: type=registry,ref=ghcr.io/${{ steps.org.outputs.name }}/freshr-web:staging
           cache-to: type=inline
 
       # ── 3. React web image — production build ─────────────────────────────
@@ -68,7 +73,7 @@ jobs:
         id: meta-web-prod
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository_owner }}/freshr-web
+          images: ghcr.io/${{ steps.org.outputs.name }}/freshr-web
           tags: |
             type=sha,prefix=,format=short
 
@@ -81,7 +86,7 @@ jobs:
           build-args: |
             VITE_API_BASE_URL=${{ secrets.PROD_API_URL }}
           # Re-use layers from the staging build — same deps, only the env arg differs
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository_owner }}/freshr-web:staging
+          cache-from: type=registry,ref=ghcr.io/${{ steps.org.outputs.name }}/freshr-web:staging
           cache-to: type=inline
 
   deploy-staging:
@@ -116,5 +121,5 @@ jobs:
             echo "🌐 API (staging):  http://$(curl -s ifconfig.me):8001"
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
-          GHCR_ORG: ${{ github.repository_owner }}
+          GHCR_ORG: ${{ needs.build-and-push.outputs.org_name }}
           IMAGE_TAG: ${{ needs.build-and-push.outputs.image_tag }}
