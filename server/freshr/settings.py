@@ -33,6 +33,17 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '0.0.0.0,127.0.0.1,localhost,web').split(',')
 
+# Caddy (and nginx-in-frontend) terminate TLS upstream of Django. Without this,
+# request.is_secure() returns False and CSRF rejects same-origin POSTs as
+# "Origin checking failed - https://... does not match any trusted origins".
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Required for HTTPS admin/CSRF-protected POSTs. Include scheme.
+# e.g. "https://staging.freshr.cc,https://freshr.cc"
+CSRF_TRUSTED_ORIGINS = [
+    o for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o
+]
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
