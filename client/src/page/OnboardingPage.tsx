@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
+import axios from "axios";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
 import FreshrLogo from "../components/logo/FreshrLogo";
@@ -49,7 +50,14 @@ export default function OnboardingPage() {
       return;
     }
     try {
-      const existingAccount = await accountService.getAccount();
+      let existingAccount = null;
+      try {
+        existingAccount = await accountService.getAccount();
+      } catch (err) {
+        if (!axios.isAxiosError(err) || err.response?.status !== 404) {
+          throw err;
+        }
+      }
       await accountService.saveAccount({
         id: existingAccount?.id ?? sessionStorage.getItem("userId") ?? "",
         first_name: firstName.trim(),
