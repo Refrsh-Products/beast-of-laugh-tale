@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_prod:/var/lib/postgresql/data
     # NOT exposed to host — internal Docker network only thus no ports
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
@@ -36,9 +36,9 @@ services:
              python manage.py migrate --noinput &&
              gunicorn freshr.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120"
     volumes:
-      - media:/app/media
+      - media_prod:/app/media
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     env_file:
       - .env.prod
     environment:
@@ -60,7 +60,7 @@ services:
     restart: unless-stopped
     command: celery -A freshr worker -l info --concurrency 2
     volumes:
-      - media:/app/media
+      - media_prod:/app/media
     env_file:
       - .env.prod
     environment:
@@ -82,7 +82,7 @@ services:
     restart: unless-stopped
     command: celery -A freshr beat -l info
     volumes:
-      - media:/app/media
+      - media_prod:/app/media
     env_file:
       - .env.prod
     environment:
@@ -122,5 +122,5 @@ networks:
     external: true
 
 volumes:
-  postgres_data:
-  media:
+  postgres_data_prod:
+  media_prod:
