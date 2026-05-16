@@ -109,14 +109,23 @@ services:
         aliases:
           - frontend-staging
 
+  # Log viewer for all containers on the host (staging AND prod, since it
+  # reads /var/run/docker.sock). Not exposed to the host — Caddy reverse-proxies
+  # logs.freshr.cc to this container over the `edge` network.
   dozzle:
     image: amir20/dozzle:latest
     restart: unless-stopped
+    environment:
+      DOZZLE_AUTH_PROVIDER: simple
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - dozzle_data:/data
-    ports:
-      - "8889:8080" # Maps internal 8080 to VPS port 8889
+      - /opt/freshr/dozzle/users.yml:/data/users.yml:ro
+    networks:
+      default:
+      edge:
+        aliases:
+          - dozzle
 
 networks:
   edge:

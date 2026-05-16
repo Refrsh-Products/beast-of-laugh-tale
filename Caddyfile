@@ -3,5 +3,12 @@ staging.freshr.cc {
 }
 
 freshr.cc, www.freshr.cc {
-    reverse_proxy frontend-prod:80
+	reverse_proxy frontend-prod:80
+}
+
+# Dozzle log viewer. Auth is handled by Dozzle itself (DOZZLE_AUTH_PROVIDER=simple,
+# users defined in /opt/freshr/dozzle/users.yml on the VPS). Caddy just terminates
+# TLS and forwards to the dozzle service over the `edge` network.
+logs.freshr.cc {
+	reverse_proxy dozzle:8080
 }

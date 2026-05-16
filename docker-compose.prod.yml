@@ -113,20 +113,14 @@ services:
         aliases:
           - frontend-prod
 
-  dozzle:
-    image: amir20/dozzle:latest
-    restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - dozzle_data:/data
-    ports:
-      - "8888:8080" # Maps internal 8080 to VPS port 8888
+  # Dozzle intentionally not duplicated here — the staging stack's Dozzle reads
+  # /var/run/docker.sock and already sees every container on the host (staging
+  # AND prod). Access it at https://logs.freshr.cc.
 
 networks:
   edge:
     external: true
 
 volumes:
-  dozzle_data:
   postgres_data:
   media:
