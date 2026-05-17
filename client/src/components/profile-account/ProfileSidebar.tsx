@@ -29,16 +29,16 @@ function NavItem({
         if (!active) (e.currentTarget as HTMLElement).style.color = B;
       }}
       onMouseLeave={(e) => {
-        if (!active) (e.currentTarget as HTMLElement).style.color = "#aaa";
+        if (!active) (e.currentTarget as HTMLElement).style.color = "#000000";
       }}
       style={{
         padding: "10px 0 10px 14px",
         borderLeft: `3px solid ${active ? B : "transparent"}`,
         fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: "0.72rem",
+        fontSize: "0.75rem",
         fontWeight: 700,
         letterSpacing: "0.1em",
-        color: active ? B : "#aaa",
+        color: B,
         cursor: "pointer",
         userSelect: "none",
         transition: "color 0.12s",
@@ -123,8 +123,8 @@ export default function ProfileSidebar({
       <div
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.72rem",
-          color: "#888",
+          fontSize: "0.75rem",
+          color: "#000000",
           marginBottom: 16,
           wordBreak: "break-all",
           lineHeight: 1.6,
@@ -140,7 +140,7 @@ export default function ProfileSidebar({
           border: `2px solid ${B}`,
           padding: "4px 10px",
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.62rem",
+          fontSize: "0.75rem",
           fontWeight: 700,
           letterSpacing: "0.1em",
           background: plan === "FREE" ? W : G,

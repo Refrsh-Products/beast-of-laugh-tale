@@ -108,7 +108,7 @@ export default function GoogleAuthBtn() {
           style={{
             color: "#cc0000",
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.72rem",
+            fontSize: "0.75rem",
             margin: "0 0 16px",
           }}
         >

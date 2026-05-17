@@ -387,7 +387,7 @@ export default function NotebookPage() {
           <span
             style={{
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.68rem",
+              fontSize: "0.75rem",
               fontWeight: 700,
               letterSpacing: "0.08em",
               color: "#7a5c00",

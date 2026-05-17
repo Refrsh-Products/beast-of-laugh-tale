@@ -30,8 +30,8 @@ function UsageBar({
           display: "flex",
           justifyContent: "space-between",
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.65rem",
-          color: "#555",
+          fontSize: "0.75rem",
+          color: "#000000",
         }}
       >
         <span>{label}</span>
@@ -81,7 +81,7 @@ export default function UsageBanner({ usage }: { usage: AccountUseage }) {
       <span
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.65rem",
+          fontSize: "0.75rem",
           fontWeight: 700,
           textTransform: "uppercase",
           letterSpacing: "0.08em",

@@ -61,7 +61,7 @@ export default function Button({
       onMouseUp={() => setDown(false)}
       style={{
         background: disabled ? "#ccc" : bg,
-        color: disabled ? "#888" : color,
+        color: color,
         border: `2px solid ${disabled ? "#ccc" : B}`,
         boxShadow: disabled ? "none" : shadow,
         transform: disabled ? "none" : transform,

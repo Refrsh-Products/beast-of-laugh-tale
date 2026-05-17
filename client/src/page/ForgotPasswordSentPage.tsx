@@ -68,7 +68,7 @@ export default function ForgotPasswordSentPage() {
         <p
           style={{
             fontSize: "0.75rem",
-            color: "#555",
+            color: "#000000",
             lineHeight: 1.7,
             marginBottom: 8,
           }}
@@ -90,7 +90,7 @@ export default function ForgotPasswordSentPage() {
         {/* Divider */}
         <div style={{ height: 3, background: B, marginBottom: 24 }} />
 
-        <p style={{ fontSize: "0.72rem", color: "#888", marginBottom: 6 }}>
+        <p style={{ fontSize: "0.75rem", color: "#000000", marginBottom: 6 }}>
           Didn't get it?
         </p>
         <span
@@ -108,7 +108,7 @@ export default function ForgotPasswordSentPage() {
         </span>
 
         {/* Back to login */}
-        <p style={{ marginTop: 32, fontSize: "0.75rem", color: "#555" }}>
+        <p style={{ marginTop: 32, fontSize: "0.75rem", color: "#000000" }}>
           <span
             onClick={() => navigate("/login")}
             style={{

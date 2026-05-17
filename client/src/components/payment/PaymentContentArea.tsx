@@ -119,7 +119,7 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
           fontSize: "0.78rem",
-          color: "#666",
+          color: "#000000",
           marginBottom: 24,
         }}
       >
@@ -142,7 +142,7 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
             style={{
               padding: "8px 20px",
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.72rem",
+              fontSize: "0.75rem",
               fontWeight: 700,
               letterSpacing: "0.1em",
               cursor: "pointer",
@@ -203,7 +203,7 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
                   background: B,
                   color: W,
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.6rem",
+                  fontSize: "0.75rem",
                   fontWeight: 700,
                   letterSpacing: "0.14em",
                   padding: "4px 10px",
@@ -216,7 +216,7 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
             <div
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.65rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 letterSpacing: "0.14em",
                 marginBottom: 8,
@@ -240,7 +240,7 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
                     fontFamily: "'IBM Plex Mono', monospace",
                     fontSize: "0.85rem",
                     fontWeight: 700,
-                    color: "#666",
+                    color: "#000000",
                     textDecoration: "line-through",
                     marginBottom: 2,
                   }}
@@ -253,8 +253,8 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
             <div
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.7rem",
-                color: "#555",
+                fontSize: "0.75rem",
+                color: "#000000",
                 marginBottom: 6,
               }}
             >
@@ -265,7 +265,7 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
               <div
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.65rem",
+                  fontSize: "0.75rem",
                   fontWeight: 700,
                   marginBottom: 8,
                   color: "#1a6e1a",
@@ -278,8 +278,8 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
             <p
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
-                color: "#444",
+                fontSize: "0.75rem",
+                color: "#000000",
                 marginBottom: 20,
                 lineHeight: 1.6,
               }}
@@ -303,7 +303,7 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
                   key={f}
                   style={{
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.72rem",
+                    fontSize: "0.75rem",
                     display: "flex",
                     alignItems: "center",
                     gap: 8,
@@ -322,11 +322,11 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
               }}
               style={{
                 background: !plan.billingInterval ? "#eee" : B,
-                color: !plan.billingInterval ? "#999" : W,
+                color: !plan.billingInterval ? B : W,
                 border: `2px solid ${!plan.billingInterval ? "#ccc" : B}`,
                 padding: "10px 16px",
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 letterSpacing: "0.06em",
                 cursor: !plan.billingInterval ? "default" : "pointer",
@@ -343,8 +343,8 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
       <p
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.68rem",
-          color: "#888",
+          fontSize: "0.75rem",
+          color: "#000000",
           marginTop: 24,
           textAlign: "center",
         }}

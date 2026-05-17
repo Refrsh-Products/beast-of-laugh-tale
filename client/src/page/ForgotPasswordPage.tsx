@@ -92,7 +92,7 @@ export default function ForgotPasswordPage() {
         <p
           style={{
             fontSize: "0.75rem",
-            color: "#555",
+            color: "#000000",
             marginBottom: 32,
             lineHeight: 1.6,
           }}
@@ -103,7 +103,7 @@ export default function ForgotPasswordPage() {
         {/* Error */}
         {error && (
           <p
-            style={{ color: "#cc0000", fontSize: "0.72rem", marginBottom: 16 }}
+            style={{ color: "#cc0000", fontSize: "0.75rem", marginBottom: 16 }}
           >
             {error}
           </p>
@@ -118,7 +118,7 @@ export default function ForgotPasswordPage() {
             <label
               style={{
                 display: "block",
-                fontSize: "0.68rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 letterSpacing: "0.12em",
                 marginBottom: 6,
@@ -160,7 +160,7 @@ export default function ForgotPasswordPage() {
         </form>
 
         {/* Back to login */}
-        <p style={{ marginTop: 24, fontSize: "0.75rem", color: "#555" }}>
+        <p style={{ marginTop: 24, fontSize: "0.75rem", color: "#000000" }}>
           <span
             onClick={() => navigate("/login")}
             onMouseEnter={(e) => (e.currentTarget.style.color = B)}

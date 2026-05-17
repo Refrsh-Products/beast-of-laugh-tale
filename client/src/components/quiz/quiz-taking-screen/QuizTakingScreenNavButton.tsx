@@ -73,7 +73,7 @@ export default function NavButton({
         letterSpacing: "0.06em",
         border: `2px solid ${disabled ? "#ccc" : B}`,
         background: disabled ? "#eee" : green ? G : W,
-        color: disabled ? "#aaa" : B,
+        color: B,
         boxShadow: shadow,
         transform,
         cursor: disabled ? "not-allowed" : "pointer",

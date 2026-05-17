@@ -161,7 +161,7 @@ export default function FileItem({
             style={{
               flex: 1,
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.72rem",
+              fontSize: "0.75rem",
               border: `1.5px solid ${B}`,
               padding: "2px 6px",
               outline: "none",
@@ -173,7 +173,7 @@ export default function FileItem({
           <span
             style={{
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.72rem",
+              fontSize: "0.75rem",
               color: B,
               flex: 1,
               overflow: "hidden",
@@ -310,7 +310,7 @@ export default function FileItem({
               border: "none",
               borderBottom: `1px solid #eee`,
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.7rem",
+              fontSize: "0.75rem",
               color: B,
               cursor: "pointer",
               textAlign: "left",
@@ -348,7 +348,7 @@ export default function FileItem({
               background: "none",
               border: "none",
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.7rem",
+              fontSize: "0.75rem",
               color: R,
               cursor: "pointer",
               textAlign: "left",

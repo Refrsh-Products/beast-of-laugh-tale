@@ -209,9 +209,9 @@ export default function QuizTakingScreen({
             <span
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
+                fontSize: "0.75rem",
                 fontWeight: 600,
-                color: "#555",
+                color: "#000000",
               }}
             >
               Q {currentQ + 1} of {numQuestions}
@@ -265,9 +265,9 @@ export default function QuizTakingScreen({
                 style={{
                   background: isFlagged ? GREY : "transparent",
                   border: `1.5px solid ${isFlagged ? B : "#bbb"}`,
-                  color: isFlagged ? B : "#888",
+                  color: B,
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.68rem",
+                  fontSize: "0.75rem",
                   fontWeight: 600,
                   letterSpacing: "0.04em",
                   padding: "5px 12px",
@@ -324,7 +324,7 @@ export default function QuizTakingScreen({
                     <span
                       style={{
                         fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.72rem",
+                        fontSize: "0.75rem",
                         fontWeight: 700,
                         color: B,
                         flexShrink: 0,
@@ -370,9 +370,9 @@ export default function QuizTakingScreen({
                         padding: 0,
                         cursor: "pointer",
                         fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.72rem",
+                        fontSize: "0.75rem",
                         fontWeight: 600,
-                        color: "#555",
+                        color: "#000000",
                         display: "flex",
                         alignItems: "center",
                         gap: 6,
@@ -385,7 +385,7 @@ export default function QuizTakingScreen({
                           transform: explanationOpen
                             ? "rotate(90deg)"
                             : "rotate(0deg)",
-                          fontSize: "0.65rem",
+                          fontSize: "0.75rem",
                         }}
                       >
                         ▶
@@ -407,15 +407,15 @@ export default function QuizTakingScreen({
                         e.currentTarget.style.borderColor = B;
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.color = "#555";
+                        e.currentTarget.style.color = "#000000";
                         e.currentTarget.style.borderColor = "#bbb";
                       }}
                       style={{
                         background: "transparent",
                         border: "1.5px solid #bbb",
-                        color: "#555",
+                        color: "#000000",
                         fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.68rem",
+                        fontSize: "0.75rem",
                         fontWeight: 600,
                         letterSpacing: "0.04em",
                         padding: "6px 14px",
@@ -442,7 +442,7 @@ export default function QuizTakingScreen({
                       style={{
                         fontFamily: "'IBM Plex Mono', monospace",
                         fontSize: "0.78rem",
-                        color: "#444",
+                        color: "#000000",
                         margin: 0,
                         lineHeight: 1.7,
                       }}
@@ -493,7 +493,7 @@ export default function QuizTakingScreen({
                     alignItems: "center",
                     justifyContent: "center",
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.62rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     color: numberColor,
                     transition: "background 0.1s",
@@ -534,15 +534,15 @@ export default function QuizTakingScreen({
               e.currentTarget.style.borderColor = B;
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#888";
+              e.currentTarget.style.color = "#000000";
               e.currentTarget.style.borderColor = "#ccc";
             }}
             style={{
               background: "transparent",
               border: "1.5px solid #ccc",
-              color: "#888",
+              color: "#000000",
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.68rem",
+              fontSize: "0.75rem",
               fontWeight: 600,
               letterSpacing: "0.04em",
               padding: "8px 20px",

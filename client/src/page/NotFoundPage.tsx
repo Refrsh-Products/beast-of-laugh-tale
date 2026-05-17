@@ -80,7 +80,7 @@ export default function NotFoundPage() {
         <p
           style={{
             fontSize: "0.75rem",
-            color: "#555",
+            color: "#000000",
             lineHeight: 1.7,
             marginBottom: 32,
           }}
@@ -95,7 +95,7 @@ export default function NotFoundPage() {
           GO HOME
         </Button>
 
-        <p style={{ marginTop: 20, fontSize: "0.75rem", color: "#555" }}>
+        <p style={{ marginTop: 20, fontSize: "0.75rem", color: "#000000" }}>
           <span
             onClick={() => navigate(-1)}
             style={{

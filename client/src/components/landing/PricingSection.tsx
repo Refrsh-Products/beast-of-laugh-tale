@@ -86,7 +86,7 @@ export default function PricingSection() {
             border: `2px solid ${G}`,
             padding: "6px 14px",
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.65rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             letterSpacing: "0.15em",
             marginBottom: 20,
@@ -115,7 +115,7 @@ export default function PricingSection() {
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
             fontSize: "0.82rem",
-            color: "#888",
+            color: "#FFFFFF",
             marginBottom: 56,
             maxWidth: 420,
             lineHeight: 1.7,
@@ -157,7 +157,7 @@ export default function PricingSection() {
                     color: plan.highlighted ? W : B,
                     border: `2px solid ${plan.highlighted ? B : "#333"}`,
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.58rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     letterSpacing: "0.14em",
                     padding: "3px 10px",
@@ -171,10 +171,10 @@ export default function PricingSection() {
               <div
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.62rem",
+                  fontSize: "0.75rem",
                   fontWeight: 700,
                   letterSpacing: "0.16em",
-                  color: plan.highlighted ? B : "#888",
+                  color: B,
                   marginBottom: 16,
                 }}
               >
@@ -188,7 +188,7 @@ export default function PricingSection() {
                     fontFamily: "'IBM Plex Mono', monospace",
                     fontSize: "0.9rem",
                     fontWeight: 700,
-                    color: "#444",
+                    color: "#000000",
                     textDecoration: "line-through",
                     marginBottom: 2,
                   }}
@@ -211,8 +211,8 @@ export default function PricingSection() {
               <div
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.7rem",
-                  color: plan.highlighted ? "#1a4a1a" : "#666",
+                  fontSize: "0.75rem",
+                  color: plan.highlighted ? "#1a4a1a" : B,
                   marginBottom: plan.saving ? 6 : 20,
                 }}
               >
@@ -223,7 +223,7 @@ export default function PricingSection() {
                 <div
                   style={{
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.65rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     color: "#1a4a1a",
                     marginBottom: 20,
@@ -249,8 +249,8 @@ export default function PricingSection() {
               <p
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.72rem",
-                  color: plan.highlighted ? "#1a4a1a" : "#555",
+                  fontSize: "0.75rem",
+                  color: plan.highlighted ? "#1a4a1a" : B,
                   marginBottom: 24,
                   lineHeight: 1.65,
                 }}
@@ -275,7 +275,7 @@ export default function PricingSection() {
                     key={f}
                     style={{
                       fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.72rem",
+                      fontSize: "0.75rem",
                       color: B,
                       display: "flex",
                       alignItems: "center",
@@ -297,7 +297,7 @@ export default function PricingSection() {
                   border: `2px solid ${plan.highlighted ? B : "#333"}`,
                   padding: "12px 16px",
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.72rem",
+                  fontSize: "0.75rem",
                   fontWeight: 700,
                   letterSpacing: "0.08em",
                   cursor: "pointer",
@@ -328,8 +328,8 @@ export default function PricingSection() {
         <p
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.68rem",
-            color: "#555",
+            fontSize: "0.75rem",
+            color: "#FFFFFF",
             marginTop: 40,
             textAlign: "center",
           }}

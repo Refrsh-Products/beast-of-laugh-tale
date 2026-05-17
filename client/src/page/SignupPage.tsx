@@ -146,10 +146,10 @@ export default function SignupPage() {
             <div style={{ flex: 1, height: 2, background: B }} />
             <span
               style={{
-                fontSize: "0.7rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 letterSpacing: "0.1em",
-                color: "#666",
+                color: "#000000",
               }}
             >
               or
@@ -163,7 +163,7 @@ export default function SignupPage() {
               style={{
                 color: "#cc0000",
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
+                fontSize: "0.75rem",
                 margin: "0 0 16px",
               }}
             >
@@ -206,7 +206,7 @@ export default function SignupPage() {
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#888")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
                   style={{
                     position: "absolute",
                     right: 12,
@@ -216,9 +216,9 @@ export default function SignupPage() {
                     border: "none",
                     cursor: "pointer",
                     padding: 0,
-                    color: "#888",
+                    color: "#000000",
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.65rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     letterSpacing: "0.05em",
                     transition: "color 0.12s",
@@ -252,9 +252,9 @@ export default function SignupPage() {
                     border: "none",
                     cursor: "pointer",
                     padding: 0,
-                    color: "#888",
+                    color: "#000000",
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.65rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     letterSpacing: "0.05em",
                     transition: "color 0.12s",
@@ -281,7 +281,7 @@ export default function SignupPage() {
             style={{
               marginTop: 28,
               fontSize: "0.75rem",
-              color: "#555",
+              color: "#000000",
               textAlign: "center",
             }}
           >

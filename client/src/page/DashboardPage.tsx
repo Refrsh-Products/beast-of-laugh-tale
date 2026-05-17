@@ -344,7 +344,7 @@ export default function DashboardPage() {
           <span
             style={{
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.6rem",
+              fontSize: "0.75rem",
               fontWeight: 700,
               letterSpacing: "0.12em",
               textTransform: "uppercase",
@@ -353,7 +353,7 @@ export default function DashboardPage() {
           >
             {usage.plan}
           </span>
-          <span style={{ color: "#ddd" }}>·</span>
+          <span style={{ color: "#000000" }}>·</span>
           {[
             {
               label: "Notebooks",
@@ -391,8 +391,8 @@ export default function DashboardPage() {
                 <span
                   style={{
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.6rem",
-                    color: "#777",
+                    fontSize: "0.75rem",
+                    color: "#000000",
                   }}
                 >
                   {item.label}
@@ -401,18 +401,18 @@ export default function DashboardPage() {
                 <span
                   style={{
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.6rem",
+                    fontSize: "0.75rem",
                     color: B,
                     fontWeight: 700,
                   }}
                 >
                   {item.fmt(item.used)}
-                  <span style={{ color: "#bbb", fontWeight: 400 }}>
+                  <span style={{ color: "#000000", fontWeight: 400 }}>
                     /{item.fmt(item.limit)}
                   </span>
                 </span>
               </span>
-              {i < arr.length - 1 && <span style={{ color: "#ddd" }}>·</span>}
+              {i < arr.length - 1 && <span style={{ color: "#000000" }}>·</span>}
             </span>
           ))}
           {isFreePlan && (
@@ -439,7 +439,7 @@ export default function DashboardPage() {
                 padding: "4px 12px",
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontWeight: 700,
-                fontSize: "0.6rem",
+                fontSize: "0.75rem",
                 letterSpacing: "0.05em",
                 cursor: "pointer",
                 boxShadow: `2px 2px 0 ${B}`,
@@ -487,8 +487,8 @@ export default function DashboardPage() {
             <p
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.7rem",
-                color: "#888",
+                fontSize: "0.75rem",
+                color: "#000000",
                 margin: "6px 0 0",
               }}
             >
@@ -537,7 +537,7 @@ export default function DashboardPage() {
                 borderRadius: 0,
                 padding: "8px 12px 8px 32px",
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
+                fontSize: "0.75rem",
                 outline: "none",
                 boxSizing: "border-box",
                 transition: "border-color 0.15s",
@@ -656,7 +656,7 @@ export default function DashboardPage() {
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: "0.78rem",
-                color: "#666",
+                color: "#000000",
                 margin: 0,
               }}
             >

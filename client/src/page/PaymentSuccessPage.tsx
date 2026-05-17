@@ -81,7 +81,7 @@ export default function PaymentSuccessPage() {
         <p
           style={{
             fontSize: "0.75rem",
-            color: "#555",
+            color: "#000000",
             lineHeight: 1.7,
             marginBottom: 32,
           }}

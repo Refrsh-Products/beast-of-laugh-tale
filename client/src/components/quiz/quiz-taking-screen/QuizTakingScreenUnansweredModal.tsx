@@ -30,7 +30,7 @@ export default function UnansweredModal({
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
           fontSize: "0.78rem",
-          color: "#555",
+          color: "#000000",
           margin: "0 0 28px",
           lineHeight: 1.7,
         }}

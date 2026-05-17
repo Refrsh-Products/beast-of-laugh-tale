@@ -30,10 +30,10 @@ function ReadOnlyRow({ label, value }: { label: string; value: string }) {
       <div
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.65rem",
+          fontSize: "0.75rem",
           fontWeight: 700,
           letterSpacing: "0.14em",
-          color: "#aaa",
+          color: "#000000",
           marginBottom: 8,
         }}
       >
@@ -43,7 +43,7 @@ function ReadOnlyRow({ label, value }: { label: string; value: string }) {
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
           fontSize: "0.88rem",
-          color: "#888",
+          color: "#000000",
         }}
       >
         {value || "—"}

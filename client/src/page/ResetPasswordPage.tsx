@@ -138,7 +138,7 @@ export default function ResetPasswordPage() {
             <p
               style={{
                 fontSize: "0.75rem",
-                color: "#555",
+                color: "#000000",
                 lineHeight: 1.6,
                 marginBottom: 24,
               }}
@@ -182,7 +182,7 @@ export default function ResetPasswordPage() {
             <p
               style={{
                 fontSize: "0.75rem",
-                color: "#555",
+                color: "#000000",
                 marginBottom: 32,
                 lineHeight: 1.6,
               }}
@@ -195,7 +195,7 @@ export default function ResetPasswordPage() {
               <p
                 style={{
                   color: "#cc0000",
-                  fontSize: "0.72rem",
+                  fontSize: "0.75rem",
                   marginBottom: 16,
                 }}
               >
@@ -212,7 +212,7 @@ export default function ResetPasswordPage() {
                 <label
                   style={{
                     display: "block",
-                    fontSize: "0.68rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     letterSpacing: "0.12em",
                     marginBottom: 6,
@@ -233,7 +233,7 @@ export default function ResetPasswordPage() {
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#888")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
                     style={{
                       position: "absolute",
                       right: 12,
@@ -243,9 +243,9 @@ export default function ResetPasswordPage() {
                       border: "none",
                       cursor: "pointer",
                       padding: 0,
-                      color: "#888",
+                      color: "#000000",
                       fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.65rem",
+                      fontSize: "0.75rem",
                       fontWeight: 700,
                       letterSpacing: "0.05em",
                       transition: "color 0.12s",
@@ -261,7 +261,7 @@ export default function ResetPasswordPage() {
                 <label
                   style={{
                     display: "block",
-                    fontSize: "0.68rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     letterSpacing: "0.12em",
                     marginBottom: 6,
@@ -290,9 +290,9 @@ export default function ResetPasswordPage() {
                       border: "none",
                       cursor: "pointer",
                       padding: 0,
-                      color: "#888",
+                      color: "#000000",
                       fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.65rem",
+                      fontSize: "0.75rem",
                       fontWeight: 700,
                       letterSpacing: "0.05em",
                       transition: "color 0.12s",

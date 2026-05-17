@@ -47,8 +47,9 @@ export default function TopNavbar({
       <div
         onClick={() => navigate("/dashboard")}
         style={{
-          position: "relative",
           display: "inline-flex",
+          alignItems: "center",
+          gap: 4,
           cursor: "pointer",
           userSelect: "none",
         }}
@@ -60,22 +61,22 @@ export default function TopNavbar({
             fontSize: "1.5rem",
             letterSpacing: "-0.02em",
             color: G,
+            lineHeight: 1,
           }}
         >
           FRESHR
         </span>
         <span
           style={{
-            position: "absolute",
-            top: -4,
-            right: -36,
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.5rem",
+            fontSize: "0.6rem",
             fontWeight: 700,
             letterSpacing: "0.1em",
             background: B,
             color: G,
-            padding: "2px 5px",
+            padding: "2px 4px",
+            alignSelf: "flex-start",
+            marginTop: -8,
           }}
         >
           BETA
@@ -111,7 +112,7 @@ export default function TopNavbar({
             justifyContent: "center",
             fontFamily: "'Syne', sans-serif",
             fontWeight: 800,
-            fontSize: "0.65rem",
+            fontSize: "0.75rem",
             flexShrink: 0,
             overflow: "hidden",
           }}
@@ -130,8 +131,8 @@ export default function TopNavbar({
         <span
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.68rem",
-            color: "#555",
+            fontSize: "0.75rem",
+            color: "#000000",
             maxWidth: 160,
             overflow: "hidden",
             textOverflow: "ellipsis",

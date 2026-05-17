@@ -95,7 +95,7 @@ export default function OnboardingPage() {
   const labelStyle: React.CSSProperties = {
     display: "block",
     fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.68rem",
+    fontSize: "0.75rem",
     fontWeight: 700,
     letterSpacing: "0.12em",
     marginBottom: 6,
@@ -144,8 +144,8 @@ export default function OnboardingPage() {
         <p
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.72rem",
-            color: "#666",
+            fontSize: "0.75rem",
+            color: "#000000",
             margin: "0 0 32px",
             lineHeight: 1.6,
           }}
@@ -158,7 +158,7 @@ export default function OnboardingPage() {
             style={{
               color: "#cc0000",
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.72rem",
+              fontSize: "0.75rem",
               margin: "0 0 20px",
             }}
           >

@@ -68,10 +68,10 @@ export default function PastPresentationsColumn({
         <span
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.62rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             letterSpacing: "0.14em",
-            color: "#555",
+            color: "#000000",
           }}
         >
           YOUR SLIDES
@@ -102,7 +102,7 @@ export default function PastPresentationsColumn({
                   color: W,
                   border: `1.5px solid ${B}`,
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.6rem",
+                  fontSize: "0.75rem",
                   fontWeight: 700,
                   padding: "3px 8px",
                   cursor: "pointer",
@@ -153,8 +153,8 @@ export default function PastPresentationsColumn({
             <p
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.7rem",
-                color: "#bbb",
+                fontSize: "0.75rem",
+                color: "#000000",
                 lineHeight: 1.8,
                 margin: 0,
               }}
@@ -228,9 +228,9 @@ export default function PastPresentationsColumn({
                     <p
                       style={{
                         fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.72rem",
+                        fontSize: "0.75rem",
                         fontWeight: 700,
-                        color: isLoading ? "#aaa" : B,
+                        color: B,
                         margin: 0,
                         lineHeight: 1.4,
                         flex: 1,
@@ -251,9 +251,9 @@ export default function PastPresentationsColumn({
                       <span
                         style={{
                           fontFamily: "'IBM Plex Mono', monospace",
-                          fontSize: "0.68rem",
+                          fontSize: "0.75rem",
                           fontWeight: 700,
-                          color: isLoading ? "#ccc" : B,
+                          color: B,
                         }}
                       >
                         {isLoading ? "—" : `${p.slide_count}`}
@@ -266,31 +266,31 @@ export default function PastPresentationsColumn({
                     <span
                       style={{
                         fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.58rem",
-                        color: isLoading ? "#bbb" : "#999",
+                        fontSize: "0.75rem",
+                        color: B,
                       }}
                     >
                       {isLoading ? "generating..." : timeAgo(p.generated_at)}
                     </span>
                     {!isLoading && (
                       <>
-                        <span style={{ color: "#ccc" }}>·</span>
+                        <span style={{ color: "#000000" }}>·</span>
                         <span
                           style={{
                             fontFamily: "'IBM Plex Mono', monospace",
-                            fontSize: "0.58rem",
-                            color: "#666",
+                            fontSize: "0.75rem",
+                            color: "#000000",
                             textTransform: "capitalize",
                           }}
                         >
                           {p.text_length.toLowerCase()}
                         </span>
-                        <span style={{ color: "#ccc" }}>·</span>
+                        <span style={{ color: "#000000" }}>·</span>
                         <span
                           style={{
                             fontFamily: "'IBM Plex Mono', monospace",
-                            fontSize: "0.58rem",
-                            color: "#666",
+                            fontSize: "0.75rem",
+                            color: "#000000",
                           }}
                         >
                           {p.slide_count} slides
@@ -366,8 +366,8 @@ export default function PastPresentationsColumn({
             <p
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
-                color: "#555",
+                fontSize: "0.75rem",
+                color: "#000000",
                 marginBottom: 24,
                 lineHeight: 1.5,
               }}

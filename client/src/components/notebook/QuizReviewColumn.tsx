@@ -80,7 +80,7 @@ export default function QuizReviewColumn({
           onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.72rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             color: B,
             cursor: "pointer",
@@ -124,31 +124,31 @@ export default function QuizReviewColumn({
             <span
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.65rem",
-                color: "#666",
+                fontSize: "0.75rem",
+                color: "#000000",
                 textTransform: "capitalize",
               }}
             >
               {quiz.difficulty}
             </span>
-            <span style={{ color: "#ccc" }}>·</span>
+            <span style={{ color: "#000000" }}>·</span>
             <span
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.65rem",
-                color: "#666",
+                fontSize: "0.75rem",
+                color: "#000000",
               }}
             >
               {numQuestions} questions
             </span>
             {timed && timeLimitMinutes && (
               <>
-                <span style={{ color: "#ccc" }}>·</span>
+                <span style={{ color: "#000000" }}>·</span>
                 <span
                   style={{
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.65rem",
-                    color: "#666",
+                    fontSize: "0.75rem",
+                    color: "#000000",
                   }}
                 >
                   {timeLimitMinutes} min limit
@@ -157,12 +157,12 @@ export default function QuizReviewColumn({
             )}
             {dateStr && (
               <>
-                <span style={{ color: "#ccc" }}>·</span>
+                <span style={{ color: "#000000" }}>·</span>
                 <span
                   style={{
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.65rem",
-                    color: "#666",
+                    fontSize: "0.75rem",
+                    color: "#000000",
                   }}
                 >
                   {formatDate(dateStr)}
@@ -248,7 +248,7 @@ export default function QuizReviewColumn({
                     <span
                       style={{
                         fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.65rem",
+                        fontSize: "0.75rem",
                         fontWeight: 700,
                         color: correct ? "#2a9e30" : "#cc3333",
                         flexShrink: 0,
@@ -316,7 +316,7 @@ export default function QuizReviewColumn({
                           <span
                             style={{
                               fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: "0.68rem",
+                              fontSize: "0.75rem",
                               fontWeight: 700,
                               color: textColor,
                               flexShrink: 0,
@@ -327,7 +327,7 @@ export default function QuizReviewColumn({
                           <span
                             style={{
                               fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: "0.72rem",
+                              fontSize: "0.75rem",
                               color: textColor,
                               flex: 1,
                               lineHeight: 1.5,
@@ -339,7 +339,7 @@ export default function QuizReviewColumn({
                             <span
                               style={{
                                 fontFamily: "'IBM Plex Mono', monospace",
-                                fontSize: "0.58rem",
+                                fontSize: "0.75rem",
                                 color:
                                   !correct && isUserAnswer
                                     ? "#cc3333"
@@ -375,9 +375,9 @@ export default function QuizReviewColumn({
                               padding: 0,
                               cursor: "pointer",
                               fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: "0.72rem",
+                              fontSize: "0.75rem",
                               fontWeight: 600,
-                              color: "#555",
+                              color: "#000000",
                               display: "flex",
                               alignItems: "center",
                               gap: 6,
@@ -388,7 +388,7 @@ export default function QuizReviewColumn({
                                 display: "inline-block",
                                 transition: "transform 0.2s",
                                 transform: openExplanations.has(qi) ? "rotate(90deg)" : "rotate(0deg)",
-                                fontSize: "0.65rem",
+                                fontSize: "0.75rem",
                               }}
                             >
                               ▶
@@ -410,15 +410,15 @@ export default function QuizReviewColumn({
                               e.currentTarget.style.borderColor = B;
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.color = "#555";
+                              e.currentTarget.style.color = "#000000";
                               e.currentTarget.style.borderColor = "#bbb";
                             }}
                             style={{
                               background: "transparent",
                               border: "1.5px solid #bbb",
-                              color: "#555",
+                              color: "#000000",
                               fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: "0.68rem",
+                              fontSize: "0.75rem",
                               fontWeight: 600,
                               letterSpacing: "0.04em",
                               padding: "6px 14px",
@@ -444,7 +444,7 @@ export default function QuizReviewColumn({
                             style={{
                               fontFamily: "'IBM Plex Mono', monospace",
                               fontSize: "0.78rem",
-                              color: "#444",
+                              color: "#000000",
                               margin: 0,
                               lineHeight: 1.7,
                             }}
