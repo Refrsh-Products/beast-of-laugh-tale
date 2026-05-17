@@ -5,7 +5,7 @@ API_KEY=$ANTHROPIC_API_KEY
 TEMP_CONTEXT="git_context.txt"
 
 if [ -z "$API_KEY" ]; then
-    echo -e "\033[1;31mError: ANTHROPIC_API_KEY is not set.\033[0m"
+    echo -e "\033[1;31mError: ANTHROPIC_API_KEY is not set.\033[0m \n use 'export ANTHROPIC_API_KEY=[AIP KEY]' to set the env var"
     exit 1
 fi
 

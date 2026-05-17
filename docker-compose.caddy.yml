@@ -1,0 +1,33 @@
+# Shared edge proxy. Terminates TLS for freshr.cc and staging.freshr.cc,
+# reverse-proxies to the appropriate frontend container over the `edge` network.
+#
+# One-time setup on the VPS:
+#   docker network create edge
+#
+# Run with:
+#   docker compose -p freshr-edge -f docker-compose.caddy.yml up -d
+#
+# Reload after editing Caddyfile:
+#   docker compose -p freshr-edge -f docker-compose.caddy.yml restart caddy
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - edge
+
+networks:
+  edge:
+    external: true
+
+volumes:
+  caddy_data:
+  caddy_config:

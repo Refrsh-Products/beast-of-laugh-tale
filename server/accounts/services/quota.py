@@ -22,14 +22,20 @@ def get_limits(plan: str):
     return settings.FRESHR_TIER_LIMITS.get(plan, settings.FRESHR_TIER_LIMITS["FREE"])
 
 
-def check_notebook_quota(account: Account):
+def get_notebook_quota_counts(account: Account) -> tuple[int, int | str]:
+    """Return (active_count, limit) for the account's notebook quota."""
     plan = get_effective_plan(account)
     limits = get_limits(plan)
-    max_notebooks = limits["max_notebooks"]
-    if max_notebooks == "unlimited":
+    limit = limits["max_notebooks"]
+    active_count = Notebook.objects.filter(user=account.user, is_archived=False).count()
+    return active_count, limit
+
+
+def check_notebook_quota(account: Account):
+    active_count, limit = get_notebook_quota_counts(account)
+    if limit == "unlimited":
         return True
-    notebook_count = Notebook.objects.filter(user=account.user).count()
-    return notebook_count < max_notebooks
+    return active_count < limit
 
 def check_file_per_notebook_quota(account: Account, notebook: Notebook):
     plan = get_effective_plan(account)
@@ -40,6 +46,11 @@ def check_file_per_notebook_quota(account: Account, notebook: Notebook):
     notebook_file_count = NotebookFile.objects.filter(notebook=notebook).count()
     return notebook_file_count < max_files_per_notebook
 
+def check_size_per_file(account: Account, file_size_bytes: int) -> bool:
+    plan = get_effective_plan(account)
+    limits = get_limits(plan)
+    max_size_mb = limits["max_size_per_file_mega_bytes"]
+    return file_size_bytes <= max_size_mb * 1024 * 1024
 
 def check_storage_quota(account: Account, incoming_bytes: int):
     plan = get_effective_plan(account)
@@ -51,7 +62,7 @@ def check_storage_quota(account: Account, incoming_bytes: int):
 def check_daily_quiz_quota(account: Account):
     plan = get_effective_plan(account)
     limits = get_limits(plan)
-    max_quizzes = limits["max_quizzes_per_notebook"]
+    max_quizzes = limits["max_quizzes_per_day"]
     if max_quizzes == "unlimited":
         return True
     today = date.today()
@@ -59,12 +70,10 @@ def check_daily_quiz_quota(account: Account):
     return usage.quizzes_generated < max_quizzes
 
 
-def check_daily_presentation_quota(account: Account):
+def check_presentation_quota(account: Account):
     plan = get_effective_plan(account)
     limits = get_limits(plan)
-    max_presentations = limits["max_presentations_per_day"]
+    max_presentations = limits["max_presentations_total"]
     if max_presentations == "unlimited":
         return True
-    today = date.today()
-    usage, _ = DailyUsage.objects.get_or_create(account=account, date=today)
-    return usage.presentations_generated < max_presentations
+    return account.presentations_generated < max_presentations

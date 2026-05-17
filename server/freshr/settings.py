@@ -14,6 +14,7 @@ import os
 from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -25,16 +26,29 @@ load_dotenv()
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-w@hqs_0!7r_)6on$(cs(c*5_mbr3)=y9%2p-b5_=8cjm0wda^='
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-w@hqs_0!7r_)6on$(cs(c*5_mbr3)=y9%2p-b5_=8cjm0wda^=')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ["0.0.0.0", "127.0.0.1", "localhost", "web"]
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '0.0.0.0,127.0.0.1,localhost,web').split(',')
+
+# Caddy (and nginx-in-frontend) terminate TLS upstream of Django. Without this,
+# request.is_secure() returns False and CSRF rejects same-origin POSTs as
+# "Origin checking failed - https://... does not match any trusted origins".
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Required for HTTPS admin/CSRF-protected POSTs. Include scheme.
+# e.g. "https://staging.freshr.cc,https://freshr.cc"
+CSRF_TRUSTED_ORIGINS = [
+    o for o in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if o
+]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://freshr.cc",        # Production React (port 80)
+    "https://staging.freshr.cc",   # Staging React
 ]
 
 
@@ -74,11 +88,13 @@ AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'accounts.middleware.SubscriptionExpiryMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -153,6 +169,12 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+}
 
 MEDIA_ROOT = BASE_DIR / "media"
 
@@ -181,16 +203,18 @@ FRESHR_TIER_LIMITS = {
     "FREE": {
         "max_notebooks": 3,
         "max_files_per_notebook": 2,
-        "max_quizzes_per_notebook": 5,
-        "max_presentations_per_day": 2,
-        "storage_mega_bytes": 500,
+        "max_size_per_file_mega_bytes": 10,
+        "max_quizzes_per_day": 5,
+        "max_presentations_total": 2,
+        "storage_mega_bytes": 60,
     },
     "PAID": {
         "max_notebooks": "unlimited",
         "max_files_per_notebook": "unlimited",
-        "max_quizzes_per_notebook": "unlimited",
-        "max_presentations_per_day": "unlimited",
-        "storage_mega_bytes": 5000,
+        "max_size_per_file_mega_bytes": 50,
+        "max_quizzes_per_day": "unlimited",
+        "max_presentations_total": "unlimited",
+        "storage_mega_bytes": 2000,
     },
 }
 
@@ -199,6 +223,8 @@ FRESHR_TIER_LIMITS = {
 CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
 CELERY_TIMEZONE = "Asia/Dhaka"
+
+CELERY_BEAT_SCHEDULE = {"expire-subscriptions": {"task": "accounts.tasks.expire_subscriptions", "schedule": crontab(minute=0)}}
 
 # Email Configuration (console backend for development)
 EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
@@ -209,7 +235,7 @@ DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'
 FRONTEND_URL = os.getenv("FRONTEND_URL", 'http://localhost:3000')
 
 # Google OAuth2.0
-GOOGLE_OAUTH_CLIENT_SECET = os.getenv('GOOGLE_OAUTH_CLIENT_SECET')
+GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
 
 # ZiniPay
 ZINIPAY_API_KEY = os.getenv('ZINIPAY_API_KEY', '')

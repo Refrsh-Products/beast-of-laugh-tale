@@ -113,9 +113,9 @@ export default function UsageBanner({ usage }: { usage: AccountUseage }) {
       />
 
       <UsageBar
-        label="Daily Presentation"
-        used={usage.daily_presentations.used}
-        limit={usage.daily_presentations.limit}
+        label="Presentations"
+        used={usage.presentations.used}
+        limit={usage.presentations.limit}
       />
     </div>
   );

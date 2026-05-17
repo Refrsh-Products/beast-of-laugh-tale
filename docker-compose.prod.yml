@@ -1,0 +1,126 @@
+# Production environment
+# Run with: docker compose --env-file .env.prod -p freshr-prod -f docker-compose.prod.yml up -d
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+    # NOT exposed to host — internal Docker network only thus no ports
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    # NOT exposed to host — internal Docker network only thus no port
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    image: ghcr.io/${GHCR_ORG}/freshr-server:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: >
+      sh -c "python manage.py collectstatic --noinput &&
+             python manage.py migrate --noinput &&
+             gunicorn freshr.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120"
+    volumes:
+      - media_prod:/app/media
+    ports:
+      - "127.0.0.1:8000:8000"
+    env_file:
+      - .env.prod
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_URL: redis://redis:6379/0
+      CONNECTION_STRING: postgresql+psycopg://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery:
+    image: ghcr.io/${GHCR_ORG}/freshr-server:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: celery -A freshr worker -l info --concurrency 2
+    volumes:
+      - media_prod:/app/media
+    env_file:
+      - .env.prod
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_URL: redis://redis:6379/0
+      CONNECTION_STRING: postgresql+psycopg://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery-beat:
+    image: ghcr.io/${GHCR_ORG}/freshr-server:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    command: celery -A freshr beat -l info
+    volumes:
+      - media_prod:/app/media
+    env_file:
+      - .env.prod
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      REDIS_URL: redis://redis:6379/0
+      CONNECTION_STRING: postgresql+psycopg://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # React SPA served by Nginx.
+  # VITE_API_BASE_URL is baked in at build time. To change the API URL,
+  # update the PROD_API_URL secret in GitHub, push to main, and promote the new SHA.
+  # No host port: the shared Caddy (docker-compose.caddy.yml) reaches this
+  # container over the `edge` network via the `frontend-prod` alias.
+  frontend:
+    image: ghcr.io/${GHCR_ORG}/freshr-web:${IMAGE_TAG:-latest}
+    restart: unless-stopped
+    networks:
+      default:
+      edge:
+        aliases:
+          - frontend-prod
+
+  # Dozzle intentionally not duplicated here — the staging stack's Dozzle reads
+  # /var/run/docker.sock and already sees every container on the host (staging
+  # AND prod). Access it at https://logs.freshr.cc.
+
+networks:
+  edge:
+    external: true
+
+volumes:
+  postgres_data_prod:
+  media_prod:

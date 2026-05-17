@@ -16,6 +16,7 @@ interface PresentationViewerProps {
   presentation: PresentationSession;
   onClose: () => void;
   onUpdate?: (updatedSlides: PresentationSlide[]) => void;
+  onRefineSlide?: (slideId: string, feedback: string) => Promise<PresentationSlide>;
 }
 
 // ─── Slide thumbnail (right panel) ───────────────────────────────────────────
@@ -137,6 +138,7 @@ export default function PresentationViewer({
   presentation,
   onClose,
   onUpdate,
+  onRefineSlide,
 }: PresentationViewerProps) {
   const deckRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -148,6 +150,8 @@ export default function PresentationViewer({
   const [aiMessages, setAiMessages] = useState<AiMessage[]>([]);
   const [aiPanelCollapsed, setAiPanelCollapsed] = useState(false);
   const [chatInput, setChatInput] = useState("");
+  const [isRefining, setIsRefining] = useState(false);
+  const [slideEditorKey, setSlideEditorKey] = useState(0);
   const [deckKey, setDeckKey] = useState(0);
   const [exportOpen, setExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -232,20 +236,38 @@ export default function PresentationViewer({
     setDraftSlides((prev) => prev.map((s, i) => (i === index ? updated : s)));
   }
 
-  function handleSendChat() {
-    if (!chatInput.trim()) return;
+  async function handleSendChat() {
+    if (!chatInput.trim() || isRefining) return;
     const content = chatInput.trim();
     setChatInput("");
-    setAiMessages((prev) => [
-      ...prev,
-      { role: "user", content },
-      {
-        role: "ai",
-        content:
-          "AI slide editing is coming soon. Edit slides directly for now.",
-      },
-    ]);
     setAiPanelCollapsed(false);
+    setAiMessages((prev) => [...prev, { role: "user", content }]);
+
+    if (!onRefineSlide || !activeDraftSlide) {
+      setAiMessages((prev) => [
+        ...prev,
+        { role: "ai", content: "AI slide editing is not available." },
+      ]);
+      return;
+    }
+
+    setIsRefining(true);
+    try {
+      const updatedSlide = await onRefineSlide(activeDraftSlide.id, content);
+      updateSlide(currentSlideIndex, updatedSlide);
+      setSlideEditorKey((k) => k + 1);
+      setAiMessages((prev) => [
+        ...prev,
+        { role: "ai", content: "I have successfully made your changes." },
+      ]);
+    } catch {
+      setAiMessages((prev) => [
+        ...prev,
+        { role: "ai", content: "Sorry, failed to update the slide, try again." },
+      ]);
+    } finally {
+      setIsRefining(false);
+    }
   }
 
   const showAiPanel = aiMessages.length > 0;
@@ -623,6 +645,21 @@ export default function PresentationViewer({
                       </div>
                     </div>
                   ))}
+                  {isRefining && (
+                    <div style={{ marginBottom: 12, display: "flex", alignItems: "flex-start" }}>
+                      <div
+                        style={{
+                          padding: "8px 10px",
+                          background: "#f0f0f0",
+                          fontFamily: "'IBM Plex Mono', monospace",
+                          fontSize: "0.68rem",
+                          color: "#999",
+                        }}
+                      >
+                        Thinking...
+                      </div>
+                    </div>
+                  )}
                   <div ref={chatEndRef} />
                 </div>
               </>
@@ -644,7 +681,7 @@ export default function PresentationViewer({
           <div style={{ flex: 1, overflow: "hidden" }}>
             {activeDraftSlide && (
               <SlideEditor
-                key={activeDraftSlide.id}
+                key={`${activeDraftSlide.id}-${slideEditorKey}`}
                 slide={activeDraftSlide}
                 totalSlides={draftSlides.length}
                 onChange={(updated) => updateSlide(currentSlideIndex, updated)}
@@ -669,6 +706,7 @@ export default function PresentationViewer({
               onChange={(e) => setChatInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
               placeholder="Ask AI to edit this slide..."
+              disabled={isRefining}
               style={{
                 flex: 1,
                 border: `2px solid ${B}`,
@@ -677,20 +715,22 @@ export default function PresentationViewer({
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: "0.72rem",
                 outline: "none",
-                background: W,
+                background: isRefining ? "#f5f5f5" : W,
+                opacity: isRefining ? 0.6 : 1,
               }}
             />
             <button
               onClick={handleSendChat}
+              disabled={isRefining}
               style={{
-                background: B,
+                background: isRefining ? "#555" : B,
                 color: W,
-                border: `2px solid ${B}`,
+                border: `2px solid ${isRefining ? "#555" : B}`,
                 padding: "8px 16px",
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: "0.72rem",
                 fontWeight: 700,
-                cursor: "pointer",
+                cursor: isRefining ? "not-allowed" : "pointer",
                 letterSpacing: "0.04em",
               }}
             >

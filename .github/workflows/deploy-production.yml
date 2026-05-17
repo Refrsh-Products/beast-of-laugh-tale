@@ -1,0 +1,62 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: |
+          Short SHA to promote to production (e.g. a3f9c12).
+          Both freshr-server:SHA and freshr-web:SHA must already exist in GHCR —
+          they are built automatically when that commit was pushed to main.
+          Verify it on staging first before promoting.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production # Add required reviewers here in GitHub repo settings
+
+    steps:
+      - name: Confirm deployment target
+        run: |
+          echo "🚀 Promoting tag '${{ inputs.image_tag }}' to production"
+          echo "   freshr-server:${{ inputs.image_tag }}"
+          echo "   freshr-web:${{ inputs.image_tag }}"
+
+      - name: Set lowercase org name
+        id: org
+        run: echo "name=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_SSH_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: GHCR_TOKEN,GHCR_ORG,IMAGE_TAG
+          script: |
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_ORG" --password-stdin
+
+            cd /opt/freshr
+
+            # Pull both the server and web images at the given SHA, then restart.
+            # No build happens here — images were built when this commit hit main.
+            export IMAGE_TAG=$IMAGE_TAG
+            docker compose --env-file .env.prod -p freshr-prod -f docker-compose.prod.yml pull
+            docker compose --env-file .env.prod -p freshr-prod -f docker-compose.prod.yml up -d --remove-orphans
+
+            docker image prune -f
+
+            echo "✅ Production deployed — tag: $IMAGE_TAG"
+            echo "🌐 App (prod): http://$(curl -s ifconfig.me)"
+            echo "🌐 API (prod): http://$(curl -s ifconfig.me):8000"
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GHCR_ORG: ${{ steps.org.outputs.name }}
+          IMAGE_TAG: ${{ inputs.image_tag }}

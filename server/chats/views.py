@@ -8,6 +8,8 @@ from rest_framework.serializers import BaseSerializer
 from rest_framework.views import APIView
 
 from notebooks.models import Notebook
+from notebooks.services.activity import touch_notebook_activity
+from notebooks.services.archive import assert_notebook_writable
 from .serializers import ChatMessageCreateSerializer, ChatMessageSerializer, ChatSerializer, ChatCreateSerializer, ChatUpdateSerializer
 from .models import Chats, ChatMessages, ChatRole
 from .services.llm_service import _stream_llm_response
@@ -33,7 +35,9 @@ class ChatListCreateView(generics.ListCreateAPIView):
         notebook = get_object_or_404(
             Notebook, id=self.request.data.get("notebook"), user=self.request.user  # type: ignore[attr-defined]
         )
+        assert_notebook_writable(notebook)
         serializer.save(notebook=notebook)
+        touch_notebook_activity(notebook_id=notebook.id)
 
 class ChatDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (IsAuthenticated,)
@@ -65,12 +69,14 @@ class ChatMessageListCreateView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         chat = get_object_or_404(
-            Chats,
+            Chats.objects.select_related("notebook"),
             id=self.kwargs["chat_id"],
             notebook__user=self.request.user,
         )
+        assert_notebook_writable(chat.notebook)
         next_index = ChatMessages.objects.filter(chat=chat).count()
         serializer.save(chat=chat, role=ChatRole.USER, order_index=next_index)
+        touch_notebook_activity(notebook_id=chat.notebook_id) # type: ignore
 
 
 class ChatMessageStreamView(APIView):
@@ -79,6 +85,9 @@ class ChatMessageStreamView(APIView):
     def get(self, request: Request, chat_id: str) -> Response | StreamingHttpResponse:
         # FETCH DATA
         chat = get_object_or_404(Chats, id=chat_id, notebook__user=request.user)
+        
+        assert_notebook_writable(chat.notebook)
+        
         messages = ChatMessages.objects.filter(
             chat=chat, is_deleted=False
         ).order_by("order_index")

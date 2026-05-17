@@ -28,8 +28,15 @@ const useNotebookServiceApi = (): NotebookService => {
     },
 
     listArchived: async () => {
-      // Backend endpoint TBD — return empty until confirmed
-      return [];
+      try {
+        const response = await fetchData<Notebook[]>(
+          `${NotebookServiceApiEndpoints.getNotebooks}?archived=true`,
+          "GET",
+        );
+        return response;
+      } catch (err) {
+        throw err;
+      }
     },
 
     getNotebook: async (notebook_id) => {
@@ -83,11 +90,30 @@ const useNotebookServiceApi = (): NotebookService => {
     },
 
     archive: async (notebook_id) => {
-      console.log("Implement archiving the notebook: ", notebook_id);
+      try {
+        await fetchData<Notebook>(
+          NotebookServiceApiEndpoints.archiveNotebook(notebook_id),
+          "POST",
+        );
+        console.log("[useNotebookServiceApi] Archived Notebook: ", notebook_id);
+      } catch (err) {
+        throw err;
+      }
     },
 
     unarchive: async (notebook_id) => {
-      console.log("Implement unarchiving the notebook: ", notebook_id);
+      try {
+        await fetchData<Notebook>(
+          NotebookServiceApiEndpoints.unarchiveNotebook(notebook_id),
+          "POST",
+        );
+        console.log(
+          "[useNotebookServiceApi] Unarchived Notebook: ",
+          notebook_id,
+        );
+      } catch (err) {
+        throw err;
+      }
     },
 
     seed: async () => {

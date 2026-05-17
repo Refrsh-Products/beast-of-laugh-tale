@@ -270,7 +270,6 @@ export default function SignupPage() {
                 variant="green"
                 fullWidth
                 type="submit"
-                onClick={handleSubmit}
               >
                 Sign up →
               </Button>

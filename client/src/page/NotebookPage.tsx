@@ -1,18 +1,8 @@
-import { useState, useEffect, useRef } from "react";
-import axios from "axios";
-import {
-  useParams,
-  useNavigate,
-  Navigate,
-  useSearchParams,
-} from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, Navigate } from "react-router-dom";
 import useAuthService from "../services/auth";
 import useNotebookService from "../services/notebooks";
 import type { Notebook, NotebookFile } from "../storage";
-import type {
-  QuizGenerateOptions,
-  NotebookTopic,
-} from "../services/quiz/Quiz.types";
 
 import NotebookTitle from "../components/notebook/NotebookTitle";
 import FilesColumn, {
@@ -26,69 +16,88 @@ import QuizReviewColumn from "../components/notebook/QuizReviewColumn";
 import QuizTakingScreen from "../components/notebook/QuizTakingScreen";
 import PastQuizColumn from "../components/notebook/PastQuizColumn";
 import QuizColumn from "../components/notebook/QuizColumn";
-import PresentationColumn, { type PresentationGenerateOptions } from "../components/notebook/PresentationColumn";
+import PresentationColumn from "../components/notebook/PresentationColumn";
 import PastPresentationsColumn from "../components/notebook/PastPresentationsColumn";
 import PresentationViewer from "../components/presentation/PresentationViewer";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
 import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
 import useChatService from "../services/chat";
-import useQuizService from "../services/quiz";
-import usePresentationService from "../services/presentation";
-import type { QuizSession } from "../hooks/useQuizService.api";
-import type { PresentationSession, PresentationSlide } from "../services/presentation/Presentation.types";
+
+import usePresentationSessions from "../hooks/presentation/usePresentationSessions";
+import useChatSessions from "../hooks/chat/useChatSessions";
+import useQuizSessions from "../hooks/quiz/useQuizSessions";
 
 const B = "#000000";
 const W = "#FFFFFF";
 
 export default function NotebookPage() {
   const { id } = useParams<{ id: string }>();
-  const [searchParams, setSearchParams] = useSearchParams();
   const authService = useAuthService();
   const notebookService = useNotebookService();
   const chatService = useChatService();
-  const quizService = useQuizService();
-  const presentationService = usePresentationService();
   const navigate = useNavigate();
   const { toasts, showToast } = useToast();
 
   const [notebook, setNotebook] = useState<Notebook | null>(null);
   const [files, setFiles] = useState<NotebookFile[]>([]);
-  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
   const [activeView, setActiveView] = useState<ActiveView>("chat");
-  const [quizTopics, setQuizTopics] = useState<NotebookTopic[]>([]);
-  const [isLoadingTopics, setIsLoadingTopics] = useState(false);
-  const [previousQuizzes, setPreviousQuizzes] = useState<QuizSession[]>([]);
-  const [presentationTopics, setPresentationTopics] = useState<NotebookTopic[]>([]);
-  const [isLoadingPresentationTopics, setIsLoadingPresentationTopics] = useState(false);
-  const [isGeneratingPresentation, setIsGeneratingPresentation] = useState(false);
-  const [presentations, setPresentations] = useState<PresentationSession[]>([]);
-  const [selectedQuiz, setSelectedQuiz] = useState<QuizSession | null>(null);
-  const [activeQuiz, setActiveQuiz] = useState<QuizSession | null>(null);
-  const [activePresentation, setActivePresentation] = useState<PresentationSession | null>(null);
   const [pendingChatInput, setPendingChatInput] = useState<string>("");
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [notFound, setNotFound] = useState(false);
+  const [upgradeModal, setUpgradeModal] = useState<{
+    title: string;
+    description: string;
+  } | null>(null);
+  const [notebookNotFound, setNotebookNotFound] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<FileUploadState[]>([]);
-  const [chatSessions, setChatSessions] = useState<
-    Awaited<ReturnType<typeof chatService.listChatSessions>>
-  >([]);
-  const presentationPollRefs = useRef<Set<ReturnType<typeof setInterval>>>(new Set());
 
   const notebookId = id ?? "";
-
   const hasProcessingFiles = files.some(
     (f) =>
       f.ingestion_status === "pending" || f.ingestion_status === "processing",
   );
   const hasReadyFiles = files.some((f) => f.ingestion_status === "ready");
 
-  // Clear any active presentation poll intervals on unmount
-  useEffect(() => {
-    return () => {
-      presentationPollRefs.current.forEach(clearInterval);
-    };
-  }, []);
+  const notebookArchivedModal = {
+    title: "Notebook is archived",
+    description: "This notebook is read-only. Go back to the dashboard and unarchive it to make changes.",
+  };
+
+  const chatSessions = useChatSessions(
+    notebookId,
+    showToast,
+    files,
+    hasReadyFiles,
+    () => setUpgradeModal(notebookArchivedModal),
+  );
+
+  const quizSessions = useQuizSessions(
+    notebookId,
+    showToast,
+    activeView,
+    () =>
+      setUpgradeModal({
+        title: "Daily quiz limit reached",
+        description:
+          "You've hit your daily quiz limit on the free plan. Upgrade to Pro for unlimited daily quizzes, more storage, and additional notebooks.",
+      }),
+    (msg) => {
+      setPendingChatInput(msg);
+      setActiveView("chat");
+    },
+    () => setUpgradeModal(notebookArchivedModal),
+  );
+  const presentationSession = usePresentationSessions(
+    notebookId,
+    showToast,
+    activeView,
+    () =>
+      setUpgradeModal({
+        title: "Daily presentation limit reached",
+        description:
+          "You've hit your daily presentation limit on the free plan. Upgrade to Pro for unlimited presentations, more storage, and additional notebooks.",
+      }),
+    () => setUpgradeModal(notebookArchivedModal),
+  );
 
   // Poll file list every 3s while any file is still being ingested
   useEffect(() => {
@@ -103,18 +112,14 @@ export default function NotebookPage() {
   }, [hasProcessingFiles, notebookId]);
 
   useEffect(() => {
-    // SHOULD I MODE THIS FUNCTION to A NEW FILE??? 
-    // function name is load() really, tf is load, load what load who!!
-    async function load() {
+    async function loadNotebooksAndFiles() {
       try {
-        // found really - do better man
-        // something like foundNotebook
-        const found = await notebookService.getNotebook(notebookId);
-        if (!found) {
-          setNotFound(true);
+        const foundNotebookById = await notebookService.getNotebook(notebookId);
+        if (!foundNotebookById) {
+          setNotebookNotFound(true);
           return;
         }
-        setNotebook(found);
+        setNotebook(foundNotebookById);
 
         try {
           const files = await notebookService.listFiles(notebookId);
@@ -123,82 +128,22 @@ export default function NotebookPage() {
           showToast("Failed to load files", "danger");
         }
       } catch (err) {
-        console.error("[NotebookPage] load() error:", err);
-        setNotFound(true);
-      }
-
-      try {
-        const sessions = await chatService.listChatSessions(notebookId);
-        setChatSessions(sessions);
-      } catch (err) {
-        showToast("Failed to load chat sessions", "danger");
+        console.error("[NotebookPage] loadNotebooksAndFiles() error:", err);
+        setNotebookNotFound(true);
       }
     }
-    load();
+    loadNotebooksAndFiles();
   }, [notebookId]);
 
-  useEffect(() => {
-    if (activeView !== "quiz") return;
-    // SHOULD I MODE THIS FUNCTION to A NEW FILE???
-    async function loadQuizData() {
-      if (quizTopics.length === 0) {
-        setIsLoadingTopics(true);
-        try {
-          const topics = await notebookService.listTopics(notebookId);
-          setQuizTopics(topics);
-        } catch (err) {
-          console.error(err);
-          setQuizTopics([]);
-        } finally {
-          setIsLoadingTopics(false);
-        }
-      }
-      const quizzes = await quizService.listQuizSessionsByNotebook(notebookId);
-      setPreviousQuizzes(quizzes);
-    }
-    loadQuizData();
-  }, [activeView, notebookId]);
-
-  useEffect(() => {
-    if (activeView !== "presentation") return;
-    // SHOULD I MODE THIS FUNCTION to A NEW FILE???
-    async function loadPresentationData() {
-      if (presentationTopics.length === 0) {
-        setIsLoadingPresentationTopics(true);
-        try {
-          const topics = await notebookService.listTopics(notebookId);
-          setPresentationTopics(topics);
-        } catch (err) {
-          console.error(err);
-          setPresentationTopics([]);
-        } finally {
-          setIsLoadingPresentationTopics(false);
-        }
-      }
-      try {
-        const existing = await presentationService.listPresentationsByNotebook(notebookId);
-        setPresentations(existing);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    loadPresentationData();
-  }, [activeView, notebookId]);
-
-  if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
-
-  // notFound what? your mom? 
-  // try something like notebookNotFound
-  if (notFound) return <Navigate to="/dashboard" replace />;
-
-  async function handleTitleSave(newTitle: string) {
+  /** Notebook Stuff */
+  async function handleNotebookTitleSave(newTitle: string) {
     if (!notebook) return;
     await notebookService.update(notebookId, { title: newTitle });
     setNotebook((prev) => (prev ? { ...prev, title: newTitle } : prev));
     showToast("Notebook renamed", "neutral");
   }
 
-  // this function needs comments and can be refactored better
+  // this function needs comments and can be refactored better, rename it to have the word file
   async function handleUpload(uploaded: File[]) {
     setUploadProgress(
       uploaded.map((f) => ({ name: f.name, status: "uploading" })),
@@ -228,15 +173,37 @@ export default function NotebookPage() {
             );
           }
         } catch (err) {
+          const data = (err as any)?.response?.data;
+          const code = data?.code;
           const errMsg =
-            (err as any)?.response?.data?.detail ??
+            data?.message ??
+            data?.detail ??
             (err instanceof Error ? err.message : "Upload failed");
           setUploadProgress((prev) =>
             prev.map((p, idx) =>
               idx === i ? { ...p, status: "error", error: errMsg } : p,
             ),
           );
-          showToast(errMsg, "danger");
+          if (code === "notebook_archived") {
+            setUpgradeModal(notebookArchivedModal);
+          } else if (code === "file_size_exceeded") {
+            setUpgradeModal({
+              title: "File too large",
+              description: `${errMsg} Upgrade to Pro for larger uploads, more storage, and unlimited notebooks.`,
+            });
+          } else if (code === "storage_quota_exceeded") {
+            setUpgradeModal({
+              title: "Storage limit reached",
+              description: "You've hit your storage limit on the free plan. Upgrade to Pro for more storage, larger files, and unlimited notebooks.",
+            });
+          } else if (code === "file_quota_exceeded") {
+            setUpgradeModal({
+              title: "File limit reached",
+              description: "You've hit the file limit for this notebook on the free plan. Upgrade to Pro for more files per notebook.",
+            });
+          } else {
+            showToast(errMsg, "danger");
+          }
         }
       }),
     );
@@ -248,7 +215,11 @@ export default function NotebookPage() {
       );
       try {
         setFiles(await notebookService.listFiles(notebookId));
-      } catch {}
+      } catch (err) {
+        console.error(
+          `[NotebookPage.tsx] Error while listing files for notebook ID: ${notebookId}, error: ${err}`,
+        );
+      }
     }
 
     setTimeout(
@@ -259,7 +230,7 @@ export default function NotebookPage() {
     setTimeout(() => setUploadProgress([]), 6000);
   }
 
-  async function handleDeleteSelected(ids: string[]) {
+  async function handleDeleteSelectedFiles(ids: string[]) {
     try {
       await Promise.all(
         ids.map((id) => notebookService.deleteFile(notebookId, id)),
@@ -269,302 +240,36 @@ export default function NotebookPage() {
         `${ids.length} file${ids.length > 1 ? "s" : ""} deleted`,
         "danger",
       );
-    } catch {} // WHY IS THIS EMPTY!! This will silently consume the error
-  }
-
-  /** ------------------------- CHAT STUFF STARTS ------------------------------------ */
-
-  async function handleSendMessage(
-    message: string,
-    onChunk?: (text: string) => void,
-  ): Promise<{ reply: string; sessionId: string }> {
-    if (files.length === 0) {
-      showToast("Upload lecture notes before chatting", "danger");
-      throw new Error("no files");
-    }
-    if (!hasReadyFiles) {
-      showToast("Your files are still being indexed. Please wait...", "danger");
-      throw new Error("files processing");
-    }
-    {
-      let sessionId = activeSessionId;
-      const sessionExists = chatSessions.some((s) => s.id === sessionId);
-
-      if (!sessionId || !sessionExists) {
-        const session = await chatService.createChatSession(notebookId);
-        sessionId = session.id;
-        setChatSessions((prev) => [...prev, session]);
-        // URL update is intentionally left to ChatColumn via onSessionCreated
-      }
-
-      await chatService.createChatSessionMessage(sessionId, message);
-
-      // Stream AI response
-      let fullReply = "";
-      await chatService.streamChatReply(sessionId, (chunk) => {
-        fullReply += chunk;
-        onChunk?.(chunk);
-      });
-
-      return {
-        reply: fullReply,
-        sessionId,
-      };
-    }
-  }
-
-  const activeSessionId = searchParams.get("session");
-
-  // CHAT STUFF - rename function to have the word chat in it
-  function handleSessionSelect(sessionId: string) {
-    setSearchParams({ session: sessionId });
-  }
-
-  // CHAT STUFF - rename function to have the word chat in it
-  function handleSessionCreated(sessionId: string) {
-    setSearchParams({ session: sessionId }, { replace: true });
-  }
-
-  // CHAT STUFF - rename function to have the word chat in it
-  async function handleNewSession(title?: string): Promise<string> {
-    const session = await chatService.createChatSession(notebookId, title);
-    setChatSessions((prev) => [...prev, session]);
-    return session.id;
-    // URL update is intentionally left to ChatColumn via onSessionCreated
-  }
-
-  // CHAT STUFF - rename function to have the word chat in it
-  async function handleRenameSession(chatId: string, title: string) {
-    await chatService.updateChatSession(chatId, title);
-    setChatSessions((prev) =>
-      prev.map((s) => (s.id === chatId ? { ...s, title } : s)),
-    );
-  }
-
-  // CHAT STUFF - rename function to have the word chat in it
-  async function handleDeleteSession(chatId: string) {
-    await chatService.deleteChatSession(chatId);
-    setChatSessions((prev) => prev.filter((s) => s.id !== chatId));
-    if (activeSessionId === chatId) {
-      setSearchParams({});
-    }
-  }
-
-  /** ------------------------- CHAT STUFF ENDS ------------------------------------ */
-
-  /** ------------------------- QUIZ STUFF STARTS ------------------------------------ */
-
-  async function handleGenerateQuiz(options: QuizGenerateOptions) {
-    setIsGeneratingQuiz(true);
-    const isAllTopics = options.topics.length === 0 && !options.prompt;
-    const payload = {
-      notebook: notebookId,
-      topic: isAllTopics
-        ? "All Topics"
-        : options.topics.map((t) => t.name).join(", "),
-      topic_id: isAllTopics ? undefined : options.topics[0]?.id,
-      difficulty: options.difficulty,
-      quiz_type: options.quizType,
-      time_limit: options.timeLimit ? options.timeLimit * 60 : undefined,
-      num_questions: options.questionCount,
-    };
-
-    try {
-      const quiz = await quizService.createQuizSession(payload);
-      setSelectedQuiz(null);
-      setActiveQuiz(quiz);
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 403) {
-        setShowUpgradeModal(true);
-      } else {
-        showToast("Failed to generate quiz", "danger");
-      }
-    } finally {
-      setIsGeneratingQuiz(false);
+      console.error(`[NotebookPage.tsx] Error while trying to delete file.`);
     }
   }
 
-  async function handleQuizComplete(
-    userAnswers: (number | null)[],
-    _timeTaken: number,
-    _flaggedQuestions: number[],
-  ) {
-    if (!activeQuiz) return;
-    const questions = activeQuiz.questions ?? [];
-    const answers = questions
-      .map((q, i) => {
-        const selectedIndex = userAnswers[i];
-        if (selectedIndex === null) return null;
-        const resolvedChoices =
-          q.choices.length > 0 ? q.choices : ["True", "False"];
-        return {
-          question_id: q.id,
-          user_answer: resolvedChoices[selectedIndex],
-        };
-      })
-      .filter(
-        (a): a is { question_id: string; user_answer: string } => a !== null,
-      );
+  /** NotbookFile Stuff */
+  async function handleDeleteOneFile(id: string) {
     try {
-      const completedQuiz = await quizService.submitQuiz(
-        activeQuiz.id!,
-        answers,
-      );
-      const quizzes = await quizService.listQuizSessionsByNotebook(notebookId);
-      setPreviousQuizzes(quizzes);
-      setActiveQuiz(null);
-      setSelectedQuiz(completedQuiz);
-    } catch {
-      showToast("Failed to submit quiz", "danger");
-    }
-  }
-
-  function handleQuizExit() {
-    navigate(`/notebook/${notebookId}`, { replace: true });
-  }
-
-  function handleTakeToChat(
-    questionText: string,
-    options: string[],
-    topic: string,
-  ) {
-    const formatted = [
-      `I'm studying ${topic} and I need help with this question:`,
-      "",
-      `"${questionText}"`,
-      "",
-      "Options were:",
-      ...options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`),
-    ].join("\n");
-    setActiveQuiz(null);
-    setPendingChatInput(formatted);
-    setActiveView("chat");
-  }
-
-  function handleQuizClick(quiz: QuizSession) {
-    setSelectedQuiz(quiz);
-  }
-
-  function handleBackToGenerator() {
-    setSelectedQuiz(null);
-  }
-
-  async function handleDeleteQuizSessions(ids: string[]) {
-    try {
-      await Promise.all(ids.map((id) => quizService.deleteQuizSession(id)));
-      setPreviousQuizzes((prev) => prev.filter((q) => !ids.includes(q.id!)));
-      if (selectedQuiz && ids.includes(selectedQuiz.id!)) {
-        setSelectedQuiz(null);
-      }
-    } catch {
-      showToast("Failed to delete quiz sessions", "danger");
-    }
-  }
-
-  async function handleRetakeQuiz() {
-    if (!selectedQuiz) return;
-    setIsGeneratingQuiz(true);
-    try {
-      const quiz = await quizService.retakePastQuiz(selectedQuiz.id!);
-      setSelectedQuiz(null);
-      setActiveQuiz(quiz);
-    } catch {
-      showToast("Failed to generate quiz", "danger");
-    } finally {
-      setIsGeneratingQuiz(false);
-    }
-  }
-
-  /** ------------------------- QUIZ STUFF ENDS -------------------------------------- */
-
-  /** ------------------------- PRESENTATION STUFF STARTS -------------------------------------- */
-
-  async function handleGeneratePresentation(options: PresentationGenerateOptions) {
-    setIsGeneratingPresentation(true);
-    const isAllTopics = options.topics.length === 0 && !options.customTopic;
-    const payload = {
-      notebook: notebookId,
-      topic: isAllTopics ? "All Topics" : options.topics.map((t) => t.name).join(", "),
-      topic_id: isAllTopics ? undefined : options.topics[0]?.id,
-      custom_prompt: options.customTopic || undefined,
-      slide_count: options.numSlides,
-      text_length: options.textLength.toUpperCase() as "BRIEF" | "BALANCED" | "DETAILED",
-    };
-
-    try {
-      const session = await presentationService.createPresentation(payload);
-      setPresentations((prev) => [session, ...prev]);
-
-      const intervalId = setInterval(async () => {
-        try {
-          const updated = await presentationService.getPresentation(session.id);
-          setPresentations((prev) =>
-            prev.map((p) => (p.id === session.id ? updated : p))
-          );
-          if (updated.status === "COMPLETED") {
-            clearInterval(intervalId);
-            presentationPollRefs.current.delete(intervalId);
-            setIsGeneratingPresentation(false);
-            showToast("Presentation ready", "neutral");
-          } else if (updated.status === "FAILED") {
-            clearInterval(intervalId);
-            presentationPollRefs.current.delete(intervalId);
-            setIsGeneratingPresentation(false);
-            showToast("Presentation generation failed", "danger");
-          }
-        } catch {
-          clearInterval(intervalId);
-          presentationPollRefs.current.delete(intervalId);
-          setIsGeneratingPresentation(false);
-        }
-      }, 5000);
-      presentationPollRefs.current.add(intervalId);
+      await notebookService.deleteFile(notebookId, id);
+      setFiles((prev) => prev.filter((f) => f.id !== id));
+      showToast("File deleted", "danger");
     } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.status === 403) {
-        setShowUpgradeModal(true);
-      } else {
-        showToast("Failed to generate presentation", "danger");
-      }
-      setIsGeneratingPresentation(false);
+      console.error(`[NotebookPage.tsx] Error while deleting a file.`);
     }
   }
 
-  async function handlePresentationClick(presentation: PresentationSession) {
+  async function handleRenameFile(id: string, newName: string) {
     try {
-      const full = await presentationService.getPresentation(presentation.id);
-      setActivePresentation(full);
-    } catch {
-      setActivePresentation(presentation);
-    }
-  }
-
-  async function handleDeletePresentations(ids: string[]) {
-    try {
-      await Promise.all(
-        ids.map((id) => presentationService.deletePresentation(id)),
+      await notebookService.renameFile(notebookId, id, newName);
+      setFiles((prev) =>
+        prev.map((f) => (f.id === id ? { ...f, name: newName } : f)),
       );
-      setPresentations((prev) => prev.filter((p) => !ids.includes(p.id)));
-      if (activePresentation && ids.includes(activePresentation.id)) {
-        setActivePresentation(null);
-      }
-    } catch {
-      showToast("Failed to delete presentations", "danger");
+      showToast("File renamed", "neutral");
+    } catch (err) {
+      console.error(`[NotebookPage.tsx] Error while renaming file.`);
     }
   }
 
-  function handlePresentationUpdate(updatedSlides: PresentationSlide[]) {
-    setPresentations((prev) =>
-      prev.map((p) =>
-        p.id === activePresentation?.id ? { ...p, slides: updatedSlides } : p,
-      ),
-    );
-    setActivePresentation((prev) =>
-      prev ? { ...prev, slides: updatedSlides } : null,
-    );
-  }
-
-  /** ------------------------- PRESENTATION STUFF ENDS -------------------------------------- */
-
+  if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
+  if (notebookNotFound) return <Navigate to="/dashboard" replace />;
   if (!notebook) return null; // need to replace this with a loading skeleton screen
   /**
    * Something like so:
@@ -577,29 +282,83 @@ export default function NotebookPage() {
       if (isLoading) return <LoadingSpinner />;
    */
 
-  /** ------------------------- NOTEBOOKFILE STUFF STARTS -------------------------------------- */
-  // Notebookfile stuff can stay as this is part of the notebook technically - according to backend model
-
-  // RENAME THIS TO handleDeleteOneFile
-  async function handleDeleteOne(id: string) {
-    try {
-      await notebookService.deleteFile(notebookId, id);
-      setFiles((prev) => prev.filter((f) => f.id !== id));
-      showToast("File deleted", "danger");
-    } catch {} // WHY IS THIS EMPTY - T.T
-  }
-
-  async function handleRenameFile(id: string, newName: string) {
-    try {
-      await notebookService.renameFile(notebookId, id, newName);
-      setFiles((prev) =>
-        prev.map((f) => (f.id === id ? { ...f, name: newName } : f)),
+  // Right column — Files on chat, Previous Quizzes on quiz, Previous Slides on presentation
+  function renderCenterPanel() {
+    if (activeView === "chat")
+      return (
+        <ChatColumn
+          onSend={chatSessions.handleSendMessage}
+          sessions={chatSessions.chatSessions}
+          activeSessionId={chatSessions.activeSessionId}
+          onSessionSelect={chatSessions.handleSessionSelect}
+          onNewSession={chatSessions.handleNewSession}
+          onSessionCreated={chatSessions.handleSessionCreated}
+          onRenameSession={chatSessions.handleRenameSession}
+          onDeleteSession={chatSessions.handleDeleteSession}
+          getChatMessages={chatService.getChatSessionMessages}
+          chatDisabled={files.length > 0 && !hasReadyFiles}
+          initialInput={pendingChatInput}
+          onInitialInputConsumed={() => setPendingChatInput("")}
+        />
       );
-      showToast("File renamed", "neutral");
-    } catch {} // WHY IS THIS EMPTY - T.T
+    if (activeView === "presentation")
+      return (
+        <PresentationColumn
+          topics={presentationSession.presentationTopics}
+          isLoadingTopics={presentationSession.isLoadingPresentationTopics}
+          onGenerate={presentationSession.handleGeneratePresentation}
+          isGenerating={presentationSession.isGeneratingPresentation}
+        />
+      );
+    if (quizSessions.selectedQuiz)
+      return (
+        <QuizReviewColumn
+          quiz={quizSessions.selectedQuiz}
+          onBack={quizSessions.handleBackToGenerator}
+          onRetake={quizSessions.handleRetakeQuiz}
+          onTakeToChat={quizSessions.handleTakeToChat}
+        />
+      );
+    return (
+      <QuizColumn
+        topics={quizSessions.quizTopics}
+        isLoadingTopics={quizSessions.isLoadingTopics}
+        onGenerate={quizSessions.handleGenerateQuiz}
+        isGenerating={quizSessions.isGeneratingQuiz}
+      />
+    );
   }
 
-  /** ------------------------- NOTEBOOKFILE STUFF ENDS -------------------------------------- */
+  // Dynamic main window (Chat, Quiz, or Presentation)
+  function renderRightPanel() {
+    if (activeView === "quiz")
+      return (
+        <PastQuizColumn
+          quizzes={quizSessions.previousQuizzes}
+          selectedQuizId={quizSessions.selectedQuiz?.id ?? null}
+          onQuizClick={quizSessions.handleQuizClick}
+          onDeleteSelected={quizSessions.handleDeleteQuizSessions}
+        />
+      );
+    if (activeView === "presentation")
+      return (
+        <PastPresentationsColumn
+          presentations={presentationSession.presentations}
+          onPresentationClick={presentationSession.handlePresentationClick}
+          onDeleteSelected={presentationSession.handleDeletePresentations}
+        />
+      );
+    return (
+      <FilesColumn
+        files={files}
+        onUpload={handleUpload}
+        onDeleteSelected={handleDeleteSelectedFiles}
+        onDeleteOne={handleDeleteOneFile}
+        onRename={handleRenameFile}
+        uploadProgress={uploadProgress}
+      />
+    );
+  }
 
   return (
     <div
@@ -611,6 +370,34 @@ export default function NotebookPage() {
         fontFamily: "'IBM Plex Mono', monospace",
       }}
     >
+      {/* Archived banner */}
+      {notebook.is_archived && (
+        <div
+          style={{
+            background: "#f5f0e0",
+            borderBottom: `2px solid ${B}`,
+            padding: "8px 24px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 12,
+            flexShrink: 0,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.68rem",
+              fontWeight: 700,
+              letterSpacing: "0.08em",
+              color: "#7a5c00",
+            }}
+          >
+            ARCHIVED — this notebook is read-only. Go to the dashboard to unarchive it.
+          </span>
+        </div>
+      )}
+
       {/* Top bar */}
       <div
         style={{
@@ -644,7 +431,10 @@ export default function NotebookPage() {
           ← Back to dashboard
         </span>
 
-        <NotebookTitle title={notebook.title} onSave={handleTitleSave} />
+        <NotebookTitle
+          title={notebook.title}
+          onSave={handleNotebookTitleSave}
+        />
 
         {/* Spacer to keep title centered */}
         <div style={{ width: 140, flexShrink: 0 }} />
@@ -663,120 +453,39 @@ export default function NotebookPage() {
         {/* Options/Tools nav column (left) */}
         <OptionsColumn activeView={activeView} onViewChange={setActiveView} />
 
-        {/* Dynamic main window (Chat, Quiz, or Presentation) */}
-        {activeView === "chat" ? (
-          <ChatColumn
-            onSend={handleSendMessage}
-            sessions={chatSessions}
-            activeSessionId={activeSessionId}
-            onSessionSelect={handleSessionSelect}
-            onNewSession={handleNewSession}
-            onSessionCreated={handleSessionCreated}
-            onRenameSession={handleRenameSession}
-            onDeleteSession={handleDeleteSession}
-            getChatMessages={chatService.getChatSessionMessages}
-            chatDisabled={files.length > 0 && !hasReadyFiles}
-            initialInput={pendingChatInput}
-            onInitialInputConsumed={() => setPendingChatInput("")}
-          />
-        ) : activeView === "presentation" ? (
-          <PresentationColumn
-            topics={presentationTopics}
-            isLoadingTopics={isLoadingPresentationTopics}
-            onGenerate={handleGeneratePresentation}
-            isGenerating={isGeneratingPresentation}
-          />
-        ) : selectedQuiz ? (
-          <QuizReviewColumn
-            quiz={selectedQuiz}
-            onBack={handleBackToGenerator}
-            onRetake={handleRetakeQuiz}
-            onTakeToChat={handleTakeToChat}
-          />
-        ) : (
-          <QuizColumn
-            topics={quizTopics}
-            isLoadingTopics={isLoadingTopics}
-            onGenerate={handleGenerateQuiz}
-            isGenerating={isGeneratingQuiz}
-          />
-        )}
-
-        {/* Right column — Files on chat, Previous Quizzes on quiz, Previous Slides on presentation */}
-        {activeView === "quiz" ? (
-          <PastQuizColumn
-            quizzes={previousQuizzes}
-            selectedQuizId={selectedQuiz?.id ?? null}
-            onQuizClick={handleQuizClick}
-            onDeleteSelected={handleDeleteQuizSessions}
-          />
-        ) : activeView === "presentation" ? (
-          <PastPresentationsColumn
-            presentations={presentations}
-            onPresentationClick={handlePresentationClick}
-            onDeleteSelected={handleDeletePresentations}
-          />
-        ) : (
-          <FilesColumn
-            files={files}
-            onUpload={handleUpload}
-            onDeleteSelected={handleDeleteSelected}
-            onDeleteOne={handleDeleteOne}
-            onRename={handleRenameFile}
-            uploadProgress={uploadProgress}
-          />
-        )}
+        {renderCenterPanel()}
+        {renderRightPanel()}
       </div>
 
       <ToastContainer toasts={toasts} />
 
-      {showUpgradeModal && (
+      {upgradeModal && (
         <UpgradeModal
-          onClose={() => setShowUpgradeModal(false)}
-          title="Daily quiz limit reached"
-          description="You've hit your daily quiz limit on the free plan. Upgrade to Pro for unlimited daily quizzes, more storage, and additional notebooks."
+          onClose={() => setUpgradeModal(null)}
+          title={upgradeModal.title}
+          description={upgradeModal.description}
         />
       )}
 
       {/* Quiz-taking overlay — sits on top of everything */}
-      {activeQuiz && (
+      {quizSessions.activeQuiz && (
         <QuizTakingScreen
-          quiz={activeQuiz}
-          onComplete={handleQuizComplete}
-          onExit={handleQuizExit}
-          onTakeToChat={handleTakeToChat}
+          quiz={quizSessions.activeQuiz}
+          onComplete={quizSessions.handleQuizComplete}
+          onExit={quizSessions.handleQuizExit}
+          onTakeToChat={quizSessions.handleTakeToChat}
         />
       )}
 
       {/* Presentation viewer overlay */}
-      {activePresentation && (
+      {presentationSession.activePresentation && (
         <PresentationViewer
-          presentation={activePresentation}
-          onClose={() => setActivePresentation(null)}
-          onUpdate={handlePresentationUpdate}
+          presentation={presentationSession.activePresentation}
+          onClose={presentationSession.handleClosePresentation}
+          onUpdate={presentationSession.handleUpdatePresentation}
+          onRefineSlide={presentationSession.handleRefineSlide}
         />
       )}
     </div>
   );
 }
-
-/**
- * The JSX itself is actually reasonably clean — the structure is clear and the components are well-named. There are two spots that could be tightened:
-  1. The nested ternary chains for the center and right panels — these are the biggest readability issue. Pulling them into small named functions just before the return makes the JSX much more scannable:
-  function renderCenterPanel() {
-    if (activeView === "chat") return <ChatColumn ... />;
-    if (activeView === "presentation") return <PresentationColumn ... />;
-    if (selectedQuiz) return <QuizReviewColumn ... />;
-    return <QuizColumn ... />;
-  }
-  function renderRightPanel() {
-    if (activeView === "quiz") return <PastQuizColumn ... />;
-    if (activeView === "presentation") return <PastPresentationsColumn ... />;
-    return <FilesColumn ... />;
-  }
-  Then the JSX becomes just {renderCenterPanel()} and {renderRightPanel()} — much cleaner.
-  2. The inline style objects on the wrapper divs — they're verbose but consistent with the rest of the file's style. Extracting them to named constants above the return (const topBarStyle = {...}) reduces visual noise without changing the approach.
-  That said, the current version isn't bad — it's just that those ternary chains are the one thing that makes you have to slow down and parse. The renderX function approach is the highest-value cleanup here.
- * 
- * 
- */

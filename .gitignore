@@ -128,7 +128,7 @@ ipython_config.py
 __pypackages__/
 
 # Celery stuff
-celerybeat-schedule
+celerybeat-schedule*
 celerybeat.pid
 
 # SageMath parsed files
@@ -136,6 +136,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.staging
+.env.prod
 .envrc
 .venv
 env/

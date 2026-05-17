@@ -148,12 +148,13 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 docker compose up --build
 ```
 
-This starts four services:
+This starts five services:
 
 - `postgres` — PostgreSQL 16 with PGVector extension
 - `redis` — Redis 7 for Celery broker and result backend
 - `web` — Django development server on port `8000`
 - `celery` — Celery worker for asynchronous document indexing
+- `celery-beat` — Celery Beat scheduler for periodic tasks (e.g., subscription expiry)
 
 **4. Access the API**
 
@@ -223,12 +224,13 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-**6. (Optional) Start Celery worker**
+**6. (Optional) Start Celery worker and beat scheduler**
 
 In a separate terminal (with the virtualenv activated):
 
 ```bash
 celery -A freshr worker -l info
+celery -A freshr beat -l info
 ```
 
 ---
@@ -278,3 +280,14 @@ All protected endpoints require the `Authorization: Bearer <access_token>` heade
 ## License
 
 This project is licensed under the terms of the [LICENSE](LICENSE) file included in this repository.
+
+## How to access Dozzle
+
+### The SSH Tunnel (Most Secure / Recommended)
+
+On your laptop, run this command:
+ssh -L 8888:localhost:8888 deploy@163.61.236.102
+
+Now, open your browser and go to http://localhost:8888.
+
+Your computer thinks Dozzle is running locally, but it’s actually securely pulling the data through your encrypted SSH connection.
