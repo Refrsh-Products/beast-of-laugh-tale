@@ -28,6 +28,8 @@ export const AuthServiceApiEndpoints = {
   resetPassword: `${AuthServiceApiBase}/password-reset/`,
   resetPasswordConfirm: `${AuthServiceApiBase}/password-reset/confirm/`,
   register: `${AuthServiceApiBase}/register/`,
+  verifyEmail: `${AuthServiceApiBase}/verify-email/`,
+  verifyEmailConfirm: `${AuthServiceApiBase}/verify-email/confirm/`,
 };
 
 // Notebooks

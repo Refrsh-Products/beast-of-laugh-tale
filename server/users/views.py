@@ -15,6 +15,8 @@ from drf_spectacular.utils import extend_schema
 import requests as http_requests
 
 from users.services import email_service
+from users.services.verification import send_verification_email
+from users.tokens import email_verification_token
 from .models import User
 from accounts.models import Account
 from .serializers import (
@@ -23,6 +25,8 @@ from .serializers import (
     MessageResponseSerializer,
     RegistrationSerializer,
     UserSerializer,
+    EmailVerificationRequestSerializer,
+    EmailVerificationConfirmSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
 )
@@ -80,6 +84,8 @@ class GoogleAuth(APIView):
             if created:
                 user.set_unusable_password()
                 user.registration_method = 'google'
+                # Google has already verified the email, so skip our verification step.
+                user.is_active = True
                 user.save()
             else:
                 print(f"[GoogleAuth] Existing user registration_method: {user.registration_method}")
@@ -130,28 +136,36 @@ class LoginView(APIView):
     )
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
-        if serializer.is_valid():
-            user = authenticate(
-                request,
-                username=serializer.validated_data["email"], # type: ignore
-                password=serializer.validated_data["password"], # type: ignore
-            )
-            if user:
-                user = cast(User, user)
-                refresh = RefreshToken.for_user(user)
-                return Response(
-                    {
-                        'user': UserSerializer(user).data,
-                        'tokens': {
-                            'refresh': str(refresh),
-                            'access': str(refresh.access_token),
-                        }
-                    }, status=status.HTTP_200_OK
-                )
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data["email"]  # type: ignore
+        password = serializer.validated_data["password"]  # type: ignore
+
+        user = authenticate(request, username=email, password=password)
+        if user:
+            user = cast(User, user)
+            refresh = RefreshToken.for_user(user)
             return Response(
-                {"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED
+                {
+                    'user': UserSerializer(user).data,
+                    'tokens': {
+                        'refresh': str(refresh),
+                        'access': str(refresh.access_token),
+                    }
+                }, status=status.HTTP_200_OK
             )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        # authenticate() returns None for both wrong-password and inactive users.
+        # If credentials are correct but the account is unverified, surface that
+        # explicitly so the frontend can offer a "resend verification" action.
+        existing = User.objects.filter(email__iexact=email).first()
+        if existing and not existing.is_active and existing.check_password(password):
+            return Response(
+                {"error": "Please verify your email before logging in.", "needs_verification": True},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        return Response({"error": "Invalid credentials"}, status=status.HTTP_401_UNAUTHORIZED)
     
 class LogoutView(APIView):
     """
@@ -176,29 +190,132 @@ class LogoutView(APIView):
 class RegistrationView(APIView):
     """
     POST: Register a new user.
-    Returns JWT tokens upon successful registration.
+    The user is created with is_active=False and emailed a verification link.
+    JWT tokens are not returned here — they are issued by the verification-confirm
+    endpoint once the user proves ownership of the email.
+
+    If a user with this email already exists:
+      - and is verified → 400 with an "already exists" error.
+      - and is unverified → password is overwritten with the new submission and the
+        verification email is resent. This recovers the "lost the verification link"
+        case without leaking that the email is registered.
     """
     permission_classes = [AllowAny]
 
     @extend_schema(
         request=RegistrationSerializer,
-        responses={201: UserSerializer}
+        responses={201: MessageResponseSerializer}
     )
     def post(self, request):
         serializer = RegistrationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = cast(User, serializer.save())
+        data: dict = serializer.validated_data  # type: ignore[assignment]
+        email: str = data['email']
+        password: str = data['password']
 
-        # Generate JWT tokens
+        existing = User.objects.filter(email__iexact=email).first()
+        if existing and existing.is_active:
+            return Response(
+                {'error': 'An account with this email already exists. Please log in or reset your password.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if existing:
+            existing.set_password(password)
+            existing.save(update_fields=['password'])
+            user = existing
+        else:
+            user = cast(User, serializer.save())
+
+        send_verification_email(user)
+
+        return Response(
+            {'message': 'Account created. Check your email to verify your account.'},
+            status=status.HTTP_201_CREATED,
+        )
+
+class EmailVerificationRequestView(APIView):
+    """
+    POST: (Re)send the email-verification link.
+    Always responds with a generic success message regardless of whether the email
+    is registered, to avoid leaking which addresses have accounts.
+
+    Rate-limited via DEFAULT_THROTTLE_RATES['verify_email_resend'] to prevent
+    abuse of the outbound email channel.
+    """
+    permission_classes = [AllowAny]
+    throttle_scope = 'verify_email_resend'
+
+    @extend_schema(
+        request=EmailVerificationRequestSerializer,
+        responses={200: MessageResponseSerializer},
+    )
+    def post(self, request):
+        serializer = EmailVerificationRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data: dict = serializer.validated_data  # type: ignore[assignment]
+        email: str = data['email']
+
+        user = User.objects.filter(email__iexact=email, is_active=False).first()
+        if user:
+            send_verification_email(user)
+
+        return Response(
+            {'message': 'If an unverified account exists for this email, a verification link has been sent.'},
+            status=status.HTTP_200_OK,
+        )
+
+
+class EmailVerificationConfirmView(APIView):
+    """
+    POST: Confirm email verification with uid+token.
+    Activates the account (is_active=True) and returns JWT tokens so the user
+    can proceed straight to onboarding without a second login step.
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=EmailVerificationConfirmSerializer,
+        responses={200: UserSerializer},
+    )
+    def post(self, request):
+        serializer = EmailVerificationConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data: dict = serializer.validated_data  # type: ignore[assignment]
+
+        try:
+            uid = uuid.UUID(force_str(urlsafe_base64_decode(data['uid'])))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist) as e:
+            print(f"[EmailVerificationConfirm] UID decode error: {type(e).__name__}: {e} | raw uid={data.get('uid')!r}")
+            return Response({'error': 'Invalid verification link.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Friendly message for already-verified users; otherwise the is_active hash
+        # in the token would make the link look "expired" which is confusing.
+        if user.is_active:
+            return Response(
+                {'error': 'This account is already verified. Please log in.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not email_verification_token.check_token(user, data['token']):
+            return Response(
+                {'error': 'Invalid or expired verification link.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.is_active = True
+        user.save(update_fields=['is_active'])
+
         refresh = RefreshToken.for_user(user)
-
         return Response({
             'user': UserSerializer(user).data,
             'tokens': {
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
-            }
-        }, status=status.HTTP_201_CREATED)
+            },
+        }, status=status.HTTP_200_OK)
+
 
 class PasswordResetRequestView(APIView):
     """
@@ -232,9 +349,10 @@ class PasswordResetRequestView(APIView):
             print(f"[PasswordReset] Reset URL: {reset_url}")
             email_service.send_template_email(
                 to=email,
-                subject='Reset Your FRESHR Password',
+                subject='Reset your password',
                 template_name='emails/password_reset.html',
                 context={'account': account, 'reset_url': reset_url},
+                from_email=settings.PASSWORD_RESET_FROM_EMAIL,
             )
 
         except (User.DoesNotExist, Account.DoesNotExist):

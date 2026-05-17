@@ -44,6 +44,14 @@ const AuthServiceMock: AuthService = {
     return Promise.reject(new Error("Not implemented"));
   },
 
+  requestEmailVerification: () => {
+    return Promise.reject(new Error("Not implemented"));
+  },
+
+  confirmEmailVerification: () => {
+    return Promise.reject(new Error("Not implemented"));
+  },
+
   requestPasswordReset: () => {
     return Promise.reject(new Error("Not implemented"))
   },

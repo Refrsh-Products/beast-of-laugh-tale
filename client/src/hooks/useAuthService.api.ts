@@ -9,7 +9,10 @@ import {
   savePassword,
   saveAccount,
 } from "../storage";
-import type { AuthService } from "../services/auth/AuthService.types";
+import {
+  NeedsVerificationError,
+  type AuthService,
+} from "../services/auth/AuthService.types";
 import type { StoredAccount, StoredUser } from "../storage";
 import type { LoginResponse } from "../page/dto/LoginResponse.dto";
 import type { LoginRequest } from "../page/dto/LoginRequest.dto";
@@ -86,7 +89,16 @@ const useAuthServiceApi = (): AuthService => {
         saveUser(user);
         startSession();
         return user;
-      } catch (err) {
+      } catch (err: any) {
+        // Backend returns 403 with needs_verification:true when credentials are
+        // correct but the email hasn't been verified yet. Surface this as a
+        // typed error so the LoginPage can offer "resend verification".
+        if (
+          err.response?.status === 403 &&
+          err.response?.data?.needs_verification
+        ) {
+          throw new NeedsVerificationError(email);
+        }
         console.error("[AuthServiceApi] Login failed: ", err);
         throw err;
       }
@@ -120,8 +132,10 @@ const useAuthServiceApi = (): AuthService => {
     },
 
     register: async (email, password, password_confirm) => {
+      // The backend creates the account with is_active=false and emails a
+      // verification link. JWT tokens are issued by confirmEmailVerification.
       try {
-        const response = await fetchData<RegistrationResponse>(
+        await fetchData<RegistrationResponse>(
           AuthServiceApiEndpoints.register,
           "POST",
           {
@@ -130,24 +144,9 @@ const useAuthServiceApi = (): AuthService => {
             password_confirm: password_confirm,
           },
         );
-        const data = response;
-
-        sessionStorage.setItem("accessToken", data.tokens.access ?? "");
-        sessionStorage.setItem("refreshToken", data.tokens.refresh ?? "");
-        sessionStorage.setItem("userId", data.user.id ?? "");
-        sessionStorage.setItem("email", data.user.email ?? "");
-        sessionStorage.setItem("freshr_onboarding_completed", "false");
-
-        const user: StoredUser = {
-          id: data.user.id,
-          email: data.user.email,
-          is_active: data.user.is_active,
-          created_at: data.user.created_at,
-        };
-        saveUser(user);
+        // Cache the password so the mock auth flow keeps working in dev; the
+        // real flow doesn't depend on it post-verification.
         savePassword(password);
-        startSession();
-        return user;
       } catch (err: any) {
         if (err.response?.data) {
           const data = err.response.data;
@@ -161,6 +160,47 @@ const useAuthServiceApi = (): AuthService => {
         }
         throw err;
       }
+    },
+
+    requestEmailVerification: async (email) => {
+      try {
+        await fetchData(
+          AuthServiceApiEndpoints.verifyEmail,
+          "POST",
+          { email },
+        );
+      } catch (err) {
+        // 429 is a rate-limit from the backend (ScopedRateThrottle). Let it
+        // bubble up so the UI can surface a "try again later" message.
+        throw err;
+      }
+    },
+
+    confirmEmailVerification: async (uid, token) => {
+      const response = await fetchData<LoginResponse>(
+        AuthServiceApiEndpoints.verifyEmailConfirm,
+        "POST",
+        { uid, token },
+      );
+      const data = response;
+
+      sessionStorage.setItem("accessToken", data.tokens.access ?? "");
+      sessionStorage.setItem("refreshToken", data.tokens.refresh ?? "");
+      sessionStorage.setItem("userId", data.user.id ?? "");
+      sessionStorage.setItem("email", data.user.email ?? "");
+      // The user has just verified — they haven't onboarded yet, so skip the
+      // /accounts/me/ fetch (it would 404) and flag onboarding as incomplete.
+      sessionStorage.setItem("freshr_onboarding_completed", "false");
+
+      const user: StoredUser = {
+        id: data.user.id,
+        email: data.user.email,
+        is_active: data.user.is_active,
+        created_at: data.user.created_at,
+      };
+      saveUser(user);
+      startSession();
+      return user;
     },
 
     requestPasswordReset: async (email) => {

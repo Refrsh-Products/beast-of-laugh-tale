@@ -44,10 +44,8 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const user = await authService.register(email, password, confirm);
-      console.log("Registed user", user);
-
-      navigate("/onboarding");
+      await authService.register(email, password, confirm);
+      navigate("/verify-email/sent", { state: { email } });
     } catch (err) {
       console.error("[SignupPage] Error During Registration:", err);
       setError(`Failed to Register User: ${email}\nError: ${err}`);
