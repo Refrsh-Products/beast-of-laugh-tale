@@ -64,7 +64,7 @@ export default function LoginPage() {
         }}
       >
         {/* Logo */}
-        <FreshrLogo />
+        <FreshrLogo color="#000000" />
 
         {/* Form container */}
         <div style={{ width: "100%", maxWidth: 420 }}>

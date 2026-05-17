@@ -47,16 +47,39 @@ export default function TopNavbar({
       <div
         onClick={() => navigate("/dashboard")}
         style={{
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 800,
-          fontSize: "1.5rem",
-          letterSpacing: "-0.02em",
-          color: G,
+          position: "relative",
+          display: "inline-flex",
           cursor: "pointer",
           userSelect: "none",
         }}
       >
-        FRESHR
+        <span
+          style={{
+            fontFamily: "'Syne', sans-serif",
+            fontWeight: 800,
+            fontSize: "1.5rem",
+            letterSpacing: "-0.02em",
+            color: G,
+          }}
+        >
+          FRESHR
+        </span>
+        <span
+          style={{
+            position: "absolute",
+            top: -4,
+            right: -36,
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: "0.5rem",
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            background: B,
+            color: G,
+            padding: "2px 5px",
+          }}
+        >
+          BETA
+        </span>
       </div>
 
       {/* Profile */}
