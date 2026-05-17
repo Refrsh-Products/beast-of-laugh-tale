@@ -5,6 +5,15 @@ services:
   postgres:
     image: pgvector/pgvector:pg16
     restart: unless-stopped
+    # Tuned for a low-RAM host shared with another Postgres + Python stacks.
+    command: >
+      postgres
+      -c shared_buffers=64MB
+      -c work_mem=2MB
+      -c maintenance_work_mem=32MB
+      -c effective_cache_size=256MB
+      -c max_connections=50
+    mem_limit: 256m
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -21,6 +30,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    command: redis-server --maxmemory 64mb --maxmemory-policy allkeys-lru
+    mem_limit: 96m
     # NOT exposed to host — internal Docker network only thus no port
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
@@ -34,7 +45,8 @@ services:
     command: >
       sh -c "python manage.py collectstatic --noinput &&
              python manage.py migrate --noinput &&
-             gunicorn freshr.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120"
+             gunicorn freshr.wsgi:application --bind 0.0.0.0:8000 --workers 1 --timeout 120"
+    mem_limit: 512m
     volumes:
       - media_prod:/app/media
     ports:
@@ -58,7 +70,8 @@ services:
   celery:
     image: ghcr.io/${GHCR_ORG}/freshr-server:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    command: celery -A freshr worker -l info --concurrency 2
+    command: celery -A freshr worker -l info --concurrency 1
+    mem_limit: 768m
     volumes:
       - media_prod:/app/media
     env_file:
@@ -77,27 +90,10 @@ services:
       redis:
         condition: service_healthy
 
-  celery-beat:
-    image: ghcr.io/${GHCR_ORG}/freshr-server:${IMAGE_TAG:-latest}
-    restart: unless-stopped
-    command: celery -A freshr beat -l info
-    volumes:
-      - media_prod:/app/media
-    env_file:
-      - .env.prod
-    environment:
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      REDIS_URL: redis://redis:6379/0
-      CONNECTION_STRING: postgresql+psycopg://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+  # celery-beat removed — the only scheduled task (accounts.tasks.expire_subscriptions)
+  # is now triggered hourly from the host's root crontab via:
+  #   0 * * * * docker exec freshr-prod-web-1 python manage.py shell -c "from accounts.tasks import expire_subscriptions; expire_subscriptions()" >> /var/log/freshr-expire-subscriptions.log 2>&1
+  # Running beat as its own container cost ~350 MiB resident to fire one message per hour.
 
   # React SPA served by Nginx.
   # VITE_API_BASE_URL is baked in at build time. To change the API URL,
@@ -107,6 +103,7 @@ services:
   frontend:
     image: ghcr.io/${GHCR_ORG}/freshr-web:${IMAGE_TAG:-latest}
     restart: unless-stopped
+    mem_limit: 64m
     networks:
       default:
       edge:
