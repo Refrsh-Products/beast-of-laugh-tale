@@ -56,13 +56,13 @@ async function captureSlide(
             style={{
               fontFamily: "monospace",
               fontSize: 9,
-              color: "#999",
+              color: "#000000",
               letterSpacing: "0.1em",
             }}
           >
             {topic?.toUpperCase()}
           </span>
-          <span style={{ fontFamily: "monospace", fontSize: 9, color: "#999" }}>
+          <span style={{ fontFamily: "monospace", fontSize: 9, color: "#000000" }}>
             {slide.order_index + 1} / {total}
           </span>
         </div>

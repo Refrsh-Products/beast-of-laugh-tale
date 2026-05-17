@@ -31,10 +31,10 @@ export default function SettingsField({
         style={{
           display: "block",
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.65rem",
+          fontSize: "0.75rem",
           fontWeight: 700,
           letterSpacing: "0.14em",
-          color: disabled ? "#aaa" : "#555",
+          color: B,
           marginBottom: 8,
         }}
       >
@@ -89,25 +89,25 @@ export default function SettingsField({
             style={{
               fontFamily: "'IBM Plex Mono', monospace",
               fontSize: "0.88rem",
-              color: disabled ? "#aaa" : B,
+              color: B,
               wordBreak: "break-all",
             }}
           >
-            {value || <span style={{ color: "#aaa" }}>—</span>}
+            {value || <span style={{ color: "#000000" }}>—</span>}
           </span>
           {!disabled && (
             <button
               onClick={onEditStart}
               onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "#888")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = B)}
               style={{
                 background: "none",
                 border: "none",
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.7rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 letterSpacing: "0.08em",
-                color: "#888",
+                color: "#000000",
                 cursor: "pointer",
                 padding: "4px 0",
                 whiteSpace: "nowrap",
@@ -126,8 +126,8 @@ export default function SettingsField({
       {disabled && (
         <p
           style={{
-            fontSize: "0.63rem",
-            color: "#aaa",
+            fontSize: "0.75rem",
+            color: "#000000",
             marginTop: 6,
             fontFamily: "'IBM Plex Mono', monospace",
           }}

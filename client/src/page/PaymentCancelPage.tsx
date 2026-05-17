@@ -81,7 +81,7 @@ export default function PaymentCancelPage() {
         <p
           style={{
             fontSize: "0.75rem",
-            color: "#555",
+            color: "#000000",
             lineHeight: 1.7,
             marginBottom: 32,
           }}
@@ -97,7 +97,7 @@ export default function PaymentCancelPage() {
           </Button>
         </div>
 
-        <p style={{ fontSize: "0.75rem", color: "#555" }}>
+        <p style={{ fontSize: "0.75rem", color: "#000000" }}>
           <span
             onClick={() => navigate("/dashboard")}
             style={{

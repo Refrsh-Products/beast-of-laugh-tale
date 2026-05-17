@@ -138,8 +138,8 @@ export default function NotebookRow({
       <span
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.62rem",
-          color: "#888",
+          fontSize: "0.75rem",
+          color: "#000000",
           flexShrink: 0,
         }}
       >
@@ -150,8 +150,8 @@ export default function NotebookRow({
       <span
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.62rem",
-          color: "#888",
+          fontSize: "0.75rem",
+          color: "#000000",
           flexShrink: 0,
         }}
       >
@@ -180,7 +180,7 @@ export default function NotebookRow({
             padding: "0 2px",
             fontSize: "1rem",
             lineHeight: 1,
-            color: "#888",
+            color: "#000000",
             opacity: hovered || menuOpen ? 1 : 0,
             transition: "opacity 0.1s",
             flexShrink: 0,

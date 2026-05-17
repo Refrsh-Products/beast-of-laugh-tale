@@ -98,7 +98,7 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
   const bulletsField = (hint?: string) => (
     <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
       {hint && (
-        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: "#aaa", letterSpacing: "0.08em" }}>
+        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: "#000000", letterSpacing: "0.08em" }}>
           {hint}
         </span>
       )}
@@ -117,7 +117,7 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
               onClick={() => removeBullet(i)}
               onMouseEnter={(e) => (e.currentTarget.style.color = "#ff4444")}
               onMouseLeave={(e) => (e.currentTarget.style.color = "#ccc")}
-              style={{ background: "transparent", border: "none", cursor: "pointer", color: "#ccc", fontSize: "1.1rem", flexShrink: 0, padding: "0 4px", lineHeight: 1, transition: "color 0.1s" }}
+              style={{ background: "transparent", border: "none", cursor: "pointer", color: "#000000", fontSize: "1.1rem", flexShrink: 0, padding: "0 4px", lineHeight: 1, transition: "color 0.1s" }}
             >
               ×
             </button>
@@ -128,7 +128,7 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
         onClick={addBullet}
         onMouseEnter={(e) => { e.currentTarget.style.borderColor = G; e.currentTarget.style.color = B; }}
         onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#ccc"; e.currentTarget.style.color = "#aaa"; }}
-        style={{ alignSelf: "flex-start", background: "transparent", border: "1px dashed #ccc", color: "#aaa", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.65rem", padding: "4px 10px", cursor: "pointer", marginTop: 4, transition: "border-color 0.1s, color 0.1s" }}
+        style={{ alignSelf: "flex-start", background: "transparent", border: "1px dashed #ccc", color: "#000000", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.65rem", padding: "4px 10px", cursor: "pointer", marginTop: 4, transition: "border-color 0.1s, color 0.1s" }}
       >
         + Add bullet
       </button>
@@ -137,7 +137,7 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
 
   const imageField = (index: number, label = "IMAGE URL") => (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", color: "#888" }}>
+      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em", color: "#000000" }}>
         {label}
       </span>
       {localImages[index]?.url && (
@@ -214,7 +214,7 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
                 fontSize: "1rem",
                 lineHeight: 1.8,
                 resize: "vertical",
-                color: "#333",
+                color: "#000000",
               }}
             />
           </>
@@ -247,7 +247,7 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
               value={localCaption}
               onChange={(e) => setCaption(e.target.value)}
               placeholder="Caption..."
-              style={{ ...inputBase, fontSize: "1rem", color: "#555", fontStyle: "italic" }}
+              style={{ ...inputBase, fontSize: "1rem", color: "#000000", fontStyle: "italic" }}
             />
           </>
         );
@@ -285,7 +285,7 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
               value={localQuoteSource}
               onChange={(e) => setQuoteSource(e.target.value)}
               placeholder="— Source / attribution"
-              style={{ ...inputBase, fontSize: "0.85rem", color: "#666", letterSpacing: "0.04em" }}
+              style={{ ...inputBase, fontSize: "0.85rem", color: "#000000", letterSpacing: "0.04em" }}
             />
           </>
         );
@@ -302,7 +302,7 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
                   value={localBullets[0] ?? ""}
                   onChange={(e) => setBullet(0, e.target.value)}
                   placeholder="Caption for image 1..."
-                  style={{ ...inputBase, fontSize: "0.85rem", color: "#555", fontStyle: "italic" }}
+                  style={{ ...inputBase, fontSize: "0.85rem", color: "#000000", fontStyle: "italic" }}
                 />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -312,7 +312,7 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
                   value={localBullets[1] ?? ""}
                   onChange={(e) => setBullet(1, e.target.value)}
                   placeholder="Caption for image 2..."
-                  style={{ ...inputBase, fontSize: "0.85rem", color: "#555", fontStyle: "italic" }}
+                  style={{ ...inputBase, fontSize: "0.85rem", color: "#000000", fontStyle: "italic" }}
                 />
               </div>
             </div>
@@ -341,10 +341,10 @@ export default function SlideEditor({ slide, totalSlides, onChange }: SlideEdito
       </div>
 
       <div style={{ borderTop: "1px solid #eee", padding: "6px 20px", display: "flex", justifyContent: "space-between", flexShrink: 0, background: "#fafafa" }}>
-        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: "#999", letterSpacing: "0.08em" }}>
+        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: "#000000", letterSpacing: "0.08em" }}>
           SLIDE {slide.order_index + 1} OF {totalSlides}
         </span>
-        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: "#bbb", letterSpacing: "0.08em" }}>
+        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: "#000000", letterSpacing: "0.08em" }}>
           {slide.layout.toUpperCase()}
         </span>
       </div>

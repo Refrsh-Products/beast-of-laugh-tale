@@ -115,10 +115,10 @@ export default function OptionsColumn({
         <span
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.62rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             letterSpacing: "0.14em",
-            color: "#555",
+            color: "#000000",
           }}
         >
           TOOLS
@@ -179,7 +179,7 @@ export default function OptionsColumn({
                   style={{
                     fontFamily: "'IBM Plex Mono', monospace",
                     fontWeight: 700,
-                    fontSize: "0.72rem",
+                    fontSize: "0.75rem",
                     margin: "0 0 3px",
                     letterSpacing: "0.02em",
                     color: isActive ? W : B,
@@ -190,10 +190,10 @@ export default function OptionsColumn({
                 <p
                   style={{
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.62rem",
+                    fontSize: "0.75rem",
                     margin: 0,
                     lineHeight: 1.5,
-                    color: isActive ? "rgba(255,255,255,0.65)" : "#888",
+                    color: isActive ? W : B,
                   }}
                 >
                   {item.sublabel}

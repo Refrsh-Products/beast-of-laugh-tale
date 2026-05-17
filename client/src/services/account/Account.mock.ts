@@ -31,7 +31,7 @@ const AccountServiceMock: AccountService = {
         limit_bytes: BigInt(500 * 1024 * 1024),
       },
       daily_quizzes: { used: 0, limit: 5 },
-      presentations: { used: 0, limit: 2 },
+presentations: { used: 0, limit: 2 },
     });
   },
 };

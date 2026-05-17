@@ -215,7 +215,7 @@ export default function ChatColumn({
                 border: `1.5px solid ${B}`,
                 padding: "4px 8px",
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
+                fontSize: "0.75rem",
                 outline: "none",
                 background: W,
               }}
@@ -229,7 +229,7 @@ export default function ChatColumn({
                 padding: "4px 10px",
                 cursor: "pointer",
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
+                fontSize: "0.75rem",
               }}
             >
               ✓
@@ -242,11 +242,11 @@ export default function ChatColumn({
               style={{
                 border: `1.5px solid #ccc`,
                 background: "transparent",
-                color: "#888",
+                color: "#000000",
                 padding: "4px 8px",
                 cursor: "pointer",
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
+                fontSize: "0.75rem",
               }}
             >
               ✕
@@ -258,7 +258,7 @@ export default function ChatColumn({
               fontFamily: "'IBM Plex Mono', monospace",
               fontSize: "0.78rem",
               fontWeight: 700,
-              color: currentSession ? B : "#ccc",
+              color: B,
               letterSpacing: "0.02em",
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -280,7 +280,7 @@ export default function ChatColumn({
               style={{
                 background: dropdownOpen ? B : "transparent",
                 border: `1.5px solid ${dropdownOpen ? B : "#ddd"}`,
-                color: dropdownOpen ? W : "#666",
+                color: dropdownOpen ? W : B,
                 width: 28,
                 height: 28,
                 display: "flex",
@@ -325,7 +325,7 @@ export default function ChatColumn({
                     border: "none",
                     borderBottom: `1.5px solid #eee`,
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.72rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     color: B,
                     cursor: "pointer",
@@ -349,8 +349,8 @@ export default function ChatColumn({
                       style={{
                         padding: "10px 14px",
                         fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.68rem",
-                        color: "#bbb",
+                        fontSize: "0.75rem",
+                        color: "#000000",
                       }}
                     >
                       No sessions yet
@@ -396,7 +396,7 @@ export default function ChatColumn({
                                 borderBottom: `1.5px solid ${B}`,
                                 padding: "8px 14px",
                                 fontFamily: "'IBM Plex Mono', monospace",
-                                fontSize: "0.7rem",
+                                fontSize: "0.75rem",
                                 background: "transparent",
                                 color: isActive ? W : B,
                                 outline: "none",
@@ -413,7 +413,7 @@ export default function ChatColumn({
                                   flex: 1,
                                   padding: "9px 14px",
                                   fontFamily: "'IBM Plex Mono', monospace",
-                                  fontSize: "0.72rem",
+                                  fontSize: "0.75rem",
                                   cursor: "pointer",
                                   color: isActive ? W : B,
                                   whiteSpace: "nowrap",
@@ -436,9 +436,9 @@ export default function ChatColumn({
                                       background: "transparent",
                                       border: "none",
                                       cursor: "pointer",
-                                      color: isActive ? W : "#aaa",
+                                      color: isActive ? W : B,
                                       padding: "0 6px",
-                                      fontSize: "0.65rem",
+                                      fontSize: "0.75rem",
                                       flexShrink: 0,
                                     }}
                                   >
@@ -456,7 +456,7 @@ export default function ChatColumn({
                                       cursor: "pointer",
                                       color: isActive ? "#ff8080" : "#ccc",
                                       padding: "0 10px 0 0",
-                                      fontSize: "0.65rem",
+                                      fontSize: "0.75rem",
                                       flexShrink: 0,
                                     }}
                                   >
@@ -524,7 +524,7 @@ export default function ChatColumn({
           <span
             style={{
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.65rem",
+              fontSize: "0.75rem",
               color: "#7a6000",
             }}
           >
@@ -593,7 +593,7 @@ export default function ChatColumn({
             background: chatDisabled ? "#f5f5f5" : W,
             outline: "none",
             boxSizing: "border-box",
-            color: chatDisabled ? "#aaa" : B,
+            color: B,
             cursor: chatDisabled ? "not-allowed" : "text",
           }}
         />
@@ -670,8 +670,8 @@ function EmptyState() {
       <p
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.7rem",
-          color: "#aaa",
+          fontSize: "0.75rem",
+          color: "#000000",
           margin: 0,
           lineHeight: 1.6,
         }}
@@ -695,7 +695,7 @@ function TypingIndicator() {
           padding: "10px 16px",
           fontFamily: "'IBM Plex Mono', monospace",
           fontSize: "0.78rem",
-          color: "#aaa",
+          color: "#000000",
           letterSpacing: "0.1em",
         }}
       >

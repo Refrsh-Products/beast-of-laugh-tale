@@ -1,14 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Loading from "../components/loading/Loading";
 import useAuthService from "../services/auth";
 import GoogleAuthBtn from "../components/google-auth/GoogleAuthBtn";
 import FreshrLogo from "../components/logo/FreshrLogo";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { BLACK as B, WHITE as W } from "../constants/theme";
+import { inputStyle, labelStyle, inputHandlers } from "../styles/form";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -19,40 +17,6 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    border: `3px solid ${B}`,
-    borderRadius: 0,
-    padding: "12px 14px",
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.82rem",
-    background: W,
-    outline: "none",
-    boxSizing: "border-box",
-    transition: "border-color 0.15s",
-  };
-
-  const inputHandlers = {
-    onMouseEnter: (e: React.MouseEvent<HTMLInputElement>) => {
-      if (document.activeElement !== e.currentTarget)
-        e.currentTarget.style.borderColor = G;
-    },
-    onMouseLeave: (e: React.MouseEvent<HTMLInputElement>) => {
-      e.currentTarget.style.borderColor = B;
-    },
-    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
-      e.currentTarget.style.borderColor = B;
-    },
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.68rem",
-    fontWeight: 700,
-    letterSpacing: "0.12em",
-    marginBottom: 6,
-  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -100,7 +64,7 @@ export default function LoginPage() {
         }}
       >
         {/* Logo */}
-        <FreshrLogo />
+        <FreshrLogo color="#000000" />
 
         {/* Form container */}
         <div style={{ width: "100%", maxWidth: 420 }}>
@@ -134,10 +98,10 @@ export default function LoginPage() {
             <div style={{ flex: 1, height: 2, background: B }} />
             <span
               style={{
-                fontSize: "0.7rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 letterSpacing: "0.1em",
-                color: "#666",
+                color: "#000000",
               }}
             >
               or
@@ -151,7 +115,7 @@ export default function LoginPage() {
               style={{
                 color: "#cc0000",
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
+                fontSize: "0.75rem",
                 margin: "0 0 16px",
               }}
             >
@@ -194,7 +158,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#888")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
                   style={{
                     position: "absolute",
                     right: 12,
@@ -204,9 +168,9 @@ export default function LoginPage() {
                     border: "none",
                     cursor: "pointer",
                     padding: 0,
-                    color: "#888",
+                    color: "#000000",
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.65rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     letterSpacing: "0.05em",
                     transition: "color 0.12s",
@@ -221,8 +185,8 @@ export default function LoginPage() {
               <Link
                 to="/forgot-password"
                 style={{
-                  fontSize: "0.72rem",
-                  color: "#555",
+                  fontSize: "0.75rem",
+                  color: "#000000",
                   textDecoration: "underline",
                   textUnderlineOffset: 3,
                 }}
@@ -243,7 +207,7 @@ export default function LoginPage() {
             style={{
               marginTop: 28,
               fontSize: "0.75rem",
-              color: "#555",
+              color: "#000000",
               textAlign: "center",
             }}
           >

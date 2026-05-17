@@ -43,8 +43,8 @@ export default function DashboardHeader({
         <p
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.7rem",
-            color: "#888",
+            fontSize: "0.75rem",
+            color: "#000000",
             margin: "4px 0 0",
           }}
         >
@@ -71,7 +71,7 @@ export default function DashboardHeader({
               borderRadius: 0,
               padding: "8px 12px 8px 32px",
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.72rem",
+              fontSize: "0.75rem",
               background: W,
               outline: "none",
               width: 200,

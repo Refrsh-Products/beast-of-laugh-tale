@@ -17,10 +17,10 @@ export default function ArchivedSection({
       <div
         style={{
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.6rem",
+          fontSize: "0.75rem",
           fontWeight: 700,
           letterSpacing: "0.14em",
-          color: "#aaa",
+          color: "#000000",
           marginBottom: 12,
           display: "flex",
           alignItems: "center",
@@ -50,7 +50,7 @@ export default function ArchivedSection({
                 fontFamily: "'Syne', sans-serif",
                 fontWeight: 700,
                 fontSize: "0.88rem",
-                color: "#888",
+                color: "#000000",
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -71,7 +71,7 @@ export default function ArchivedSection({
               }}
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.62rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 letterSpacing: "0.06em",
                 background: "none",

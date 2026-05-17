@@ -58,7 +58,7 @@ export default function UpgradeModal({
             style={{
               fontFamily: "'IBM Plex Mono', monospace",
               fontSize: "0.75rem",
-              color: "#555",
+              color: "#000000",
               margin: 0,
               lineHeight: 1.6,
             }}
@@ -79,11 +79,11 @@ export default function UpgradeModal({
           <span
             style={{
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.65rem",
+              fontSize: "0.75rem",
               fontWeight: 700,
               letterSpacing: "0.1em",
               textTransform: "uppercase",
-              color: "#888",
+              color: "#000000",
             }}
           >
             Pro plan includes
@@ -102,7 +102,7 @@ export default function UpgradeModal({
                 alignItems: "center",
                 gap: 8,
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
+                fontSize: "0.75rem",
               }}
             >
               <span
@@ -115,7 +115,7 @@ export default function UpgradeModal({
                   alignItems: "center",
                   justifyContent: "center",
                   flexShrink: 0,
-                  fontSize: "0.6rem",
+                  fontSize: "0.75rem",
                   fontWeight: 700,
                 }}
               >

@@ -4,12 +4,10 @@ import Button from "../components/ui/Button";
 import FeatureCard from "../components/landing/FeatureCard";
 import TestimonialSection from "../components/landing/TestimonialSection";
 import RotatingText from "../components/landing/RotatingText";
+import PricingSection from "../components/landing/PricingSection";
 import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 
-/* ─── Design tokens ───────────────────────────────────────── */
-const G = "#84e487"; // green accent
-const B = "#000000"; // black
-const W = "#FFFFFF"; // white
+import { GREEN as G, BLACK as B, WHITE as W } from "../constants/theme";
 
 /* ─── Main page ───────────────────────────────────────────── */
 export default function LandingPage() {
@@ -89,7 +87,7 @@ export default function LandingPage() {
                 color: W,
                 border: `2px solid ${B}`,
                 padding: "6px 14px",
-                fontSize: "0.65rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 letterSpacing: "0.15em",
                 marginBottom: 28,
@@ -129,7 +127,7 @@ export default function LandingPage() {
               style={{
                 fontSize: "0.85rem",
                 lineHeight: 1.9,
-                color: "#444",
+                color: "#000000",
                 maxWidth: 460,
                 marginBottom: 40,
               }}
@@ -192,14 +190,14 @@ export default function LandingPage() {
                     background: G,
                     border: `1px solid ${B}`,
                     padding: "4px 10px",
-                    fontSize: "0.62rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     letterSpacing: "0.1em",
                   }}
                 >
                   NOTEBOOK_01
                 </span>
-                <span style={{ fontSize: "0.62rem", color: "#999" }}>
+                <span style={{ fontSize: "0.75rem", color: "#000000" }}>
                   3 docs · indexed ✓
                 </span>
               </div>
@@ -209,9 +207,9 @@ export default function LandingPage() {
               <div style={{ marginBottom: 14 }}>
                 <div
                   style={{
-                    fontSize: "0.58rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
-                    color: "#999",
+                    color: "#000000",
                     marginBottom: 5,
                     letterSpacing: "0.12em",
                   }}
@@ -222,7 +220,7 @@ export default function LandingPage() {
                   style={{
                     border: `2px solid ${B}`,
                     padding: "10px 12px",
-                    fontSize: "0.73rem",
+                    fontSize: "0.75rem",
                     background: "#f5f5f5",
                     lineHeight: 1.65,
                   }}
@@ -236,7 +234,7 @@ export default function LandingPage() {
               <div style={{ flex: 1 }}>
                 <div
                   style={{
-                    fontSize: "0.58rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     marginBottom: 5,
                     letterSpacing: "0.12em",
@@ -248,7 +246,7 @@ export default function LandingPage() {
                   style={{
                     border: `2px solid ${B}`,
                     padding: "10px 12px",
-                    fontSize: "0.73rem",
+                    fontSize: "0.75rem",
                     lineHeight: 1.65,
                   }}
                 >
@@ -277,7 +275,7 @@ export default function LandingPage() {
                     background: G,
                     border: `1px solid ${B}`,
                     padding: "3px 10px",
-                    fontSize: "0.6rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                   }}
                 >
@@ -287,7 +285,7 @@ export default function LandingPage() {
                   style={{
                     border: `1px solid ${B}`,
                     padding: "3px 10px",
-                    fontSize: "0.6rem",
+                    fontSize: "0.75rem",
                   }}
                 >
                   + 2 sources
@@ -389,7 +387,7 @@ export default function LandingPage() {
                 color: W,
                 border: `2px solid ${B}`,
                 padding: "6px 14px",
-                fontSize: "0.65rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 letterSpacing: "0.15em",
                 marginBottom: 18,
@@ -489,7 +487,7 @@ export default function LandingPage() {
                   style={{
                     fontSize: "0.78rem",
                     lineHeight: 1.85,
-                    color: "#555",
+                    color: "#000000",
                     margin: 0,
                   }}
                 >
@@ -504,53 +502,8 @@ export default function LandingPage() {
       {/* ── TESTIMONIALS ── */}
       <TestimonialSection />
 
-      {/* ── CTA ── */}
-      <section
-        id="cta"
-        className="py-24 px-6 md:px-16"
-        style={{ background: B }}
-      >
-        <div className="max-w-3xl mx-auto text-center">
-          <h2
-            id="cta-heading"
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "clamp(2.5rem, 6vw, 5rem)",
-              color: W,
-              lineHeight: 1.0,
-              letterSpacing: "-0.03em",
-              marginBottom: 24,
-            }}
-          >
-            Your notes are
-            <br />
-            <span style={{ color: G }}>waiting to teach you.</span>
-          </h2>
-          <p
-            id="cta-text"
-            style={{
-              color: "#666",
-              fontSize: "0.85rem",
-              lineHeight: 1.85,
-              maxWidth: 440,
-              margin: "0 auto 48px",
-            }}
-          >
-            Stop rereading the same pages. Start asking questions. FRESHR turns
-            passive notes into an active learning engine.
-          </p>
-          <span
-            id="cta-button"
-            onClick={() => navigate("/signup")}
-            style={{ cursor: "pointer" }}
-          >
-            <Button variant="green" large>
-              Create your first notebook →
-            </Button>
-          </span>
-        </div>
-      </section>
+      {/* ── PRICING ── */}
+      <PricingSection />
 
       {/* ── FOOTER ── */}
       <footer
@@ -571,7 +524,7 @@ export default function LandingPage() {
 
         <span
           id="footer-copyright"
-          style={{ fontSize: "0.7rem", color: "#888" }}
+          style={{ fontSize: "0.75rem", color: "#000000" }}
         >
           © 2025 FRESHR
         </span>

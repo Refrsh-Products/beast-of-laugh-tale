@@ -101,7 +101,7 @@ function SlideThumbnail({
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: "0.32rem",
-                  color: "#666",
+                  color: "#000000",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
@@ -304,7 +304,7 @@ export default function PresentationViewer({
             style={{
               fontFamily: "'IBM Plex Mono', monospace",
               fontSize: "0.6rem",
-              color: "#666",
+              color: "#000000",
               letterSpacing: "0.08em",
             }}
           >
@@ -354,7 +354,7 @@ export default function PresentationViewer({
               style={{
                 background: "transparent",
                 border: "1.5px solid #555",
-                color: "#aaa",
+                color: "#000000",
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: "0.72rem",
                 fontWeight: 700,
@@ -379,7 +379,7 @@ export default function PresentationViewer({
                 style={{
                   background: "transparent",
                   border: "1.5px solid #555",
-                  color: "#aaa",
+                  color: "#000000",
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: "0.72rem",
                   fontWeight: 700,
@@ -413,7 +413,7 @@ export default function PresentationViewer({
                         width: "100%",
                         background: "transparent",
                         border: "none",
-                        color: "#ccc",
+                        color: "#000000",
                         fontFamily: "'IBM Plex Mono', monospace",
                         fontSize: "0.72rem",
                         fontWeight: 700,
@@ -435,7 +435,7 @@ export default function PresentationViewer({
               onClick={enterEditMode}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = W; e.currentTarget.style.color = W; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#aaa"; }}
-              style={{ background: "transparent", border: "1.5px solid #555", color: "#aaa", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: 700, padding: "5px 14px", cursor: "pointer", letterSpacing: "0.06em", transition: "border-color 0.1s, color 0.1s" }}
+              style={{ background: "transparent", border: "1.5px solid #555", color: "#000000", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: 700, padding: "5px 14px", cursor: "pointer", letterSpacing: "0.06em", transition: "border-color 0.1s, color 0.1s" }}
             >
               Edit
             </button>
@@ -443,7 +443,7 @@ export default function PresentationViewer({
               onClick={onClose}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = W; e.currentTarget.style.color = W; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#aaa"; }}
-              style={{ background: "transparent", border: "1.5px solid #555", color: "#aaa", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: 700, padding: "5px 14px", cursor: "pointer", letterSpacing: "0.06em", transition: "border-color 0.1s, color 0.1s" }}
+              style={{ background: "transparent", border: "1.5px solid #555", color: "#000000", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: 700, padding: "5px 14px", cursor: "pointer", letterSpacing: "0.06em", transition: "border-color 0.1s, color 0.1s" }}
             >
               × Close
             </button>
@@ -493,10 +493,10 @@ export default function PresentationViewer({
                       {renderSlideContent(slide)}
                     </div>
                     <div style={{ borderTop: "1px solid #ddd", marginTop: "0.6em", paddingTop: "0.4em", display: "flex", justifyContent: "space-between", flexShrink: 0 }}>
-                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.55em", color: "#999", letterSpacing: "0.1em" }}>
+                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.55em", color: "#000000", letterSpacing: "0.1em" }}>
                         {presentation.topic?.toUpperCase()}
                       </span>
-                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.55em", color: "#999" }}>
+                      <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.55em", color: "#000000" }}>
                         {slide.order_index + 1} / {slides.length}
                       </span>
                     </div>
@@ -505,7 +505,7 @@ export default function PresentationViewer({
               ))
             ) : (
               <Slide background={W}>
-                <p style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#aaa" }}>
+                <p style={{ fontFamily: "'IBM Plex Mono', monospace", color: "#000000" }}>
                   No slides available.
                 </p>
               </Slide>
@@ -570,7 +570,7 @@ export default function PresentationViewer({
                     fontFamily: "'IBM Plex Mono', monospace",
                     fontSize: "0.7rem",
                     fontWeight: 700,
-                    color: "#888",
+                    color: "#000000",
                     padding: 4,
                   }}
                 >
@@ -597,7 +597,7 @@ export default function PresentationViewer({
                       fontSize: "0.6rem",
                       fontWeight: 700,
                       letterSpacing: "0.1em",
-                      color: "#555",
+                      color: "#000000",
                     }}
                   >
                     AI CHAT
@@ -611,7 +611,7 @@ export default function PresentationViewer({
                       fontFamily: "'IBM Plex Mono', monospace",
                       fontSize: "0.7rem",
                       fontWeight: 700,
-                      color: "#aaa",
+                      color: "#000000",
                       padding: "0 4px",
                     }}
                   >
@@ -653,7 +653,7 @@ export default function PresentationViewer({
                           background: "#f0f0f0",
                           fontFamily: "'IBM Plex Mono', monospace",
                           fontSize: "0.68rem",
-                          color: "#999",
+                          color: "#000000",
                         }}
                       >
                         Thinking...
@@ -763,7 +763,7 @@ export default function PresentationViewer({
                 fontSize: "0.6rem",
                 fontWeight: 700,
                 letterSpacing: "0.1em",
-                color: "#555",
+                color: "#000000",
               }}
             >
               SLIDES

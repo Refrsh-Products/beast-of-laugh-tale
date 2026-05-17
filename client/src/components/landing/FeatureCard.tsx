@@ -32,7 +32,7 @@ export default function FeatureCard({ title, icon, desc }: FeatureCardProps) {
         style={{
           fontSize: "0.78rem",
           lineHeight: 1.85,
-          color: "#555",
+          color: "#000000",
           fontFamily: "'IBM Plex Mono', monospace",
           margin: 0,
         }}

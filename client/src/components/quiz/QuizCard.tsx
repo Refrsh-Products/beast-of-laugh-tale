@@ -75,7 +75,7 @@ export default function QuizCard({
         <p
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.72rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             color: B,
             margin: 0,
@@ -99,7 +99,7 @@ export default function QuizCard({
           <span
             style={{
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.68rem",
+              fontSize: "0.75rem",
               fontWeight: 700,
               color: B,
             }}
@@ -121,43 +121,43 @@ export default function QuizCard({
         <span
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.58rem",
-            color: "#999",
+            fontSize: "0.75rem",
+            color: "#000000",
           }}
         >
           {timeAgo(dateStr)}
         </span>
-        <span style={{ color: "#ccc" }}>·</span>
+        <span style={{ color: "#000000" }}>·</span>
         <span
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.58rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             letterSpacing: "0.04em",
-            color: "#666",
+            color: "#000000",
             textTransform: "capitalize",
           }}
         >
           {quiz.difficulty}
         </span>
-        <span style={{ color: "#ccc" }}>·</span>
+        <span style={{ color: "#000000" }}>·</span>
         <span
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.58rem",
-            color: "#666",
+            fontSize: "0.75rem",
+            color: "#000000",
           }}
         >
           {numQuestions}q
         </span>
         {timed && timeLimitMinutes && (
           <>
-            <span style={{ color: "#ccc" }}>·</span>
+            <span style={{ color: "#000000" }}>·</span>
             <span
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.58rem",
-                color: "#666",
+                fontSize: "0.75rem",
+                color: "#000000",
               }}
             >
               {timeLimitMinutes}min

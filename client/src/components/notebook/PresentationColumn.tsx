@@ -21,10 +21,10 @@ const THEMES: Record<PresentationTheme, { label: string; bg: string; text: strin
 const labelStyle: React.CSSProperties = {
   display: "block",
   fontFamily: "'IBM Plex Mono', monospace",
-  fontSize: "0.62rem",
+  fontSize: "0.75rem",
   fontWeight: 700,
   letterSpacing: "0.12em",
-  color: "#555",
+  color: "#000000",
   marginBottom: 6,
 };
 
@@ -99,7 +99,7 @@ function ThemeCard({
           display: "block",
           marginTop: 6,
           fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.62rem",
+          fontSize: "0.75rem",
           fontWeight: selected ? 700 : 400,
           color: B,
         }}
@@ -183,10 +183,10 @@ export default function PresentationColumn({
         <span
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.62rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             letterSpacing: "0.14em",
-            color: "#555",
+            color: "#000000",
           }}
         >
           PRESENTATION GENERATOR
@@ -219,11 +219,11 @@ export default function PresentationColumn({
                 <span
                   onClick={() => setTopicsExpanded(false)}
                   onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#888")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
                   style={{
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.65rem",
-                    color: "#888",
+                    fontSize: "0.75rem",
+                    color: "#000000",
                     cursor: "pointer",
                     userSelect: "none",
                   }}
@@ -234,11 +234,11 @@ export default function PresentationColumn({
             </div>
 
             {isLoadingTopics ? (
-              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.7rem", color: "#aaa", margin: 0 }}>
+              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", color: "#000000", margin: 0 }}>
                 Loading topics...
               </p>
             ) : topics.length === 0 ? (
-              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.7rem", color: "#aaa", margin: 0, lineHeight: 1.6 }}>
+              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", color: "#000000", margin: 0, lineHeight: 1.6 }}>
                 No topics found. Upload files to your notebook first.
               </p>
             ) : topicsExpanded ? (
@@ -278,12 +278,12 @@ export default function PresentationColumn({
                 {hiddenCount > 0 && (
                   <span
                     onClick={() => setTopicsExpanded(true)}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#444")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#666")}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#000000")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
                     style={{
                       fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.65rem",
-                      color: "#666",
+                      fontSize: "0.75rem",
+                      color: "#000000",
                       textDecoration: "underline",
                       textUnderlineOffset: "3px",
                       cursor: "pointer",
@@ -297,11 +297,11 @@ export default function PresentationColumn({
             )}
 
             {selectedTopics.length > 0 ? (
-              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: "#888", margin: "6px 0 0" }}>
+              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", color: "#000000", margin: "6px 0 0" }}>
                 {selectedTopics.length} topic{selectedTopics.length > 1 ? "s" : ""} selected
               </p>
             ) : topics.length > 0 && (
-              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.6rem", color: "#888", margin: "6px 0 0" }}>
+              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", color: "#000000", margin: "6px 0 0" }}>
                 No topics selected — presentation will cover all topics
               </p>
             )}
@@ -327,7 +327,7 @@ export default function PresentationColumn({
                 borderRadius: 0,
                 padding: "8px 10px",
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
+                fontSize: "0.75rem",
                 background: W,
                 outline: "none",
                 resize: "vertical",
@@ -427,7 +427,7 @@ export default function PresentationColumn({
           }}
           style={{
             background: canGenerate ? G : "#eee",
-            color: canGenerate ? B : "#aaa",
+            color: B,
             border: `2px solid ${canGenerate ? B : "#ccc"}`,
             boxShadow: canGenerate ? `4px 4px 0 ${B}` : "none",
             padding: "14px 40px",

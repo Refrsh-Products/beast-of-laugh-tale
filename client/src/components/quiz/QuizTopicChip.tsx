@@ -30,7 +30,7 @@ export default function QuizTopicChip({
         border: `2px solid ${B}`,
         background: bg,
         fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: "0.68rem",
+        fontSize: "0.75rem",
         fontWeight: selected ? 700 : 500,
         letterSpacing: "0.04em",
         cursor: "pointer",

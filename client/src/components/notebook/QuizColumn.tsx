@@ -13,10 +13,10 @@ const COLLAPSED_MAX = 4; // Number of topics to show when topic chip is collapse
 const labelStyle: React.CSSProperties = {
   display: "block",
   fontFamily: "'IBM Plex Mono', monospace",
-  fontSize: "0.62rem",
+  fontSize: "0.75rem",
   fontWeight: 700,
   letterSpacing: "0.12em",
-  color: "#555",
+  color: "#000000",
   marginBottom: 6,
 };
 
@@ -96,10 +96,10 @@ export default function QuizColumn({
         <span
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.62rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             letterSpacing: "0.14em",
-            color: "#555",
+            color: "#000000",
           }}
         >
           QUIZ GENERATOR
@@ -139,11 +139,11 @@ export default function QuizColumn({
                 <span
                   onClick={() => setTopicsExpanded(false)}
                   onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#888")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
                   style={{
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.68rem",
-                    color: "#888",
+                    fontSize: "0.75rem",
+                    color: "#000000",
                     cursor: "pointer",
                     userSelect: "none",
                   }}
@@ -157,8 +157,8 @@ export default function QuizColumn({
               <p
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.7rem",
-                  color: "#aaa",
+                  fontSize: "0.75rem",
+                  color: "#000000",
                   margin: 0,
                 }}
               >
@@ -168,8 +168,8 @@ export default function QuizColumn({
               <p
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.7rem",
-                  color: "#aaa",
+                  fontSize: "0.75rem",
+                  color: "#000000",
                   margin: 0,
                   lineHeight: 1.6,
                 }}
@@ -222,12 +222,12 @@ export default function QuizColumn({
                 {hiddenCount > 0 && (
                   <span
                     onClick={() => setTopicsExpanded(true)}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#444")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#666")}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = "#000000")}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
                     style={{
                       fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.65rem",
-                      color: "#666",
+                      fontSize: "0.75rem",
+                      color: "#000000",
                       textDecoration: "underline",
                       textUnderlineOffset: "3px",
                       cursor: "pointer",
@@ -244,8 +244,8 @@ export default function QuizColumn({
               <p
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.62rem",
-                  color: "#888",
+                  fontSize: "0.75rem",
+                  color: "#000000",
                   margin: "8px 0 0",
                 }}
               >
@@ -256,8 +256,8 @@ export default function QuizColumn({
               <p
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.62rem",
-                  color: "#888",
+                  fontSize: "0.75rem",
+                  color: "#000000",
                   margin: "8px 0 0",
                 }}
               >
@@ -367,7 +367,7 @@ export default function QuizColumn({
 
             {/* Time Limit — always visible, disabled when no timer */}
             <div>
-              <label style={{ ...labelStyle, color: quizType === "TIMED" ? "#555" : "#bbb" }}>
+              <label style={{ ...labelStyle, color: B }}>
                 TIME LIMIT
               </label>
               <Dropdown
@@ -427,7 +427,7 @@ export default function QuizColumn({
           }}
           style={{
             background: canGenerate ? G : "#eee",
-            color: canGenerate ? B : "#aaa",
+            color: B,
             border: `2px solid ${canGenerate ? B : "#ccc"}`,
             boxShadow: canGenerate ? `4px 4px 0 ${B}` : "none",
             padding: "14px 40px",

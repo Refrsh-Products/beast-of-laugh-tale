@@ -46,7 +46,7 @@ function Stars({ count }: { count: number }) {
           key={i}
           style={{
             fontSize: "1.35rem",
-            color: i <= count ? G : "#ddd",
+            color: i <= count ? G : B,
             WebkitTextStroke: i <= count ? `1px ${B}` : "1px #ccc",
           }}
         >
@@ -73,7 +73,7 @@ export default function TestimonialSection() {
               color: W,
               border: `2px solid ${B}`,
               padding: "6px 14px",
-              fontSize: "0.65rem",
+              fontSize: "0.75rem",
               fontWeight: 700,
               letterSpacing: "0.15em",
               marginBottom: 18,
@@ -129,8 +129,8 @@ export default function TestimonialSection() {
               </div>
               <div
                 style={{
-                  fontSize: "0.72rem",
-                  color: "#777",
+                  fontSize: "0.75rem",
+                  color: "#000000",
                   fontWeight: 400,
                   marginTop: -4,
                 }}

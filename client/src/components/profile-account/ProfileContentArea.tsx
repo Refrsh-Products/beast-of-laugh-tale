@@ -175,10 +175,10 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
                   style={{
                     display: "block",
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.65rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     letterSpacing: "0.14em",
-                    color: "#555",
+                    color: "#000000",
                     marginBottom: 8,
                   }}
                 >
@@ -254,7 +254,7 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
                     <p
                       style={{
                         fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.7rem",
+                        fontSize: "0.75rem",
                         color: "#cc0000",
                         margin: 0,
                       }}
@@ -297,10 +297,10 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
                   style={{
                     display: "block",
                     fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.65rem",
+                    fontSize: "0.75rem",
                     fontWeight: 700,
                     letterSpacing: "0.14em",
-                    color: "#555",
+                    color: "#000000",
                     marginBottom: 8,
                   }}
                 >

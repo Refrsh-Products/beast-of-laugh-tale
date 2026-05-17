@@ -70,10 +70,10 @@ export default function PreviousQuizzesColumn({
         <span
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.62rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
             letterSpacing: "0.14em",
-            color: "#555",
+            color: "#000000",
           }}
         >
           YOUR QUIZZES
@@ -104,7 +104,7 @@ export default function PreviousQuizzesColumn({
                   color: W,
                   border: `1.5px solid ${B}`,
                   fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.6rem",
+                  fontSize: "0.75rem",
                   fontWeight: 700,
                   padding: "3px 8px",
                   cursor: "pointer",
@@ -155,8 +155,8 @@ export default function PreviousQuizzesColumn({
             <p
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.7rem",
-                color: "#bbb",
+                fontSize: "0.75rem",
+                color: "#000000",
                 lineHeight: 1.8,
                 margin: 0,
               }}
@@ -218,8 +218,8 @@ export default function PreviousQuizzesColumn({
             <p
               style={{
                 fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.72rem",
-                color: "#555",
+                fontSize: "0.75rem",
+                color: "#000000",
                 marginBottom: 24,
                 lineHeight: 1.5,
               }}

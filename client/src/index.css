@@ -30,3 +30,11 @@ html, body {
 .freshr-scroll::-webkit-scrollbar { width: 6px; }
 .freshr-scroll::-webkit-scrollbar-track { background: transparent; }
 .freshr-scroll::-webkit-scrollbar-thumb { background: #ccc; }
+
+/* Global scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #84e487; border-radius: 0; }
+
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: #84e487 #000; }
