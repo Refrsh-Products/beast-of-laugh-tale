@@ -38,7 +38,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     registration_method = models.CharField(max_length=20, choices=REGISTRATION_CHOICES, default='email')
 
-    is_active = models.BooleanField(default=True, help_text="Indicates whether the user account is active. Defaults to False and user needs to verify email on signup before it can be set to True.")
+    is_active = models.BooleanField(default=False, help_text="Indicates whether the user account is active. New email-registered users start inactive and must verify their email before this flips to True. Google-registered users are activated immediately on first sign-in.")
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False, help_text="Indicates whether the user has all admin permissions. Defaults to False.")
     created_at = models.DateTimeField(auto_now_add=True)

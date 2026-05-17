@@ -14,14 +14,13 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class RegistrationSerializer(serializers.Serializer):
-    """Registration serializer for creating a new user"""
+    """Registration serializer. Duplicate-email handling lives in the view so that
+    an existing-but-unverified account triggers a silent resend instead of an error."""
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, validators=[validate_password])
     password_confirm = serializers.CharField(write_only=True)
 
     def validate_email(self, value):
-        if User.objects.filter(email__iexact=value).exists():
-            raise serializers.ValidationError("A user with this email already exists.")
         return value.lower()
 
     def validate(self, attrs):
@@ -57,6 +56,17 @@ class GoogleAuthSerializer(serializers.Serializer):
 class MessageResponseSerializer(serializers.Serializer):
     """Generic message response"""
     message = serializers.CharField()
+
+
+class EmailVerificationRequestSerializer(serializers.Serializer):
+    """(Re)send the email verification link for an unverified account"""
+    email = serializers.EmailField()
+
+
+class EmailVerificationConfirmSerializer(serializers.Serializer):
+    """Confirm email verification with the uid+token from the verification link"""
+    uid = serializers.CharField()
+    token = serializers.CharField()
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):

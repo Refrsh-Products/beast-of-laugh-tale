@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Loading from "../components/loading/Loading";
 import useAuthService from "../services/auth";
+import { NeedsVerificationError } from "../services/auth/AuthService.types";
 import GoogleAuthBtn from "../components/google-auth/GoogleAuthBtn";
 import FreshrLogo from "../components/logo/FreshrLogo";
 import { BLACK as B, WHITE as W } from "../constants/theme";
@@ -15,6 +16,12 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [needsVerificationFor, setNeedsVerificationFor] = useState<
+    string | null
+  >(null);
+  const [resendState, setResendState] = useState<
+    "idle" | "sending" | "sent" | "rate-limited" | "error"
+  >("idle");
   const [isLoading, setIsLoading] = useState(false);
 
 
@@ -25,6 +32,8 @@ export default function LoginPage() {
     }
 
     setError("");
+    setNeedsVerificationFor(null);
+    setResendState("idle");
     setIsLoading(true);
 
     try {
@@ -32,10 +41,25 @@ export default function LoginPage() {
       console.log("[LoginPage] Logged in user:", user);
 
       navigate("/dashboard");
-    } catch {
-      setError("Incorrect email or password. Please try again.");
+    } catch (err) {
+      if (err instanceof NeedsVerificationError) {
+        setNeedsVerificationFor(err.email);
+      } else {
+        setError("Incorrect email or password. Please try again.");
+      }
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    if (!needsVerificationFor) return;
+    setResendState("sending");
+    try {
+      await authService.requestEmailVerification(needsVerificationFor);
+      setResendState("sent");
+    } catch (err: any) {
+      setResendState(err?.response?.status === 429 ? "rate-limited" : "error");
     }
   };
 
@@ -121,6 +145,58 @@ export default function LoginPage() {
             >
               {error}
             </p>
+          )}
+
+          {/* Needs-verification banner */}
+          {needsVerificationFor && (
+            <div
+              style={{
+                border: `2px solid ${B}`,
+                background: "#fff8d6",
+                padding: "12px 14px",
+                margin: "0 0 16px",
+                fontSize: "0.72rem",
+                lineHeight: 1.5,
+              }}
+            >
+              <p style={{ margin: "0 0 8px", fontWeight: 700 }}>
+                Please verify your email before logging in.
+              </p>
+              <p style={{ margin: "0 0 10px", color: "#555" }}>
+                We sent a verification link to {needsVerificationFor}.
+              </p>
+              <span
+                onClick={
+                  resendState === "sending"
+                    ? undefined
+                    : handleResendVerification
+                }
+                style={{
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  color: resendState === "sending" ? "#888" : B,
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                  cursor: resendState === "sending" ? "default" : "pointer",
+                }}
+              >
+                {resendState === "sending"
+                  ? "Sending..."
+                  : resendState === "sent"
+                    ? "Sent! Check your inbox."
+                    : "Resend verification link"}
+              </span>
+              {resendState === "rate-limited" && (
+                <p style={{ margin: "8px 0 0", color: "#cc0000" }}>
+                  Too many resend attempts. Try again in a few minutes.
+                </p>
+              )}
+              {resendState === "error" && (
+                <p style={{ margin: "8px 0 0", color: "#cc0000" }}>
+                  Could not resend right now. Please try again.
+                </p>
+              )}
+            </div>
           )}
 
           {/* Fields */}

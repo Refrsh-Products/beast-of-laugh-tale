@@ -183,6 +183,14 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    # ScopedRateThrottle only kicks in for views that set `throttle_scope`, so this
+    # is opt-in per view and won't accidentally limit other endpoints.
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.ScopedRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'verify_email_resend': '5/hour',
+    },
 }
 
 SPECTACULAR_SETTINGS = {
@@ -231,12 +239,16 @@ CELERY_WORKER_MAX_MEMORY_PER_CHILD = 400_000  # kilobytes (~400MB RSS)
 
 CELERY_BEAT_SCHEDULE = {"expire-subscriptions": {"task": "accounts.tasks.expire_subscriptions", "schedule": crontab(minute=0)}}
 
-# Email Configuration (console backend for development)
+# Email Configuration — Resend via django-anymail. Sender addresses live on the
+# verified no-reply.freshr.cc subdomain; per-purpose mailboxes (support@, security@)
+# let recipients and inbox providers distinguish transactional categories.
 EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
 ANYMAIL = {
     "RESEND_API_KEY": os.environ.get("RESEND_API_KEY"),
 }
-DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'
+DEFAULT_FROM_EMAIL = 'REFRSH <no-reply@no-reply.freshr.cc>'
+PASSWORD_RESET_FROM_EMAIL = 'REFRSH Support <support@no-reply.freshr.cc>'
+VERIFICATION_FROM_EMAIL = 'REFRSH <security@no-reply.freshr.cc>'
 FRONTEND_URL = os.getenv("FRONTEND_URL", 'http://localhost:3000')
 
 # Google OAuth2.0
