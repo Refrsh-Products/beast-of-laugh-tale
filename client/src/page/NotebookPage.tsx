@@ -23,6 +23,7 @@ import UpgradeModal from "../components/dashboard/UpgradeModal";
 import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
 import useChatService from "../services/chat";
+import { track } from "../lib/analytics";
 
 import usePresentationSessions from "../hooks/presentation/usePresentationSessions";
 import useChatSessions from "../hooks/chat/useChatSessions";
@@ -168,6 +169,7 @@ export default function NotebookPage() {
             showToast(`${file.name}: ${errMsg}`, "danger");
           } else {
             successCount++;
+            track("file-upload");
             setUploadProgress((prev) =>
               prev.map((p, idx) => (idx === i ? { ...p, status: "done" } : p)),
             );

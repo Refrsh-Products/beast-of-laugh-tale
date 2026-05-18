@@ -6,6 +6,7 @@ import type { ActiveView } from "../../components/notebook/OptionsColumn";
 import type { PresentationSession } from "../../services/presentation/Presentation.types";
 import type { NotebookTopic } from "../../services/quiz/Quiz.types";
 import useNotebookService from "../../services/notebooks";
+import { track } from "../../lib/analytics";
 import axios from "axios";
 
 const usePresentationSessions = (
@@ -81,6 +82,7 @@ const usePresentationSessions = (
     presentationTopics,
     isLoadingPresentationTopics,
     handleGeneratePresentation: async (options) => {
+      track("generate-presentation");
       setIsGeneratingPresentation(true);
       const isAllTopics = options.topics.length === 0 && !options.customTopic;
       const payload = {

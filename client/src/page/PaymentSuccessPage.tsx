@@ -1,5 +1,7 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
+import { track } from "../lib/analytics";
 
 const G = "#84e487";
 const B = "#000000";
@@ -7,6 +9,10 @@ const W = "#FFFFFF";
 
 export default function PaymentSuccessPage() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    track("user-upgraded");
+  }, []);
 
   return (
     <div

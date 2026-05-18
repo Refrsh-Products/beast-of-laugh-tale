@@ -19,6 +19,7 @@ import NotebookMenu from "../components/dashboard/NotebookMenu";
 import { useToast } from "../hooks/useToast";
 import ToastContainer from "../components/ui/ToastContainer";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
+import { track } from "../lib/analytics";
 
 const G = "#84e487";
 const B = "#000000";
@@ -189,6 +190,30 @@ export default function DashboardPage() {
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [openMenuId]);
 
+  // Fires `dashboard-engaged-5min` once per mount after 5 minutes of cumulative
+  // activity. Idle gaps >30s do not accumulate, so background tabs don't qualify.
+  useEffect(() => {
+    let engagedMs = 0;
+    let lastActivityAt = Date.now();
+    let fired = false;
+    const onActivity = () => { lastActivityAt = Date.now(); };
+    const events = ["mousemove", "keydown", "scroll", "click", "touchstart"];
+    events.forEach((e) => window.addEventListener(e, onActivity, { passive: true }));
+    const id = window.setInterval(() => {
+      if (Date.now() - lastActivityAt < 30_000) {
+        engagedMs += 1000;
+        if (!fired && engagedMs >= 5 * 60 * 1000) {
+          track("dashboard-engaged-5min");
+          fired = true;
+        }
+      }
+    }, 1000);
+    return () => {
+      window.clearInterval(id);
+      events.forEach((e) => window.removeEventListener(e, onActivity));
+    };
+  }, []);
+
   function handleCreateRequest() {
     if (usage && usage.notebooks.used >= usage.notebooks.limit) {
       setUpgradeModal({
@@ -268,6 +293,7 @@ export default function DashboardPage() {
     }
     try {
       await notebookService.create(trimmed);
+      track("notebook-created");
       setCreateTitle("");
       setCreateError("");
       setShowCreateModal(false);

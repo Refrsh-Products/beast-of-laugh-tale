@@ -9,6 +9,7 @@ import ProfileSidebar, {
 import ProfileContentArea from "../components/profile-account/ProfileContentArea";
 import AccountContentArea from "../components/profile-account/AccountContentArea";
 import PaymentContentArea from "../components/payment/PaymentContentArea";
+import { track } from "../lib/analytics";
 
 const B = "#000000";
 const W = "#FFFFFF";
@@ -40,6 +41,10 @@ export default function ProfilePage() {
     const timer = setTimeout(() => setSuccess(null), 3000);
     return () => clearTimeout(timer);
   }, [success]);
+
+  useEffect(() => {
+    if (activeTab === "payment") track("upgrade-plan-viewed");
+  }, [activeTab]);
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
 
