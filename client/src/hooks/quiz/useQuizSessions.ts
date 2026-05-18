@@ -8,6 +8,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import type { ActiveView } from "../../components/notebook/OptionsColumn";
 import type { NotebookTopic } from "../../services/quiz/Quiz.types";
+import { track } from "../../lib/analytics";
 
 const useQuizSessions = (
   notebookId: string,
@@ -64,6 +65,7 @@ const useQuizSessions = (
     activeQuiz,
     isGeneratingQuiz,
     handleGenerateQuiz: async (options) => {
+      track("generate-quiz");
       setIsGeneratingQuiz(true);
       const isAllTopics = options.topics.length === 0 && !options.prompt;
       const payload = {
