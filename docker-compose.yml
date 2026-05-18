@@ -59,6 +59,9 @@ services:
     volumes:
       - ./server:/app
       - media:/app/media
+      # Persists HF hub + unstructured model downloads across container restarts.
+      # Without this, every ingestion re-downloads ~1.5 GB from Hugging Face.
+      - hf_cache:/root/.cache
     env_file:
       - ./server/.env
     environment:
@@ -109,3 +112,4 @@ services:
 volumes:
   postgres_data:
   media:
+  hf_cache:

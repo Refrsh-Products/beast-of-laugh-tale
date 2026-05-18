@@ -2,11 +2,9 @@ import json
 import logging
 import requests
 import stripe
-from datetime import timedelta
 from drf_spectacular.utils import extend_schema
 
 from django.conf import settings
-from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
@@ -15,18 +13,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from accounts.models import Account, TierPlan, SubscriptionStatus
+from accounts.models import Account
+from accounts.services.upgrade import upgrade_account_to_pro
 from .models import Payment, PaymentStatus, BillingInterval
 from .serializers import InitiatePaymentSerializer, PaymentSerializer
 
 logger = logging.getLogger(__name__)
 
 ZINIPAY_API_URL = 'https://api.zinipay.com/v1/payment/create'
-
-SUBSCRIPTION_DURATIONS: dict[str, timedelta] = {
-    BillingInterval.MONTHLY: timedelta(days=30),
-    BillingInterval.YEARLY: timedelta(days=365),
-}
 
 @extend_schema(request=InitiatePaymentSerializer)
 class InitiatePaymentView(APIView):
@@ -148,20 +142,7 @@ class ZiniPayWebhookView(APIView):
 
         if payment_status == 'COMPLETED':
             payment.status = PaymentStatus.COMPLETED
-
-            now = timezone.now()
-            duration = SUBSCRIPTION_DURATIONS.get(payment.billing_interval, timedelta(days=30))
-
-            account = payment.account
-            account.tier_plan = TierPlan.PAID
-            account.billing_interval = payment.billing_interval
-            account.subscription_status = SubscriptionStatus.ACTIVE
-            account.subscription_start_date = now
-            account.subscription_end_date = now + duration
-            account.save(update_fields=[
-                'tier_plan', 'billing_interval', 'subscription_status',
-                'subscription_start_date', 'subscription_end_date', 'updated_at',
-            ])
+            upgrade_account_to_pro(payment.account, payment.billing_interval)
         elif payment_status == 'FAILED':
             payment.status = PaymentStatus.FAILED
         elif payment_status == 'CANCELLED':
@@ -281,19 +262,7 @@ class StripeWebhookView(APIView):
         payment.metadata = session.to_dict() if hasattr(session, 'to_dict') else dict(session)
         payment.status = PaymentStatus.COMPLETED
 
-        now = timezone.now()
-        duration = SUBSCRIPTION_DURATIONS.get(payment.billing_interval, timedelta(days=30))
-
-        account = payment.account
-        account.tier_plan = TierPlan.PAID
-        account.billing_interval = payment.billing_interval
-        account.subscription_status = SubscriptionStatus.ACTIVE
-        account.subscription_start_date = now
-        account.subscription_end_date = now + duration
-        account.save(update_fields=[
-            'tier_plan', 'billing_interval', 'subscription_status',
-            'subscription_start_date', 'subscription_end_date', 'updated_at',
-        ])
+        upgrade_account_to_pro(payment.account, payment.billing_interval)
 
         payment.save(update_fields=['transaction_id', 'invoice_id', 'metadata', 'status', 'updated_at'])
 

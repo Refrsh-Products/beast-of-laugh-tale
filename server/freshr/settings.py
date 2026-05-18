@@ -229,6 +229,7 @@ FRESHR_TIER_LIMITS = {
 # Celery
 CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+CELERY_RESULT_EXTENDED = True
 CELERY_TIMEZONE = "Asia/Dhaka"
 
 # Recycle prefork workers to keep RAG/torch/unstructured imports from accumulating.

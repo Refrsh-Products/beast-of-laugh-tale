@@ -21,7 +21,10 @@ class NotebookFileInline(admin.TabularInline):
 
 @admin.register(Notebook)
 class NotebookAdmin(admin.ModelAdmin):
-    list_display = ("id", "title", "created_at", "updated_at")
+    list_display = ("id", "title", "user", "created_at", "updated_at")
+    list_filter = ('user',)
+    search_fields = ('title', 'user__email')
+    list_select_related = ('user',)
     inlines = [NotebookFileInline]
 
 @admin.register(NotebookFile)
