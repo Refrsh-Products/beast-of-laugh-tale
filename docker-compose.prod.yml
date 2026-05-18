@@ -71,9 +71,14 @@ services:
     image: ghcr.io/${GHCR_ORG}/freshr-server:${IMAGE_TAG:-latest}
     restart: unless-stopped
     command: celery -A freshr worker -l info --concurrency 1
-    mem_limit: 768m
+    # 1536m fits the unstructured hi_res model set (~1.0–1.4 GB resident:
+    # YOLOX + table-transformer + layout) without spilling into swap mid-inference.
+    mem_limit: 1536m
     volumes:
       - media_prod:/app/media
+      # Persists HF hub + unstructured model downloads across container restarts.
+      # Without this, every ingestion re-downloads ~1.5 GB from Hugging Face.
+      - hf_cache_prod:/root/.cache
     env_file:
       - .env.prod
     environment:
@@ -121,3 +126,4 @@ networks:
 volumes:
   postgres_data_prod:
   media_prod:
+  hf_cache_prod:
