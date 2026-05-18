@@ -31,7 +31,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     accountService.getAccount()
-      .then((acc) => { if (acc) setAccount(acc); })
+      .then((res) => { if (res) setAccount(res.account); })
       .catch(() => {});
   }, []);
 

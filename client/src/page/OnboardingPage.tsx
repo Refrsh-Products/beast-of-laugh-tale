@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
-import axios from "axios";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
+import type { OnboardingStatus } from "../services/account/Account.types";
 import FreshrLogo from "../components/logo/FreshrLogo";
+import LoadErrorScreen from "../components/ui/LoadErrorScreen";
 import { getGoogleProfile, clearGoogleProfile } from "../storage";
 import Button from "../components/ui/Button";
 
@@ -24,18 +25,27 @@ export default function OnboardingPage() {
   const [postalCode, setPostalCode] = useState("");
   const [error, setError] = useState("");
   const [showErrors, setShowErrors] = useState(false);
-  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(
-    null,
-  );
+  const [status, setStatus] = useState<OnboardingStatus | "loading">("loading");
+  const [retrying, setRetrying] = useState(false);
+
+  async function checkStatus() {
+    setRetrying(true);
+    const next = await accountService.getOnboardingStatus();
+    setStatus(next);
+    setRetrying(false);
+  }
 
   useEffect(() => {
     if (!authService.isLoggedIn()) return;
-    accountService.hasCompletedOnboarding().then(setOnboardingComplete);
+    checkStatus();
   }, []);
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
-  if (onboardingComplete === null) return null;
-  if (onboardingComplete) return <Navigate to="/dashboard" replace />;
+  if (status === "loading") return null;
+  if (status === "error") {
+    return <LoadErrorScreen onRetry={checkStatus} retrying={retrying} />;
+  }
+  if (status === "complete") return <Navigate to="/dashboard" replace />;
 
   async function handleSubmit() {
     setError("");
@@ -53,16 +63,7 @@ export default function OnboardingPage() {
     }
     setShowErrors(false);
     try {
-      let existingAccount = null;
-      try {
-        existingAccount = await accountService.getAccount();
-      } catch (err) {
-        if (!axios.isAxiosError(err) || err.response?.status !== 404) {
-          throw err;
-        }
-      }
-      await accountService.saveAccount({
-        id: existingAccount?.id ?? sessionStorage.getItem("userId") ?? "",
+      await accountService.updateAccount({
         first_name: firstName.trim(),
         last_name: lastName.trim(),
         phone: phone.trim(),
@@ -71,7 +72,7 @@ export default function OnboardingPage() {
         city: city.trim(),
         postal_code: postalCode.trim(),
         profile_picture_url: googleProfile?.profile_picture_url,
-        tier_plan: (existingAccount?.tier_plan ?? "FREE") as any,
+        onboarding_completed: true,
       });
       clearGoogleProfile();
       navigate("/dashboard");

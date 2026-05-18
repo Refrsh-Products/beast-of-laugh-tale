@@ -62,7 +62,7 @@ export default function AccountContentArea({
   const [account, setAccount] = useState<StoredAccount | null>(getCachedAccount());
 
   useEffect(() => {
-    accountService.getAccount().then((acc) => { if (acc) setAccount(acc); }).catch(() => {});
+    accountService.getAccount().then((res) => { if (res) setAccount(res.account); }).catch(() => {});
   }, []);
 
   const planLabel = account?.tier_plan ?? "FREE";
