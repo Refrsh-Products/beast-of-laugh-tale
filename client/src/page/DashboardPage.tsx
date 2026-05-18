@@ -4,8 +4,10 @@ import { Navigate, useNavigate } from "react-router-dom";
 import useNotebookService from "../services/notebooks";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
+import type { OnboardingStatus } from "../services/account/Account.types";
 import type { Notebook, AccountUseage, StoredAccount } from "../storage";
 import { getAccount as getCachedAccount } from "../storage";
+import LoadErrorScreen from "../components/ui/LoadErrorScreen";
 
 import TopNavbar from "../components/dashboard/TopNavbar";
 import NotebookCard from "../components/dashboard/NotebookCard";
@@ -111,9 +113,8 @@ export default function DashboardPage() {
   const [createTitle, setCreateTitle] = useState("");
   const [createError, setCreateError] = useState("");
   const { toasts, showToast } = useToast();
-  const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(
-    null,
-  );
+  const [status, setStatus] = useState<OnboardingStatus | "loading">("loading");
+  const [retrying, setRetrying] = useState(false);
   const [usage, setUsage] = useState<AccountUseage | null>(null);
 
   async function fetchUsage() {
@@ -124,13 +125,30 @@ export default function DashboardPage() {
     }
   }
 
-  useEffect(() => {
-    accountService.getAccount().then((acc) => { if (acc) setAccount(acc); }).catch(() => {});
-  }, []);
+  // Single /accounts/me/ fetch: derives both the cached profile and the
+  // onboarding flag from one response, so a transient failure produces one
+  // "error" state instead of an inconsistent (account-loaded, status-error)
+  // pair that would otherwise bounce the user to /onboarding.
+  async function loadAccount() {
+    setRetrying(true);
+    try {
+      const res = await accountService.getAccount();
+      if (res) setAccount(res.account);
+      setStatus(res?.onboardingCompleted ? "complete" : "incomplete");
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        setStatus("incomplete");
+      } else {
+        setStatus("error");
+      }
+    } finally {
+      setRetrying(false);
+    }
+  }
 
   useEffect(() => {
     if (!authService.isLoggedIn()) return;
-    accountService.hasCompletedOnboarding().then(setOnboardingComplete);
+    loadAccount();
     fetchUsage();
   }, []);
 
@@ -287,8 +305,11 @@ export default function DashboardPage() {
   }
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
-  if (onboardingComplete === null) return null;
-  if (!onboardingComplete) return <Navigate to="/onboarding" replace />;
+  if (status === "loading") return null;
+  if (status === "error") {
+    return <LoadErrorScreen onRetry={loadAccount} retrying={retrying} />;
+  }
+  if (status === "incomplete") return <Navigate to="/onboarding" replace />;
   if (!user || !account) return <Navigate to="/login" replace />;
 
   const sorted = [...notebooks].sort((a, b) => {

@@ -71,7 +71,7 @@ The backend is built with **Django REST Framework**, uses **Celery + Redis** for
 ### Planned (Phase 2 & 3)
 
 - AI-generated quizzes from notebook content
-- Flashcard generation
+- Flashcard generation (decided not to proceed with it)
 - AI presentation builder
 - Learning progress tracking & analytics
 - Citations and research tools

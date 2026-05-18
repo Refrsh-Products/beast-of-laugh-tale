@@ -46,7 +46,6 @@ export interface StoredAccount {
   postal_code: string;
   tier_plan: string;
   profile_picture_url?: string;
-  onboarding_completed?: string;
 }
 
 export interface StoredGoogleProfile {

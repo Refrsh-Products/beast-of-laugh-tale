@@ -37,8 +37,9 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    accountService.getAccount().then((acc) => {
-      if (!acc) return;
+    accountService.getAccount().then((res) => {
+      if (!res) return;
+      const acc = res.account;
       setAccount(acc);
       setName(`${acc.first_name} ${acc.last_name}`.trim());
       setPhone(acc.phone ?? "");

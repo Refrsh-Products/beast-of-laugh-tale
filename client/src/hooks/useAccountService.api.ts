@@ -1,8 +1,12 @@
+import axios from "axios";
 import createFreshrApiInstance, {
   UserServiceApiEndpoints,
 } from "../services/freshr-api";
 import { saveAccount, type AccountUseage } from "../storage";
-import type { AccountService } from "../services/account/Account.types";
+import type {
+  AccountService,
+  OnboardingStatus,
+} from "../services/account/Account.types";
 import type { AccountMeResponse } from "../page/dto/AccountMeResponse.dto";
 import useAxiosInterceptor from "./useAxiosInterceptor";
 import { useFetch } from "./useFetch";
@@ -27,56 +31,40 @@ const useAccountServiceApi = (): AccountService => {
         postal_code: resp.postal_code,
         phone: resp.phone,
         tier_plan: resp.tier_plan,
-        onboarding_completed: String(resp.onboarding_completed),
       };
       saveAccount(account);
-      return account;
+      return { account, onboardingCompleted: resp.onboarding_completed };
     },
 
     saveAccount: async (account) => {
-      try {
-        await fetchData(UserServiceApiEndpoints.accounts, "POST", account);
-        saveAccount(account);
-        sessionStorage.setItem("freshr_onboarding_completed", "true");
-      } catch (err) {
-        throw err;
-      }
+      await fetchData(UserServiceApiEndpoints.accounts, "POST", account);
+      saveAccount(account);
     },
 
     updateAccount: async (account) => {
-      try {
-        const resp = await fetchData(
-          UserServiceApiEndpoints.accountMe,
-          "PATCH",
-          account,
-        );
-        console.log("[useAccountServiceApi] Account Update Response: ", resp);
-        saveAccount(account);
-      } catch (err) {
-        throw err;
-      }
+      await fetchData(UserServiceApiEndpoints.accountMe, "PATCH", account);
     },
 
-    hasCompletedOnboarding: async () => {
+    getOnboardingStatus: async (): Promise<OnboardingStatus> => {
       try {
         const response = await fetchData<AccountMeResponse>(
           UserServiceApiEndpoints.accountMe,
         );
-        return response.onboarding_completed === true;
-      } catch {
-        return false;
+        return response.onboarding_completed ? "complete" : "incomplete";
+      } catch (err) {
+        // 404 means no Account row exists — treat as not yet onboarded. Every
+        // other failure (network, 5xx, timeout) is genuinely unknown, and we
+        // must NOT collapse it to "incomplete" or we'll bounce already-
+        // onboarded users back to the form.
+        if (axios.isAxiosError(err) && err.response?.status === 404) {
+          return "incomplete";
+        }
+        return "error";
       }
     },
 
     getAccountUsage: async () => {
-      try {
-        const response = await fetchData<AccountUseage>(
-          UserServiceApiEndpoints.accountUsage,
-        );
-        return response;
-      } catch (err) {
-        throw err;
-      }
+      return await fetchData<AccountUseage>(UserServiceApiEndpoints.accountUsage);
     },
   };
 };

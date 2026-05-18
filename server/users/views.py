@@ -19,6 +19,7 @@ from users.services.verification import send_verification_email
 from users.tokens import email_verification_token
 from .models import User
 from accounts.models import Account
+from accounts.services.account import ensure_account
 from .serializers import (
     GoogleAuthSerializer,
     LoginSerializer,
@@ -95,7 +96,19 @@ class GoogleAuth(APIView):
                         'status': False
                     }, status=status.HTTP_403_FORBIDDEN)
 
+            # Every authenticated user must have an Account row so views that
+            # touch request.user.account don't crash. For brand-new Google users
+            # we seed name/picture from Google; for returning users this is a
+            # no-op unless their Account was somehow missing.
+            ensure_account(
+                user,
+                first_name=first_name or None,
+                last_name=last_name or None,
+                profile_picture_url=profile_picture_url or None,
+            )
             if profile_picture_url:
+                # Refresh the picture for returning users in case it changed at
+                # the provider. ensure_account already filled it for new users.
                 Account.objects.filter(user=user).update(
                     profile_picture_url=profile_picture_url
                 )
@@ -306,6 +319,11 @@ class EmailVerificationConfirmView(APIView):
 
         user.is_active = True
         user.save(update_fields=['is_active'])
+
+        # Create the stub Account now so every verified user is safe to assume
+        # request.user.account exists. The onboarding form then PATCHes this
+        # row and flips onboarding_completed to True.
+        ensure_account(user)
 
         refresh = RefreshToken.for_user(user)
         return Response({

@@ -4,10 +4,14 @@ import {
   hasCompletedOnboarding,
   getNotebooks,
 } from "../../storage";
-import type { AccountService } from "./Account.types";
+import type { AccountService, OnboardingStatus } from "./Account.types";
 
 const AccountServiceMock: AccountService = {
-  getAccount: async () => getAccount(),
+  getAccount: async () => {
+    const account = getAccount();
+    if (!account) return null;
+    return { account, onboardingCompleted: hasCompletedOnboarding() };
+  },
 
   saveAccount: (account) => {
     saveAccount(account);
@@ -15,11 +19,13 @@ const AccountServiceMock: AccountService = {
   },
 
   updateAccount: (account) => {
-    saveAccount(account);
+    const current = getAccount();
+    if (current) saveAccount({ ...current, ...account } as typeof current);
     return Promise.resolve();
   },
 
-  hasCompletedOnboarding: () => Promise.resolve(hasCompletedOnboarding()),
+  getOnboardingStatus: (): Promise<OnboardingStatus> =>
+    Promise.resolve(hasCompletedOnboarding() ? "complete" : "incomplete"),
 
   getAccountUsage: () => {
     const notebooks = getNotebooks();

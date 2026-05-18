@@ -78,7 +78,6 @@ INSTALLED_APPS = [
     "chats",
     "presentation",
     "quiz",
-    "flashcard",
     "drf_spectacular",
     "payments",
 ]

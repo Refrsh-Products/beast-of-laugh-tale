@@ -51,16 +51,15 @@ const useAuthServiceApi = (): AuthService => {
         sessionStorage.setItem("userId", data.user.id ?? "");
         sessionStorage.setItem("email", data.user.email ?? "");
 
+        // Eagerly cache the profile so the dashboard can render header/sidebar
+        // without a second round-trip. The onboarding flag itself is read from
+        // /accounts/me/ on each page mount (so it's never stale).
         try {
           const accountResp = await fetchData<AccountMeResponse>(
             UserServiceApiEndpoints.accountMe,
             "GET",
             null,
             { headers: { Authorization: `Bearer ${data.tokens.access}` } },
-          );
-          sessionStorage.setItem(
-            "freshr_onboarding_completed",
-            String(accountResp.onboarding_completed),
           );
           const account: StoredAccount = {
             id: accountResp.id,
@@ -77,7 +76,6 @@ const useAuthServiceApi = (): AuthService => {
           saveAccount(account);
         } catch (err) {
           console.error("[AuthServiceApi] Failed to fetch account: ", err);
-          sessionStorage.setItem("freshr_onboarding_completed", "false");
         }
 
         const user: StoredUser = {
@@ -124,7 +122,6 @@ const useAuthServiceApi = (): AuthService => {
         sessionStorage.removeItem("refreshToken");
         sessionStorage.removeItem("userId");
         sessionStorage.removeItem("email");
-        sessionStorage.removeItem("freshr_onboarding_completed");
         localStorage.removeItem("freshr_account");
         localStorage.removeItem("freshr_user");
         endSession();
@@ -188,9 +185,6 @@ const useAuthServiceApi = (): AuthService => {
       sessionStorage.setItem("refreshToken", data.tokens.refresh ?? "");
       sessionStorage.setItem("userId", data.user.id ?? "");
       sessionStorage.setItem("email", data.user.email ?? "");
-      // The user has just verified — they haven't onboarded yet, so skip the
-      // /accounts/me/ fetch (it would 404) and flag onboarding as incomplete.
-      sessionStorage.setItem("freshr_onboarding_completed", "false");
 
       const user: StoredUser = {
         id: data.user.id,
