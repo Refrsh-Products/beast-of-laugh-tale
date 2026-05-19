@@ -79,7 +79,6 @@ export const PaymentServiceApiBase = "/api/payments";
 export const PaymentServiceApiEndpoints = {
   getPayments: `${PaymentServiceApiBase}/`,
   initiatePayment: `${PaymentServiceApiBase}/initiate/`,
-  initiateStripePayment: `${PaymentServiceApiBase}/stripe/initiate/`,
 };
 
 // Quizzes
