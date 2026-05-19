@@ -4,8 +4,6 @@ import type { ProfileTab } from "../profile-account/ProfileSidebar";
 import usePaymentService from "../../services/payment";
 import { BLACK as B, WHITE as W, GREEN as G } from "../../constants/theme";
 
-type PaymentProvider = "zinipay" | "stripe";
-
 interface PaymentContentAreaProps {
   activeTab: ProfileTab;
 }
@@ -82,16 +80,12 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
   const navigate = useNavigate();
   const [loading, setLoading] = useState<"MONTHLY" | "YEARLY" | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [provider, setProvider] = useState<PaymentProvider>("stripe");
 
   const handlePayment = async (billing_interval: "MONTHLY" | "YEARLY") => {
     setLoading(billing_interval);
     setError(null);
     try {
-      const { payment_url } =
-        provider === "stripe"
-          ? await paymentService.initializeStripePayment(billing_interval)
-          : await paymentService.initializePayment(billing_interval);
+      const { payment_url } = await paymentService.initializePayment(billing_interval);
       window.location.href = payment_url;
     } catch {
       setError("Failed to initiate payment. Please try again.");
@@ -125,38 +119,6 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
       >
         One semester can change everything. Priced like it.
       </p>
-
-      {/* Provider toggle */}
-      <div
-        style={{
-          display: "inline-flex",
-          border: `2px solid ${B}`,
-          marginBottom: 32,
-          overflow: "hidden",
-        }}
-      >
-        {(["stripe", "zinipay"] as PaymentProvider[]).map((p, i) => (
-          <button
-            key={p}
-            onClick={() => setProvider(p)}
-            style={{
-              padding: "8px 20px",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              cursor: "pointer",
-              background: provider === p ? B : W,
-              color: provider === p ? W : B,
-              border: "none",
-              borderLeft: i > 0 ? `2px solid ${B}` : "none",
-              transition: "background 0.12s, color 0.12s",
-            }}
-          >
-            {p === "stripe" ? "STRIPE" : "ZINIPAY"}
-          </button>
-        ))}
-      </div>
 
       {error && (
         <div

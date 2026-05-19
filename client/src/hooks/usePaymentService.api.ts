@@ -39,20 +39,6 @@ const usePaymentServiceApi = (): PaymentService => {
         throw err;
       }
     },
-
-    initializeStripePayment: async (billing_interval) => {
-      try {
-        const response = await fetchData<{ payment_url: string }>(
-          PaymentServiceApiEndpoints.initiateStripePayment,
-          "POST",
-          { billing_interval: billing_interval },
-        );
-        return response;
-      } catch (err) {
-        throw err;
-      }
-    },
-
   };
 };
 

@@ -73,6 +73,9 @@ class AccountAdmin(admin.ModelAdmin):
         'storage_bytes_used',
         'presentations_generated',
         'payments_link',
+        'tier_plan',
+        'subscription_status',
+        'billing_interval',
     )
     fieldsets = (
         ('Identity Verification', {

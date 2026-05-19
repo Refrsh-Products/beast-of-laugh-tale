@@ -7,3 +7,5 @@ class AccountsConfig(AppConfig):
 
     def ready(self):
         from . import signals  # noqa: F401
+        from .admin_dashboard import install_dashboard
+        install_dashboard()

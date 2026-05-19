@@ -74,7 +74,13 @@ export default function LandingPage() {
       <section
         id="hero"
         className="px-[4.5rem] md:px-48 pt-16 pb-20"
-        style={{ borderBottom: `3px solid ${B}`, minHeight: "calc(100vh - 65px - 44px)", display: "flex", flexDirection: "column", justifyContent: "center" }}
+        style={{
+          borderBottom: `3px solid ${B}`,
+          minHeight: "calc(100vh - 65px - 44px)",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+        }}
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-40 items-center w-full">
           {/* Copy */}
@@ -526,7 +532,7 @@ export default function LandingPage() {
           id="footer-copyright"
           style={{ fontSize: "0.75rem", color: "#000000" }}
         >
-          © 2025 FRESHR
+          © 2026 FRESHR
         </span>
       </footer>
     </div>

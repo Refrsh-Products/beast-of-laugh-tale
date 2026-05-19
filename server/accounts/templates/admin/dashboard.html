@@ -1,0 +1,87 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+{% if dashboard_metrics %}
+<style>
+  .dash-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    padding: 12px;
+  }
+  .dash-tile {
+    background: var(--body-bg, #fff);
+    border: 1px solid var(--border-color, #e5e5e5);
+    border-radius: 6px;
+    padding: 14px 16px;
+  }
+  .dash-tile .dash-num {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.1;
+    color: var(--body-fg, #333);
+  }
+  .dash-tile .dash-sub {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--body-quiet-color, #666);
+    margin-top: 4px;
+  }
+</style>
+
+<div class="module">
+  <h2>User Metrics</h2>
+  <div class="dash-grid">
+    <div class="dash-tile">
+      <div class="dash-num">{{ dashboard_metrics.users.active_30d }}</div>
+      <div class="dash-sub">Active users (last 30 days)</div>
+    </div>
+    <div class="dash-tile">
+      <div class="dash-num">{{ dashboard_metrics.users.new_today }}</div>
+      <div class="dash-sub">New signups today</div>
+    </div>
+    <div class="dash-tile">
+      <div class="dash-num">{{ dashboard_metrics.users.new_this_week }}</div>
+      <div class="dash-sub">New signups this week</div>
+    </div>
+    <div class="dash-tile">
+      <div class="dash-num">{{ dashboard_metrics.users.new_this_month }}</div>
+      <div class="dash-sub">New signups this month</div>
+    </div>
+    <div class="dash-tile">
+      <div class="dash-num">{{ dashboard_metrics.users.free }}</div>
+      <div class="dash-sub">Free users</div>
+    </div>
+    <div class="dash-tile">
+      <div class="dash-num">{{ dashboard_metrics.users.paid_total }}</div>
+      <div class="dash-sub">
+        Paid users
+        ({{ dashboard_metrics.users.paid_monthly }} monthly /
+        {{ dashboard_metrics.users.paid_yearly }} yearly)
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="module">
+  <h2>Feature Usage</h2>
+  <div class="dash-grid">
+    <div class="dash-tile">
+      <div class="dash-num">{{ dashboard_metrics.usage.quizzes_today }}</div>
+      <div class="dash-sub">Quizzes generated today</div>
+    </div>
+    <div class="dash-tile">
+      <div class="dash-num">{{ dashboard_metrics.usage.presentations_today }}</div>
+      <div class="dash-sub">Presentations generated today</div>
+    </div>
+    <div class="dash-tile">
+      <div class="dash-num">{{ dashboard_metrics.usage.storage_total_human }}</div>
+      <div class="dash-sub">Total storage used</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{{ block.super }}
+{% endblock %}

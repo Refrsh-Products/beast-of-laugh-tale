@@ -16,5 +16,4 @@ export interface Payment {
 export interface PaymentService {
   listPayments(): Promise<Payment[]>;
   initializePayment(billing_interval: string): Promise<{ payment_url: string }>;
-  initializeStripePayment(billing_interval: string): Promise<{ payment_url: string }>;
 }
