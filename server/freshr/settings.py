@@ -261,3 +261,33 @@ ZINIPAY_YEARLY_PRICE = os.getenv('ZINIPAY_YEARLY_PRICE', '1200')
 
 # Public URL of this backend (used for webhook registration)
 BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:8000')
+
+# JSON logging so Dozzle can recognize levels and color them. Tracebacks are
+# emitted as an array of lines under `traceback` (see DozzleJsonFormatter) so
+# they stay readable in Dozzle instead of becoming an escaped single-line blob.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'json': {
+            '()': 'freshr.logging_formatters.DozzleJsonFormatter',
+            'format': '%(levelname)s %(name)s %(message)s %(asctime)s',
+            'rename_fields': {'levelname': 'level', 'asctime': 'time', 'name': 'logger'},
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'json',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'django.request': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        'celery': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+    },
+}

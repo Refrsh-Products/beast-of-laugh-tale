@@ -354,7 +354,7 @@ export default function PresentationViewer({
               style={{
                 background: "transparent",
                 border: "1.5px solid #555",
-                color: "#000000",
+                color: "#aaa",
                 fontFamily: "'IBM Plex Mono', monospace",
                 fontSize: "0.72rem",
                 fontWeight: 700,
@@ -379,7 +379,7 @@ export default function PresentationViewer({
                 style={{
                   background: "transparent",
                   border: "1.5px solid #555",
-                  color: "#000000",
+                  color: "#aaa",
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: "0.72rem",
                   fontWeight: 700,
@@ -413,7 +413,7 @@ export default function PresentationViewer({
                         width: "100%",
                         background: "transparent",
                         border: "none",
-                        color: "#000000",
+                        color: "#aaa",
                         fontFamily: "'IBM Plex Mono', monospace",
                         fontSize: "0.72rem",
                         fontWeight: 700,
@@ -435,7 +435,7 @@ export default function PresentationViewer({
               onClick={enterEditMode}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = W; e.currentTarget.style.color = W; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#aaa"; }}
-              style={{ background: "transparent", border: "1.5px solid #555", color: "#000000", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: 700, padding: "5px 14px", cursor: "pointer", letterSpacing: "0.06em", transition: "border-color 0.1s, color 0.1s" }}
+              style={{ background: "transparent", border: "1.5px solid #555", color: "#aaa", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: 700, padding: "5px 14px", cursor: "pointer", letterSpacing: "0.06em", transition: "border-color 0.1s, color 0.1s" }}
             >
               Edit
             </button>
@@ -443,7 +443,7 @@ export default function PresentationViewer({
               onClick={onClose}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = W; e.currentTarget.style.color = W; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#555"; e.currentTarget.style.color = "#aaa"; }}
-              style={{ background: "transparent", border: "1.5px solid #555", color: "#000000", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: 700, padding: "5px 14px", cursor: "pointer", letterSpacing: "0.06em", transition: "border-color 0.1s, color 0.1s" }}
+              style={{ background: "transparent", border: "1.5px solid #555", color: "#aaa", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: 700, padding: "5px 14px", cursor: "pointer", letterSpacing: "0.06em", transition: "border-color 0.1s, color 0.1s" }}
             >
               × Close
             </button>

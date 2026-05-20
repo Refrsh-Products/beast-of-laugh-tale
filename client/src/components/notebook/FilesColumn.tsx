@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import type { NotebookFile } from "../../storage";
 import FileItem from "./FileItem";
+import UploadConfirmModal from "./UploadConfirmModal";
 
 const G = "#84e487";
 const B = "#000000";
@@ -170,19 +171,25 @@ export default function FilesColumn({
   const [bulkMode, setBulkMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingUpload, setPendingUpload] = useState<File[] | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleDrop(e: React.DragEvent) {
     e.preventDefault();
     setIsDragging(false);
     const dropped = Array.from(e.dataTransfer.files);
-    if (dropped.length) onUpload(dropped);
+    if (dropped.length) setPendingUpload(dropped);
   }
 
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(e.target.files ?? []);
-    if (picked.length) onUpload(picked);
+    if (picked.length) setPendingUpload(picked);
     e.target.value = "";
+  }
+
+  function confirmUpload() {
+    if (pendingUpload) onUpload(pendingUpload);
+    setPendingUpload(null);
   }
 
   function toggleSelect(id: string) {
@@ -423,6 +430,15 @@ export default function FilesColumn({
           ))
         )}
       </div>
+
+      {/* Upload confirmation modal */}
+      {pendingUpload && (
+        <UploadConfirmModal
+          files={pendingUpload}
+          onConfirm={confirmUpload}
+          onCancel={() => setPendingUpload(null)}
+        />
+      )}
 
       {/* Bulk delete confirmation modal */}
       {showConfirm && (

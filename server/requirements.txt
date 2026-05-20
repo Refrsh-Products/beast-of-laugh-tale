@@ -120,6 +120,7 @@ python-dotenv==1.2.1
 python-iso639==2026.1.31
 python-magic==0.4.27
 python-multipart==0.0.22
+python-json-logger==3.3.0
 python-oxmsg==0.0.2
 PyYAML==6.0.3
 pyyaml_env_tag==1.1

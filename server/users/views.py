@@ -1,5 +1,6 @@
 from typing import cast
 import uuid
+import logging
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -32,6 +33,8 @@ from .serializers import (
     PasswordResetConfirmSerializer,
 )
 
+logger = logging.getLogger(__name__)
+
 class GoogleAuth(APIView):
     """
     POST: Authenticate a user via Google OAuth2.
@@ -45,27 +48,22 @@ class GoogleAuth(APIView):
         responses={200: UserSerializer},
     )
     def post(self, request):
-        print(f"[GoogleAuth] POST received. request.data: {request.data}")
-
         serializer = GoogleAuthSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data: dict = serializer.validated_data  # type: ignore[assignment]
         token: str = data['token']
 
-        print(f"[GoogleAuth] Token received (first 20 chars): {token[:20]}...")
-
         try:
-            print("[GoogleAuth] Calling Google userinfo endpoint...")
+            logger.debug("[GoogleAuth] Calling Google userinfo endpoint...")
             userinfo_response = http_requests.get(
                 'https://www.googleapis.com/oauth2/v3/userinfo',
                 headers={'Authorization': f'Bearer {token}'},
                 timeout=10,
             )
-            print(f"[GoogleAuth] Google userinfo status: {userinfo_response.status_code}")
-            print(f"[GoogleAuth] Google userinfo body: {userinfo_response.text}")
+            logger.debug(f"[GoogleAuth] Google userinfo status: {userinfo_response.status_code}")
 
             if userinfo_response.status_code != 200:
-                print(f"[GoogleAuth] ERROR: Invalid token response from Google")
+                logger.error(f"[GoogleAuth] ERROR: Invalid token response from Google")
                 return Response({
                     'error': "Invalid token",
                     'status': False
@@ -73,14 +71,13 @@ class GoogleAuth(APIView):
 
             client = userinfo_response.json()
             email = client['email']
-            print(f"[GoogleAuth] User email from Google: {email}")
 
             first_name = client.get('given_name', '')
             last_name = client.get('family_name', '')
             profile_picture_url = client.get('picture', '')
 
             user, created = User.objects.get_or_create(email=email)
-            print(f"[GoogleAuth] User {'CREATED' if created else 'FOUND'}: {user.email}")
+            logger.debug(f"[GoogleAuth] User {'CREATED' if created else 'FOUND'}: {user.email}")
 
             if created:
                 user.set_unusable_password()
@@ -89,7 +86,7 @@ class GoogleAuth(APIView):
                 user.is_active = True
                 user.save()
             else:
-                print(f"[GoogleAuth] Existing user registration_method: {user.registration_method}")
+                logger.debug(f"[GoogleAuth] Existing user registration_method: {user.registration_method}")
                 if user.registration_method != 'google':
                     return Response({
                         'error': "User needs to sign in through email",
@@ -114,7 +111,7 @@ class GoogleAuth(APIView):
                 )
 
             refresh = RefreshToken.for_user(user)
-            print(f"[GoogleAuth] JWT tokens generated successfully for {user.email}")
+            logger.debug(f"[GoogleAuth] JWT tokens generated successfully.")
             return Response({
                 'tokens': {
                     'access': str(refresh.access_token),
@@ -132,7 +129,7 @@ class GoogleAuth(APIView):
         
 
         except (KeyError, http_requests.exceptions.RequestException) as e:
-            print(f"[GoogleAuth] EXCEPTION: {type(e).__name__}: {e}")
+            logger.error(f"[GoogleAuth] EXCEPTION: {type(e).__name__}: {e}")
             return Response({
                 'error': "Invalid token",
                 'status': False
@@ -300,7 +297,7 @@ class EmailVerificationConfirmView(APIView):
             uid = uuid.UUID(force_str(urlsafe_base64_decode(data['uid'])))
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist) as e:
-            print(f"[EmailVerificationConfirm] UID decode error: {type(e).__name__}: {e} | raw uid={data.get('uid')!r}")
+            logger.error(f"[EmailVerificationConfirm] UID decode error: {type(e).__name__}: {e} | raw uid={data.get('uid')!r}")
             return Response({'error': 'Invalid verification link.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Friendly message for already-verified users; otherwise the is_active hash
@@ -364,7 +361,7 @@ class PasswordResetRequestView(APIView):
             frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
             reset_url = f"{frontend_url}/reset-password?uid={uid}&token={token}"
 
-            print(f"[PasswordReset] Reset URL: {reset_url}")
+            logger.debug(f"[PasswordReset] Reset URL: {reset_url}")
             email_service.send_template_email(
                 to=email,
                 subject='Reset your password',
@@ -395,14 +392,13 @@ class PasswordResetConfirmView(APIView):
     def post(self, request):
         serializer = PasswordResetConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
         data: dict = serializer.validated_data  # type: ignore[assignment]
-        print(data)
+
         try:
             uid = uuid.UUID(force_str(urlsafe_base64_decode(data['uid'])))
             user = User.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist) as e:
-            print(f"[PasswordResetConfirm] UID decode error: {type(e).__name__}: {e} | raw uid={data.get('uid')!r}")
+            logger.error(f"[PasswordResetConfirm] UID decode error: {type(e).__name__}: {e} | raw uid={data.get('uid')!r}")
             return Response(
                 {'error': 'Invalid reset link.'},
                 status=status.HTTP_400_BAD_REQUEST
