@@ -407,7 +407,7 @@ export function createChatMessage(
 
 // ── Quizzes ──────────────────────────────────────────────────────────
 
-export type QuizDifficulty = "easy" | "medium" | "hard";
+export type QuizDifficulty = "EASY" | "MEDIUM" | "HARD";
 
 export interface QuizQuestion {
   id: string;

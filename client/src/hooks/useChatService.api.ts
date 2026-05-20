@@ -111,6 +111,9 @@ const useChatServiceApi = (): ChatServices => {
       const token = sessionStorage.getItem("accessToken");
       const url = `${import.meta.env.VITE_API_BASE_URL}${ChatServiceApiEndpoints.chatMessageStream(chatId)}`;
 
+      const streamStart = performance.now();
+      console.log("[stream] connecting", { chatId, url });
+
       const response = await fetch(url, {
         method: "GET",
         headers: {
@@ -118,23 +121,60 @@ const useChatServiceApi = (): ChatServices => {
         },
       });
 
+      console.log("[stream] response received", {
+        chatId,
+        status: response.status,
+        ok: response.ok,
+        elapsedMs: Math.round(performance.now() - streamStart),
+        hasBody: !!response.body,
+      });
+
       if (!response.body) throw new Error("No response body");
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
 
+      let rawChunkCount = 0;
+      let dataLineCount = 0;
+      let textChunkCount = 0;
+      let doneSeen = false;
+
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log("[stream] reader done", {
+            chatId,
+            rawChunkCount,
+            dataLineCount,
+            textChunkCount,
+            doneSeen,
+            totalMs: Math.round(performance.now() - streamStart),
+          });
+          break;
+        }
 
         const chunk = decoder.decode(value, { stream: true });
+        rawChunkCount++;
+        console.log("[stream] raw chunk", {
+          chatId,
+          index: rawChunkCount,
+          bytes: value?.byteLength,
+          preview: chunk.slice(0, 200),
+        });
 
         const lines = chunk.split("\n").filter((l) => l.startsWith("data: "));
         for (const line of lines) {
+          dataLineCount++;
           const raw = line.slice(6); // strip "data: "
-          if (raw === "[DONE]") continue;
+          if (raw === "[DONE]") {
+            doneSeen = true;
+            continue;
+          }
           const parsed = JSON.parse(raw);
-          if (parsed.text) onChunk(parsed.text);
+          if (parsed.text) {
+            textChunkCount++;
+            onChunk(parsed.text);
+          }
         }
       }
     },

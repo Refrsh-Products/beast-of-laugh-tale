@@ -119,8 +119,8 @@ jobs:
             docker image prune -f
 
             echo "✅ Staging deployed — server & web tag: $IMAGE_TAG"
-            echo "🌐 App (staging):  http://$(curl -s ifconfig.me):8080"
-            echo "🌐 API (staging):  http://$(curl -s ifconfig.me):8001"
+            echo "🌐 App (staging):  http://$(curl -s ifconfig.me)"
+            echo "🌐 API (staging):  http://$(curl -s ifconfig.me)/admin/"
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           GHCR_ORG: ${{ needs.build-and-push.outputs.org_name }}

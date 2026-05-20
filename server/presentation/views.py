@@ -169,7 +169,7 @@ class SlideRefineView(APIView):
             presentation_id=presentation_id,
             presentation__notebook__user=request.user,
         )
-        assert_notebook_writable(slide.presentation.notebook_id) # type: ignore
+        assert_notebook_writable(slide.presentation.notebook) # type: ignore
         body = SlideRefineSerializer(data=request.data)
         body.is_valid(raise_exception=True)
 

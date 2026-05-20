@@ -25,6 +25,7 @@ const usePresentationServiceApi = (): PresentationService => {
         PresentationServiceApiEndpoints.createPresentation(notebook),
         "POST",
         body,
+        { timeout: 120000 },
       );
     },
 
@@ -81,6 +82,7 @@ const usePresentationServiceApi = (): PresentationService => {
         PresentationServiceApiEndpoints.refineSlide(presentationId, slideId),
         "POST",
         { feedback },
+        { timeout: 120000 },
       );
     },
 

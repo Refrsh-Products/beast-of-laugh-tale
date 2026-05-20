@@ -132,6 +132,7 @@ const useQuizSessions = (
     },
 
     handleQuizExit: () => {
+      setActiveQuiz(null);
       navigate(`/notebook/${notebookId}`, { replace: true });
     },
 

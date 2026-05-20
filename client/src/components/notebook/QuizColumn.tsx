@@ -1,6 +1,9 @@
 import { useState } from "react";
 import type { QuizDifficulty } from "../../storage";
-import type { QuizGenerateOptions, NotebookTopic } from "../../services/quiz/Quiz.types";
+import type {
+  QuizGenerateOptions,
+  NotebookTopic,
+} from "../../services/quiz/Quiz.types";
 import QuizTopicChip from "../quiz/QuizTopicChip";
 import Dropdown from "../ui/Dropdown";
 import Divider from "../quiz/Divider";
@@ -37,13 +40,14 @@ export default function QuizColumn({
   const [selectedTopics, setSelectedTopics] = useState<NotebookTopic[]>([]);
   const [prompt, setPrompt] = useState("");
   const [questionCount, setQuestionCount] = useState<number>(5);
-  const [difficulty, setDifficulty] = useState<QuizDifficulty>("easy");
+  const [difficulty, setDifficulty] = useState<QuizDifficulty>("EASY");
   const [quizType, setQuizType] = useState<string>("PRACTICE");
   const [timeLimit, setTimeLimit] = useState<number | null>(null);
 
   const canGenerate = !isGenerating;
 
-  const isAllTopicsMode = selectedTopics.length === 0 && prompt.trim().length === 0;
+  const isAllTopicsMode =
+    selectedTopics.length === 0 && prompt.trim().length === 0;
 
   function toggleTopic(topic: NotebookTopic) {
     setSelectedTopics((prev) =>
@@ -139,7 +143,9 @@ export default function QuizColumn({
                 <span
                   onClick={() => setTopicsExpanded(false)}
                   onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = "#000000")
+                  }
                   style={{
                     fontFamily: "'IBM Plex Mono', monospace",
                     fontSize: "0.75rem",
@@ -222,8 +228,12 @@ export default function QuizColumn({
                 {hiddenCount > 0 && (
                   <span
                     onClick={() => setTopicsExpanded(true)}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#000000")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.color = "#000000")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = "#000000")
+                    }
                     style={{
                       fontFamily: "'IBM Plex Mono', monospace",
                       fontSize: "0.75rem",
@@ -252,17 +262,19 @@ export default function QuizColumn({
                 {selectedTopics.length} topic
                 {selectedTopics.length > 1 ? "s" : ""} selected
               </p>
-            ) : topics.length > 0 && (
-              <p
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  color: "#000000",
-                  margin: "8px 0 0",
-                }}
-              >
-                No topics selected — quiz will cover all topics
-              </p>
+            ) : (
+              topics.length > 0 && (
+                <p
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.75rem",
+                    color: "#000000",
+                    margin: "8px 0 0",
+                  }}
+                >
+                  No topics selected — quiz will cover all topics
+                </p>
+              )
             )}
           </div>
 
@@ -367,9 +379,7 @@ export default function QuizColumn({
 
             {/* Time Limit — always visible, disabled when no timer */}
             <div>
-              <label style={{ ...labelStyle, color: B }}>
-                TIME LIMIT
-              </label>
+              <label style={{ ...labelStyle, color: B }}>TIME LIMIT</label>
               <Dropdown
                 value={timeLimit !== null ? String(timeLimit) : ""}
                 onChange={(v) => setTimeLimit(v === "" ? null : Number(v))}

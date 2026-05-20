@@ -1,3 +1,6 @@
+# Local environment
+# Run with: docker compose --env-file .env.local -p freshr-local -f docker-compose.local.yml up -d
+
 services:
   postgres:
     image: pgvector/pgvector:pg16
@@ -30,14 +33,14 @@ services:
       context: ./server
     command: >
       sh -c "python manage.py migrate --noinput &&
-             python manage.py runserver 0.0.0.0:8000"
+             gunicorn freshr.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
     volumes:
       - ./server:/app
       - media:/app/media
     ports:
       - "8000:8000"
     env_file:
-      - ./server/.env
+      - .env.local
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -63,7 +66,7 @@ services:
       # Without this, every ingestion re-downloads ~1.5 GB from Hugging Face.
       - hf_cache:/root/.cache
     env_file:
-      - ./server/.env
+      - .env.local
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"
@@ -78,28 +81,15 @@ services:
       redis:
         condition: service_healthy
 
-  celery-beat:
-    build:
-      context: ./server
-    command: celery -A freshr beat -l info
+  dozzle:
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    mem_limit: 64m
+    ports:
+      - "8080:8080"
     volumes:
-      - ./server:/app
-      - media:/app/media
-    env_file:
-      - ./server/.env
-    environment:
-      DB_HOST: postgres
-      DB_PORT: "5432"
-      DB_NAME: freshr
-      DB_USER: freshr
-      DB_PASSWORD: freshr
-      REDIS_URL: redis://redis:6379/0
-      CONNECTION_STRING: postgresql+psycopg://freshr:freshr@postgres:5432/freshr
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - dozzle_data:/data
 
   mkdocs:
     image: squidfunk/mkdocs-material
@@ -110,6 +100,7 @@ services:
     command: serve --dev-addr=0.0.0.0:8000
 
 volumes:
+  dozzle_data:
   postgres_data:
   media:
   hf_cache:
