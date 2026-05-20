@@ -56,6 +56,7 @@ const useQuizServiceApi = (): QuizService => {
           QuizServiceApiEndpoints.createQuizSession(notebook),
           "POST",
           body,
+          { timeout: 120000 },
         );
         return response;
       } catch (err) {
