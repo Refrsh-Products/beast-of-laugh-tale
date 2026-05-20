@@ -131,9 +131,16 @@ const useQuizSessions = (
       }
     },
 
-    handleQuizExit: () => {
+    handleQuizExit: async () => {
       setActiveQuiz(null);
-      navigate(`/notebook/${notebookId}`, { replace: true });
+      try {
+        const quizzes =
+          await quizService.listQuizSessionsByNotebook(notebookId);
+        setPreviousQuizzes(quizzes);
+      } catch {
+        showToast("Failed to refresh past quizzes", "danger");
+      }
+      navigate(`/notebook/${notebookId}?view=quiz`, { replace: true });
     },
 
     handleTakeToChat: (questionText, options, topic) => {

@@ -69,7 +69,7 @@ class InitiatePaymentView(APIView):
             'amount': str(amount),
             'redirect_url': f"{settings.FRONTEND_URL}/payment/success",
             'cancel_url': f"{settings.FRONTEND_URL}/payment/cancel",
-            'webhook_url': f"{settings.BACKEND_URL}/payments/webhook/",
+            'webhook_url': f"{settings.BACKEND_URL}/api/payments/webhook/",
             'cus_email': request.user.email,
             'cus_name': f"{account.first_name} {account.last_name}",
             'val_id': str(payment.id),
