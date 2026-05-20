@@ -135,15 +135,19 @@ class PaymentListView(APIView):
 @method_decorator(csrf_exempt, name='dispatch')
 class ZiniPayWebhookView(APIView):
     """
-    POST: Receives payment notifications from ZiniPay.
+    GET/POST: Receives payment notifications from ZiniPay.
 
-    The webhook only carries {invoice_id, status, val_id} (as JSON body or
-    query parameters). We use val_id to find our Payment, then call the
-    /v1/payment/verify endpoint to fetch the authoritative payment details
-    before updating the record.
+    ZiniPay sends the webhook as a GET with query params (same shape as the
+    success redirect). POST with JSON body is also accepted. We use val_id
+    to find our Payment, then call /v1/payment/verify to fetch authoritative
+    payment details before updating the record — never trust the webhook
+    payload directly since the URL is reachable from the public internet.
     """
     authentication_classes = []
     permission_classes = []
+
+    def get(self, request):
+        return self.post(request)
 
     def post(self, request):
         try:
