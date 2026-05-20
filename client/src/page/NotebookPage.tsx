@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Navigate } from "react-router-dom";
+import { useParams, useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import useAuthService from "../services/auth";
 import useNotebookService from "../services/notebooks";
 import type { Notebook, NotebookFile } from "../storage";
@@ -42,7 +42,21 @@ export default function NotebookPage() {
 
   const [notebook, setNotebook] = useState<Notebook | null>(null);
   const [files, setFiles] = useState<NotebookFile[]>([]);
-  const [activeView, setActiveView] = useState<ActiveView>("chat");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewParam = searchParams.get("view");
+  const activeView: ActiveView =
+    viewParam === "quiz" || viewParam === "presentation" ? viewParam : "chat";
+  const setActiveView = (view: ActiveView) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (view === "chat") next.delete("view");
+        else next.set("view", view);
+        return next;
+      },
+      { replace: true },
+    );
+  };
   const [pendingChatInput, setPendingChatInput] = useState<string>("");
   const [upgradeModal, setUpgradeModal] = useState<{
     title: string;

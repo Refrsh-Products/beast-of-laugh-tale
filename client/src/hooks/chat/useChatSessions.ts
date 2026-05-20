@@ -80,10 +80,21 @@ const useChatSessions = (
       }
     },
     handleSessionSelect: (sessionId) => {
-      setSearchParams({ session: sessionId });
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("session", sessionId);
+        return next;
+      });
     },
     handleSessionCreated: (sessionId) => {
-      setSearchParams({ session: sessionId }, { replace: true });
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("session", sessionId);
+          return next;
+        },
+        { replace: true },
+      );
     },
     handleNewSession: async (title = "Untitled Chat") => {
       const session = await chatService.createChatSession(notebookId, title);
@@ -101,7 +112,11 @@ const useChatSessions = (
       await chatService.deleteChatSession(chatId);
       setChatSessions((prev) => prev.filter((s) => s.id !== chatId));
       if (activeSessionId === chatId) {
-        setSearchParams({});
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("session");
+          return next;
+        });
       }
     },
   };
