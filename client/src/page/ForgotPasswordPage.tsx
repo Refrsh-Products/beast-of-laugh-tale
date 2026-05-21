@@ -23,7 +23,6 @@ export default function ForgotPasswordPage() {
     setError("");
     setIsLoading(true);
     try {
-      // TODO: wire up authService.requestPasswordReset(email) when ready
       authService.requestPasswordReset(email);
       navigate("/forgot-password/sent", { state: { email } });
     } finally {
@@ -153,7 +152,12 @@ export default function ForgotPasswordPage() {
           </div>
 
           <div style={{ marginTop: 8 }}>
-            <Button variant="green" fullWidth type="submit" disabled={isLoading}>
+            <Button
+              variant="green"
+              fullWidth
+              type="submit"
+              disabled={isLoading}
+            >
               {isLoading ? "Sending..." : "Send reset link →"}
             </Button>
           </div>
@@ -179,4 +183,3 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
-

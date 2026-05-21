@@ -528,12 +528,35 @@ export default function LandingPage() {
           FRESHR
         </span>
 
-        <span
-          id="footer-copyright"
-          style={{ fontSize: "0.75rem", color: "#000000" }}
-        >
-          © 2026 FRESHR
-        </span>
+        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+          <span
+            id="footer-support"
+            onClick={() => navigate("/support")}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.textDecoration = "underline")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.textDecoration = "none")
+            }
+            style={{
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              letterSpacing: "0.1em",
+              color: "#000000",
+              cursor: "pointer",
+              textUnderlineOffset: 3,
+            }}
+          >
+            SUPPORT
+          </span>
+
+          <span
+            id="footer-copyright"
+            style={{ fontSize: "0.75rem", color: "#000000" }}
+          >
+            © 2026 FRESHR
+          </span>
+        </div>
       </footer>
     </div>
   );

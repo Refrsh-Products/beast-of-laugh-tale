@@ -300,6 +300,28 @@ export default function LoginPage() {
               Sign up
             </Link>
           </p>
+
+          <p
+            style={{
+              marginTop: 10,
+              fontSize: "0.72rem",
+              color: "#555",
+              textAlign: "center",
+            }}
+          >
+            Need help?{" "}
+            <Link
+              to="/support"
+              style={{
+                color: B,
+                fontWeight: 700,
+                textDecoration: "underline",
+                textUnderlineOffset: 3,
+              }}
+            >
+              Contact support
+            </Link>
+          </p>
         </div>
       </div>
 

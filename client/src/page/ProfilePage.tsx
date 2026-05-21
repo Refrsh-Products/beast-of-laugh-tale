@@ -9,6 +9,7 @@ import ProfileSidebar, {
 import ProfileContentArea from "../components/profile-account/ProfileContentArea";
 import AccountContentArea from "../components/profile-account/AccountContentArea";
 import PaymentContentArea from "../components/payment/PaymentContentArea";
+import SupportContentArea from "../components/profile-account/SupportContentArea";
 import { track } from "../lib/analytics";
 
 const B = "#000000";
@@ -116,7 +117,17 @@ export default function ProfilePage() {
             justifyContent: "center",
           }}
         >
-          <div style={{ width: "100%", maxWidth: activeTab === "payment" ? 800 : 420 }}>
+          <div
+            style={{
+              width: "100%",
+              maxWidth:
+                activeTab === "payment"
+                  ? 800
+                  : activeTab === "support"
+                    ? 640
+                    : 420,
+            }}
+          >
             {/* ── Profile tab content area ── */}
             <ProfileContentArea activeTab={activeTab} />
 
@@ -125,6 +136,13 @@ export default function ProfilePage() {
 
             {/* ── Payment tab content area ── */}
             <PaymentContentArea activeTab={activeTab} />
+
+            {/* ── Support tab content area ── */}
+            <SupportContentArea
+              activeTab={activeTab}
+              defaultName={name}
+              defaultEmail={user?.email ?? ""}
+            />
           </div>
         </div>
       </div>
