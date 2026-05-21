@@ -7,11 +7,13 @@ export interface SupportFormPayload {
   message: string;
 }
 
-export async function sendSupportEmail(payload: SupportFormPayload): Promise<void> {
+export async function sendSupportEmail(
+  payload: SupportFormPayload,
+): Promise<void> {
   const accessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
   if (!accessKey) {
     throw new Error(
-      "Missing VITE_WEB3FORMS_ACCESS_KEY — get a key at https://web3forms.com and add it to client/.env",
+      "Missing VITE_WEB3FORMS_ACCESS_KEY — get a key at https://web3forms.com",
     );
   }
 
