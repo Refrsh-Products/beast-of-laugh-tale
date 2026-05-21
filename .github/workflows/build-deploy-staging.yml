@@ -63,6 +63,7 @@ jobs:
           build-args: |
             VITE_API_BASE_URL=${{ secrets.STAGING_API_URL }}
             VITE_GOOGLE_AUTH_CLIENT_ID=${{ secrets.GOOGLE_AUTH_CLIENT_ID }}
+            VITE_WEB3FORMS_ACCESS_KEY=${{ secrets.WEB3FORMS_ACCESS_KEY }}
           cache-from: type=registry,ref=ghcr.io/${{ steps.org.outputs.name }}/freshr-web:staging
           cache-to: type=inline
 
