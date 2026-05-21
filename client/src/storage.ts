@@ -45,6 +45,8 @@ export interface StoredAccount {
   city: string;
   postal_code: string;
   tier_plan: string;
+  billing_interval: string | null;
+  subscription_status: string;
   profile_picture_url?: string;
 }
 

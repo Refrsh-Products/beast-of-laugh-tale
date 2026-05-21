@@ -9,6 +9,8 @@ export interface AccountMeResponse {
   postal_code: string;
   phone: string;
   tier_plan: string;
+  billing_interval: string | null;
+  subscription_status: string;
   onboarding_completed: boolean;
   created_at: string;
   updated_at: string;

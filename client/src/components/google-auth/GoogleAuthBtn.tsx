@@ -79,6 +79,8 @@ export default function GoogleAuthBtn() {
               postal_code: accountResp.postal_code,
               phone: accountResp.phone,
               tier_plan: accountResp.tier_plan,
+              billing_interval: accountResp.billing_interval,
+              subscription_status: accountResp.subscription_status,
             };
             saveAccount(account);
           } catch (err) {

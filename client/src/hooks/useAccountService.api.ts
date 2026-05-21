@@ -31,6 +31,8 @@ const useAccountServiceApi = (): AccountService => {
         postal_code: resp.postal_code,
         phone: resp.phone,
         tier_plan: resp.tier_plan,
+        billing_interval: resp.billing_interval,
+        subscription_status: resp.subscription_status,
       };
       saveAccount(account);
       return { account, onboardingCompleted: resp.onboarding_completed };

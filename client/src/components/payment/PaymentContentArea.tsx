@@ -1,14 +1,32 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { ProfileTab } from "../profile-account/ProfileSidebar";
 import usePaymentService from "../../services/payment";
+import useAccountService from "../../services/account";
 import { BLACK as B, WHITE as W, GREEN as G } from "../../constants/theme";
 
 interface PaymentContentAreaProps {
   activeTab: ProfileTab;
 }
 
-const PLANS = [
+type PlanId = "free" | "monthly" | "semester";
+
+interface Plan {
+  id: PlanId;
+  label: string;
+  tagline: string;
+  price: string;
+  originalPrice: string | null;
+  unit: string;
+  badge: string | null;
+  saving: string | null;
+  featured: boolean;
+  features: string[];
+  cta: string;
+  billingInterval: "MONTHLY" | "YEARLY" | null;
+}
+
+const PLANS: Plan[] = [
   {
     id: "free",
     label: "BASIC",
@@ -27,7 +45,7 @@ const PLANS = [
       "3 presentations / day",
       "Community support",
     ],
-    cta: "Current Plan",
+    cta: "Subscribe — Free →",
     billingInterval: null,
   },
   {
@@ -49,7 +67,7 @@ const PLANS = [
       "Priority support",
     ],
     cta: "Subscribe Monthly →",
-    billingInterval: "MONTHLY" as const,
+    billingInterval: "MONTHLY",
   },
   {
     id: "semester",
@@ -71,21 +89,44 @@ const PLANS = [
       "Priority support",
     ],
     cta: "Subscribe — One Semester →",
-    billingInterval: "YEARLY" as const,
+    billingInterval: "YEARLY",
   },
 ];
 
-export default function PaymentContentArea({ activeTab }: PaymentContentAreaProps) {
+export default function PaymentContentArea({
+  activeTab,
+}: PaymentContentAreaProps) {
   const paymentService = usePaymentService();
+  const accountService = useAccountService();
   const navigate = useNavigate();
   const [loading, setLoading] = useState<"MONTHLY" | "YEARLY" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<PlanId>("free");
+
+  useEffect(() => {
+    if (activeTab !== "payment") return;
+    accountService
+      .getAccount()
+      .then((res) => {
+        if (!res) return;
+        const { tier_plan, billing_interval, subscription_status } =
+          res.account;
+        if (tier_plan === "PAID" && subscription_status === "ACTIVE") {
+          if (billing_interval === "MONTHLY") setCurrentPlan("monthly");
+          else if (billing_interval === "YEARLY") setCurrentPlan("semester");
+        } else {
+          setCurrentPlan("free");
+        }
+      })
+      .catch(() => {});
+  }, [activeTab]);
 
   const handlePayment = async (billing_interval: "MONTHLY" | "YEARLY") => {
     setLoading(billing_interval);
     setError(null);
     try {
-      const { payment_url } = await paymentService.initializePayment(billing_interval);
+      const { payment_url } =
+        await paymentService.initializePayment(billing_interval);
       window.location.href = payment_url;
     } catch {
       setError("Failed to initiate payment. Please try again.");
@@ -276,28 +317,46 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
               ))}
             </div>
 
-            <button
-              disabled={!plan.billingInterval || loading !== null}
-              onClick={() => {
-                if (plan.billingInterval) handlePayment(plan.billingInterval);
-                else navigate("/dashboard");
-              }}
-              style={{
-                background: !plan.billingInterval ? "#eee" : B,
-                color: !plan.billingInterval ? B : W,
-                border: `2px solid ${!plan.billingInterval ? "#ccc" : B}`,
-                padding: "10px 16px",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                cursor: !plan.billingInterval ? "default" : "pointer",
-                width: "100%",
-                textAlign: "center",
-              }}
-            >
-              {loading === plan.billingInterval ? "REDIRECTING..." : plan.cta}
-            </button>
+            {(() => {
+              const isCurrent = plan.id === currentPlan;
+              const isPaidUserOnFreeCard =
+                plan.id === "free" && currentPlan !== "free";
+              const isInactive = isCurrent || isPaidUserOnFreeCard;
+              const isLoading =
+                plan.billingInterval !== null &&
+                loading === plan.billingInterval;
+              let label: string;
+              if (isLoading) label = "REDIRECTING...";
+              else if (isCurrent) label = "Current Plan";
+              else if (isPaidUserOnFreeCard) label = "Included";
+              else label = plan.cta;
+              return (
+                <button
+                  disabled={isInactive || loading !== null}
+                  onClick={() => {
+                    if (isInactive) return;
+                    if (plan.billingInterval)
+                      handlePayment(plan.billingInterval);
+                    else navigate("/dashboard");
+                  }}
+                  style={{
+                    background: isInactive ? "#eee" : B,
+                    color: isInactive ? B : W,
+                    border: `2px solid ${isInactive ? "#ccc" : B}`,
+                    padding: "10px 16px",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.06em",
+                    cursor: isInactive ? "default" : "pointer",
+                    width: "100%",
+                    textAlign: "center",
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })()}
           </div>
         ))}
       </div>
@@ -311,7 +370,8 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
           textAlign: "center",
         }}
       >
-        * Pricing in Bangladeshi Taka (BDT). Features are placeholders — final limits subject to change.
+        * Pricing in Bangladeshi Taka (BDT). Features are placeholders — final
+        limits subject to change.
       </p>
     </div>
   );
