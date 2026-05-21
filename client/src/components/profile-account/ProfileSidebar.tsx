@@ -2,7 +2,7 @@ const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
 
-export type ProfileTab = "profile" | "account" | "payment";
+export type ProfileTab = "profile" | "account" | "payment" | "support";
 
 interface ProfileSidebarProps {
   avatar: string;
@@ -170,6 +170,11 @@ export default function ProfileSidebar({
           label="UPGRADE PLAN"
           active={activeTab === "payment"}
           onClick={() => onTabChange("payment")}
+        />
+        <NavItem
+          label="SUPPORT"
+          active={activeTab === "support"}
+          onClick={() => onTabChange("support")}
         />
       </div>
     </div>
