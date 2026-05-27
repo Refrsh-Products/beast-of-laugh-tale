@@ -1,3 +1,6 @@
+import { useMediaQuery } from "../../hooks/useMediaQuery";
+import { BP_PHONE } from "../../constants/breakpoints";
+
 const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
@@ -57,7 +60,66 @@ function Stars({ count }: { count: number }) {
   );
 }
 
+function TestimonialCard({
+  t,
+  layoutStyle,
+}: {
+  t: (typeof TESTIMONIALS)[number];
+  layoutStyle: React.CSSProperties;
+}) {
+  return (
+    <div
+      style={{
+        border: `3px solid ${B}`,
+        padding: "28px 24px",
+        background: W,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        ...layoutStyle,
+      }}
+    >
+      <div
+        style={{
+          fontFamily: "'Syne', sans-serif",
+          fontWeight: 800,
+          fontSize: "1rem",
+          letterSpacing: "-0.01em",
+        }}
+      >
+        {t.name}
+      </div>
+      <div
+        style={{
+          fontSize: "0.75rem",
+          color: "#000000",
+          fontWeight: 400,
+          marginTop: -4,
+        }}
+      >
+        {t.university}
+      </div>
+      <p
+        style={{
+          fontSize: "0.78rem",
+          lineHeight: 1.85,
+          color: B,
+          margin: "8px 0 0",
+          flex: 1,
+        }}
+      >
+        {t.quote}
+      </p>
+      <div style={{ marginTop: 8 }}>
+        <Stars count={t.stars} />
+      </div>
+    </div>
+  );
+}
+
 export default function TestimonialSection() {
+  const isPhone = useMediaQuery(BP_PHONE);
+
   return (
     <section
       className="py-20 px-6 md:px-16"
@@ -96,64 +158,53 @@ export default function TestimonialSection() {
           </h2>
         </div>
 
-        {/* Single 6-column grid — row 1: 3 cards, row 2: 2 cards centered */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(6, 1fr)",
-            gap: 20,
-          }}
-        >
-          {TESTIMONIALS.map((t, i) => (
-            <div
-              key={t.name}
-              style={{
-                gridColumn: GRID_COLUMNS[i],
-                border: `3px solid ${B}`,
-                padding: "28px 24px",
-                background: W,
-                display: "flex",
-                flexDirection: "column",
-                gap: 10,
-              }}
-            >
-              <div
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 800,
-                  fontSize: "1rem",
-                  letterSpacing: "-0.01em",
+        {isPhone ? (
+          /* Phone: horizontal scroll-snap carousel */
+          <div
+            style={{
+              display: "flex",
+              gap: 16,
+              overflowX: "auto",
+              scrollSnapType: "x mandatory",
+              WebkitOverflowScrolling: "touch",
+              paddingBottom: 12,
+              marginLeft: -24,
+              marginRight: -24,
+              paddingLeft: 24,
+              paddingRight: 24,
+              scrollPaddingLeft: 24,
+            }}
+          >
+            {TESTIMONIALS.map((t) => (
+              <TestimonialCard
+                key={t.name}
+                t={t}
+                layoutStyle={{
+                  flex: "0 0 auto",
+                  width: "min(85vw, 320px)",
+                  scrollSnapAlign: "start",
                 }}
-              >
-                {t.name}
-              </div>
-              <div
-                style={{
-                  fontSize: "0.75rem",
-                  color: "#000000",
-                  fontWeight: 400,
-                  marginTop: -4,
-                }}
-              >
-                {t.university}
-              </div>
-              <p
-                style={{
-                  fontSize: "0.78rem",
-                  lineHeight: 1.85,
-                  color: B,
-                  margin: "8px 0 0",
-                  flex: 1,
-                }}
-              >
-                {t.quote}
-              </p>
-              <div style={{ marginTop: 8 }}>
-                <Stars count={t.stars} />
-              </div>
-            </div>
-          ))}
-        </div>
+              />
+            ))}
+          </div>
+        ) : (
+          /* Desktop: 6-column grid — row 1: 3 cards, row 2: 2 cards centered */
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(6, 1fr)",
+              gap: 20,
+            }}
+          >
+            {TESTIMONIALS.map((t, i) => (
+              <TestimonialCard
+                key={t.name}
+                t={t}
+                layoutStyle={{ gridColumn: GRID_COLUMNS[i] }}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
