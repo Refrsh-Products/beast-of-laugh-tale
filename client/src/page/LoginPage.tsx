@@ -69,23 +69,24 @@ export default function LoginPage() {
     <div
       style={{
         display: "flex",
-        minHeight: "100vh",
+        minHeight: "100dvh",
         fontFamily: "'IBM Plex Mono', monospace",
       }}
     >
       {/* ── LEFT HALF (form) ── */}
       <div
         style={{
-          flex: "0 0 50%",
+          flex: "1 1 100%",
           background: W,
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
           alignItems: "center",
-          padding: "48px 32px",
+          padding: "48px 24px",
           position: "relative",
           boxSizing: "border-box",
         }}
+        className="login-left"
       >
         {/* Logo */}
         <FreshrLogo color="#000000" />
@@ -340,6 +341,7 @@ export default function LoginPage() {
       <style>{`
         @media (min-width: 768px) {
           .login-right { display: block !important; }
+          .login-left { flex: 0 0 50% !important; padding: 48px 32px !important; }
         }
       `}</style>
     </div>

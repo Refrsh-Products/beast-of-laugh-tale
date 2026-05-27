@@ -12,7 +12,7 @@ export default function ForgotPasswordSentPage() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         background: B,
         display: "flex",
         alignItems: "center",

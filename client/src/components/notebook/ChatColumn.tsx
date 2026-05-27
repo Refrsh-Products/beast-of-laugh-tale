@@ -307,6 +307,7 @@ export default function ChatColumn({
                   border: `2px solid ${B}`,
                   boxShadow: `4px 4px 0 ${B}`,
                   minWidth: 210,
+                  maxWidth: "calc(100vw - 32px)",
                   zIndex: 100,
                   overflow: "hidden",
                 }}

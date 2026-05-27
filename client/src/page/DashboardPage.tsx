@@ -20,6 +20,8 @@ import { useToast } from "../hooks/useToast";
 import ToastContainer from "../components/ui/ToastContainer";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
 import { track } from "../lib/analytics";
+import { useMediaQuery } from "../hooks/useMediaQuery";
+import { BP_PHONE } from "../constants/breakpoints";
 
 const G = "#84e487";
 const B = "#000000";
@@ -94,6 +96,7 @@ export default function DashboardPage() {
   const notebookService = useNotebookService();
   const navigate = useNavigate();
   const user = authService.getUser();
+  const isPhone = useMediaQuery(BP_PHONE);
   const [account, setAccount] = useState<StoredAccount | null>(getCachedAccount());
 
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
@@ -363,7 +366,7 @@ export default function DashboardPage() {
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        height: "100dvh",
         overflow: "hidden",
       }}
     >
@@ -378,10 +381,11 @@ export default function DashboardPage() {
         <div
           style={{
             display: "flex",
+            flexWrap: "wrap",
             justifyContent: "center",
             alignItems: "center",
-            gap: 20,
-            padding: "7px 64px",
+            gap: isPhone ? 8 : 20,
+            padding: isPhone ? "8px 12px" : "7px 64px",
             background: W,
             borderBottom: `2px solid ${B}`,
             flexShrink: 0,
@@ -432,7 +436,7 @@ export default function DashboardPage() {
           ].map((item, i, arr) => (
             <span
               key={item.label}
-              style={{ display: "flex", alignItems: "center", gap: 20 }}
+              style={{ display: "flex", alignItems: "center", gap: isPhone ? 8 : 20 }}
             >
               <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <span
@@ -459,7 +463,7 @@ export default function DashboardPage() {
                   </span>
                 </span>
               </span>
-              {i < arr.length - 1 && <span style={{ color: "#000000" }}>·</span>}
+              {!isPhone && i < arr.length - 1 && <span style={{ color: "#000000" }}>·</span>}
             </span>
           ))}
           {isFreePlan && (
@@ -478,8 +482,8 @@ export default function DashboardPage() {
                 e.currentTarget.style.transform = "none";
               }}
               style={{
-                position: "absolute",
-                right: 64,
+                position: isPhone ? "static" : "absolute",
+                right: isPhone ? "auto" : 64,
                 background: W,
                 color: B,
                 border: `2px solid ${B}`,
@@ -491,6 +495,7 @@ export default function DashboardPage() {
                 cursor: "pointer",
                 boxShadow: `2px 2px 0 ${B}`,
                 transition: "transform 0.1s, box-shadow 0.1s, background 0.1s",
+                marginTop: isPhone ? 4 : 0,
               }}
             >
               UPGRADE TO PRO →
@@ -504,7 +509,7 @@ export default function DashboardPage() {
           flex: 1,
           overflowY: "auto",
           background: "#f5f5f0",
-          padding: "40px 64px",
+          padding: isPhone ? "20px 16px" : "40px 64px",
         }}
         className="freshr-scroll"
       >
@@ -512,10 +517,11 @@ export default function DashboardPage() {
         <div
           style={{
             display: "flex",
-            alignItems: "flex-start",
+            flexDirection: isPhone ? "column" : "row",
+            alignItems: isPhone ? "stretch" : "flex-start",
             justifyContent: "space-between",
             marginBottom: 24,
-            gap: 24,
+            gap: isPhone ? 16 : 24,
           }}
         >
           <div>
@@ -561,10 +567,11 @@ export default function DashboardPage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            gap: 12,
             marginBottom: 28,
           }}
         >
-          <div style={{ position: "relative", width: 320 }}>
+          <div style={{ position: "relative", width: isPhone ? "100%" : 320, minWidth: 0, flex: isPhone ? 1 : "none" }}>
             <input
               type="text"
               value={searchQuery}
@@ -684,7 +691,7 @@ export default function DashboardPage() {
           <div
             style={{
               border: `2px dashed ${B}`,
-              padding: "64px 32px",
+              padding: isPhone ? "48px 16px" : "64px 32px",
               textAlign: "center",
               marginBottom: 24,
             }}

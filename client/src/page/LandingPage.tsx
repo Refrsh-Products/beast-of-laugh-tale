@@ -73,10 +73,10 @@ export default function LandingPage() {
       {/* ── HERO ── */}
       <section
         id="hero"
-        className="px-[4.5rem] md:px-48 pt-16 pb-20"
+        className="px-6 sm:px-12 md:px-48 pt-12 sm:pt-16 pb-16 sm:pb-20"
         style={{
           borderBottom: `3px solid ${B}`,
-          minHeight: "calc(100vh - 65px - 44px)",
+          minHeight: "calc(100dvh - 65px - 44px)",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",

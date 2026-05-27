@@ -28,6 +28,9 @@ import { track } from "../lib/analytics";
 import usePresentationSessions from "../hooks/presentation/usePresentationSessions";
 import useChatSessions from "../hooks/chat/useChatSessions";
 import useQuizSessions from "../hooks/quiz/useQuizSessions";
+import MobileDrawer from "../components/ui/MobileDrawer";
+import { useMediaQuery } from "../hooks/useMediaQuery";
+import { BP_TABLET } from "../constants/breakpoints";
 
 const B = "#000000";
 const W = "#FFFFFF";
@@ -71,6 +74,9 @@ export default function NotebookPage() {
       f.ingestion_status === "pending" || f.ingestion_status === "processing",
   );
   const hasReadyFiles = files.some((f) => f.ingestion_status === "ready");
+  const isCompact = useMediaQuery(BP_TABLET);
+  const [toolsDrawerOpen, setToolsDrawerOpen] = useState(false);
+  const [filesDrawerOpen, setFilesDrawerOpen] = useState(false);
 
   const notebookArchivedModal = {
     title: "Notebook is archived",
@@ -381,7 +387,7 @@ export default function NotebookPage() {
       style={{
         display: "flex",
         flexDirection: "column",
-        height: "100vh",
+        height: "100dvh",
         overflow: "hidden",
         fontFamily: "'IBM Plex Mono', monospace",
       }}
@@ -419,59 +425,138 @@ export default function NotebookPage() {
         style={{
           background: W,
           borderBottom: `3px solid ${B}`,
-          padding: "0 24px",
+          padding: isCompact ? "0 12px" : "0 24px",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           height: 56,
           flexShrink: 0,
+          gap: 8,
         }}
       >
-        <span
-          onClick={() => navigate("/dashboard")}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.textDecoration = "underline")
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
-          style={{
-            fontSize: "0.78rem",
-            fontWeight: 700,
-            color: B,
-            cursor: "pointer",
-            letterSpacing: "0.04em",
-            flexShrink: 0,
-            textDecoration: "none",
-            textUnderlineOffset: "3px",
-          }}
-        >
-          ← Back to dashboard
-        </span>
+        {isCompact ? (
+          <button
+            onClick={() => setToolsDrawerOpen(true)}
+            aria-label="Open tools"
+            style={{
+              background: W,
+              border: `2px solid ${B}`,
+              padding: "4px 10px",
+              cursor: "pointer",
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "1rem",
+              lineHeight: 1,
+              color: B,
+              flexShrink: 0,
+            }}
+          >
+            ☰
+          </button>
+        ) : (
+          <span
+            onClick={() => navigate("/dashboard")}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.textDecoration = "underline")
+            }
+            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+            style={{
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              color: B,
+              cursor: "pointer",
+              letterSpacing: "0.04em",
+              flexShrink: 0,
+              textDecoration: "none",
+              textUnderlineOffset: "3px",
+            }}
+          >
+            ← Back to dashboard
+          </span>
+        )}
 
-        <NotebookTitle
-          title={notebook.title}
-          onSave={handleNotebookTitleSave}
-        />
+        <div style={{ flex: 1, display: "flex", justifyContent: "center", minWidth: 0 }}>
+          <NotebookTitle
+            title={notebook.title}
+            onSave={handleNotebookTitleSave}
+          />
+        </div>
 
-        {/* Spacer to keep title centered */}
-        <div style={{ width: 140, flexShrink: 0 }} />
+        {isCompact ? (
+          <button
+            onClick={() => setFilesDrawerOpen(true)}
+            aria-label="Open files / panel"
+            style={{
+              background: W,
+              border: `2px solid ${B}`,
+              padding: "4px 10px",
+              cursor: "pointer",
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.85rem",
+              lineHeight: 1,
+              color: B,
+              flexShrink: 0,
+            }}
+          >
+            ▦
+          </button>
+        ) : (
+          <div style={{ width: 140, flexShrink: 0 }} />
+        )}
       </div>
 
-      {/* 3-column layout */}
+      {/* 3-column layout (single column on phone) */}
       <div
         style={{
           flex: 1,
           display: "grid",
-          gridTemplateColumns: "220px 1fr 260px",
+          gridTemplateColumns: isCompact ? "1fr" : "220px 1fr 260px",
           overflow: "hidden",
           position: "relative",
+          minHeight: 0,
         }}
       >
-        {/* Options/Tools nav column (left) */}
-        <OptionsColumn activeView={activeView} onViewChange={setActiveView} />
+        {/* Options/Tools nav column (inline on desktop, in drawer on phone) */}
+        {!isCompact && (
+          <OptionsColumn activeView={activeView} onViewChange={setActiveView} />
+        )}
 
         {renderCenterPanel()}
-        {renderRightPanel()}
+
+        {!isCompact && renderRightPanel()}
       </div>
+
+      {/* Phone-only drawers */}
+      {isCompact && (
+        <>
+          <MobileDrawer
+            open={toolsDrawerOpen}
+            onClose={() => setToolsDrawerOpen(false)}
+            side="left"
+            width="min(240px, 85vw)"
+            ariaLabel="Notebook tools"
+          >
+            <OptionsColumn
+              activeView={activeView}
+              onViewChange={(v) => {
+                setActiveView(v);
+                setToolsDrawerOpen(false);
+              }}
+            />
+          </MobileDrawer>
+
+          <MobileDrawer
+            open={filesDrawerOpen}
+            onClose={() => setFilesDrawerOpen(false)}
+            side="right"
+            width="min(320px, 90vw)"
+            ariaLabel="Files panel"
+          >
+            <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+              {renderRightPanel()}
+            </div>
+          </MobileDrawer>
+        </>
+      )}
 
       <ToastContainer toasts={toasts} />
 

@@ -10,7 +10,10 @@ import ProfileContentArea from "../components/profile-account/ProfileContentArea
 import AccountContentArea from "../components/profile-account/AccountContentArea";
 import PaymentContentArea from "../components/payment/PaymentContentArea";
 import SupportContentArea from "../components/profile-account/SupportContentArea";
+import MobileDrawer from "../components/ui/MobileDrawer";
 import { track } from "../lib/analytics";
+import { useMediaQuery } from "../hooks/useMediaQuery";
+import { BP_TABLET } from "../constants/breakpoints";
 
 const B = "#000000";
 const W = "#FFFFFF";
@@ -30,6 +33,8 @@ export default function ProfilePage() {
     (location.state as { tab?: ProfileTab } | null)?.tab ?? "profile";
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
   const [success, setSuccess] = useState<string | null>(null);
+  const isCompact = useMediaQuery(BP_TABLET);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     accountService.getAccount()
@@ -57,10 +62,15 @@ export default function ProfilePage() {
       : avatarLetter;
   const planLabel = account?.tier_plan ?? "FREE";
 
+  const handleTabChange = (tab: ProfileTab) => {
+    setActiveTab(tab);
+    if (isCompact) setDrawerOpen(false);
+  };
+
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         display: "flex",
         flexDirection: "column",
         background: "#f5f5f0",
@@ -72,10 +82,31 @@ export default function ProfilePage() {
         style={{
           background: W,
           borderBottom: `3px solid ${B}`,
-          padding: "16px 32px",
+          padding: isCompact ? "12px 16px" : "16px 32px",
           flexShrink: 0,
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
         }}
       >
+        {isCompact && (
+          <button
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Open menu"
+            style={{
+              background: W,
+              border: `2px solid ${B}`,
+              padding: "4px 10px",
+              cursor: "pointer",
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "1rem",
+              lineHeight: 1,
+              color: B,
+            }}
+          >
+            ☰
+          </button>
+        )}
         <span
           onClick={() => navigate("/dashboard")}
           onMouseEnter={(e) =>
@@ -97,24 +128,43 @@ export default function ProfilePage() {
       </div>
 
       {/* Two-panel layout */}
-      <div style={{ display: "flex", flex: 1 }}>
-        <ProfileSidebar
-          avatar={avatar}
-          name={name}
-          email={user?.email ?? ""}
-          plan={planLabel}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+        {isCompact ? (
+          <MobileDrawer
+            open={drawerOpen}
+            onClose={() => setDrawerOpen(false)}
+            width="min(240px, 85vw)"
+            ariaLabel="Profile navigation"
+          >
+            <ProfileSidebar
+              avatar={avatar}
+              name={name}
+              email={user?.email ?? ""}
+              plan={planLabel}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+            />
+          </MobileDrawer>
+        ) : (
+          <ProfileSidebar
+            avatar={avatar}
+            name={name}
+            email={user?.email ?? ""}
+            plan={planLabel}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
+        )}
 
         {/* Content area */}
         <div
           style={{
             flex: 1,
-            padding: "48px",
+            padding: isCompact ? "24px 16px" : "48px",
             overflowY: "auto",
             display: "flex",
             justifyContent: "center",
+            minWidth: 0,
           }}
         >
           <div

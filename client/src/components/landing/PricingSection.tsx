@@ -77,7 +77,7 @@ export default function PricingSection() {
         />
       </div>
       {/* Header */}
-      <div style={{ padding: "0 48px", maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
+      <div style={{ padding: "0 clamp(16px, 5vw, 48px)", maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
         <div
           style={{
             display: "inline-block",
@@ -129,7 +129,7 @@ export default function PricingSection() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))",
             gap: 20,
             alignItems: "stretch",
           }}

@@ -63,8 +63,9 @@ export default function NotebookTitle({ title, onSave }: NotebookTitleProps) {
           outline: "none",
           background: "transparent",
           padding: "2px 4px",
-          minWidth: 200,
-          maxWidth: 500,
+          minWidth: 0,
+          width: "100%",
+          maxWidth: 320,
           color: B,
         }}
       />
