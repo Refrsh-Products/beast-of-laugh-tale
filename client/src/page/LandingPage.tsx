@@ -8,11 +8,14 @@ import PricingSection from "../components/landing/PricingSection";
 import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 
 import { GREEN as G, BLACK as B, WHITE as W } from "../constants/theme";
+import { useMediaQuery } from "../hooks/useMediaQuery";
+import { BP_PHONE } from "../constants/breakpoints";
 
 /* ─── Main page ───────────────────────────────────────────── */
 export default function LandingPage() {
   const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
+  const isPhone = useMediaQuery(BP_PHONE);
 
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 80);
@@ -350,14 +353,15 @@ export default function LandingPage() {
               ["100%", "Your data"],
             ] as [string, string][]
           ).map(([n, l]) => (
-            <div key={l}>
+            <div key={l} style={{ minWidth: 0 }}>
               <div
                 style={{
                   fontFamily: "'Syne', sans-serif",
                   fontWeight: 800,
-                  fontSize: "3.5rem",
+                  fontSize: isPhone ? "2.25rem" : "3.5rem",
                   color: G,
                   lineHeight: 1,
+                  whiteSpace: "nowrap",
                 }}
               >
                 {n}
@@ -417,14 +421,46 @@ export default function LandingPage() {
             </h2>
           </div>
 
-          <div
-            id="features-grid"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
-          >
-            {FEATURES.map((f, i) => (
-              <FeatureCard key={i} {...f} />
-            ))}
-          </div>
+          {isPhone ? (
+            <div
+              id="features-grid"
+              style={{
+                display: "flex",
+                gap: 16,
+                overflowX: "auto",
+                scrollSnapType: "x mandatory",
+                WebkitOverflowScrolling: "touch",
+                paddingBottom: 12,
+                marginLeft: -24,
+                marginRight: -24,
+                paddingLeft: 24,
+                paddingRight: 24,
+                scrollPaddingLeft: 24,
+              }}
+            >
+              {FEATURES.map((f, i) => (
+                <div
+                  key={i}
+                  style={{
+                    flex: "0 0 auto",
+                    width: "min(85vw, 320px)",
+                    scrollSnapAlign: "start",
+                  }}
+                >
+                  <FeatureCard {...f} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              id="features-grid"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5"
+            >
+              {FEATURES.map((f, i) => (
+                <FeatureCard key={i} {...f} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -454,7 +490,24 @@ export default function LandingPage() {
 
           <div
             id="how-it-works-grid"
-            className="grid grid-cols-1 md:grid-cols-3 gap-5"
+            className={isPhone ? undefined : "grid grid-cols-1 md:grid-cols-3 gap-5"}
+            style={
+              isPhone
+                ? {
+                    display: "flex",
+                    gap: 16,
+                    overflowX: "auto",
+                    scrollSnapType: "x mandatory",
+                    WebkitOverflowScrolling: "touch",
+                    paddingBottom: 12,
+                    marginLeft: -24,
+                    marginRight: -24,
+                    paddingLeft: 24,
+                    paddingRight: 24,
+                    scrollPaddingLeft: 24,
+                  }
+                : undefined
+            }
           >
             {STEPS.map((s) => (
               <div
@@ -463,6 +516,13 @@ export default function LandingPage() {
                   background: W,
                   border: `3px solid ${B}`,
                   padding: "36px 28px",
+                  ...(isPhone
+                    ? {
+                        flex: "0 0 auto",
+                        width: "min(85vw, 320px)",
+                        scrollSnapAlign: "start",
+                      }
+                    : {}),
                 }}
               >
                 <div
