@@ -20,7 +20,7 @@ export default function LoadErrorScreen({
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         background: "#f5f5f0",
         display: "flex",
         alignItems: "center",

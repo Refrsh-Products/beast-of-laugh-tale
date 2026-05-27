@@ -27,6 +27,22 @@ html, body {
   50%       { opacity: 0; }
 }
 
+@keyframes drawer-slide-in-left {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes drawer-slide-in-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+/* Prevent media from overflowing on small screens */
+img, video {
+  max-width: 100%;
+  height: auto;
+}
+
 .freshr-scroll::-webkit-scrollbar { width: 6px; }
 .freshr-scroll::-webkit-scrollbar-track { background: transparent; }
 .freshr-scroll::-webkit-scrollbar-thumb { background: #ccc; }

@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
+import { BP_PHONE } from "../../constants/breakpoints";
 
 const G = "#84e487";
 const B = "#000000";
@@ -17,6 +19,7 @@ export default function TopNavbar({
   profilePictureUrl,
 }: TopNavbarProps) {
   const navigate = useNavigate();
+  const isPhone = useMediaQuery(BP_PHONE);
   const displayLabel = userName?.trim() || userEmail;
   const avatarLetter = (userName || userEmail || "?")[0].toUpperCase();
   const [avatarError, setAvatarError] = useState(false);
@@ -35,7 +38,7 @@ export default function TopNavbar({
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0 64px",
+        padding: isPhone ? "0 16px" : "0 64px",
         height: 56,
         background: W,
         color: B,
@@ -58,7 +61,7 @@ export default function TopNavbar({
           style={{
             fontFamily: "'Syne', sans-serif",
             fontWeight: 800,
-            fontSize: "1.5rem",
+            fontSize: isPhone ? "1.25rem" : "1.5rem",
             letterSpacing: "-0.02em",
             color: G,
             lineHeight: 1,
@@ -97,6 +100,7 @@ export default function TopNavbar({
           padding: "5px 8px",
           background: profileHovered ? "#f0f0f0" : "transparent",
           transition: "background 0.12s",
+          minWidth: 0,
         }}
       >
         <div
@@ -128,19 +132,21 @@ export default function TopNavbar({
             avatarLetter
           )}
         </div>
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            color: "#000000",
-            maxWidth: 160,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {displayLabel}
-        </span>
+        {!isPhone && (
+          <span
+            style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.75rem",
+              color: "#000000",
+              maxWidth: 160,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {displayLabel}
+          </span>
+        )}
       </div>
     </div>
   );

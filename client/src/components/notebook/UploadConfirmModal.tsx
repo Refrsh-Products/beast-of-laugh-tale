@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
+import { BP_PHONE } from "../../constants/breakpoints";
 
 const B = "#000000";
 const W = "#FFFFFF";
@@ -152,6 +154,7 @@ export default function UploadConfirmModal({
 }: UploadConfirmModalProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const selected = files[selectedIndex] ?? files[0];
+  const isPhone = useMediaQuery(BP_PHONE);
 
   const totalBytes = files.reduce((sum, f) => sum + f.size, 0);
 
@@ -162,7 +165,7 @@ export default function UploadConfirmModal({
         inset: 0,
         background: "rgba(0,0,0,0.5)",
         display: "flex",
-        alignItems: "center",
+        alignItems: isPhone ? "stretch" : "center",
         justifyContent: "center",
         zIndex: 200,
       }}
@@ -170,10 +173,10 @@ export default function UploadConfirmModal({
       <div
         style={{
           background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `6px 6px 0 ${B}`,
-          width: "min(900px, 92vw)",
-          height: "min(640px, 88vh)",
+          border: isPhone ? "none" : `2px solid ${B}`,
+          boxShadow: isPhone ? "none" : `6px 6px 0 ${B}`,
+          width: isPhone ? "100%" : "min(900px, 92vw)",
+          height: isPhone ? "100dvh" : "min(640px, 88vh)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
@@ -218,17 +221,20 @@ export default function UploadConfirmModal({
           style={{
             flex: 1,
             display: "grid",
-            gridTemplateColumns: "280px 1fr",
+            gridTemplateColumns: isPhone ? "1fr" : "280px 1fr",
+            gridTemplateRows: isPhone ? "auto 1fr" : "1fr",
             minHeight: 0,
           }}
         >
-          {/* Left: file list */}
+          {/* Left: file list (top on phone) */}
           <div
             style={{
-              borderRight: `2px solid ${B}`,
+              borderRight: isPhone ? "none" : `2px solid ${B}`,
+              borderBottom: isPhone ? `2px solid ${B}` : "none",
               overflowY: "auto",
               display: "flex",
               flexDirection: "column",
+              maxHeight: isPhone ? 180 : undefined,
             }}
           >
             {files.map((file, i) => {

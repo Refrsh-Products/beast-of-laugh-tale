@@ -78,7 +78,7 @@ export default function SupportPage() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         background: W,
         fontFamily: "'IBM Plex Mono', monospace",
         color: B,

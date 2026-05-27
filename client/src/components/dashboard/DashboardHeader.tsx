@@ -1,3 +1,6 @@
+import { useMediaQuery } from "../../hooks/useMediaQuery";
+import { BP_PHONE } from "../../constants/breakpoints";
+
 const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
@@ -15,14 +18,18 @@ export default function DashboardHeader({
   onSearchChange: (val: string) => void;
   onViewChange: (view: "grid" | "list") => void;
 }) {
+  const isPhone = useMediaQuery(BP_PHONE);
+
   return (
     <div
       style={{
-        padding: "24px 32px 16px",
+        padding: isPhone ? "16px" : "24px 32px 16px",
         borderBottom: `2px solid ${B}`,
         display: "flex",
-        alignItems: "center",
+        flexDirection: isPhone ? "column" : "row",
+        alignItems: isPhone ? "stretch" : "center",
         justifyContent: "space-between",
+        gap: isPhone ? 12 : 0,
         flexShrink: 0,
         background: W,
       }}
@@ -52,9 +59,16 @@ export default function DashboardHeader({
         </p>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
         {/* Search */}
-        <div style={{ position: "relative" }}>
+        <div style={{ position: "relative", flex: isPhone ? 1 : "none", minWidth: 0 }}>
           <input
             type="text"
             value={searchQuery}
@@ -74,8 +88,9 @@ export default function DashboardHeader({
               fontSize: "0.75rem",
               background: W,
               outline: "none",
-              width: 200,
+              width: isPhone ? "100%" : 200,
               transition: "border-color 0.15s",
+              boxSizing: "border-box",
             }}
           />
           <svg
@@ -102,7 +117,7 @@ export default function DashboardHeader({
         </div>
 
         {/* Grid/List toggle */}
-        <div style={{ display: "flex", border: `2px solid ${B}` }}>
+        <div style={{ display: "flex", border: `2px solid ${B}`, flexShrink: 0 }}>
           <button
             onClick={() => onViewChange("grid")}
             onMouseEnter={(e) => {

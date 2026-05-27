@@ -32,6 +32,7 @@ export default function NotebookMenu({
         border: `2px solid ${B}`,
         boxShadow: `4px 4px 0 ${B}`,
         minWidth: 140,
+        maxWidth: 'calc(100vw - 16px)',
       }}
       onMouseDown={(e) => e.stopPropagation()}
     >

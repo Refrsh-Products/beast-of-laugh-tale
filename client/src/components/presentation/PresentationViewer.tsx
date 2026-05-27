@@ -6,6 +6,9 @@ import type { PresentationSession, PresentationSlide } from "../../services/pres
 import SlideEditor from "./SlideEditor";
 import { renderSlideContent, B, G, W } from "./SlideLayouts";
 import { exportAsPdf, exportAsPptx } from "./exportPresentation";
+import MobileDrawer from "../ui/MobileDrawer";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
+import { BP_TABLET } from "../../constants/breakpoints";
 
 interface AiMessage {
   role: "user" | "ai";
@@ -156,6 +159,9 @@ export default function PresentationViewer({
   const [exportOpen, setExportOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
+  const isCompact = useMediaQuery(BP_TABLET);
+  const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
+  const [slidesDrawerOpen, setSlidesDrawerOpen] = useState(false);
 
   // Inject / remove reveal.js CSS in normal mode
   useEffect(() => {
@@ -283,11 +289,31 @@ export default function PresentationViewer({
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        padding: "0 24px",
+        padding: isCompact ? "0 12px" : "0 24px",
         flexShrink: 0,
+        gap: 8,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, flex: "1 1 0" }}>
+        {editMode && isCompact && (
+          <button
+            onClick={() => setChatDrawerOpen(true)}
+            aria-label="Open AI chat"
+            style={{
+              background: "transparent",
+              border: "1.5px solid #555",
+              color: "#aaa",
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.85rem",
+              padding: "2px 8px",
+              cursor: "pointer",
+              lineHeight: 1,
+              flexShrink: 0,
+            }}
+          >
+            ☰
+          </button>
+        )}
         <span
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
@@ -295,6 +321,10 @@ export default function PresentationViewer({
             fontWeight: 700,
             color: G,
             letterSpacing: "0.1em",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            minWidth: 0,
           }}
         >
           {presentation.topic || "Presentation"}
@@ -313,7 +343,26 @@ export default function PresentationViewer({
         )}
       </div>
 
-      <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+      <div style={{ display: "flex", gap: isCompact ? 6 : 10, alignItems: "center", flexShrink: 0 }}>
+        {editMode && isCompact && (
+          <button
+            onClick={() => setSlidesDrawerOpen(true)}
+            aria-label="Open slide list"
+            style={{
+              background: "transparent",
+              border: "1.5px solid #555",
+              color: "#aaa",
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: "0.85rem",
+              padding: "2px 8px",
+              cursor: "pointer",
+              lineHeight: 1,
+              flexShrink: 0,
+            }}
+          >
+            ▦
+          </button>
+        )}
         {editMode ? (
           <>
             <button
@@ -519,6 +568,7 @@ export default function PresentationViewer({
   // ── Edit mode ────────────────────────────────────────────────────────────────
 
   const activeDraftSlide = draftSlides[currentSlideIndex];
+  const showAiPanelInline = showAiPanel && !isCompact;
 
   return (
     <div
@@ -535,8 +585,8 @@ export default function PresentationViewer({
 
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
 
-        {/* AI chat panel */}
-        {showAiPanel && (
+        {/* AI chat panel (inline on desktop) */}
+        {showAiPanelInline && (
           <div
             style={{
               width: aiPanelCollapsed ? 36 : 260,
@@ -739,47 +789,222 @@ export default function PresentationViewer({
           </div>
         </div>
 
-        {/* Right: slide thumbnails */}
-        <div
-          style={{
-            width: 180,
-            flexShrink: 0,
-            overflowY: "auto",
-            background: W,
-          }}
-        >
+        {/* Right: slide thumbnails (inline on desktop) */}
+        {!isCompact && (
           <div
             style={{
-              height: 40,
-              borderBottom: `2px solid ${B}`,
-              display: "flex",
-              alignItems: "center",
-              padding: "0 12px",
+              width: 180,
+              flexShrink: 0,
+              overflowY: "auto",
+              background: W,
             }}
           >
-            <span
+            <div
               style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.6rem",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                color: "#000000",
+                height: 40,
+                borderBottom: `2px solid ${B}`,
+                display: "flex",
+                alignItems: "center",
+                padding: "0 12px",
               }}
             >
-              SLIDES
-            </span>
+              <span
+                style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.6rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  color: "#000000",
+                }}
+              >
+                SLIDES
+              </span>
+            </div>
+            {draftSlides.map((slide, i) => (
+              <SlideThumbnail
+                key={slide.id}
+                slide={slide}
+                index={i}
+                selected={i === currentSlideIndex}
+                onClick={() => setCurrentSlideIndex(i)}
+              />
+            ))}
           </div>
-          {draftSlides.map((slide, i) => (
-            <SlideThumbnail
-              key={slide.id}
-              slide={slide}
-              index={i}
-              selected={i === currentSlideIndex}
-              onClick={() => setCurrentSlideIndex(i)}
-            />
-          ))}
-        </div>
+        )}
       </div>
+
+      {/* Mobile drawers for AI chat + slide list */}
+      {isCompact && (
+        <>
+          <MobileDrawer
+            open={chatDrawerOpen}
+            onClose={() => setChatDrawerOpen(false)}
+            side="left"
+            width="min(320px, 90vw)"
+            ariaLabel="AI chat"
+          >
+            <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+              <div
+                style={{
+                  height: 40,
+                  borderBottom: `2px solid ${B}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "0 12px",
+                  flexShrink: 0,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.6rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    color: "#000000",
+                  }}
+                >
+                  AI CHAT
+                </span>
+                <button
+                  onClick={() => setChatDrawerOpen(false)}
+                  aria-label="Close chat"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.85rem",
+                    fontWeight: 700,
+                    color: "#000000",
+                    padding: "0 4px",
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              <div style={{ flex: 1, overflowY: "auto", padding: 12 }}>
+                {aiMessages.length === 0 && (
+                  <div
+                    style={{
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: "0.7rem",
+                      color: "#666",
+                      padding: 8,
+                    }}
+                  >
+                    No messages yet. Ask AI to edit the current slide using the input below.
+                  </div>
+                )}
+                {aiMessages.map((msg, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      marginBottom: 12,
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: msg.role === "user" ? "flex-end" : "flex-start",
+                    }}
+                  >
+                    <div
+                      style={{
+                        maxWidth: "85%",
+                        padding: "8px 10px",
+                        background: msg.role === "user" ? B : "#f0f0f0",
+                        color: msg.role === "user" ? W : B,
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: "0.7rem",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {msg.content}
+                    </div>
+                  </div>
+                ))}
+                {isRefining && (
+                  <div style={{ display: "flex", alignItems: "flex-start" }}>
+                    <div
+                      style={{
+                        padding: "8px 10px",
+                        background: "#f0f0f0",
+                        fontFamily: "'IBM Plex Mono', monospace",
+                        fontSize: "0.7rem",
+                        color: "#000000",
+                      }}
+                    >
+                      Thinking...
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </MobileDrawer>
+
+          <MobileDrawer
+            open={slidesDrawerOpen}
+            onClose={() => setSlidesDrawerOpen(false)}
+            side="right"
+            width="min(220px, 75vw)"
+            ariaLabel="Slide list"
+          >
+            <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+              <div
+                style={{
+                  height: 40,
+                  borderBottom: `2px solid ${B}`,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "0 12px",
+                  flexShrink: 0,
+                }}
+              >
+                <span
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.6rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    color: "#000000",
+                  }}
+                >
+                  SLIDES
+                </span>
+                <button
+                  onClick={() => setSlidesDrawerOpen(false)}
+                  aria-label="Close slide list"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: "0.85rem",
+                    fontWeight: 700,
+                    color: "#000000",
+                    padding: "0 4px",
+                  }}
+                >
+                  ×
+                </button>
+              </div>
+              <div style={{ flex: 1, overflowY: "auto" }}>
+                {draftSlides.map((slide, i) => (
+                  <SlideThumbnail
+                    key={slide.id}
+                    slide={slide}
+                    index={i}
+                    selected={i === currentSlideIndex}
+                    onClick={() => {
+                      setCurrentSlideIndex(i);
+                      setSlidesDrawerOpen(false);
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+          </MobileDrawer>
+        </>
+      )}
     </div>
   );
 }
