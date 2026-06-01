@@ -277,6 +277,42 @@ export default function LoginPage() {
                 Log in →
               </Button>
             </div>
+
+            <p
+              style={{
+                marginTop: 4,
+                fontSize: "0.7rem",
+                color: "#555",
+                lineHeight: 1.6,
+                textAlign: "center",
+              }}
+            >
+              By continuing, you agree to FRESHR's{" "}
+              <Link
+                to="/terms-of-service"
+                style={{
+                  color: B,
+                  fontWeight: 700,
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
+              >
+                Terms of Service
+              </Link>{" "}
+              and{" "}
+              <Link
+                to="/privacy-policy"
+                style={{
+                  color: B,
+                  fontWeight: 700,
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
+              >
+                Privacy Policy
+              </Link>
+              .
+            </p>
           </form>
 
           {/* Footer */}

@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import type { ProfileTab } from "./ProfileSidebar";
 import Button from "../ui/Button";
 import { sendSupportEmail } from "../../lib/supportEmail";
+import { POLICY_LINKS } from "../../constants/policies";
 
 const G = "#84e487";
 const B = "#000000";
@@ -295,6 +297,44 @@ export default function SupportContentArea({
             Your message will be sent directly to {SUPPORT_EMAIL}.
           </p>
         </form>
+      </div>
+
+      {/* ── LEGAL ── */}
+      <div style={{ marginTop: 28 }}>
+        <div
+          style={{
+            fontSize: "0.68rem",
+            fontWeight: 700,
+            letterSpacing: "0.14em",
+            marginBottom: 10,
+          }}
+        >
+          LEGAL
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: 18,
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: "0.78rem",
+          }}
+        >
+          {(["privacy", "terms", "refund"] as const).map((key) => (
+            <Link
+              key={key}
+              to={POLICY_LINKS[key].path}
+              style={{
+                color: B,
+                fontWeight: 700,
+                textDecoration: "underline",
+                textUnderlineOffset: 3,
+              }}
+            >
+              {POLICY_LINKS[key].label}
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   );

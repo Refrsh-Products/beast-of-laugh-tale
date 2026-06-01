@@ -1,5 +1,9 @@
-from ..models import NotebookFile
+import logging
 from pathlib import Path
+
+from ..models import NotebookFile
+
+logger = logging.getLogger(__name__)
 
 class NotebookFileService:
     @staticmethod
@@ -17,5 +21,5 @@ class NotebookFileService:
             notebook_file.save(update_fields=["file_url"])
             return notebook_file
         except Exception as err:
-            print("[Notebook File Service] Error: ", str(err))
+            logger.exception("Error uploading a file to the notebook: error=%s ", str(err))
             raise

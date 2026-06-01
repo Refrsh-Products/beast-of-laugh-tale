@@ -588,27 +588,42 @@ export default function LandingPage() {
           FRESHR
         </span>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <span
-            id="footer-support"
-            onClick={() => navigate("/support")}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.textDecoration = "underline")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.textDecoration = "none")
-            }
-            style={{
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              color: "#000000",
-              cursor: "pointer",
-              textUnderlineOffset: 3,
-            }}
-          >
-            SUPPORT
-          </span>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 24,
+          }}
+        >
+          {[
+            { id: "footer-support", label: "SUPPORT", path: "/support" },
+            { id: "footer-privacy", label: "PRIVACY", path: "/privacy-policy" },
+            { id: "footer-terms", label: "TERMS", path: "/terms-of-service" },
+            { id: "footer-refund", label: "REFUND", path: "/refund-policy" },
+          ].map((link) => (
+            <span
+              key={link.id}
+              id={link.id}
+              onClick={() => navigate(link.path)}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.textDecoration = "underline")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.textDecoration = "none")
+              }
+              style={{
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                color: "#000000",
+                cursor: "pointer",
+                textUnderlineOffset: 3,
+              }}
+            >
+              {link.label}
+            </span>
+          ))}
 
           <span
             id="footer-copyright"

@@ -336,6 +336,32 @@ export default function PricingSection() {
         >
           * Pricing in Bangladeshi Taka (BDT). Features subject to change before launch.
         </p>
+        <p
+          style={{
+            fontFamily: "'IBM Plex Mono', monospace",
+            fontSize: "0.75rem",
+            color: "#FFFFFF",
+            marginTop: 8,
+            textAlign: "center",
+          }}
+        >
+          <span
+            onClick={() => navigate("/refund-policy")}
+            onMouseEnter={(e) =>
+              (e.currentTarget.style.textDecoration = "underline")
+            }
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.textDecoration = "none")
+            }
+            style={{
+              cursor: "pointer",
+              fontWeight: 700,
+              textUnderlineOffset: 3,
+            }}
+          >
+            Read our Refund Policy →
+          </span>
+        </p>
       </div>
     </section>
   );
