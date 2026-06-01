@@ -141,9 +141,9 @@ export default function LandingPage() {
                 marginBottom: 40,
               }}
             >
-              Upload your study materials into notebooks. FRESHR indexes
-              everything with AI — then lets you query your own knowledge base
-              like a tutor who's read every page you have.
+              Upload your study materials into notebooks. FRESHR reads and
+              learns everything you add, then answers your questions like a
+              tutor who has read every page you have.
             </p>
           </div>
 
@@ -347,10 +347,10 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {(
             [
-              ["10×", "Faster recall"],
+              ["1", "Place for everything"],
               ["∞", "Documents"],
-              ["RAG", "Powered"],
-              ["100%", "Your data"],
+              ["0", "Lost notes"],
+              ["100%", "Private and secure"],
             ] as [string, string][]
           ).map(([n, l]) => (
             <div key={l} style={{ minWidth: 0 }}>
@@ -490,7 +490,9 @@ export default function LandingPage() {
 
           <div
             id="how-it-works-grid"
-            className={isPhone ? undefined : "grid grid-cols-1 md:grid-cols-3 gap-5"}
+            className={
+              isPhone ? undefined : "grid grid-cols-1 md:grid-cols-3 gap-5"
+            }
             style={
               isPhone
                 ? {
