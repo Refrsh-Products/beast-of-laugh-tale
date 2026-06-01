@@ -17,6 +17,7 @@ import NotFoundPage from "./page/NotFoundPage";
 import PaymentSuccessPage from "./page/PaymentSuccessPage";
 import PaymentCancelPage from "./page/PaymentCancelPage";
 import SupportPage from "./page/SupportPage";
+import PolicyPage from "./page/PolicyPage";
 
 export default function App() {
 
@@ -45,6 +46,9 @@ export default function App() {
           <Route path="/payment/cancel" element={<PaymentCancelPage />} />
           <Route path="/support" element={<SupportPage />} />
           <Route path="/notebook/:id" element={<NotebookPage />} />
+          <Route path="/privacy-policy" element={<PolicyPage policy="privacy" />} />
+          <Route path="/terms-of-service" element={<PolicyPage policy="terms" />} />
+          <Route path="/refund-policy" element={<PolicyPage policy="refund" />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>

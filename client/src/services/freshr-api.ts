@@ -74,6 +74,12 @@ export const ChatServiceApiEndpoints = {
     `${ChatServiceApiBase}/${chat_id}/messages/stream/`,
 };
 
+// Policies
+export const PolicyServiceApiBase = "/api/policies";
+export const PolicyServiceApiEndpoints = {
+  getActive: (slug: string) => `${PolicyServiceApiBase}/${slug}/`,
+};
+
 // Payments
 export const PaymentServiceApiBase = "/api/payments";
 export const PaymentServiceApiEndpoints = {

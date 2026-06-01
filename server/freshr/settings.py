@@ -80,6 +80,7 @@ INSTALLED_APPS = [
     "quiz",
     "drf_spectacular",
     "payments",
+    "policies",
 ]
 
 # Custom User Model
@@ -197,6 +198,7 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API for notebooks and notebook files",
     "VERSION": "1.0.0",
     "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": r"/api/",
 }
 
 SIMPLE_JWT = {

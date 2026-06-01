@@ -30,6 +30,7 @@ api_urlpatterns = [
     path('quizzes/', include(("quiz.urls","quiz"), namespace="quiz")),
 
     path('payments/', include(("payments.urls", "payments"), namespace="payments")),
+    path('policies/', include(("policies.urls", "policies"), namespace="policies")),
 
     # authentication endpoints
     path('auth/', include('users.urls')),

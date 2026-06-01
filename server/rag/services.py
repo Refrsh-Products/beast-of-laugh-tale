@@ -1,6 +1,7 @@
 import os
 import json
 import asyncio
+import logging
 from typing import List, Tuple
 import numpy as np
 from langchain_core.documents import Document
@@ -11,6 +12,11 @@ from anthropic import Anthropic
 from anthropic.types import TextBlockParam, ImageBlockParam, TextBlock
 from asgiref.sync import sync_to_async
 from sqlalchemy.exc import ProgrammingError
+
+
+# `tag` is emitted as a top-level JSON field by DozzleJsonFormatter, so it can
+# be used as a Dozzle filter (e.g. tag=rag) to isolate RAG pipeline logs.
+logger = logging.LoggerAdapter(logging.getLogger(__name__), {"tag": "rag"})
 
 
 _vectorstore_table_initialized = False
@@ -54,7 +60,7 @@ async def ingest_note_to_rag(note_id):
     file_path = note.file.path
 
     # Step 1: Partition
-    print(f"Partitioning document: {file_path}")
+    logger.info("Partitioning document: %s", file_path)
 
     IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "tiff", "bmp"}
 
@@ -71,10 +77,10 @@ async def ingest_note_to_rag(note_id):
     else:
         raise ValueError(f"Unsupported file type: {note.file_type}")
 
-    print(f"Extracted {len(elements)} elements")
+    logger.info("Extracted %d elements", len(elements))
 
     # Step 2: Chunk
-    print(f"Creating smart chunks...")
+    logger.info("Creating smart chunks...")
 
     chunks = chunk_by_title(
         elements,
@@ -83,38 +89,46 @@ async def ingest_note_to_rag(note_id):
         combine_text_under_n_chars=500
     )
 
-    print(f"Created {len(chunks)} chunks")
+    logger.info("Created %d chunks", len(chunks))
 
     # Step 3: AI Summarisation
-    print("Processing chunks with AI Summaries...")
+    logger.info("Processing chunks with AI Summaries...")
 
     langchain_documents = []
     total_chunks = len(chunks)
 
     for i, chunk in enumerate(chunks):
         current_chunk = i + 1
-        print(f"   Processing chunk {current_chunk}/{total_chunks}")
+        logger.debug("Processing chunk %d/%d", current_chunk, total_chunks)
 
         content_data = separate_content_types(chunk)
 
-        print(f"     Types found: {content_data['types']}")
-        print(f"     Tables: {len(content_data['tables'])}, Images: {len(content_data['images'])}")
+        logger.debug(
+            "Chunk %d types=%s tables=%d images=%d",
+            current_chunk,
+            content_data['types'],
+            len(content_data['tables']),
+            len(content_data['images']),
+        )
 
         if content_data['tables'] or content_data['images']:
-            print(f"     Creating AI summary for mixed content...")
+            logger.debug("Creating AI summary for mixed content (chunk %d)", current_chunk)
             try:
                 enhanced_content = await sync_to_async(create_ai_enhanced_summary)(
                     content_data['text'],
                     content_data['tables'],
                     content_data['images']
                 )
-                print(f"     AI summary created successfully")
-                print(f"     Enhanced content preview: {enhanced_content[:200]}...")
-            except Exception as e:
-                print(f"     AI summary failed: {e}")
+                logger.debug(
+                    "AI summary created (chunk %d) preview=%s",
+                    current_chunk,
+                    enhanced_content[:200],
+                )
+            except Exception:
+                logger.exception("AI summary failed for chunk %d", current_chunk)
                 enhanced_content = content_data['text']
         else:
-            print(f"     Using raw text (no tables/images)")
+            logger.debug("Using raw text for chunk %d (no tables/images)", current_chunk)
             enhanced_content = content_data['text']
 
         doc = Document(
@@ -129,7 +143,7 @@ async def ingest_note_to_rag(note_id):
 
         langchain_documents.append(doc)
 
-    print(f"Processed {len(langchain_documents)} chunks")
+    logger.info("Processed %d chunks", len(langchain_documents))
     summarised_chunks = langchain_documents
 
     for doc in summarised_chunks:
@@ -138,7 +152,7 @@ async def ingest_note_to_rag(note_id):
         doc.metadata["notebook_file_id"] = str(note.pk)
 
     # Step 4: Topic Discovery + Chunk Embedding
-    print("Discovering topics and embedding chunks...")
+    logger.info("Discovering topics and embedding chunks...")
 
     embed_model = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
     chunk_texts = [doc.page_content for doc in summarised_chunks]
@@ -150,12 +164,12 @@ async def ingest_note_to_rag(note_id):
         )
         if topics:
             assign_topics_by_similarity(summarised_chunks, chunk_embeddings, topic_embeddings, topics)
-            print(f"Assigned topics to {len(summarised_chunks)} chunks")
-    except Exception as e:
-        print(f"Topic discovery failed (non-fatal): {e}")
+            logger.info("Assigned topics to %d chunks", len(summarised_chunks))
+    except Exception:
+        logger.exception("Topic discovery failed (non-fatal)")
 
     # Step 5: Vector Store — use pre-computed embeddings to avoid re-embedding
-    print("Upserting to vector store...")
+    logger.info("Upserting to vector store...")
     vector_store = await get_vector_store()
     await vector_store.aadd_embeddings(
         texts=chunk_texts,
@@ -191,7 +205,7 @@ async def discover_file_topics(
     if not raw_topics:
         return [], []
 
-    print(f"  LLM discovered topics: {raw_topics}")
+    logger.info("LLM discovered topics: %s", raw_topics)
 
     embed_model = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
     topic_embeddings_raw = await embed_model.aembed_documents(raw_topics)
@@ -205,7 +219,7 @@ async def discover_file_topics(
         matched_topic = await _find_similar_topic(notebook_id, topic_emb, threshold=0.9)
 
         if matched_topic:
-            print(f"  Reusing existing topic: '{matched_topic.name}'")
+            logger.debug("Reusing existing topic: '%s'", matched_topic.name)
             result_topics.append(matched_topic)
             # Fetch the stored embedding for this topic for later cosine comparison
             result_embeddings.append(matched_topic.embedding.tolist())
@@ -215,7 +229,7 @@ async def discover_file_topics(
                 name=topic_name,
                 embedding=topic_emb,
             )
-            print(f"  Created new topic: '{topic_name}'")
+            logger.info("Created new topic: '%s'", topic_name)
             result_topics.append(new_topic)
             result_embeddings.append(topic_emb)
 
@@ -280,21 +294,50 @@ def assign_topics_by_similarity(
 
 
 async def delete_file_vectors(notebook_file_id: str):
-    """Delete all vector chunks belonging to a single NotebookFile."""
+    """Delete a file's chunks plus any topics this file orphans.
+
+    Topics are notebook-scoped and reused across files in the same notebook
+    (see `_find_similar_topic`), so we only delete a topic if no remaining
+    chunk references it. Orphan-check must run BEFORE the chunk delete,
+    otherwise every referenced topic looks orphaned.
+    """
+    from sqlalchemy import text
+    from sqlalchemy.ext.asyncio import create_async_engine
+
     connection_string = os.getenv("CONNECTION_STRING")
     if not connection_string:
         raise ValueError("CONNECTION_STRING environment variable is not set")
 
-    from sqlalchemy.ext.asyncio import create_async_engine
     engine = create_async_engine(connection_string)
-    async with engine.begin() as conn:
-        await conn.execute(
-            __import__("sqlalchemy").text(
-                "DELETE FROM rag_embeddings WHERE langchain_metadata->>'notebook_file_id' = :file_id"
-            ),
-            {"file_id": str(notebook_file_id)},
-        )
-    await engine.dispose()
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(
+                text(
+                    """
+                    DELETE FROM rag_notebooktopic
+                    WHERE id::text IN (
+                        SELECT DISTINCT langchain_metadata->>'topic_id'
+                        FROM rag_embeddings
+                        WHERE langchain_metadata->>'notebook_file_id' = :file_id
+                          AND langchain_metadata->>'topic_id' IS NOT NULL
+                    )
+                    AND NOT EXISTS (
+                        SELECT 1 FROM rag_embeddings
+                        WHERE langchain_metadata->>'notebook_file_id' != :file_id
+                          AND langchain_metadata->>'topic_id' = rag_notebooktopic.id::text
+                    )
+                    """
+                ),
+                {"file_id": str(notebook_file_id)},
+            )
+            await conn.execute(
+                text(
+                    "DELETE FROM rag_embeddings WHERE langchain_metadata->>'notebook_file_id' = :file_id"
+                ),
+                {"file_id": str(notebook_file_id)},
+            )
+    finally:
+        await engine.dispose()
 
 
 async def delete_notebook_vectors(notebook_id: str):
@@ -343,15 +386,18 @@ async def query_notebook_rag_by_topic(notebook_id: str, user_id: str, topic_name
 
     # Graceful fallback for old chunks that pre-date topic tagging
     if not results:
-        print(f"  No topic-filtered results for topic_id={topic_id}, falling back to notebook-level retrieval")
+        logger.info(
+            "No topic-filtered results for topic_id=%s, falling back to notebook-level retrieval",
+            topic_id,
+        )
         fallback_filter = {"notebook_id": str(notebook_id), "user_id": str(user_id)}
-        print(f"  Fallback filter: {fallback_filter}")
+        logger.debug("Fallback filter: %s", fallback_filter)
         results = await vector_store.asimilarity_search(
             topic_name,
             k=k,
             filter=fallback_filter,
         )
-        print(f"  Fallback results count: {len(results)}")
+        logger.info("Fallback results count: %d", len(results))
 
     return results
 
@@ -441,8 +487,8 @@ def create_ai_enhanced_summary(text: str, tables: List[str], images: List[str]) 
             raise ValueError("Claude returned a non-text response")
         return block.text
 
-    except Exception as e:
-        print(f" AI summary failed: {e}")
+    except Exception:
+        logger.exception("AI summary failed")
         summary = f"{text[:300]}..."
         if tables:
             summary += f" [Contains {len(tables)} table(s)]"
@@ -496,6 +542,6 @@ JSON array:"""
         if isinstance(topics, list):
             return [str(t).strip() for t in topics if t][:5]
         return []
-    except Exception as e:
-        print(f"  Topic generation failed: {e}")
+    except Exception:
+        logger.exception("Topic generation failed")
         return []

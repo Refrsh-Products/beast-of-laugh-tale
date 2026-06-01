@@ -101,6 +101,31 @@ export default function PaymentSuccessPage() {
         <Button variant="primary" fullWidth onClick={() => navigate("/dashboard")}>
           GO TO DASHBOARD
         </Button>
+
+        <p
+          style={{
+            marginTop: 18,
+            fontSize: "0.7rem",
+            color: "#555",
+            lineHeight: 1.6,
+            textAlign: "center",
+          }}
+        >
+          Questions about a charge? See our{" "}
+          <span
+            onClick={() => navigate("/refund-policy")}
+            style={{
+              color: B,
+              fontWeight: 700,
+              textDecoration: "underline",
+              textUnderlineOffset: 3,
+              cursor: "pointer",
+            }}
+          >
+            Refund Policy
+          </span>
+          .
+        </p>
       </div>
     </div>
   );
