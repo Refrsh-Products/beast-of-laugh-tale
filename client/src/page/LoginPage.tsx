@@ -8,10 +8,16 @@ import GoogleAuthBtn from "../components/google-auth/GoogleAuthBtn";
 import FreshrLogo from "../components/logo/FreshrLogo";
 import { BLACK as B, WHITE as W } from "../constants/theme";
 import { inputStyle, labelStyle, inputHandlers } from "../styles/form";
+import { useMediaQuery } from "../hooks/useMediaQuery";
+import { BP_PHONE } from "../constants/breakpoints";
+
+const G = "#84e487";
+const showGoogleAuth = import.meta.env.VITE_USE_MOCK !== "true";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const authService = useAuthService();
+  const isPhone = useMediaQuery(BP_PHONE);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -23,7 +29,6 @@ export default function LoginPage() {
     "idle" | "sending" | "sent" | "rate-limited" | "error"
   >("idle");
   const [isLoading, setIsLoading] = useState(false);
-
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -39,7 +44,6 @@ export default function LoginPage() {
     try {
       const user = await authService.login(email, password);
       console.log("[LoginPage] Logged in user:", user);
-
       navigate("/dashboard");
     } catch (err) {
       if (err instanceof NeedsVerificationError) {
@@ -69,29 +73,64 @@ export default function LoginPage() {
     <div
       style={{
         display: "flex",
+        flexDirection: isPhone ? "column" : "row",
         minHeight: "100dvh",
         fontFamily: "'IBM Plex Mono', monospace",
       }}
     >
-      {/* ── LEFT HALF (form) ── */}
+      {/* ── Mobile branded header ── */}
+      {isPhone && (
+        <div
+          style={{
+            background: B,
+            padding: "22px 24px 18px",
+            borderBottom: `3px solid ${B}`,
+          }}
+        >
+          <div
+            onClick={() => navigate("/")}
+            style={{
+              fontFamily: "'Syne', sans-serif",
+              fontWeight: 800,
+              fontSize: "1.4rem",
+              letterSpacing: "-0.02em",
+              color: W,
+              cursor: "pointer",
+              marginBottom: 8,
+            }}
+          >
+            FRESHR
+          </div>
+          <div
+            style={{
+              color: G,
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+            }}
+          >
+            ◆ AI-powered learning platform
+          </div>
+        </div>
+      )}
+
+      {/* ── Form panel ── */}
       <div
         style={{
-          flex: "1 1 100%",
+          flex: isPhone ? undefined : "1 1 100%",
           background: W,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
+          justifyContent: isPhone ? "flex-start" : "center",
           alignItems: "center",
-          padding: "48px 24px",
+          padding: isPhone ? "36px 24px 52px" : "48px 24px",
           position: "relative",
           boxSizing: "border-box",
         }}
-        className="login-left"
+        className={isPhone ? undefined : "login-left"}
       >
-        {/* Logo */}
-        <FreshrLogo color="#000000" />
+        {!isPhone && <FreshrLogo color="#000000" />}
 
-        {/* Form container */}
         <div style={{ width: "100%", maxWidth: 420 }}>
           <h1
             style={{
@@ -108,33 +147,33 @@ export default function LoginPage() {
             back
           </h1>
 
-          {/* Google button */}
-          <GoogleAuthBtn />
+          {showGoogleAuth && (
+            <>
+              <GoogleAuthBtn />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  marginBottom: 24,
+                }}
+              >
+                <div style={{ flex: 1, height: 2, background: B }} />
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    color: "#000000",
+                  }}
+                >
+                  or
+                </span>
+                <div style={{ flex: 1, height: 2, background: B }} />
+              </div>
+            </>
+          )}
 
-          {/* Divider */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              marginBottom: 24,
-            }}
-          >
-            <div style={{ flex: 1, height: 2, background: B }} />
-            <span
-              style={{
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                color: "#000000",
-              }}
-            >
-              or
-            </span>
-            <div style={{ flex: 1, height: 2, background: B }} />
-          </div>
-
-          {/* Error message */}
           {error && (
             <p
               style={{
@@ -148,7 +187,6 @@ export default function LoginPage() {
             </p>
           )}
 
-          {/* Needs-verification banner */}
           {needsVerificationFor && (
             <div
               style={{
@@ -200,7 +238,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Fields */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -315,7 +352,6 @@ export default function LoginPage() {
             </p>
           </form>
 
-          {/* Footer */}
           <p
             style={{
               marginTop: 28,
@@ -362,24 +398,27 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── RIGHT HALF (black) ── */}
-      <div
-        style={{
-          flex: "0 0 50%",
-          boxSizing: "border-box",
-          background: B,
-          display: "none",
-          position: "relative",
-        }}
-        className="login-right"
-      ></div>
-
-      <style>{`
-        @media (min-width: 768px) {
-          .login-right { display: block !important; }
-          .login-left { flex: 0 0 50% !important; padding: 48px 32px !important; }
-        }
-      `}</style>
+      {/* ── Desktop right black panel ── */}
+      {!isPhone && (
+        <>
+          <div
+            style={{
+              flex: "0 0 50%",
+              boxSizing: "border-box",
+              background: B,
+              display: "none",
+              position: "relative",
+            }}
+            className="login-right"
+          />
+          <style>{`
+            @media (min-width: 768px) {
+              .login-right { display: block !important; }
+              .login-left { flex: 0 0 50% !important; padding: 48px 32px !important; }
+            }
+          `}</style>
+        </>
+      )}
     </div>
   );
 }

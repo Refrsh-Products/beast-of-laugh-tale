@@ -7,10 +7,16 @@ import useAuthService from "../services/auth";
 import Loading from "../components/loading/Loading";
 import { BLACK as B, WHITE as W } from "../constants/theme";
 import { inputStyle, labelStyle, inputHandlers } from "../styles/form";
+import { useMediaQuery } from "../hooks/useMediaQuery";
+import { BP_PHONE } from "../constants/breakpoints";
+
+const G = "#84e487";
+const showGoogleAuth = import.meta.env.VITE_USE_MOCK !== "true";
 
 export default function SignupPage() {
   const navigate = useNavigate();
   const authService = useAuthService();
+  const isPhone = useMediaQuery(BP_PHONE);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -54,67 +60,85 @@ export default function SignupPage() {
     }
   };
 
-
   if (isLoading) return <Loading />;
 
   return (
     <div
       style={{
         display: "flex",
+        flexDirection: isPhone ? "column" : "row",
         minHeight: "100dvh",
         fontFamily: "'IBM Plex Mono', monospace",
       }}
     >
-      {/* ── LEFT HALF ── */}
-      <div
-        style={{
-          flex: "0 0 50%",
-          boxSizing: "border-box",
-          background: B,
-          display: "none",
-          position: "relative",
-          borderRight: `3px solid ${B}`,
-        }}
-        className="signup-left"
-      >
-        {/* Logo */}
-        <FreshrLogo />
-      </div>
+      {/* ── Mobile branded header ── */}
+      {isPhone && (
+        <div
+          style={{
+            background: B,
+            padding: "22px 24px 18px",
+            borderBottom: `3px solid ${B}`,
+          }}
+        >
+          <div
+            onClick={() => navigate("/")}
+            style={{
+              fontFamily: "'Syne', sans-serif",
+              fontWeight: 800,
+              fontSize: "1.4rem",
+              letterSpacing: "-0.02em",
+              color: W,
+              cursor: "pointer",
+              marginBottom: 8,
+            }}
+          >
+            FRESHR
+          </div>
+          <div
+            style={{
+              color: G,
+              fontSize: "0.7rem",
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+            }}
+          >
+            ◆ AI-powered learning platform
+          </div>
+        </div>
+      )}
 
-      {/* ── RIGHT HALF ── */}
+      {/* ── Desktop left black panel ── */}
+      {!isPhone && (
+        <div
+          style={{
+            flex: "0 0 50%",
+            boxSizing: "border-box",
+            background: B,
+            display: "none",
+            position: "relative",
+            borderRight: `3px solid ${B}`,
+          }}
+          className="signup-left"
+        >
+          <FreshrLogo />
+        </div>
+      )}
+
+      {/* ── Form panel ── */}
       <div
         style={{
-          flex: "1 1 100%",
+          flex: isPhone ? undefined : "1 1 100%",
           background: W,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
+          justifyContent: isPhone ? "flex-start" : "center",
           alignItems: "center",
-          padding: "48px 24px",
+          padding: isPhone ? "36px 24px 52px" : "48px 24px",
           position: "relative",
           boxSizing: "border-box",
         }}
-        className="signup-right"
+        className={isPhone ? undefined : "signup-right"}
       >
-        {/* Mobile logo */}
-        <div
-          style={{
-            position: "absolute",
-            top: 28,
-            left: 28,
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.35rem",
-            letterSpacing: "-0.02em",
-            color: B,
-            cursor: "pointer",
-          }}
-          className="signup-mobile-logo"
-          onClick={() => navigate("/")}
-        >
-          FRESHR
-        </div>
-
         {/* Form container */}
         <div style={{ width: "100%", maxWidth: 420 }}>
           <h1
@@ -130,33 +154,33 @@ export default function SignupPage() {
             Create your account
           </h1>
 
-          {/* Google button */}
-          <GoogleAuthBtn />
+          {showGoogleAuth && (
+            <>
+              <GoogleAuthBtn />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  marginBottom: 24,
+                }}
+              >
+                <div style={{ flex: 1, height: 2, background: B }} />
+                <span
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.1em",
+                    color: "#000000",
+                  }}
+                >
+                  or
+                </span>
+                <div style={{ flex: 1, height: 2, background: B }} />
+              </div>
+            </>
+          )}
 
-          {/* Divider */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              marginBottom: 24,
-            }}
-          >
-            <div style={{ flex: 1, height: 2, background: B }} />
-            <span
-              style={{
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                color: "#000000",
-              }}
-            >
-              or
-            </span>
-            <div style={{ flex: 1, height: 2, background: B }} />
-          </div>
-
-          {/* Error message */}
           {error && (
             <p
               style={{
@@ -170,7 +194,6 @@ export default function SignupPage() {
             </p>
           )}
 
-          {/* Fields */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -265,11 +288,7 @@ export default function SignupPage() {
             </div>
 
             <div style={{ marginTop: 8 }}>
-              <Button
-                variant="green"
-                fullWidth
-                type="submit"
-              >
+              <Button variant="green" fullWidth type="submit">
                 Sign up →
               </Button>
             </div>
@@ -311,7 +330,6 @@ export default function SignupPage() {
             </p>
           </form>
 
-          {/* Footer */}
           <p
             style={{
               marginTop: 28,
@@ -358,13 +376,15 @@ export default function SignupPage() {
         </div>
       </div>
 
-      <style>{`
-        @media (min-width: 768px) {
-          .signup-left { display: block !important; }
-          .signup-right { flex: 0 0 50% !important; padding: 48px 32px !important; }
-          .signup-mobile-logo { display: none !important; }
-        }
-      `}</style>
+      {/* ── Desktop CSS ── */}
+      {!isPhone && (
+        <style>{`
+          @media (min-width: 768px) {
+            .signup-left { display: block !important; }
+            .signup-right { flex: 0 0 50% !important; padding: 48px 32px !important; }
+          }
+        `}</style>
+      )}
     </div>
   );
 }
