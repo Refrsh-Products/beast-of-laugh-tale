@@ -147,9 +147,10 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Product visual */}
+          {/* Product visual — hidden on mobile, layout collapses to copy-only */}
           <div
             id="hero-card"
+            className="hidden lg:block"
             style={{
               ...fadeIn(0.2),
               position: "relative",

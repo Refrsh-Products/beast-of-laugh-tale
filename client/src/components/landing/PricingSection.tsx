@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { GREEN as G, BLACK as B, WHITE as W } from "../../constants/theme";
 import LineWaves from "./LineWaves";
+import { useMediaQuery } from "../../hooks/useMediaQuery";
+import { BP_PHONE } from "../../constants/breakpoints";
 
 const PLANS = [
   {
@@ -49,6 +51,7 @@ const PLANS = [
 
 export default function PricingSection() {
   const navigate = useNavigate();
+  const isPhone = useMediaQuery(BP_PHONE);
 
   return (
     <section
@@ -61,20 +64,31 @@ export default function PricingSection() {
         overflow: "hidden",
       }}
     >
-      {/* Line Waves background */}
+      {/* Background decoration — WebGL on desktop, CSS fallback on mobile */}
       <div style={{ position: "absolute", inset: 0, zIndex: 0, opacity: 0.4 }}>
-        <LineWaves
-          color1="#84e487"
-          color2="#84e487"
-          color3="#84e487"
-          brightness={0.28}
-          speed={0.3}
-          warpIntensity={1}
-          rotation={-45}
-          edgeFadeWidth={0}
-          innerLineCount={32}
-          outerLineCount={36}
-        />
+        {isPhone ? (
+          <div style={{
+            width: "100%",
+            height: "100%",
+            backgroundImage: [
+              "repeating-linear-gradient(-55deg, transparent 0px, transparent 18px, rgba(132,228,135,0.3) 18px, rgba(132,228,135,0.3) 19px)",
+              "repeating-linear-gradient(-55deg, transparent 0px, transparent 37px, rgba(132,228,135,0.15) 37px, rgba(132,228,135,0.15) 38px)",
+            ].join(", "),
+          }} />
+        ) : (
+          <LineWaves
+            color1="#84e487"
+            color2="#84e487"
+            color3="#84e487"
+            brightness={0.28}
+            speed={0.3}
+            warpIntensity={1}
+            rotation={-45}
+            edgeFadeWidth={0}
+            innerLineCount={32}
+            outerLineCount={36}
+          />
+        )}
       </div>
       {/* Header */}
       <div style={{ padding: "0 clamp(16px, 5vw, 48px)", maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
