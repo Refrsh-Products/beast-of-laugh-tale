@@ -61,14 +61,14 @@ export default function LandingPage() {
             onClick={() => navigate("/signup")}
             style={{ cursor: "pointer" }}
           >
-            <Button variant="green">Sign up</Button>
+            <Button variant="green" small={isPhone}>Sign up</Button>
           </span>
           <span
             id="nav-log-in"
             onClick={() => navigate("/login")}
             style={{ cursor: "pointer" }}
           >
-            <Button variant="default">Log in</Button>
+            <Button variant="default" small={isPhone}>Log in</Button>
           </span>
         </div>
       </nav>

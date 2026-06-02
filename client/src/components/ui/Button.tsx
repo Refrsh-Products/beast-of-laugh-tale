@@ -17,6 +17,7 @@ const CONFIG: Record<Variant, { bg: string; color: string; shadowColor: string; 
 interface ButtonProps {
   variant?: Variant;
   large?: boolean;
+  small?: boolean;
   fullWidth?: boolean;
   type?: "button" | "submit";
   onClick?: () => void;
@@ -27,6 +28,7 @@ interface ButtonProps {
 export default function Button({
   variant = "default",
   large = false,
+  small = false,
   fullWidth = false,
   type = "button",
   onClick,
@@ -65,9 +67,9 @@ export default function Button({
         border: `2px solid ${disabled ? "#ccc" : B}`,
         boxShadow: disabled ? "none" : shadow,
         transform: disabled ? "none" : transform,
-        padding: large ? "16px 36px" : "11px 22px",
+        padding: large ? "16px 36px" : small ? "7px 14px" : "11px 22px",
         fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: large ? "0.85rem" : "0.75rem",
+        fontSize: large ? "0.85rem" : small ? "0.7rem" : "0.75rem",
         fontWeight,
         letterSpacing: "0.08em",
         cursor: disabled ? "not-allowed" : "pointer",
