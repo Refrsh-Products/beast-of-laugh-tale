@@ -55,21 +55,51 @@ export default function LandingPage() {
           FRESHR
         </span>
 
-        <div id="nav-actions" className="flex items-center gap-3">
-          <span
-            id="nav-cta"
-            onClick={() => navigate("/signup")}
-            style={{ cursor: "pointer" }}
-          >
-            <Button variant="green" small={isPhone}>Sign up</Button>
-          </span>
-          <span
-            id="nav-log-in"
-            onClick={() => navigate("/login")}
-            style={{ cursor: "pointer" }}
-          >
-            <Button variant="default" small={isPhone}>Log in</Button>
-          </span>
+        <div id="nav-actions" className="flex items-center gap-4">
+          {isPhone ? (
+            <>
+              <span
+                id="nav-log-in"
+                onClick={() => navigate("/login")}
+                style={{
+                  cursor: "pointer",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.06em",
+                  color: B,
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
+              >
+                Log in
+              </span>
+              <span
+                id="nav-cta"
+                onClick={() => navigate("/signup")}
+                style={{ cursor: "pointer" }}
+              >
+                <Button variant="green" small>Sign up</Button>
+              </span>
+            </>
+          ) : (
+            <>
+              <span
+                id="nav-cta"
+                onClick={() => navigate("/signup")}
+                style={{ cursor: "pointer" }}
+              >
+                <Button variant="green">Sign up</Button>
+              </span>
+              <span
+                id="nav-log-in"
+                onClick={() => navigate("/login")}
+                style={{ cursor: "pointer" }}
+              >
+                <Button variant="default">Log in</Button>
+              </span>
+            </>
+          )}
         </div>
       </nav>
 
