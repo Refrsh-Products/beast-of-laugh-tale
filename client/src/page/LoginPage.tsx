@@ -352,49 +352,45 @@ export default function LoginPage() {
             </p>
           </form>
 
-          <p
-            style={{
-              marginTop: 28,
-              fontSize: "0.75rem",
-              color: "#000000",
-              textAlign: "center",
-            }}
-          >
-            Don't have an account?{" "}
-            <Link
-              to="/signup"
+          <div style={{ marginTop: 28 }}>
+            <div style={{ height: 1, background: "#e0e0e0", marginBottom: 20 }} />
+            <p style={{ fontSize: "0.78rem", color: B, textAlign: "center", margin: 0 }}>
+              Don't have an account?{" "}
+              <Link
+                to="/signup"
+                style={{
+                  color: B,
+                  fontWeight: 700,
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
+              >
+                Sign up
+              </Link>
+            </p>
+            <p
               style={{
-                color: B,
-                fontWeight: 700,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
+                marginTop: 16,
+                fontSize: "0.68rem",
+                color: "#999",
+                textAlign: "center",
+                margin: "16px 0 0",
               }}
             >
-              Sign up
-            </Link>
-          </p>
-
-          <p
-            style={{
-              marginTop: 10,
-              fontSize: "0.72rem",
-              color: "#555",
-              textAlign: "center",
-            }}
-          >
-            Need help?{" "}
-            <Link
-              to="/support"
-              style={{
-                color: B,
-                fontWeight: 700,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
-            >
-              Contact support
-            </Link>
-          </p>
+              Need help?{" "}
+              <Link
+                to="/support"
+                style={{
+                  color: "#666",
+                  fontWeight: 700,
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
+              >
+                Contact support
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
 
