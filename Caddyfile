@@ -1,9 +1,19 @@
 staging.freshr.cc {
-	reverse_proxy frontend-staging:80
+	reverse_proxy frontend-staging:80 {
+		transport http {
+            dial_timeout 30s
+            response_header_timeout 300s
+        }
+	}
 }
 
 freshr.cc, www.freshr.cc {
-	reverse_proxy frontend-prod:80
+	reverse_proxy frontend-prod:80 {
+		transport http {
+            dial_timeout 30s
+            response_header_timeout 300s
+        }
+	}
 }
 
 # Dozzle log viewer. Auth is handled by Dozzle itself (DOZZLE_AUTH_PROVIDER=simple,
