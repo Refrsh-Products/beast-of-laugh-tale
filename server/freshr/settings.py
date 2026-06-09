@@ -234,10 +234,9 @@ CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:63
 CELERY_RESULT_EXTENDED = True
 CELERY_TIMEZONE = "Asia/Dhaka"
 
-# Recycle prefork workers to keep RAG/torch/unstructured imports from accumulating.
-# Without this a single worker grows to ~1.4GB on a 4GB host and triggers OOM/swap thrash.
-CELERY_WORKER_MAX_TASKS_PER_CHILD = 10
-CELERY_WORKER_MAX_MEMORY_PER_CHILD = 400_000  # kilobytes (~400MB RSS)
+# Recycle prefork workers periodically to guard against slow memory growth over time.
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 50
+CELERY_WORKER_MAX_MEMORY_PER_CHILD = 300_000  # kilobytes (~300MB RSS)
 
 CELERY_BEAT_SCHEDULE = {"expire-subscriptions": {"task": "accounts.tasks.expire_subscriptions", "schedule": crontab(minute=0)}}
 

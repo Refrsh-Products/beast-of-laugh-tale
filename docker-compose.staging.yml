@@ -69,7 +69,7 @@ services:
     image: ghcr.io/${GHCR_ORG}/freshr-server:${IMAGE_TAG:-latest}
     restart: unless-stopped
     command: celery -A freshr worker -l info --concurrency 1
-    mem_limit: 768m
+    mem_limit: 512m
     volumes:
       - media:/app/media
     env_file:

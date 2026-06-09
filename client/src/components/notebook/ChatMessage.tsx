@@ -1,4 +1,4 @@
-import ReactMarkdown from "react-markdown";
+import MathMarkdown from "../common/MathMarkdown";
 
 const G = "#84e487";
 const B = "#000000";
@@ -36,33 +36,33 @@ export default function ChatMessage({ message }: { message: Message }) {
         {isUser ? (
           message.text
         ) : (
-          <ReactMarkdown
+          <MathMarkdown
             components={{
-              p: ({ children }) => (
+              p: ({ children }: { children?: React.ReactNode }) => (
                 <p style={{ margin: "0 0 0.5em", lineHeight: 1.6 }}>{children}</p>
               ),
-              strong: ({ children }) => (
+              strong: ({ children }: { children?: React.ReactNode }) => (
                 <strong style={{ fontWeight: 700 }}>{children}</strong>
               ),
-              ul: ({ children }) => (
+              ul: ({ children }: { children?: React.ReactNode }) => (
                 <ul style={{ margin: "0.4em 0", paddingLeft: "1.4em" }}>{children}</ul>
               ),
-              ol: ({ children }) => (
+              ol: ({ children }: { children?: React.ReactNode }) => (
                 <ol style={{ margin: "0.4em 0", paddingLeft: "1.4em" }}>{children}</ol>
               ),
-              li: ({ children }) => (
+              li: ({ children }: { children?: React.ReactNode }) => (
                 <li style={{ marginBottom: "0.2em" }}>{children}</li>
               ),
-              h1: ({ children }) => (
+              h1: ({ children }: { children?: React.ReactNode }) => (
                 <h1 style={{ fontSize: "1em", fontWeight: 700, margin: "0.6em 0 0.3em" }}>{children}</h1>
               ),
-              h2: ({ children }) => (
+              h2: ({ children }: { children?: React.ReactNode }) => (
                 <h2 style={{ fontSize: "0.9em", fontWeight: 700, margin: "0.6em 0 0.3em" }}>{children}</h2>
               ),
-              h3: ({ children }) => (
+              h3: ({ children }: { children?: React.ReactNode }) => (
                 <h3 style={{ fontSize: "0.85em", fontWeight: 700, margin: "0.5em 0 0.2em" }}>{children}</h3>
               ),
-              code: ({ children, className }) => {
+              code: ({ children, className }: { children?: React.ReactNode; className?: string }) => {
                 const isBlock = className?.startsWith("language-");
                 return isBlock ? (
                   <pre
@@ -93,7 +93,7 @@ export default function ChatMessage({ message }: { message: Message }) {
             }}
           >
             {message.text}
-          </ReactMarkdown>
+          </MathMarkdown>
         )}
       </div>
     </div>
