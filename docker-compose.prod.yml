@@ -45,7 +45,7 @@ services:
     command: >
       sh -c "python manage.py collectstatic --noinput &&
              python manage.py migrate --noinput &&
-             gunicorn freshr.wsgi:application --bind 0.0.0.0:8000 --workers 1 --timeout 120"
+             gunicorn freshr.wsgi:application --workers 2 --threads 4 --timeout 120"
     mem_limit: 512m
     volumes:
       - media_prod:/app/media
@@ -70,7 +70,7 @@ services:
   celery:
     image: ghcr.io/${GHCR_ORG}/freshr-server:${IMAGE_TAG:-latest}
     restart: unless-stopped
-    command: celery -A freshr worker -l info --concurrency 1
+    command: celery -A freshr worker --pool=threads --concurrency=10 -l info
     # LlamaParse offloads PDF/image parsing to LlamaIndex's API — no local ML models.
     # Worker memory is now dominated by Python/Django/langchain baseline (~150–250MB).
     mem_limit: 512m

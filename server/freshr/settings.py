@@ -236,7 +236,6 @@ CELERY_TIMEZONE = "Asia/Dhaka"
 
 # Recycle prefork workers periodically to guard against slow memory growth over time.
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 50
-CELERY_WORKER_MAX_MEMORY_PER_CHILD = 300_000  # kilobytes (~300MB RSS)
 
 CELERY_BEAT_SCHEDULE = {"expire-subscriptions": {"task": "accounts.tasks.expire_subscriptions", "schedule": crontab(minute=0)}}
 
