@@ -9,13 +9,12 @@ from langchain_postgres import PGVectorStore, PGEngine
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from notebooks.models import NotebookFile
 from anthropic import Anthropic
-from anthropic.types import TextBlockParam, ImageBlockParam, TextBlock
+from anthropic.types import TextBlock
 from asgiref.sync import sync_to_async
 from sqlalchemy.exc import ProgrammingError
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
-# `tag` is emitted as a top-level JSON field by DozzleJsonFormatter, so it can
-# be used as a Dozzle filter (e.g. tag=rag) to isolate RAG pipeline logs.
 logger = logging.LoggerAdapter(logging.getLogger(__name__), {"tag": "rag"})
 
 
@@ -52,129 +51,90 @@ async def get_vector_store():
 
 
 async def ingest_note_to_rag(note_id):
-    from unstructured.partition.pdf import partition_pdf
-    from unstructured.partition.image import partition_image
-    from unstructured.chunking.title import chunk_by_title
-
     note = await NotebookFile.objects.select_related('notebook__user').aget(id=note_id)
     file_path = note.file.path
 
-    # Step 1: Partition
-    logger.info("Partitioning document: %s", file_path)
-
+    TEXT_EXTENSIONS = {"txt", "md"}
     IMAGE_EXTENSIONS = {"jpg", "jpeg", "png", "webp", "tiff", "bmp"}
+    LLAMAPARSE_EXTENSIONS = IMAGE_EXTENSIONS | {
+        "pdf", "docx", "doc", "pptx", "ppt", "xlsx", "xls",
+    }
 
-    if note.file_type == "pdf":
-        elements = partition_pdf(
-            filename=file_path,
-            strategy="hi_res",
-            infer_table_structure=True,
-            extract_image_block_types=["Image"],
-            extract_image_block_to_payload=True
+    # Step 1: Parse
+    logger.info("Parsing document: %s (type=%s)", file_path, note.file_type)
+
+    if note.file_type in TEXT_EXTENSIONS:
+        with open(file_path, "r", encoding="utf-8") as f:
+            raw_text = f.read()
+    elif note.file_type in LLAMAPARSE_EXTENSIONS:
+        from llama_cloud import AsyncLlamaCloud
+
+        # Choose parse tier based on whether the document contains images.
+        # Images/diagrams → agentic (10 cr); text-only → cost_effective (3 cr).
+        if note.file_type == "pdf":
+            has_images = _pdf_has_images(file_path)
+        else:
+            # Non-PDF office docs and image files: assume visual content.
+            has_images = True
+
+        tier = "agentic" if has_images else "cost_effective"
+        logger.info("Using LlamaParse tier=%s for file_type=%s", tier, note.file_type)
+
+        client = AsyncLlamaCloud(api_key=os.getenv("LLAMA_CLOUD_API_KEY"))
+        file_obj = await client.files.create(file=file_path, purpose="parse")
+
+        result = await client.parsing.parse(
+            file_id=file_obj.id,
+            tier=tier,
+            version="latest",
+            expand=["markdown_full"],
         )
-    elif note.file_type in IMAGE_EXTENSIONS:
-        elements = partition_image(filename=file_path)
+        raw_text = result.markdown_full or ""
     else:
         raise ValueError(f"Unsupported file type: {note.file_type}")
 
-    logger.info("Extracted %d elements", len(elements))
+    logger.info("Parsed document: %d chars", len(raw_text))
 
     # Step 2: Chunk
-    logger.info("Creating smart chunks...")
-
-    chunks = chunk_by_title(
-        elements,
-        max_characters=3000,
-        new_after_n_chars=2400,
-        combine_text_under_n_chars=500
+    splitter = RecursiveCharacterTextSplitter(
+        separators=["\n## ", "\n### ", "\n\n", "\n", " "],
+        chunk_size=3000,
+        chunk_overlap=200,
     )
+    chunk_texts = splitter.split_text(raw_text)
+    logger.info("Created %d chunks", len(chunk_texts))
 
-    logger.info("Created %d chunks", len(chunks))
+    langchain_documents = [Document(page_content=t) for t in chunk_texts]
 
-    # Step 3: AI Summarisation
-    logger.info("Processing chunks with AI Summaries...")
+    # Step 3: Embed chunks
+    logger.info("Embedding chunks...")
+    embed_model = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+    chunk_embeddings = await embed_model.aembed_documents(chunk_texts)
 
-    langchain_documents = []
-    total_chunks = len(chunks)
-
-    for i, chunk in enumerate(chunks):
-        current_chunk = i + 1
-        logger.debug("Processing chunk %d/%d", current_chunk, total_chunks)
-
-        content_data = separate_content_types(chunk)
-
-        logger.debug(
-            "Chunk %d types=%s tables=%d images=%d",
-            current_chunk,
-            content_data['types'],
-            len(content_data['tables']),
-            len(content_data['images']),
+    # Step 4: Topic Discovery
+    try:
+        topics, topic_embeddings = await discover_file_topics(
+            langchain_documents, str(note.notebook.pk)
         )
+        if topics:
+            assign_topics_by_similarity(langchain_documents, chunk_embeddings, topic_embeddings, topics)
+            logger.info("Assigned topics to %d chunks", len(langchain_documents))
+    except Exception:
+        logger.exception("Topic discovery failed (non-fatal)")
 
-        if content_data['tables'] or content_data['images']:
-            logger.debug("Creating AI summary for mixed content (chunk %d)", current_chunk)
-            try:
-                enhanced_content = await sync_to_async(create_ai_enhanced_summary)(
-                    content_data['text'],
-                    content_data['tables'],
-                    content_data['images']
-                )
-                logger.debug(
-                    "AI summary created (chunk %d) preview=%s",
-                    current_chunk,
-                    enhanced_content[:200],
-                )
-            except Exception:
-                logger.exception("AI summary failed for chunk %d", current_chunk)
-                enhanced_content = content_data['text']
-        else:
-            logger.debug("Using raw text for chunk %d (no tables/images)", current_chunk)
-            enhanced_content = content_data['text']
-
-        doc = Document(
-            page_content=enhanced_content,
-            metadata={
-                "original_content": json.dumps({
-                    "raw_text": content_data['text'],
-                    "tables_html": content_data['tables'],
-                })
-            }
-        )
-
-        langchain_documents.append(doc)
-
-    logger.info("Processed %d chunks", len(langchain_documents))
-    summarised_chunks = langchain_documents
-
-    for doc in summarised_chunks:
+    # Step 5: Attach metadata
+    for doc in langchain_documents:
         doc.metadata["notebook_id"] = str(note.notebook.pk)
         doc.metadata["user_id"] = str(note.notebook.user.pk)
         doc.metadata["notebook_file_id"] = str(note.pk)
 
-    # Step 4: Topic Discovery + Chunk Embedding
-    logger.info("Discovering topics and embedding chunks...")
-
-    embed_model = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
-    chunk_texts = [doc.page_content for doc in summarised_chunks]
-    chunk_embeddings = await embed_model.aembed_documents(chunk_texts)
-
-    try:
-        topics, topic_embeddings = await discover_file_topics(
-            summarised_chunks, str(note.notebook.pk)
-        )
-        if topics:
-            assign_topics_by_similarity(summarised_chunks, chunk_embeddings, topic_embeddings, topics)
-            logger.info("Assigned topics to %d chunks", len(summarised_chunks))
-    except Exception:
-        logger.exception("Topic discovery failed (non-fatal)")
-
-    # Step 5: Vector Store — use pre-computed embeddings to avoid re-embedding
+    # Step 6: Vector Store — use pre-computed embeddings to avoid re-embedding
     logger.info("Upserting to vector store...")
     vector_store = await get_vector_store()
     await vector_store.aadd_embeddings(
-        texts=chunk_texts,
+        texts=[doc.page_content for doc in langchain_documents],
         embeddings=chunk_embeddings,
-        metadatas=[doc.metadata for doc in summarised_chunks],
+        metadatas=[doc.metadata for doc in langchain_documents],
     )
 
     note.ingestion_status = NotebookFile.IngestionStatus.READY
@@ -404,97 +364,26 @@ async def query_notebook_rag_by_topic(notebook_id: str, user_id: str, topic_name
 
 #=========================== HELPER FUNCTIONS ===========================#
 
-def separate_content_types(chunk):
-    """Analyze what types of content are in a chunk"""
-    content_data = {
-        'text': chunk.text,
-        'tables': [],
-        'images': [],
-        'types': ['text']
-    }
-
-    if hasattr(chunk, 'metadata') and hasattr(chunk.metadata, 'orig_elements'):
-        for element in chunk.metadata.orig_elements:
-            element_type = type(element).__name__
-
-            if element_type == 'Table':
-                content_data['types'].append('table')
-                table_html = getattr(element.metadata, 'text_as_html', element.text)
-                content_data['tables'].append(table_html)
-
-            elif element_type == 'Image':
-                if hasattr(element, 'metadata') and hasattr(element.metadata, 'image_base64'):
-                    content_data['types'].append('image')
-                    content_data['images'].append(element.metadata.image_base64)
-
-    content_data['types'] = list(set(content_data['types']))
-    return content_data
-
-
-def create_ai_enhanced_summary(text: str, tables: List[str], images: List[str]) -> str:
-    """Create AI-enhanced summary for mixed content"""
-
-    client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-
+def _pdf_has_images(file_path: str) -> bool:
+    """Return True if any page in the PDF contains embedded image XObjects."""
+    from pypdf import PdfReader
     try:
-        prompt_text = f"""You are creating a searchable description for document content retrieval.
-
-        CONTENT TO ANALYZE:
-        TEXT CONTENT:
-        {text}
-
-        """
-
-        if tables:
-            prompt_text += "TABLES:\n"
-            for i, table in enumerate(tables):
-                prompt_text += f"Table {i+1}:\n{table}\n\n"
-
-        prompt_text += """
-        YOUR TASK:
-        Generate a comprehensive, searchable description that covers:
-
-        1. Key facts, numbers, and data points from text and tables
-        2. Main topics and concepts discussed
-        3. Questions this content could answer
-        4. Visual content analysis (charts, diagrams, patterns in images)
-        5. Alternative search terms users might use
-
-        Make it detailed and searchable - prioritize findability over brevity.
-
-        SEARCHABLE DESCRIPTION:"""
-
-        content_parts: list[TextBlockParam | ImageBlockParam] = [
-            TextBlockParam(type="text", text=prompt_text)
-        ]
-
-        for image_b64 in images:
-            content_parts.append(ImageBlockParam(
-                type="image",
-                source={"type": "base64", "media_type": "image/jpeg", "data": image_b64}
-            ))
-
-        response = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=1024,
-            system="You are creating a searchable description for document content retrieval.",
-            temperature=0,
-            messages=[{"role": "user", "content": content_parts}]
-        )
-
-        block = response.content[0]
-        if not isinstance(block, TextBlock):
-            raise ValueError("Claude returned a non-text response")
-        return block.text
-
+        reader = PdfReader(file_path)
+        for page in reader.pages:
+            resources = page.get("/Resources")
+            if resources and "/XObject" in resources:
+                xobjects = resources["/XObject"]
+                if hasattr(xobjects, "get_object"):
+                    xobjects = xobjects.get_object()
+                for obj in xobjects.values():
+                    if hasattr(obj, "get_object"):
+                        obj = obj.get_object()
+                    if obj.get("/Subtype") == "/Image":
+                        return True
     except Exception:
-        logger.exception("AI summary failed")
-        summary = f"{text[:300]}..."
-        if tables:
-            summary += f" [Contains {len(tables)} table(s)]"
-        if images:
-            summary += f" [Contains {len(images)} image(s)]"
-        return summary
+        logger.warning("Could not inspect PDF for images, assuming visual content: %s", file_path)
+        return True
+    return False
 
 
 def _generate_topics_from_summary(summary: str) -> List[str]:

@@ -4,6 +4,7 @@ import TimesUpModal from "../quiz/quiz-taking-screen/QuizTakingScreenTimesUpModa
 import UnansweredModal from "../quiz/quiz-taking-screen/QuizTakingScreenUnansweredModal";
 import ExitConfirmModal from "../quiz/quiz-taking-screen/QuizTakingScreenExitConfirmModal";
 import NavButton from "../quiz/quiz-taking-screen/QuizTakingScreenNavButton";
+import MathMarkdown from "../common/MathMarkdown";
 
 const G = "#84e487";
 const B = "#000000";
@@ -291,7 +292,7 @@ export default function QuizTakingScreen({
                 lineHeight: 1.6,
               }}
             >
-              {question.question_text}
+              <MathMarkdown>{question.question_text}</MathMarkdown>
             </p>
 
             {/* Answer options */}
@@ -341,7 +342,7 @@ export default function QuizTakingScreen({
                         lineHeight: 1.5,
                       }}
                     >
-                      {opt}
+                      <MathMarkdown>{opt}</MathMarkdown>
                     </span>
                   </div>
                 );

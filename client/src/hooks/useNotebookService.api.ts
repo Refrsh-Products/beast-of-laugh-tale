@@ -141,7 +141,7 @@ const useNotebookServiceApi = (): NotebookService => {
           NotebookServiceApiEndpoints.createFile(notebookId),
           "POST",
           formData,
-          { headers: { "Content-Type": undefined } },
+          { headers: { "Content-Type": undefined }, timeout: 120000 },
         );
 
         return response as NotebookFileCreateResponse;
