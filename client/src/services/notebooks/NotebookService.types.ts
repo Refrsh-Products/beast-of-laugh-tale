@@ -1,20 +1,6 @@
 import type { Notebook, NotebookFile } from "../../storage";
 import type { NotebookFileCreateResponse } from "./NotebookFile.types";
 import type { NotebookTopic } from "../quiz/Quiz.types";
-import type {
-  AudioTranscriptSummary,
-  AudioTranscriptDetail,
-  TranscribeKickoffResponse,
-  TranscriptionStatus,
-  NotesStatus,
-} from "../../components/notebook/AudioColumn";
-export type {
-  AudioTranscriptSummary,
-  AudioTranscriptDetail,
-  TranscribeKickoffResponse,
-  TranscriptionStatus,
-  NotesStatus,
-};
 
 export interface NotebookService {
   list(): Promise<Notebook[]>; // List of all the notebooks for the user
@@ -37,11 +23,5 @@ export interface NotebookService {
     newName: string,
   ): Promise<void>;
   listTopics(notebook_id: string): Promise<NotebookTopic[]>;
-  transcribeAudio(notebookId: string, file: File, title: string): Promise<TranscribeKickoffResponse>;
-  listAudioTranscripts(notebookId: string): Promise<AudioTranscriptSummary[]>;
-  getAudioTranscript(notebookId: string, transcriptId: string): Promise<AudioTranscriptDetail>;
-  updateAudioTranscript(notebookId: string, transcriptId: string, fields: { transcript_text?: string; title?: string }): Promise<void>;
-  generateNotesFromTranscript(notebookId: string, transcriptId: string): Promise<{ notes_status: NotesStatus }>;
-  deleteAudioTranscript(notebookId: string, transcriptId: string): Promise<void>;
   seed(): Promise<void>;
 }

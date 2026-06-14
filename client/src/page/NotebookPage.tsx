@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Navigate, useSearchParams } from "react-router-dom";
+import {
+  useParams,
+  useNavigate,
+  Navigate,
+  useSearchParams,
+} from "react-router-dom";
 import useAuthService from "../services/auth";
 import useNotebookService from "../services/notebooks";
 import useAccountService from "../services/account";
@@ -33,6 +38,7 @@ import useQuizSessions from "../hooks/quiz/useQuizSessions";
 import MobileDrawer from "../components/ui/MobileDrawer";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { BP_TABLET } from "../constants/breakpoints";
+import useTranscriptionService from "../services/transcription";
 
 const B = "#000000";
 const W = "#FFFFFF";
@@ -41,18 +47,23 @@ export default function NotebookPage() {
   const { id } = useParams<{ id: string }>();
   const authService = useAuthService();
   const notebookService = useNotebookService();
+  const transcriptionService = useTranscriptionService();
   const accountService = useAccountService();
   const chatService = useChatService();
   const navigate = useNavigate();
   const { toasts, showToast } = useToast();
-  const [audioFeatureEnabled, setAudioFeatureEnabled] = useState<boolean | null>(null);
+  const [audioFeatureEnabled, setAudioFeatureEnabled] = useState<
+    boolean | null
+  >(null);
 
   const [notebook, setNotebook] = useState<Notebook | null>(null);
   const [files, setFiles] = useState<NotebookFile[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
   const viewParam = searchParams.get("view");
   const activeView: ActiveView =
-    viewParam === "quiz" || viewParam === "presentation" || viewParam === "audio"
+    viewParam === "quiz" ||
+    viewParam === "presentation" ||
+    viewParam === "audio"
       ? viewParam
       : "chat";
   const setActiveView = (view: ActiveView) => {
@@ -86,7 +97,8 @@ export default function NotebookPage() {
 
   const notebookArchivedModal = {
     title: "Notebook is archived",
-    description: "This notebook is read-only. Go back to the dashboard and unarchive it to make changes.",
+    description:
+      "This notebook is read-only. Go back to the dashboard and unarchive it to make changes.",
   };
 
   const chatSessions = useChatSessions(
@@ -144,12 +156,15 @@ export default function NotebookPage() {
     accountService
       .getAccountUsage()
       .then((usage) => {
-        if (!cancelled) setAudioFeatureEnabled(usage.features?.audio_notes ?? false);
+        if (!cancelled)
+          setAudioFeatureEnabled(usage.features?.audio_notes ?? false);
       })
       .catch(() => {
         if (!cancelled) setAudioFeatureEnabled(false);
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -236,12 +251,14 @@ export default function NotebookPage() {
           } else if (code === "storage_quota_exceeded") {
             setUpgradeModal({
               title: "Storage limit reached",
-              description: "You've hit your storage limit on the free plan. Upgrade to Pro for more storage, larger files, and unlimited notebooks.",
+              description:
+                "You've hit your storage limit on the free plan. Upgrade to Pro for more storage, larger files, and unlimited notebooks.",
             });
           } else if (code === "file_quota_exceeded") {
             setUpgradeModal({
               title: "File limit reached",
-              description: "You've hit the file limit for this notebook on the free plan. Upgrade to Pro for more files per notebook.",
+              description:
+                "You've hit the file limit for this notebook on the free plan. Upgrade to Pro for more files per notebook.",
             });
           } else {
             showToast(errMsg, "danger");
@@ -379,14 +396,23 @@ export default function NotebookPage() {
       const POLL_TIMEOUT_MS = 10 * 60 * 1000; // 10 min — covers ~2hr lectures
       async function pollAudioTranscript(
         transcriptId: string,
-        isDone: (d: Awaited<ReturnType<typeof notebookService.getAudioTranscript>>) => boolean,
+        isDone: (
+          d: Awaited<
+            ReturnType<typeof transcriptionService.getAudioTranscript>
+          >,
+        ) => boolean,
       ) {
         const deadline = Date.now() + POLL_TIMEOUT_MS;
         while (true) {
-          const detail = await notebookService.getAudioTranscript(notebookId, transcriptId);
+          const detail = await transcriptionService.getAudioTranscript(
+            notebookId,
+            transcriptId,
+          );
           if (isDone(detail)) return detail;
           if (Date.now() > deadline) {
-            throw new Error("Still running — check back in History in a few minutes.");
+            throw new Error(
+              "Still running — check back in History in a few minutes.",
+            );
           }
           await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
         }
@@ -397,20 +423,30 @@ export default function NotebookPage() {
           notebookId={notebookId}
           onTranscribeAudio={async (file, title) => {
             const kickoff = await interceptPaidOnly(
-              notebookService.transcribeAudio(notebookId, file, title),
+              transcriptionService.transcribeAudio(notebookId, file, title),
             );
             const detail = await pollAudioTranscript(
               kickoff.transcript_id,
-              (d) => d.transcription_status === "ready" || d.transcription_status === "failed",
+              (d) =>
+                d.transcription_status === "ready" ||
+                d.transcription_status === "failed",
             );
             if (detail.transcription_status === "failed") {
-              throw new Error(detail.transcription_error || "Transcription failed.");
+              throw new Error(
+                detail.transcription_error || "Transcription failed.",
+              );
             }
-            return { transcript_id: kickoff.transcript_id, transcript: detail.transcript_text };
+            return {
+              transcript_id: kickoff.transcript_id,
+              transcript: detail.transcript_text,
+            };
           }}
           onGenerateNotes={async (transcriptId) => {
             await interceptPaidOnly(
-              notebookService.generateNotesFromTranscript(notebookId, transcriptId),
+              transcriptionService.generateNotesFromTranscript(
+                notebookId,
+                transcriptId,
+              ),
             );
             const detail = await pollAudioTranscript(
               transcriptId,
@@ -420,15 +456,34 @@ export default function NotebookPage() {
               throw new Error(detail.notes_error || "Notes generation failed.");
             }
             showToast("Notes saved to notebook", "success");
-            try { setFiles(await notebookService.listFiles(notebookId)); } catch {}
+            try {
+              setFiles(await notebookService.listFiles(notebookId));
+            } catch {}
             return detail.notes_text;
           }}
-          onUpdateTranscript={(transcriptId, fields) => interceptPaidOnly(notebookService.updateAudioTranscript(notebookId, transcriptId, fields))}
-          onListTranscripts={() => notebookService.listAudioTranscripts(notebookId)}
-          onGetTranscript={(transcriptId) => notebookService.getAudioTranscript(notebookId, transcriptId)}
-          onDeleteTranscript={(transcriptId) => notebookService.deleteAudioTranscript(notebookId, transcriptId)}
+          onUpdateTranscript={(transcriptId, fields) =>
+            interceptPaidOnly(
+              transcriptionService.updateAudioTranscript(
+                notebookId,
+                transcriptId,
+                fields,
+              ),
+            )
+          }
+          onListTranscripts={() =>
+            transcriptionService.listAudioTranscripts(notebookId)
+          }
+          onGetTranscript={(transcriptId) =>
+            transcriptionService.getAudioTranscript(notebookId, transcriptId)
+          }
+          onDeleteTranscript={(transcriptId) =>
+            transcriptionService.deleteAudioTranscript(notebookId, transcriptId)
+          }
           onNotesGenerated={() => {
-            notebookService.listFiles(notebookId).then(setFiles).catch(() => {});
+            notebookService
+              .listFiles(notebookId)
+              .then(setFiles)
+              .catch(() => {});
           }}
           // null = plan check still loading; treat as paid-optimistic (the backend
           // is the source of truth and will 403 if the user actually isn't paid).
@@ -520,7 +575,8 @@ export default function NotebookPage() {
               color: "#7a5c00",
             }}
           >
-            ARCHIVED — this notebook is read-only. Go to the dashboard to unarchive it.
+            ARCHIVED — this notebook is read-only. Go to the dashboard to
+            unarchive it.
           </span>
         </div>
       )}
@@ -563,7 +619,9 @@ export default function NotebookPage() {
             onMouseEnter={(e) =>
               (e.currentTarget.style.textDecoration = "underline")
             }
-            onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.textDecoration = "none")
+            }
             style={{
               fontSize: "0.78rem",
               fontWeight: 700,
@@ -579,7 +637,14 @@ export default function NotebookPage() {
           </span>
         )}
 
-        <div style={{ flex: 1, display: "flex", justifyContent: "center", minWidth: 0 }}>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            justifyContent: "center",
+            minWidth: 0,
+          }}
+        >
           <NotebookTitle
             title={notebook.title}
             onSave={handleNotebookTitleSave}
@@ -656,7 +721,13 @@ export default function NotebookPage() {
             width="min(320px, 90vw)"
             ariaLabel="Files panel"
           >
-            <div style={{ height: "100%", display: "flex", flexDirection: "column" }}>
+            <div
+              style={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
               {renderRightPanel()}
             </div>
           </MobileDrawer>
