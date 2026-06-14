@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from .models import Notebook
-from .models import NotebookFile
+from .models import Notebook, NotebookFile
+
 
 class NotebookFileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,6 +16,7 @@ class NotebookFileSerializer(serializers.ModelSerializer):
                 "updated_at",
                 ]
 
+
 class NotebookSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notebook
@@ -29,7 +30,6 @@ class NotebookSerializer(serializers.ModelSerializer):
             "archived_at",
             "last_activity_at",
         ]
-
 
 
 class NotebookFileInputSerializer(serializers.Serializer):

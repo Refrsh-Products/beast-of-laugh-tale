@@ -81,6 +81,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "payments",
     "policies",
+    "transcription"
 ]
 
 # Custom User Model
@@ -190,6 +191,11 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'verify_email_resend': '5/hour',
+        # Audio: rate-limit guardrails (not usage caps). Sized so a power user — a
+        # few lectures/day with regenerations — won't notice, but scripted abuse will.
+        'audio_transcribe': '30/hour',
+        'audio_generate_notes': '60/hour',
+        'audio_transcript_update': '120/hour',
     },
 }
 
@@ -216,6 +222,7 @@ FRESHR_TIER_LIMITS = {
         "max_quizzes_per_day": 5,
         "max_presentations_total": 2,
         "storage_mega_bytes": 60,
+        "audio_feature_enabled": False,
     },
     "PAID": {
         "max_notebooks": "unlimited",
@@ -224,9 +231,20 @@ FRESHR_TIER_LIMITS = {
         "max_quizzes_per_day": "unlimited",
         "max_presentations_total": "unlimited",
         "storage_mega_bytes": 2000,
+        "audio_feature_enabled": True,
     },
 }
 
+
+# Cache backend: Redis. Used by DRF's ScopedRateThrottle so throttle counters
+# are shared across gunicorn workers (LocMemCache would make each worker have
+# its own counter, multiplying the effective limit by the worker count).
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+    }
+}
 
 # Celery
 CELERY_BROKER_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")

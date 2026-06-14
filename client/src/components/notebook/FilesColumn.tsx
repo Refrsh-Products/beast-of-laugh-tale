@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import type { NotebookFile } from "../../storage";
 import FileItem from "./FileItem";
 import UploadConfirmModal from "./UploadConfirmModal";
+import { ACCEPTED_FILE_TYPES } from "../../lib/constants";
 
 const G = "#84e487";
 const B = "#000000";
@@ -384,7 +385,7 @@ export default function FilesColumn({
           ref={fileInputRef}
           type="file"
           multiple
-          accept=".pdf,.doc,.docx,.txt"
+          accept={ACCEPTED_FILE_TYPES}
           onChange={handleFileInput}
           style={{ display: "none" }}
         />

@@ -163,11 +163,7 @@ const useAuthServiceApi = (): AuthService => {
 
     requestEmailVerification: async (email) => {
       try {
-        await fetchData(
-          AuthServiceApiEndpoints.verifyEmail,
-          "POST",
-          { email },
-        );
+        await fetchData(AuthServiceApiEndpoints.verifyEmail, "POST", { email });
       } catch (err) {
         // 429 is a rate-limit from the backend (ScopedRateThrottle). Let it
         // bubble up so the UI can surface a "try again later" message.
@@ -201,12 +197,9 @@ const useAuthServiceApi = (): AuthService => {
 
     requestPasswordReset: async (email) => {
       try {
-        const resp = await fetchData(
-          AuthServiceApiEndpoints.resetPassword,
-          "POST",
-          { email: email },
-        );
-        console.log("[useAuthServiceApi] Reset Password Response: ", resp);
+        await fetchData(AuthServiceApiEndpoints.resetPassword, "POST", {
+          email: email,
+        });
       } catch (err) {
         throw err;
       }

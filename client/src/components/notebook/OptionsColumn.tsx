@@ -2,7 +2,7 @@ const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
 
-export type ActiveView = "chat" | "quiz" | "presentation";
+export type ActiveView = "chat" | "quiz" | "presentation" | "audio";
 
 interface OptionsColumnProps {
   activeView: ActiveView;
@@ -37,6 +37,20 @@ function PresentationIcon({ active }: { active: boolean }) {
       <rect x="2" y="2" width="14" height="11" rx="1" stroke={color} strokeWidth="1.6" />
       <path d="M9 13v3M6 16h6" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
       <path d="M5 6h8M5 9h5" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function AudioIcon({ active }: { active: boolean }) {
+  const color = active ? W : B;
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+      <path
+        d="M3 9h1M5 6v6M7 4v10M9 7v4M11 5v8M13 6v6M15 9h1"
+        stroke={color}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -86,6 +100,12 @@ export default function OptionsColumn({
       label: "Presentation",
       sublabel: "Generate slide decks",
       icon: <PresentationIcon active={activeView === "presentation"} />,
+    },
+    {
+      id: "audio",
+      label: "Audio Notes",
+      sublabel: "Transcribe lectures to notes",
+      icon: <AudioIcon active={activeView === "audio"} />,
     },
   ];
 

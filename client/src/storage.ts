@@ -33,6 +33,9 @@ export interface AccountUseage {
     used: number;
     limit: number;
   };
+  features?: {
+    audio_notes?: boolean;
+  };
 }
 
 export interface StoredAccount {

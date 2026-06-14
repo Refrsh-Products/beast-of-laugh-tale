@@ -57,6 +57,23 @@ export const NotebookServiceApiEndpoints = {
     `${NotebookServiceApiBase}/${notebook_id}/unarchive`,
 };
 
+// Transcriptions
+export const TranscriptionServiceApiBase = "/api/transcription";
+export const TranscriptionServiceEndpoints = {
+  transcribeAudio: (notebook_id: string) =>
+    `${TranscriptionServiceApiBase}/${notebook_id}/audio/transcribe`,
+  listAudioTranscripts: (notebook_id: string) =>
+    `${TranscriptionServiceApiBase}/${notebook_id}/audio/transcripts`,
+  getAudioTranscript: (notebook_id: string, transcript_id: string) =>
+    `${TranscriptionServiceApiBase}/${notebook_id}/audio/transcripts/${transcript_id}`,
+  updateAudioTranscript: (notebook_id: string, transcript_id: string) =>
+    `${TranscriptionServiceApiBase}/${notebook_id}/audio/transcripts/${transcript_id}/update`,
+  generateNotesFromTranscript: (notebook_id: string, transcript_id: string) =>
+    `${TranscriptionServiceApiBase}/${notebook_id}/audio/transcripts/${transcript_id}/generate-notes`,
+  deleteAudioTranscript: (notebook_id: string, transcript_id: string) =>
+    `${TranscriptionServiceApiBase}/${notebook_id}/audio/transcripts/${transcript_id}`,
+};
+
 // Chats
 export const ChatServiceApiBase = "/api/chats";
 export const ChatServiceApiEndpoints = {
