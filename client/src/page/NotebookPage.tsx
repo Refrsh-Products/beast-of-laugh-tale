@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, Navigate, useSearchParams } from "react-router-dom";
 import useAuthService from "../services/auth";
 import useNotebookService from "../services/notebooks";
+import useAccountService from "../services/account";
 import type { Notebook, NotebookFile } from "../storage";
 
 import NotebookTitle from "../components/notebook/NotebookTitle";
@@ -18,6 +19,7 @@ import PastQuizColumn from "../components/notebook/PastQuizColumn";
 import QuizColumn from "../components/notebook/QuizColumn";
 import PresentationColumn from "../components/notebook/PresentationColumn";
 import PastPresentationsColumn from "../components/notebook/PastPresentationsColumn";
+import AudioColumn from "../components/notebook/AudioColumn";
 import PresentationViewer from "../components/presentation/PresentationViewer";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
 import ToastContainer from "../components/ui/ToastContainer";
@@ -39,16 +41,20 @@ export default function NotebookPage() {
   const { id } = useParams<{ id: string }>();
   const authService = useAuthService();
   const notebookService = useNotebookService();
+  const accountService = useAccountService();
   const chatService = useChatService();
   const navigate = useNavigate();
   const { toasts, showToast } = useToast();
+  const [audioFeatureEnabled, setAudioFeatureEnabled] = useState<boolean | null>(null);
 
   const [notebook, setNotebook] = useState<Notebook | null>(null);
   const [files, setFiles] = useState<NotebookFile[]>([]);
   const [searchParams, setSearchParams] = useSearchParams();
   const viewParam = searchParams.get("view");
   const activeView: ActiveView =
-    viewParam === "quiz" || viewParam === "presentation" ? viewParam : "chat";
+    viewParam === "quiz" || viewParam === "presentation" || viewParam === "audio"
+      ? viewParam
+      : "chat";
   const setActiveView = (view: ActiveView) => {
     setSearchParams(
       (prev) => {
@@ -131,6 +137,20 @@ export default function NotebookPage() {
     }, 3000);
     return () => clearInterval(interval);
   }, [hasProcessingFiles, notebookId]);
+
+  // Fetch plan-level features so we can show + upsell paid-only items (e.g. Audio Notes).
+  useEffect(() => {
+    let cancelled = false;
+    accountService
+      .getAccountUsage()
+      .then((usage) => {
+        if (!cancelled) setAudioFeatureEnabled(usage.features?.audio_notes ?? false);
+      })
+      .catch(() => {
+        if (!cancelled) setAudioFeatureEnabled(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     async function loadNotebooksAndFiles() {
@@ -332,6 +352,91 @@ export default function NotebookPage() {
           isGenerating={presentationSession.isGeneratingPresentation}
         />
       );
+    if (activeView === "audio") {
+      // Free / downgraded users can still browse their past transcripts and notes,
+      // but the column blocks any mutation (`canMutate=false`) and shows an inline
+      // upgrade CTA where the action buttons would normally be.
+      const showAudioUpgrade = () =>
+        setUpgradeModal({
+          title: "Audio Notes is a Pro feature",
+          description:
+            "Upload lecture recordings, get accurate Bangla + English transcripts, and turn them into structured study notes. Upgrade to Pro to unlock Audio Notes.",
+        });
+      const interceptPaidOnly = <T,>(promise: Promise<T>): Promise<T> =>
+        promise.catch((err) => {
+          const code = (err as any)?.response?.data?.code;
+          if (code === "paid_only_feature") {
+            setAudioFeatureEnabled(false);
+            showAudioUpgrade();
+          }
+          throw err;
+        });
+
+      // Backend transcription + notes generation now run in Celery. Kickoff
+      // endpoints return 202; we poll the detail endpoint until status is
+      // terminal (ready/failed), then resolve the promise the column awaits.
+      const POLL_INTERVAL_MS = 2500;
+      const POLL_TIMEOUT_MS = 10 * 60 * 1000; // 10 min — covers ~2hr lectures
+      async function pollAudioTranscript(
+        transcriptId: string,
+        isDone: (d: Awaited<ReturnType<typeof notebookService.getAudioTranscript>>) => boolean,
+      ) {
+        const deadline = Date.now() + POLL_TIMEOUT_MS;
+        while (true) {
+          const detail = await notebookService.getAudioTranscript(notebookId, transcriptId);
+          if (isDone(detail)) return detail;
+          if (Date.now() > deadline) {
+            throw new Error("Still running — check back in History in a few minutes.");
+          }
+          await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+        }
+      }
+
+      return (
+        <AudioColumn
+          notebookId={notebookId}
+          onTranscribeAudio={async (file, title) => {
+            const kickoff = await interceptPaidOnly(
+              notebookService.transcribeAudio(notebookId, file, title),
+            );
+            const detail = await pollAudioTranscript(
+              kickoff.transcript_id,
+              (d) => d.transcription_status === "ready" || d.transcription_status === "failed",
+            );
+            if (detail.transcription_status === "failed") {
+              throw new Error(detail.transcription_error || "Transcription failed.");
+            }
+            return { transcript_id: kickoff.transcript_id, transcript: detail.transcript_text };
+          }}
+          onGenerateNotes={async (transcriptId) => {
+            await interceptPaidOnly(
+              notebookService.generateNotesFromTranscript(notebookId, transcriptId),
+            );
+            const detail = await pollAudioTranscript(
+              transcriptId,
+              (d) => d.notes_status === "ready" || d.notes_status === "failed",
+            );
+            if (detail.notes_status === "failed") {
+              throw new Error(detail.notes_error || "Notes generation failed.");
+            }
+            showToast("Notes saved to notebook", "success");
+            try { setFiles(await notebookService.listFiles(notebookId)); } catch {}
+            return detail.notes_text;
+          }}
+          onUpdateTranscript={(transcriptId, fields) => interceptPaidOnly(notebookService.updateAudioTranscript(notebookId, transcriptId, fields))}
+          onListTranscripts={() => notebookService.listAudioTranscripts(notebookId)}
+          onGetTranscript={(transcriptId) => notebookService.getAudioTranscript(notebookId, transcriptId)}
+          onDeleteTranscript={(transcriptId) => notebookService.deleteAudioTranscript(notebookId, transcriptId)}
+          onNotesGenerated={() => {
+            notebookService.listFiles(notebookId).then(setFiles).catch(() => {});
+          }}
+          // null = plan check still loading; treat as paid-optimistic (the backend
+          // is the source of truth and will 403 if the user actually isn't paid).
+          canMutate={audioFeatureEnabled !== false}
+          onUpgrade={showAudioUpgrade}
+        />
+      );
+    }
     if (quizSessions.selectedQuiz)
       return (
         <QuizReviewColumn

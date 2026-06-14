@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { BP_PHONE } from "../../constants/breakpoints";
 
@@ -36,17 +36,20 @@ function isPreviewable(file: File): "pdf" | "text" | "image" | null {
 function FilePreview({ file }: { file: File }) {
   const kind = isPreviewable(file);
   const [textContent, setTextContent] = useState<string | null>(null);
-
-  const objectUrl = useMemo(() => {
-    if (kind === "pdf" || kind === "image") return URL.createObjectURL(file);
-    return null;
-  }, [file, kind]);
+  const [objectUrl, setObjectUrl] = useState<string | null>(null);
 
   useEffect(() => {
+    if (kind !== "pdf" && kind !== "image") {
+      setObjectUrl(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setObjectUrl(url);
     return () => {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      URL.revokeObjectURL(url);
+      setObjectUrl(null);
     };
-  }, [objectUrl]);
+  }, [file, kind]);
 
   useEffect(() => {
     if (kind !== "text") {

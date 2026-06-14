@@ -10,7 +10,6 @@ from .models import Account, DailyUsage
 from .services import quota
 from notebooks.models import Notebook
 
-# Lists all accounts and creates new one
 class AccountListAPIView(generics.ListCreateAPIView):
     """
     GET: Returns a list of all accounts.
@@ -23,7 +22,6 @@ class AccountListAPIView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user, onboarding_completed=True)
 
-# Show the current user's account (no ID needed)
 class AccountDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     """
     GET: View the current user's account details.
@@ -43,7 +41,7 @@ class AccountDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 class AccountUsageAPIView(APIView):
     """
-    GET: Returns current usage vs limits for the authenticated user's account.
+    GET: Returns current usage vs limits and features available for the authenticated user's account.
     """
     permission_classes = (IsAuthenticated,)
 
@@ -62,8 +60,9 @@ class AccountUsageAPIView(APIView):
         usage_today, _ = DailyUsage.objects.get_or_create(account=account, date=date.today())
         max_quizzes = limits["max_quizzes_per_day"]
         max_presentations = limits["max_presentations_total"]
-
         storage_limit_bytes = limits["storage_mega_bytes"] * 1024 * 1024
+
+        transcription_feature = limits["audio_feature_enabled"]
 
         return Response({
             "plan": plan,
@@ -82,5 +81,8 @@ class AccountUsageAPIView(APIView):
             "presentations": {
                 "used": account.presentations_generated,
                 "limit": max_presentations,
+            },
+            "features": {
+                "audio_notes": transcription_feature,
             },
         })

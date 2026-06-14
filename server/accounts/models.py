@@ -10,7 +10,7 @@ class TierPlan(models.TextChoices):
 
 class BillingInterval(models.TextChoices):
     MONTHLY = 'MONTHLY', 'Monthly'
-    YEARLY = 'YEARLY', 'Yearly'
+    YEARLY = 'YEARLY', 'Yearly'             # YEARLY HERE MEANS ACHADEMIC SESSION - 4 months
 
 
 class SubscriptionStatus(models.TextChoices):

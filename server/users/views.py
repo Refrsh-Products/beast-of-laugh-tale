@@ -9,7 +9,6 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-# from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib.auth import authenticate
 from drf_spectacular.utils import extend_schema
@@ -361,7 +360,9 @@ class PasswordResetRequestView(APIView):
             frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:5173')
             reset_url = f"{frontend_url}/reset-password?uid={uid}&token={token}"
 
-            logger.debug(f"[PasswordReset] Reset URL: {reset_url}")
+            if settings.DEBUG:
+                logger.info(f"[PasswordReset] Reset URL: {reset_url}")
+
             email_service.send_template_email(
                 to=email,
                 subject='Reset your password',

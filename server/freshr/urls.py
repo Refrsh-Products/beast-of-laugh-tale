@@ -28,6 +28,7 @@ api_urlpatterns = [
     path('chats/', include(("chats.urls", "chats"), namespace="chats")),
     path('presentation/', include(("presentation.urls", "presentation"), namespace="presentation")),
     path('quizzes/', include(("quiz.urls","quiz"), namespace="quiz")),
+    path('transcription/', include(("transcription.urls", "transcription"), namespace="transcription")),
 
     path('payments/', include(("payments.urls", "payments"), namespace="payments")),
     path('policies/', include(("policies.urls", "policies"), namespace="policies")),

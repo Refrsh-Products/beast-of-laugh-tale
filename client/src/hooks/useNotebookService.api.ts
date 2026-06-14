@@ -1,9 +1,16 @@
 import createFreshrApiInstance, {
   NotebookServiceApiEndpoints,
+  TranscriptionServiceEndpoints,
 } from "../services/freshr-api";
 import type { NotebookService } from "../services/notebooks/NotebookService.types";
 import type { NotebookFileCreateResponse } from "../services/notebooks/NotebookFile.types";
 import type { NotebookTopic } from "../services/quiz/Quiz.types";
+import type {
+  AudioTranscriptSummary,
+  AudioTranscriptDetail,
+  TranscribeKickoffResponse,
+  NotesStatus,
+} from "../components/notebook/AudioColumn";
 import type { Notebook } from "../storage";
 import useAxiosInterceptor from "./useAxiosInterceptor";
 import { useFetch } from "./useFetch";
@@ -172,6 +179,100 @@ const useNotebookServiceApi = (): NotebookService => {
           "GET",
         );
         return response;
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    transcribeAudio: async (notebookId, file, title) => {
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("title", title);
+        // 60s is more than enough for the upload + 202 — actual transcription
+        // happens in a Celery task; the frontend polls for completion.
+        const response = await fetchData<TranscribeKickoffResponse>(
+          TranscriptionServiceEndpoints.transcribeAudio(notebookId),
+          "POST",
+          formData,
+          { headers: { "Content-Type": undefined }, timeout: 60000 },
+        );
+        return response;
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    listAudioTranscripts: async (notebookId) => {
+      try {
+        const response = await fetchData<AudioTranscriptSummary[]>(
+          TranscriptionServiceEndpoints.listAudioTranscripts(notebookId),
+          "GET",
+        );
+        return response;
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    getAudioTranscript: async (notebookId, transcriptId) => {
+      try {
+        const response = await fetchData<AudioTranscriptDetail>(
+          TranscriptionServiceEndpoints.getAudioTranscript(
+            notebookId,
+            transcriptId,
+          ),
+          "GET",
+        );
+        return response;
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    updateAudioTranscript: async (notebookId, transcriptId, fields) => {
+      try {
+        await fetchData(
+          TranscriptionServiceEndpoints.updateAudioTranscript(
+            notebookId,
+            transcriptId,
+          ),
+          "PATCH",
+          fields,
+        );
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    generateNotesFromTranscript: async (notebookId, transcriptId) => {
+      try {
+        // Kicks off a Celery task and returns 202 — actual notes are written to
+        // the AudioTranscript row; the frontend polls for completion.
+        const response = await fetchData<{ notes_status: NotesStatus }>(
+          TranscriptionServiceEndpoints.generateNotesFromTranscript(
+            notebookId,
+            transcriptId,
+          ),
+          "POST",
+          {},
+          { timeout: 30000 },
+        );
+        return response;
+      } catch (err) {
+        throw err;
+      }
+    },
+
+    deleteAudioTranscript: async (notebookId, transcriptId) => {
+      try {
+        await fetchData(
+          TranscriptionServiceEndpoints.deleteAudioTranscript(
+            notebookId,
+            transcriptId,
+          ),
+          "DELETE",
+        );
       } catch (err) {
         throw err;
       }
