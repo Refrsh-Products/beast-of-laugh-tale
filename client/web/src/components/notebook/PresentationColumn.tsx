@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { NotebookTopic } from "../../services/quiz/Quiz.types";
+import type { NotebookTopic } from "@freshr/shared";
 import QuizTopicChip from "../quiz/QuizTopicChip";
 import Dropdown from "../ui/Dropdown";
 

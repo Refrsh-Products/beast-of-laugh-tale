@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
-import type { StoredAccount } from "../storage";
+import type { StoredAccount } from "@freshr/shared";
 import ProfileSidebar, {
   type ProfileTab,
 } from "../components/profile-account/ProfileSidebar";

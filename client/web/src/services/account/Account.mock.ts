@@ -4,7 +4,7 @@ import {
   hasCompletedOnboarding,
   getNotebooks,
 } from "../../storage";
-import type { AccountService, OnboardingStatus } from "./Account.types";
+import type { AccountService, OnboardingStatus } from "@freshr/shared";
 
 const AccountServiceMock: AccountService = {
   getAccount: async () => {

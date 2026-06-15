@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Deck, Slide } from "@revealjs/react";
 import resetCssUrl from "reveal.js/reset.css?url";
 import revealCssUrl from "reveal.js/reveal.css?url";
-import type { PresentationSession, PresentationSlide } from "../../services/presentation/Presentation.types";
+import type { PresentationSession, PresentationSlide } from "@freshr/shared";
 import SlideEditor from "./SlideEditor";
 import { renderSlideContent, B, G, W } from "./SlideLayouts";
 import { exportAsPdf, exportAsPptx } from "./exportPresentation";

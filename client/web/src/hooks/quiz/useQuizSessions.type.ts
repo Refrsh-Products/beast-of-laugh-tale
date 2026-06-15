@@ -1,5 +1,5 @@
-import type { QuizGenerateOptions } from "../../services/quiz/Quiz.types";
-import type { QuizSession } from "../useQuizService.api";
+import type { QuizGenerateOptions } from "@freshr/shared";
+import type { QuizSession } from "@freshr/shared";
 
 export interface UseQuizSessions {
   handleGenerateQuiz(options: QuizGenerateOptions): Promise<void>;

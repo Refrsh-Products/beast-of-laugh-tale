@@ -1,9 +1,9 @@
 import type { UseChatSessions } from "./useChatSessions.types";
-import type { ChatSession } from "../../services/chat/ChatService.types";
+import type { ChatSession } from "@freshr/shared";
 import useChatService from "../../services/chat";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import type { NotebookFile } from "../../storage";
+import type { NotebookFile } from "@freshr/shared";
 import type { ToastVariant } from "../useToast";
 import axios from "axios";
 

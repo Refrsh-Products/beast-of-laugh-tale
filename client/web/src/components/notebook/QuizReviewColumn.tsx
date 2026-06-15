@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { QuizSession } from "../../hooks/useQuizService.api";
+import type { QuizSession } from "@freshr/shared";
 
 const G = "#84e487";
 const B = "#000000";

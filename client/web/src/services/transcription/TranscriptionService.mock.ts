@@ -1,4 +1,4 @@
-import type { TranscriptionService } from "./TranscriptionService.types";
+import type { TranscriptionService } from "@freshr/shared";
 
 const TranscriptionServiceMock: TranscriptionService = {
   transcribeAudio: (_notebookId, _file, _title) =>

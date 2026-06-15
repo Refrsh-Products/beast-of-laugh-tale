@@ -5,7 +5,7 @@ import type {
   PresentationSlide,
   SlideImage,
   SlideUpdatePayload,
-} from "./Presentation.types";
+} from "@freshr/shared";
 
 const mockStore = new Map<string, PresentationSession>();
 

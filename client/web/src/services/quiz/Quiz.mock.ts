@@ -1,9 +1,9 @@
-import type { QuizSession, QuizQuestion } from "../../hooks/useQuizService.api";
+import type { QuizSession, QuizQuestion } from "@freshr/shared";
 import type {
   QuizAnswerPayload,
   QuizCreatePayload,
   QuizService,
-} from "./Quiz.types";
+} from "@freshr/shared";
 
 // In-memory store keyed by session id
 const mockStore = new Map<string, QuizSession>();

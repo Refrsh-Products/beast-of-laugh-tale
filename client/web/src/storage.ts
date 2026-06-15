@@ -1,22 +1,12 @@
-// Core entity types now live in @freshr/shared so the service layer no longer
-// depends on this browser-storage module. Re-exported here for back-compat.
+// Core entity types live in @freshr/shared; imported here for the storage
+// function signatures below. Consumers import these directly from @freshr/shared.
 import type {
   StoredUser,
   Notebook,
-  AccountUseage,
   StoredAccount,
   NotebookFile,
   QuizDifficulty,
 } from "@freshr/shared";
-
-export type {
-  StoredUser,
-  Notebook,
-  AccountUseage,
-  StoredAccount,
-  NotebookFile,
-  QuizDifficulty,
-};
 
 export interface StoredGoogleProfile {
   first_name: string;

@@ -12,6 +12,7 @@ export type {
   User,
   RegistrationResponse,
   AccountMeResponse,
+  GoogleLoginResponse,
 } from "./dto";
 export type { QuizQuestion, QuizSession } from "./quiz";
 export type {

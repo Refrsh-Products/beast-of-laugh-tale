@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { QuizSession } from "../../hooks/useQuizService.api";
+import type { QuizSession } from "@freshr/shared";
 import TimesUpModal from "../quiz/quiz-taking-screen/QuizTakingScreenTimesUpModal";
 import UnansweredModal from "../quiz/quiz-taking-screen/QuizTakingScreenUnansweredModal";
 import ExitConfirmModal from "../quiz/quiz-taking-screen/QuizTakingScreenExitConfirmModal";

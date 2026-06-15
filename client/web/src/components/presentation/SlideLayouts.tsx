@@ -1,4 +1,4 @@
-import type { PresentationSlide } from "../../services/presentation/Presentation.types";
+import type { PresentationSlide } from "@freshr/shared";
 
 export const B = "#000000";
 export const W = "#FFFFFF";

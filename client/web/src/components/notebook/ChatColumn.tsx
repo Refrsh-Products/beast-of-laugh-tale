@@ -4,7 +4,7 @@ import type { Message } from "./ChatMessage";
 import type {
   ChatSession,
   ChatMessage as ApiChatMessage,
-} from "../../services/chat/ChatService.types";
+} from "@freshr/shared";
 
 const G = "#84e487";
 const B = "#000000";

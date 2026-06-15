@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import type { NotebookFile } from "../../storage";
+import type { NotebookFile } from "@freshr/shared";
 import FileItem from "./FileItem";
 import UploadConfirmModal from "./UploadConfirmModal";
 import { ACCEPTED_FILE_TYPES } from "../../lib/constants";

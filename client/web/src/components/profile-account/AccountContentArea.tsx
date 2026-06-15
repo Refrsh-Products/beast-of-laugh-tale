@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import useAccountService from "../../services/account";
 import useAuthService from "../../services/auth";
 import type { ProfileTab } from "./ProfileSidebar";
-import type { StoredAccount } from "../../storage";
+import type { StoredAccount } from "@freshr/shared";
 import { getAccount as getCachedAccount } from "../../storage";
 import Button from "../ui/Button";
 

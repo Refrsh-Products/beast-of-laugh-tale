@@ -13,7 +13,7 @@ import {
   seedNotebooks,
   renameNotebookFile,
 } from "../../storage";
-import type { NotebookService } from "./NotebookService.types";
+import type { NotebookService } from "@freshr/shared";
 
 const NotebookServiceMock: NotebookService = {
   list: () => Promise.resolve(getNotebooks()),

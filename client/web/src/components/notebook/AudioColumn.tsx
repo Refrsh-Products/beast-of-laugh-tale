@@ -8,23 +8,11 @@ const G = "#84e487";
 const R = "#FF4D4D";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-// These DTOs now live in @freshr/shared; imported for local use and re-exported
-// here for back-compat with existing consumers (e.g. NotebookPage).
+// Transcription DTOs live in @freshr/shared; imported here for local use.
 import type {
-  TranscriptionStatus,
-  NotesStatus,
   AudioTranscriptSummary,
   AudioTranscriptDetail,
-  TranscribeKickoffResponse,
 } from "@freshr/shared";
-
-export type {
-  TranscriptionStatus,
-  NotesStatus,
-  AudioTranscriptSummary,
-  AudioTranscriptDetail,
-  TranscribeKickoffResponse,
-};
 
 type Tab = "new" | "history";
 type NewStep = "upload" | "transcribing" | "review" | "generating";
