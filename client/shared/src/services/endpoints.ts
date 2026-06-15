@@ -2,12 +2,19 @@
  * API endpoint path builders. Pure strings — no axios, no env. The axios
  * instance factory stays in web (`services/freshr-api.ts`), which re-exports
  * these for back-compat.
- *
- * NOTE: the `/api/...` prefix is replaced with `/v1/...` in story 1.5.
  */
 
+/**
+ * Single source of truth for the URL API prefix. `/api` is what the nginx
+ * proxy routes to Django; `v1` is the contract version (mirrors Django's
+ * `API_VERSION` setting). Bump the version here in lockstep with the server,
+ * and only on a breaking change.
+ */
+export const API_VERSION = 1;
+export const ApiPrefix = `/api/v${API_VERSION}`;
+
 // Users
-export const UserServiceApiBase = "/api/users";
+export const UserServiceApiBase = `${ApiPrefix}/users`;
 export const UserServiceApiEndpoints = {
   accounts: `${UserServiceApiBase}/accounts/`,
   accountMe: `${UserServiceApiBase}/accounts/me/`,
@@ -15,7 +22,7 @@ export const UserServiceApiEndpoints = {
 };
 
 // Auth
-export const AuthServiceApiBase = "/api/auth";
+export const AuthServiceApiBase = `${ApiPrefix}/auth`;
 export const AuthServiceApiEndpoints = {
   login: `${AuthServiceApiBase}/login/`,
   googleLogin: `${AuthServiceApiBase}/google-login/`,
@@ -29,7 +36,7 @@ export const AuthServiceApiEndpoints = {
 };
 
 // Notebooks
-export const NotebookServiceApiBase = "/api/notebooks";
+export const NotebookServiceApiBase = `${ApiPrefix}/notebooks`;
 export const NotebookServiceApiEndpoints = {
   getNotebooks: `${NotebookServiceApiBase}/`,
   createNotebook: `${NotebookServiceApiBase}/`,
@@ -54,7 +61,7 @@ export const NotebookServiceApiEndpoints = {
 };
 
 // Transcriptions
-export const TranscriptionServiceApiBase = "/api/transcription";
+export const TranscriptionServiceApiBase = `${ApiPrefix}/transcription`;
 export const TranscriptionServiceEndpoints = {
   transcribeAudio: (notebook_id: string) =>
     `${TranscriptionServiceApiBase}/${notebook_id}/audio/transcribe`,
@@ -71,7 +78,7 @@ export const TranscriptionServiceEndpoints = {
 };
 
 // Chats
-export const ChatServiceApiBase = "/api/chats";
+export const ChatServiceApiBase = `${ApiPrefix}/chats`;
 export const ChatServiceApiEndpoints = {
   getChatSessions: `${ChatServiceApiBase}/`,
   createChatSession: `${ChatServiceApiBase}/`,
@@ -88,20 +95,20 @@ export const ChatServiceApiEndpoints = {
 };
 
 // Policies
-export const PolicyServiceApiBase = "/api/policies";
+export const PolicyServiceApiBase = `${ApiPrefix}/policies`;
 export const PolicyServiceApiEndpoints = {
   getActive: (slug: string) => `${PolicyServiceApiBase}/${slug}/`,
 };
 
 // Payments
-export const PaymentServiceApiBase = "/api/payments";
+export const PaymentServiceApiBase = `${ApiPrefix}/payments`;
 export const PaymentServiceApiEndpoints = {
   getPayments: `${PaymentServiceApiBase}/`,
   initiatePayment: `${PaymentServiceApiBase}/initiate/`,
 };
 
 // Quizzes
-export const QuizServiceApiBase = "/api/quizzes";
+export const QuizServiceApiBase = `${ApiPrefix}/quizzes`;
 export const QuizServiceApiEndpoints = {
   listQuizSessionsByNotebook: (notebookId: string) =>
     `${QuizServiceApiBase}/?notebook=${notebookId}`,
@@ -115,7 +122,7 @@ export const QuizServiceApiEndpoints = {
 };
 
 // Presentations
-export const PresentationServiceApiBase = "/api/presentation";
+export const PresentationServiceApiBase = `${ApiPrefix}/presentation`;
 export const PresentationServiceApiEndpoints = {
   listPresentationsByNotebook: (notebookId: string) =>
     `${PresentationServiceApiBase}/?notebook=${notebookId}`,

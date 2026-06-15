@@ -1,0 +1,50 @@
+# Local production-parity overlay.
+#
+# Purpose: run the React app EXACTLY as staging/prod do — built by
+# client/web/Dockerfile (`tsc -b && vite build`) and served by nginx from the
+# compiled `dist/` — instead of the Vite dev server (`npm run dev`). Use this
+# to catch deploy-only breakage (build/typecheck failures, nginx SPA fallback,
+# the baked-in VITE_API_BASE_URL, production bundle behavior) BEFORE pushing.
+#
+# This is an OVERLAY: it adds only the `frontend` service and reuses the
+# backend (Django/postgres/redis/celery) from docker-compose.local.yml. Run it
+# layered on top of the local stack, in the same project so they share a network:
+#
+#   docker compose --env-file .env.local -p freshr-local \
+#     -f docker-compose.local.yml -f docker-compose.local-prod.yml \
+#     up -d --build
+#
+# Then open http://localhost:8090  (Django stays on http://localhost:8000).
+#
+# To tear down just the frontend:
+#   docker compose -p freshr-local -f docker-compose.local.yml -f docker-compose.local-prod.yml rm -sf frontend
+#
+# Notes:
+# - VITE_API_BASE_URL is baked as the SPA's OWN origin (http://localhost:8090),
+#   exactly mirroring prod, where it is "https://freshr.cc" (the same host that
+#   serves the SPA). So API calls go to http://localhost:8090/api/v1/... and
+#   are proxied to Django by THIS nginx container's `location /api/` block
+#   (proxy_pass http://web:8000) — the same nginx proxy path prod uses. Being
+#   same-origin, it needs no CORS.
+# - Alternative: to instead hit Django directly (bypassing the nginx proxy),
+#   override VITE_API_BASE_URL=http://localhost:8000 — that path is cross-origin,
+#   which is why localhost:8090/8000 stay whitelisted in CORS_ALLOWED_ORIGINS.
+# - The Google client id + Web3Forms key are NOT hardcoded here.
+#   If unset, the build still succeeds; only Google login / the support form
+#   won't work locally.
+
+services:
+  frontend:
+    build:
+      context: ./client
+      dockerfile: web/Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8090}
+        VITE_GOOGLE_AUTH_CLIENT_ID: ${VITE_GOOGLE_AUTH_CLIENT_ID:-}
+        VITE_WEB3FORMS_ACCESS_KEY: ${VITE_WEB3FORMS_ACCESS_KEY:-}
+    restart: unless-stopped
+    mem_limit: 64m
+    ports:
+      - "8090:80"
+    depends_on:
+      - web

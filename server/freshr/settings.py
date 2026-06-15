@@ -47,6 +47,11 @@ CSRF_TRUSTED_ORIGINS = [
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    # Local prod-parity build (docker-compose.local-prod.yml). Only needed if
+    # you point that build straight at Django (VITE_API_BASE_URL=:8000); the
+    # default same-origin mode goes through nginx's /api/ proxy and needs no CORS.
+    "http://localhost:8090",
+    "http://127.0.0.1:8090",
     "https://freshr.cc",        # Production React (port 80)
     "https://staging.freshr.cc",   # Staging React
 ]
@@ -199,12 +204,19 @@ REST_FRAMEWORK = {
     },
 }
 
+# Single source of truth for the URL API version (the `vN` in `/api/vN/`).
+# This is the API *contract* version, not the release version — bump it only
+# when making a breaking change, and run the old version alongside the new one
+# so already-installed mobile apps keep working. The release/build number
+# (`VERSION` below) is what tracks every update.
+API_VERSION = 1
+
 SPECTACULAR_SETTINGS = {
     "TITLE": "Notebook API",
     "DESCRIPTION": "API for notebooks and notebook files",
     "VERSION": "1.0.0",
     "COMPONENT_SPLIT_REQUEST": True,
-    "SCHEMA_PATH_PREFIX": r"/api/",
+    "SCHEMA_PATH_PREFIX": rf"/api/v{API_VERSION}/",
 }
 
 SIMPLE_JWT = {
