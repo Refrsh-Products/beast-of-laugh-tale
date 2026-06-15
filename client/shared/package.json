@@ -8,8 +8,15 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./platform": "./src/platform/index.ts",
+    "./platform/*": "./src/platform/*.ts",
+    "./services": "./src/services/index.ts",
     "./services/*": "./src/services/*.ts",
+    "./types": "./src/types/index.ts",
     "./types/*": "./src/types/*.ts",
     "./constants/*": "./src/constants/*.ts"
+  },
+  "dependencies": {
+    "axios": "1.13.6"
   }
 }
