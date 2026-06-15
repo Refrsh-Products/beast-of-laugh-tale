@@ -57,7 +57,7 @@ jobs:
       - name: Build and push web image (staging)
         uses: docker/build-push-action@v5
         with:
-          context: ./client
+          context: ./client/web
           push: true
           tags: ghcr.io/${{ steps.org.outputs.name }}/freshr-web:staging
           build-args: |
@@ -82,7 +82,7 @@ jobs:
       - name: Build and push web image (production)
         uses: docker/build-push-action@v5
         with:
-          context: ./client
+          context: ./client/web
           push: true
           tags: ${{ steps.meta-web-prod.outputs.tags }}
           build-args: |
