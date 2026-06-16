@@ -1,9 +1,9 @@
 import { useState } from "react";
-import type { QuizDifficulty } from "../../storage";
+import type { QuizDifficulty } from "@freshr/shared";
 import type {
   QuizGenerateOptions,
   NotebookTopic,
-} from "../../services/quiz/Quiz.types";
+} from "@freshr/shared";
 import QuizTopicChip from "../quiz/QuizTopicChip";
 import Dropdown from "../ui/Dropdown";
 import Divider from "../quiz/Divider";

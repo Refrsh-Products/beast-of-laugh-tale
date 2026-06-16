@@ -1,4 +1,4 @@
-import type { Notebook } from "../../storage";
+import type { Notebook } from "@freshr/shared";
 
 const B = "#000000";
 const W = "#FFFFFF";

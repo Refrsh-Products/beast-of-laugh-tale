@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
-import type { OnboardingStatus } from "../services/account/Account.types";
+import type { OnboardingStatus } from "@freshr/shared";
 import FreshrLogo from "../components/logo/FreshrLogo";
 import LoadErrorScreen from "../components/ui/LoadErrorScreen";
 import { getGoogleProfile, clearGoogleProfile } from "../storage";

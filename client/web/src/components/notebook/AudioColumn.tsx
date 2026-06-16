@@ -8,37 +8,11 @@ const G = "#84e487";
 const R = "#FF4D4D";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
-
-export type TranscriptionStatus = "pending" | "processing" | "ready" | "failed";
-export type NotesStatus = "not_started" | "processing" | "ready" | "failed";
-
-export interface AudioTranscriptSummary {
-  id: string;
-  title: string;
-  has_notes: boolean;
-  transcription_status: TranscriptionStatus;
-  notes_status: NotesStatus;
-  created_at: string;
-}
-
-export interface AudioTranscriptDetail {
-  id: string;
-  title: string;
-  transcript_text: string;
-  notes_text: string;
-  has_notes: boolean;
-  transcription_status: TranscriptionStatus;
-  transcription_error: string;
-  notes_status: NotesStatus;
-  notes_error: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface TranscribeKickoffResponse {
-  transcript_id: string;
-  transcription_status: TranscriptionStatus;
-}
+// Transcription DTOs live in @freshr/shared; imported here for local use.
+import type {
+  AudioTranscriptSummary,
+  AudioTranscriptDetail,
+} from "@freshr/shared";
 
 type Tab = "new" | "history";
 type NewStep = "upload" | "transcribing" | "review" | "generating";

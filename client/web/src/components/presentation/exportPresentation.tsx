@@ -6,7 +6,7 @@ import PptxGenJS from "pptxgenjs";
 import type {
   PresentationSession,
   PresentationSlide,
-} from "../../services/presentation/Presentation.types";
+} from "@freshr/shared";
 import { renderSlideContent, B, G } from "./SlideLayouts";
 
 const SLIDE_W_PX = 960;

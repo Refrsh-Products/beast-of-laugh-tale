@@ -1,4 +1,4 @@
-import type { PaymentService } from "./PaymentService.types";
+import type { PaymentService } from "@freshr/shared";
 
 const PaymentServiceMock: PaymentService = {
   listPayments: () => Promise.resolve([]),

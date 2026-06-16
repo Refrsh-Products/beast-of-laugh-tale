@@ -8,7 +8,7 @@ import {
 import useAuthService from "../services/auth";
 import useNotebookService from "../services/notebooks";
 import useAccountService from "../services/account";
-import type { Notebook, NotebookFile } from "../storage";
+import type { Notebook, NotebookFile } from "@freshr/shared";
 
 import NotebookTitle from "../components/notebook/NotebookTitle";
 import FilesColumn, {

@@ -2,7 +2,7 @@ import type { PresentationGenerateOptions } from "../../components/notebook/Pres
 import type {
   PresentationSlide,
   PresentationSession,
-} from "../../services/presentation/Presentation.types";
+} from "@freshr/shared";
 
 export interface UsePresentationSessions {
   handleGeneratePresentation(

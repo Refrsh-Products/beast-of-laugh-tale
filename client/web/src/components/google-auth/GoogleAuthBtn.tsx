@@ -9,13 +9,13 @@ import {
   saveUser,
   saveAccount,
 } from "../../storage";
-import type { StoredAccount } from "../../storage";
-import type { AccountMeResponse } from "../../page/dto/AccountMeResponse.dto";
+import type { StoredAccount } from "@freshr/shared";
+import type { AccountMeResponse } from "@freshr/shared";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useFetch } from "../../hooks/useFetch";
 import useAxiosInterceptor from "../../hooks/useAxiosInterceptor";
-import type { GoogleLoginResponse } from "../../page/dto/GoogleLoginResponse.dto";
+import type { GoogleLoginResponse } from "@freshr/shared";
 
 const B = "#000000";
 const W = "#FFFFFF";

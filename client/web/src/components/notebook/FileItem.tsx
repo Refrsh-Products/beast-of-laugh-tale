@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import type { NotebookFile } from "../../storage";
+import type { NotebookFile } from "@freshr/shared";
 
 const B = "#000000";
 const R = "#FF4D4D";

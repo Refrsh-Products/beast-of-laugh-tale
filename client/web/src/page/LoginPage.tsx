@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Loading from "../components/loading/Loading";
 import useAuthService from "../services/auth";
-import { NeedsVerificationError } from "../services/auth/AuthService.types";
+import { NeedsVerificationError } from "@freshr/shared";
 import GoogleAuthBtn from "../components/google-auth/GoogleAuthBtn";
 import FreshrLogo from "../components/logo/FreshrLogo";
 import { BLACK as B, WHITE as W } from "../constants/theme";

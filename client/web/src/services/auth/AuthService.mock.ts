@@ -6,7 +6,7 @@ import {
   endSession,
   getPassword,
 } from "../../storage";
-import type { AuthService } from "./AuthService.types";
+import type { AuthService } from "@freshr/shared";
 
 // Auto-seed dev session so login is never required in mock mode
 if (!isLoggedIn() || !getUser()) {

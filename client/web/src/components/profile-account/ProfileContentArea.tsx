@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import type { ProfileTab } from "./ProfileSidebar";
-import type { StoredAccount } from "../../storage";
+import type { StoredAccount } from "@freshr/shared";
 import { getAccount as getCachedAccount } from "../../storage";
 import SettingsField from "../settings/SettingsField";
 import Button from "../ui/Button";

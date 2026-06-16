@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { PresentationSlide, SlideImage } from "../../services/presentation/Presentation.types";
+import type { PresentationSlide, SlideImage } from "@freshr/shared";
 
 const B = "#000000";
 const G = "#84e487";

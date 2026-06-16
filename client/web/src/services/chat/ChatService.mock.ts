@@ -7,7 +7,7 @@ import {
   listChatMessages,
   createChatMessage,
 } from "../../storage";
-import type { ChatServices } from "./ChatService.types";
+import type { ChatServices } from "@freshr/shared";
 
 const ChatServiceMock: ChatServices = {
   listChatSessions: (notebookId) => Promise.resolve(listChatSessions(notebookId)),

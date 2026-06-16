@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { PresentationSession } from "../../services/presentation/Presentation.types";
+import type { PresentationSession } from "@freshr/shared";
 
 const B = "#000000";
 const W = "#FFFFFF";

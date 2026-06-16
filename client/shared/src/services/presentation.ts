@@ -1,3 +1,6 @@
+import type { ServiceDeps } from "../platform/deps";
+import { PresentationServiceApiEndpoints } from "./endpoints";
+
 export type PresentationLayout =
   | "bullets"
   | "title-only"
@@ -100,4 +103,86 @@ export interface PresentationService {
     feedback: string,
   ) => Promise<PresentationSlide>;
   listFavouritePresentations: () => Promise<PresentationSession[]>;
+}
+
+export function createPresentationService(
+  deps: ServiceDeps,
+): PresentationService {
+  const { http } = deps;
+
+  return {
+    createPresentation: async (payload: PresentationCreatePayload) => {
+      const { notebook, ...body } = payload;
+      return await http.request<PresentationSession>(
+        PresentationServiceApiEndpoints.createPresentation(notebook),
+        "POST",
+        body,
+        { timeout: 120000 },
+      );
+    },
+
+    getPresentation: async (presentationId: string) => {
+      return await http.request<PresentationSession>(
+        PresentationServiceApiEndpoints.getPresentation(presentationId),
+        "GET",
+      );
+    },
+
+    listPresentationsByNotebook: async (notebookId: string) => {
+      return await http.request<PresentationSession[]>(
+        PresentationServiceApiEndpoints.listPresentationsByNotebook(notebookId),
+        "GET",
+      );
+    },
+
+    updatePresentation: async (
+      presentationId: string,
+      payload: { title?: string; is_favourite?: boolean },
+    ) => {
+      return await http.request<PresentationSession>(
+        PresentationServiceApiEndpoints.updatePresentation(presentationId),
+        "PATCH",
+        payload,
+      );
+    },
+
+    deletePresentation: async (presentationId: string) => {
+      await http.request(
+        PresentationServiceApiEndpoints.deletePresentation(presentationId),
+        "DELETE",
+      );
+    },
+
+    updateSlide: async (
+      presentationId: string,
+      slideId: string,
+      payload: SlideUpdatePayload,
+    ) => {
+      return await http.request<PresentationSlide>(
+        PresentationServiceApiEndpoints.updateSlide(presentationId, slideId),
+        "PATCH",
+        payload,
+      );
+    },
+
+    refineSlide: async (
+      presentationId: string,
+      slideId: string,
+      feedback: string,
+    ) => {
+      return await http.request<PresentationSlide>(
+        PresentationServiceApiEndpoints.refineSlide(presentationId, slideId),
+        "POST",
+        { feedback },
+        { timeout: 120000 },
+      );
+    },
+
+    listFavouritePresentations: async () => {
+      return await http.request<PresentationSession[]>(
+        PresentationServiceApiEndpoints.listFavouritePresentations,
+        "GET",
+      );
+    },
+  };
 }

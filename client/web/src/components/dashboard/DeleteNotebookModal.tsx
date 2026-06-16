@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import type { Notebook } from '../../storage'
+import type { Notebook } from '@freshr/shared'
 import Button from '../ui/Button'
 
 const B = '#000000'

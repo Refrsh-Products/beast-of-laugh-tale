@@ -16,6 +16,12 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* Resolve the shared workspace package to its TS source. */
+    "paths": {
+      "@freshr/shared": ["../shared/src/index.ts"],
+      "@freshr/shared/*": ["../shared/src/*"]
+    },
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,

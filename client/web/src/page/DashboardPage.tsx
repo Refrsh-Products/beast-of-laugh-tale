@@ -4,8 +4,8 @@ import { Navigate, useNavigate } from "react-router-dom";
 import useNotebookService from "../services/notebooks";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
-import type { OnboardingStatus } from "../services/account/Account.types";
-import type { Notebook, AccountUseage, StoredAccount } from "../storage";
+import type { OnboardingStatus } from "@freshr/shared";
+import type { Notebook, AccountUseage, StoredAccount } from "@freshr/shared";
 import { getAccount as getCachedAccount } from "../storage";
 import LoadErrorScreen from "../components/ui/LoadErrorScreen";
 
