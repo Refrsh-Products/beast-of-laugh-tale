@@ -8,6 +8,7 @@ export default function NotebooksLayout() {
       <Stack.Screen name="chat" options={{ title: 'Chat' }} />
       <Stack.Screen name="quiz" options={{ title: 'Quiz' }} />
       <Stack.Screen name="presentation" options={{ title: 'Presentation' }} />
+      <Stack.Screen name="transcription" options={{ title: 'Transcription' }} />
     </Stack>
   );
 }
