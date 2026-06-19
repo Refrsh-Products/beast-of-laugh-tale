@@ -23,6 +23,11 @@ export default function NotebookDetailScreen() {
           <Text>Presentation</Text>
         </Button>
       </Link>
+      <Link href="/notebooks/transcription" asChild>
+        <Button variant="secondary">
+          <Text>Transcription</Text>
+        </Button>
+      </Link>
     </View>
   );
 }
