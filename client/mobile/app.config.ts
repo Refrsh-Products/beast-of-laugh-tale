@@ -17,9 +17,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: config.name ?? 'Freshr',
     slug: config.slug ?? 'freshr',
+    plugins: [...(config.plugins ?? []), 'expo-secure-store', 'expo-web-browser'],
     extra: {
       ...config.extra,
       apiBaseUrl,
+      // Google OAuth client IDs (per platform). Set via EXPO_PUBLIC_GOOGLE_*;
+      // when none are set the Google sign-in button hides itself.
+      googleIosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+      googleAndroidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+      googleWebClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
     },
   };
 };

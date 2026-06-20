@@ -8,14 +8,12 @@ import {
   clearAccount,
   startSession,
   endSession,
-  getPassword,
-  savePassword,
 } from "../storage";
 
 /**
  * Web implementation of the shared `SessionStore` port. Tokens + identity live
  * in `sessionStorage` under the same keys the axios interceptor and Google
- * sign-in button use; user/account/password caches delegate to `storage.ts`
+ * sign-in button use; user/account caches delegate to `storage.ts`
  * (localStorage). Mobile will provide a SecureStore-backed equivalent.
  */
 export const webSessionStore: SessionStore = {
@@ -45,6 +43,4 @@ export const webSessionStore: SessionStore = {
   clearAccount,
   startSession,
   endSession,
-  getPassword,
-  savePassword,
 };

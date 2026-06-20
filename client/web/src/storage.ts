@@ -72,14 +72,8 @@ export function clearGoogleProfile(): void {
   sessionStorage.removeItem("freshr_google_profile");
 }
 
-// ── Password ──────────────────────────────────────────────────────
-export function getPassword(): string | null {
-  return localStorage.getItem("freshr_password");
-}
-
-export function savePassword(password: string): void {
-  localStorage.setItem("freshr_password", password);
-}
+// Purge any plaintext password persisted by older builds.
+localStorage.removeItem("freshr_password");
 
 // ── Notebooks ─────────────────────────────────────────────────────
 export function getNotebooks(): Notebook[] {

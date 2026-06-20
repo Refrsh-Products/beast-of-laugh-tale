@@ -4,7 +4,6 @@ import {
   saveUser,
   startSession,
   endSession,
-  getPassword,
 } from "../../storage";
 import type { AuthService } from "@freshr/shared";
 
@@ -24,21 +23,24 @@ const AuthServiceMock: AuthService = {
 
   getUser: () => getUser(),
 
-  login: (email, password) => {
-    const storedPassword = getPassword();
+  login: (email) => {
+    // Mock mode: accept the auto-seeded dev user by email (no password store).
     const storedUser = getUser();
-    if (
-      storedUser &&
-      storedUser.email === email &&
-      storedPassword === password
-    ) {
+    if (storedUser && storedUser.email === email) {
       startSession();
       return Promise.resolve(storedUser);
     }
     return Promise.reject(new Error("Incorrect email or password."));
   },
 
-  logout: () => endSession(),
+  googleLogin: () => {
+    return Promise.reject(new Error("Not implemented"));
+  },
+
+  logout: () => {
+    endSession();
+    return Promise.resolve();
+  },
 
   register: () => {
     return Promise.reject(new Error("Not implemented"));
