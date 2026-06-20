@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useAuthService } from '@/hooks/useAuthService';
 import { googleAuthConfig, isGoogleAuthConfigured } from '@/lib/config';
+import { setGoogleProfile } from '@/lib/googleProfile';
 import Constants from 'expo-constants';
 import * as Google from 'expo-auth-session/providers/google';
 import { useRouter } from 'expo-router';
@@ -17,7 +18,8 @@ WebBrowser.maybeCompleteAuthSession();
  * "Continue with Google" button. Runs the Google OAuth flow via
  * expo-auth-session, then hands the resulting access token to the shared
  * `googleLogin` service (which exchanges it for Freshr JWTs and caches the
- * profile). New users still land in the app; onboarding routing is a later epic.
+ * profile). New users have no profile yet, so we stash the Google name/picture
+ * for the onboarding form to prefill and let the root guard route them there.
  *
  * Hidden when no Google client IDs are configured so dev builds without OAuth
  * set up don't show a button that can't work.
@@ -58,10 +60,15 @@ export function GoogleSignInButton() {
     let cancelled = false;
     (async () => {
       try {
-        await authService.googleLogin(accessToken);
-        // Navigation is otherwise driven by the route guard reacting to the new
-        // session; replace explicitly so it's immediate.
-        if (!cancelled) router.replace('/notebooks');
+        const { isNewUser, profile } = await authService.googleLogin(accessToken);
+        // New users land on the onboarding form (driven by the root guard once
+        // it sees onboarding is incomplete); stash the Google profile so the
+        // form can prefill name and picture.
+        if (isNewUser) setGoogleProfile(profile);
+        // Existing users go straight to the app. New users would be bounced by
+        // the guard anyway, but routing to /notebooks first flashes the tabs, so
+        // for them we let the guard do the navigation from here.
+        if (!cancelled && !isNewUser) router.replace('/notebooks');
       } catch (err) {
         console.error('[GoogleSignIn] Backend exchange failed:', err);
         if (!cancelled) Alert.alert('Google sign-in failed', 'Please try again.');

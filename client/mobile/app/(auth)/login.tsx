@@ -30,8 +30,11 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await authService.login(email.trim(), password);
-      router.replace('/account');
+      // Don't navigate here: the root guard routes to /onboarding or /notebooks
+      // once onboarding status resolves. Keep the spinner up until it does so we
+      // never flash the tabs and then bounce an un-onboarded user back.
     } catch (err: any) {
+      setLoading(false);
       if (err instanceof NeedsVerificationError || err?.needsVerification) {
         router.push({ pathname: '/verify-email', params: { email: email.trim() } });
         return;
@@ -41,8 +44,6 @@ export default function LoginScreen() {
         err?.response?.data?.detail ??
         'Incorrect email or password. Please try again.';
       setFormError(String(message));
-    } finally {
-      setLoading(false);
     }
   };
 
