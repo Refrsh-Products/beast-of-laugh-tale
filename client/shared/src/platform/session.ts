@@ -41,8 +41,4 @@ export interface SessionStore {
   // logical "is signed in" flag (distinct from token presence)
   startSession(): void;
   endSession(): void;
-
-  // password cache (dev/mock parity)
-  getPassword(): string | null;
-  savePassword(password: string): void;
 }
