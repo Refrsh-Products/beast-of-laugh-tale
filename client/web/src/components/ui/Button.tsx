@@ -1,18 +1,7 @@
-import { useState, type ReactNode } from "react";
-
-const B = "#000000";
-const W = "#FFFFFF";
-const G = "#84e487";
-const R = "#FF4D4D";
+import type { ReactNode } from "react";
+import { cn } from "../../lib/utils";
 
 type Variant = "default" | "primary" | "danger" | "green";
-
-const CONFIG: Record<Variant, { bg: string; color: string; shadowColor: string; fontWeight: number }> = {
-  default: { bg: W,  color: B, shadowColor: B, fontWeight: 700 },
-  primary: { bg: B,  color: W, shadowColor: G, fontWeight: 600 },
-  danger:  { bg: R,  color: B, shadowColor: B, fontWeight: 700 },
-  green:   { bg: G,  color: B, shadowColor: B, fontWeight: 700 },
-};
 
 interface ButtonProps {
   variant?: Variant;
@@ -24,6 +13,13 @@ interface ButtonProps {
   disabled?: boolean;
 }
 
+const variantClasses: Record<Variant, string> = {
+  default: "bg-transparent text-foreground border border-border hover:bg-secondary",
+  primary: "bg-secondary text-foreground border border-border hover:bg-secondary/80",
+  danger:  "bg-destructive/10 text-destructive border border-destructive/30 hover:bg-destructive/20",
+  green:   "bg-primary text-primary-foreground hover:bg-primary/90",
+};
+
 export default function Button({
   variant = "default",
   large = false,
@@ -33,48 +29,19 @@ export default function Button({
   children,
   disabled = false,
 }: ButtonProps) {
-  const [hovered, setHovered] = useState(false);
-  const [down, setDown] = useState(false);
-
-  const { bg, color, shadowColor, fontWeight } = CONFIG[variant];
-
-  const transform = down
-    ? "translate(2px, 2px)"
-    : hovered
-      ? "translate(-3px, -3px)"
-      : "none";
-
-  const shadow = down
-    ? `2px 2px 0 ${shadowColor}`
-    : hovered
-      ? `6px 6px 0 ${shadowColor}`
-      : `4px 4px 0 ${shadowColor}`;
-
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
-      onMouseEnter={() => !disabled && setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setDown(false); }}
-      onMouseDown={() => !disabled && setDown(true)}
-      onMouseUp={() => setDown(false)}
-      style={{
-        background: disabled ? "#ccc" : bg,
-        color: color,
-        border: `2px solid ${disabled ? "#ccc" : B}`,
-        boxShadow: disabled ? "none" : shadow,
-        transform: disabled ? "none" : transform,
-        padding: large ? "16px 36px" : "11px 22px",
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: large ? "0.85rem" : "0.75rem",
-        fontWeight,
-        letterSpacing: "0.08em",
-        cursor: disabled ? "not-allowed" : "pointer",
-        transition: "transform 0.12s, box-shadow 0.12s",
-        width: fullWidth ? "100%" : undefined,
-        lineHeight: 1,
-      }}
+      className={cn(
+        "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors",
+        "focus:outline-none focus:ring-1 focus:ring-ring",
+        "disabled:pointer-events-none disabled:opacity-40",
+        variantClasses[variant],
+        large ? "px-8 py-3 text-base" : "px-4 py-2",
+        fullWidth && "w-full",
+      )}
     >
       {children}
     </button>

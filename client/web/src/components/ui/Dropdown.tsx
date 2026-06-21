@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-
-const B = "#000000";
-const W = "#FFFFFF";
+import { cn } from "../../lib/utils";
 
 interface SelectOption {
   value: string;
@@ -24,7 +22,6 @@ export default function Dropdown({
   disabled = false,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
-  const [hovered, setHovered] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,79 +38,43 @@ export default function Dropdown({
   const selectedLabel = options.find((o) => o.value === value)?.label;
 
   return (
-    <div ref={containerRef} style={{ position: "relative", userSelect: "none" }}>
-      {/* Trigger */}
+    <div ref={containerRef} className="relative select-none">
       <div
         onClick={() => !disabled && setOpen((o) => !o)}
-        style={{
-          width: "100%",
-          border: `2px solid ${disabled ? "#ccc" : B}`,
-          background: disabled ? "#f5f5f5" : W,
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          fontWeight: 600,
-          color: B,
-          padding: "9px 32px 9px 12px",
-          cursor: disabled ? "not-allowed" : "pointer",
-          boxShadow: disabled ? "none" : `3px 3px 0 ${B}`,
-          boxSizing: "border-box",
-          position: "relative",
-        }}
+        className={cn(
+          "flex items-center justify-between w-full px-3 py-2 text-sm rounded-md border border-border bg-input text-foreground transition-colors",
+          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer hover:bg-secondary",
+          open && "ring-1 ring-ring",
+        )}
       >
-        {selectedLabel ?? placeholder}
+        <span className={selectedLabel ? "text-foreground" : "text-muted-foreground"}>
+          {selectedLabel ?? placeholder}
+        </span>
         <span
-          style={{
-            position: "absolute",
-            right: 10,
-            top: "50%",
-            transform: `translateY(-50%) rotate(${open ? "180deg" : "0deg"})`,
-            fontSize: "0.75rem",
-            color: B,
-            transition: "transform 0.15s",
-            pointerEvents: "none",
-          }}
+          className="text-muted-foreground transition-transform duration-150 text-xs"
+          style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
         >
           ▾
         </span>
       </div>
 
-      {/* Options list */}
       {open && (
-        <div
-          style={{
-            position: "absolute",
-            top: "calc(100% + 2px)",
-            left: 0,
-            right: 0,
-            border: `2px solid ${B}`,
-            background: W,
-            zIndex: 1000,
-            boxShadow: `3px 3px 0 ${B}`,
-          }}
-        >
+        <div className="absolute top-[calc(100%+4px)] left-0 right-0 z-50 bg-popover border border-border rounded-md shadow-lg overflow-hidden">
           {options.map((opt) => {
             const isSelected = opt.value === value;
-            const isHovered = hovered === opt.value;
             return (
               <div
                 key={opt.value}
-                onMouseEnter={() => setHovered(opt.value)}
-                onMouseLeave={() => setHovered(null)}
                 onMouseDown={() => {
                   onChange(opt.value);
                   setOpen(false);
-                  setHovered(null);
                 }}
-                style={{
-                  padding: "9px 12px",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  fontWeight: isSelected ? 700 : 500,
-                  color: isHovered ? W : B,
-                  background: isHovered ? B : isSelected ? "#f0f0f0" : W,
-                  cursor: "pointer",
-                  borderBottom: "1px solid #e8e8e8",
-                }}
+                className={cn(
+                  "px-3 py-2 text-sm cursor-pointer transition-colors",
+                  isSelected
+                    ? "bg-secondary text-foreground font-medium"
+                    : "text-foreground hover:bg-secondary",
+                )}
               >
                 {opt.label}
               </div>
