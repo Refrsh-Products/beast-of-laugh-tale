@@ -5,6 +5,8 @@ import {
   startSession,
   endSession,
   getPassword,
+  getAccount,
+  saveAccount,
 } from "../../storage";
 import type { AuthService } from "@freshr/shared";
 
@@ -17,6 +19,20 @@ if (!isLoggedIn() || !getUser()) {
     created_at: new Date().toISOString(),
   });
   startSession();
+}
+if (!getAccount()) {
+  saveAccount({
+    id: "dev-account",
+    first_name: "Dev",
+    last_name: "User",
+    phone: "",
+    address1: "",
+    city: "",
+    postal_code: "",
+    tier_plan: "free",
+    billing_interval: null,
+    subscription_status: "active",
+  });
 }
 
 const AuthServiceMock: AuthService = {
