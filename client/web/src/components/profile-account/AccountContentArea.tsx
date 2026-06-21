@@ -6,8 +6,7 @@ import type { ProfileTab } from "./ProfileSidebar";
 import type { StoredAccount } from "@freshr/shared";
 import { getAccount as getCachedAccount } from "../../storage";
 import Button from "../ui/Button";
-
-const B = "#000000";
+import { Separator } from "../ui/separator";
 
 interface AccountContentAreaProps {
   activeTab: ProfileTab;
@@ -15,10 +14,7 @@ interface AccountContentAreaProps {
 
 function formatMemberSince(dateStr: string): string {
   try {
-    return new Date(dateStr).toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-    });
+    return new Date(dateStr).toLocaleDateString("en-US", { month: "long", year: "numeric" });
   } catch {
     return "—";
   }
@@ -26,35 +22,14 @@ function formatMemberSince(dateStr: string): string {
 
 function ReadOnlyRow({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ borderBottom: `2px solid ${B}`, paddingBottom: 20 }}>
-      <div
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          letterSpacing: "0.14em",
-          color: "#000000",
-          marginBottom: 8,
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.88rem",
-          color: "#000000",
-        }}
-      >
-        {value || "—"}
-      </div>
+    <div className="py-4 border-b border-border">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{label}</p>
+      <p className="text-sm text-foreground">{value || "—"}</p>
     </div>
   );
 }
 
-export default function AccountContentArea({
-  activeTab,
-}: AccountContentAreaProps) {
+export default function AccountContentArea({ activeTab }: AccountContentAreaProps) {
   const authService = useAuthService();
   const accountService = useAccountService();
   const navigate = useNavigate();
@@ -72,44 +47,24 @@ export default function AccountContentArea({
     navigate("/login");
   }
 
+  if (activeTab !== "account") return null;
+
   return (
-    <>
-      {activeTab === "account" && (
-        <>
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "1.5rem",
-              letterSpacing: "-0.02em",
-              marginBottom: 32,
-              lineHeight: 1.1,
-            }}
-          >
-            Account
-          </h2>
+    <div>
+      <h2 className="text-lg font-semibold text-foreground mb-6">Account</h2>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 0,
-              marginBottom: 40,
-            }}
-          >
-            <ReadOnlyRow label="EMAIL" value={user?.email ?? ""} />
-            <ReadOnlyRow label="PLAN" value={planLabel} />
-            <ReadOnlyRow
-              label="MEMBER SINCE"
-              value={
-                user?.created_at ? formatMemberSince(user.created_at) : "—"
-              }
-            />
-          </div>
+      <div className="flex flex-col mb-8">
+        <ReadOnlyRow label="Email" value={user?.email ?? ""} />
+        <ReadOnlyRow label="Plan" value={planLabel} />
+        <ReadOnlyRow
+          label="Member since"
+          value={user?.created_at ? formatMemberSince(user.created_at) : "—"}
+        />
+      </div>
 
-          <Button variant="danger" fullWidth onClick={handleLogout}>LOGOUT</Button>
-        </>
-      )}
-    </>
+      <Separator className="mb-6" />
+
+      <Button variant="danger" fullWidth onClick={handleLogout}>Log out</Button>
+    </div>
   );
 }

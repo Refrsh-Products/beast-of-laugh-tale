@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation, Navigate } from "react-router-dom";
+import { Menu } from "lucide-react";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
 import type { StoredAccount } from "@freshr/shared";
-import ProfileSidebar, {
-  type ProfileTab,
-} from "../components/profile-account/ProfileSidebar";
+import ProfileSidebar, { type ProfileTab } from "../components/profile-account/ProfileSidebar";
 import ProfileContentArea from "../components/profile-account/ProfileContentArea";
 import AccountContentArea from "../components/profile-account/AccountContentArea";
 import PaymentContentArea from "../components/payment/PaymentContentArea";
@@ -15,9 +14,6 @@ import { track } from "../lib/analytics";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { BP_TABLET } from "../constants/breakpoints";
 
-const B = "#000000";
-const W = "#FFFFFF";
-
 export default function ProfilePage() {
   const authService = useAuthService();
   const accountService = useAccountService();
@@ -25,14 +21,10 @@ export default function ProfilePage() {
   const user = authService.getUser();
   const [account, setAccount] = useState<StoredAccount | null>(null);
 
-  const name = account
-    ? `${account.first_name} ${account.last_name}`.trim()
-    : "";
+  const name = account ? `${account.first_name} ${account.last_name}`.trim() : "";
   const location = useLocation();
-  const initialTab =
-    (location.state as { tab?: ProfileTab } | null)?.tab ?? "profile";
+  const initialTab = (location.state as { tab?: ProfileTab } | null)?.tab ?? "profile";
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
-  const [success, setSuccess] = useState<string | null>(null);
   const isCompact = useMediaQuery(BP_TABLET);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -43,19 +35,12 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
-    if (!success) return;
-    const timer = setTimeout(() => setSuccess(null), 3000);
-    return () => clearTimeout(timer);
-  }, [success]);
-
-  useEffect(() => {
     if (activeTab === "payment") track("upgrade-plan-viewed");
   }, [activeTab]);
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
 
   const avatarLetter = (name || user?.email || "?")[0].toUpperCase();
-  // Use the URL if it exists and isn't an empty string, otherwise fallback to the letter
   const avatar =
     account?.profile_picture_url && account.profile_picture_url.trim() !== ""
       ? account.profile_picture_url
@@ -68,67 +53,28 @@ export default function ProfilePage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        background: "#f5f5f0",
-        fontFamily: "'IBM Plex Mono', monospace",
-      }}
-    >
+    <div className="min-h-dvh flex flex-col bg-background">
       {/* Top bar */}
-      <div
-        style={{
-          background: W,
-          borderBottom: `3px solid ${B}`,
-          padding: isCompact ? "12px 16px" : "16px 32px",
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
+      <div className="h-14 flex items-center gap-3 px-6 border-b border-border bg-card shrink-0">
         {isCompact && (
           <button
             onClick={() => setDrawerOpen(true)}
             aria-label="Open menu"
-            style={{
-              background: W,
-              border: `2px solid ${B}`,
-              padding: "4px 10px",
-              cursor: "pointer",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "1rem",
-              lineHeight: 1,
-              color: B,
-            }}
+            className="flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
           >
-            ☰
+            <Menu className="h-4 w-4" />
           </button>
         )}
-        <span
+        <button
           onClick={() => navigate("/dashboard")}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.textDecoration = "underline")
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
-          style={{
-            fontSize: "0.78rem",
-            fontWeight: 700,
-            color: B,
-            cursor: "pointer",
-            letterSpacing: "0.04em",
-            textDecoration: "none",
-            textUnderlineOffset: "3px",
-          }}
+          className="text-xs text-muted-foreground hover:text-foreground hover:underline underline-offset-4 transition-colors"
         >
           ← Back to dashboard
-        </span>
+        </button>
       </div>
 
       {/* Two-panel layout */}
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+      <div className="flex flex-1 min-h-0">
         {isCompact ? (
           <MobileDrawer
             open={drawerOpen}
@@ -157,37 +103,16 @@ export default function ProfilePage() {
         )}
 
         {/* Content area */}
-        <div
-          style={{
-            flex: 1,
-            padding: isCompact ? "24px 16px" : "48px",
-            overflowY: "auto",
-            display: "flex",
-            justifyContent: "center",
-            minWidth: 0,
-          }}
-        >
+        <div className="flex-1 overflow-y-auto px-8 py-8 flex justify-center min-w-0">
           <div
+            className="w-full"
             style={{
-              width: "100%",
-              maxWidth:
-                activeTab === "payment"
-                  ? 800
-                  : activeTab === "support"
-                    ? 640
-                    : 420,
+              maxWidth: activeTab === "payment" ? 800 : activeTab === "support" ? 640 : 420,
             }}
           >
-            {/* ── Profile tab content area ── */}
             <ProfileContentArea activeTab={activeTab} />
-
-            {/* ── Account tab content area ── */}
             <AccountContentArea activeTab={activeTab} />
-
-            {/* ── Payment tab content area ── */}
             <PaymentContentArea activeTab={activeTab} />
-
-            {/* ── Support tab content area ── */}
             <SupportContentArea
               activeTab={activeTab}
               defaultName={name}

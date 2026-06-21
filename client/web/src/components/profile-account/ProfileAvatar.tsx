@@ -1,5 +1,4 @@
-const G = "#84e487";
-const B = "#000000";
+import { cn } from "../../lib/utils";
 
 export default function ProfileAvatar({
   letter,
@@ -8,25 +7,13 @@ export default function ProfileAvatar({
   letter: string;
   size?: number;
 }) {
+  const sizeClass = size <= 48 ? "w-12 h-12 text-sm" : "w-20 h-20 text-xl";
   return (
     <div
-      style={{
-        width: size,
-        height: size,
-        background: G,
-        border: `3px solid ${B}`,
-        borderRadius: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontFamily: "'Syne', sans-serif",
-        fontWeight: 800,
-        fontSize: `${Math.round(size * 0.375)}px`,
-        color: B,
-        flexShrink: 0,
-        boxShadow: `4px 4px 0 ${B}`,
-        userSelect: "none",
-      }}
+      className={cn(
+        "rounded-full bg-secondary flex items-center justify-center font-semibold text-foreground select-none shrink-0",
+        sizeClass,
+      )}
     >
       {letter}
     </div>

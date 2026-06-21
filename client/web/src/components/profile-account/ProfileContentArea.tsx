@@ -4,11 +4,9 @@ import type { StoredAccount } from "@freshr/shared";
 import { getAccount as getCachedAccount } from "../../storage";
 import SettingsField from "../settings/SettingsField";
 import Button from "../ui/Button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import useAccountService from "../../services/account";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
 
 interface ProfileTabProps {
   activeTab: ProfileTab;
@@ -59,11 +57,7 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
       setEditValue(address);
       setEditAddress2(address2);
     } else {
-      const valueMap: Record<string, string> = {
-        phone,
-        city,
-        postal_code: postalCode,
-      };
+      const valueMap: Record<string, string> = { phone, city, postal_code: postalCode };
       setEditValue(valueMap[field] ?? "");
     }
     setSuccess(null);
@@ -87,9 +81,7 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
       const fn = editFirstName.trim();
       const ln = editLastName.trim();
       if (!fn || !ln) {
-        setNameError(
-          !fn ? "First name is required." : "Last name is required.",
-        );
+        setNameError(!fn ? "First name is required." : "Last name is required.");
         return;
       }
       setNameError(null);
@@ -109,8 +101,7 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
         ...account,
         phone: editingField === "phone" ? trimmed : account.phone,
         city: editingField === "city" ? trimmed : account.city,
-        postal_code:
-          editingField === "postal_code" ? trimmed : account.postal_code,
+        postal_code: editingField === "postal_code" ? trimmed : account.postal_code,
       };
       if (editingField === "phone") setPhone(trimmed);
       if (editingField === "city") setCity(trimmed);
@@ -125,289 +116,133 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
 
     try {
       await accountService.updateAccount(updated);
-      setSuccess(
-        `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} updated.`,
-      );
+      setSuccess(`${editingField.charAt(0).toUpperCase() + editingField.slice(1)} updated.`);
     } catch {
       setSuccess("Failed to save. Please try again.");
     }
   }
+
+  if (activeTab !== "profile") return null;
+
   return (
-    <>
-      {activeTab === "profile" && (
-        <>
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "1.5rem",
-              letterSpacing: "-0.02em",
-              marginBottom: 32,
-              lineHeight: 1.1,
-            }}
-          >
-            Profile
-          </h2>
+    <div>
+      <h2 className="text-lg font-semibold text-foreground mb-6">Profile</h2>
 
-          {success && (
-            <div
-              style={{
-                background: G,
-                border: `2px solid ${B}`,
-                padding: "12px 16px",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                marginBottom: 24,
-              }}
-            >
-              {success}
-            </div>
-          )}
-
-          <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-            {editingField === "name" ? (
-              <div
-                style={{
-                  borderBottom: `2px solid ${B}`,
-                  paddingBottom: 20,
-                }}
-              >
-                <label
-                  style={{
-                    display: "block",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.14em",
-                    color: "#000000",
-                    marginBottom: 8,
-                  }}
-                >
-                  NAME
-                </label>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 8,
-                  }}
-                >
-                  <input
-                    autoFocus
-                    required
-                    placeholder="First name"
-                    value={editFirstName}
-                    onChange={(e) => setEditFirstName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveEdit();
-                      if (e.key === "Escape") cancelEdit();
-                    }}
-                    onMouseEnter={(e) => {
-                      if (document.activeElement !== e.currentTarget)
-                        e.currentTarget.style.borderColor = G;
-                    }}
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.borderColor = B)
-                    }
-                    onFocus={(e) => (e.currentTarget.style.borderColor = B)}
-                    style={{
-                      border: `3px solid ${B}`,
-                      borderRadius: 0,
-                      padding: "10px 12px",
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.88rem",
-                      background: W,
-                      outline: "none",
-                      boxSizing: "border-box",
-                      transition: "border-color 0.15s",
-                    }}
-                  />
-                  <input
-                    required
-                    placeholder="Last name"
-                    value={editLastName}
-                    onChange={(e) => setEditLastName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveEdit();
-                      if (e.key === "Escape") cancelEdit();
-                    }}
-                    onMouseEnter={(e) => {
-                      if (document.activeElement !== e.currentTarget)
-                        e.currentTarget.style.borderColor = G;
-                    }}
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.borderColor = B)
-                    }
-                    onFocus={(e) => (e.currentTarget.style.borderColor = B)}
-                    style={{
-                      border: `3px solid ${B}`,
-                      borderRadius: 0,
-                      padding: "10px 12px",
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.88rem",
-                      background: W,
-                      outline: "none",
-                      boxSizing: "border-box",
-                      transition: "border-color 0.15s",
-                    }}
-                  />
-                  {nameError && (
-                    <p
-                      style={{
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.75rem",
-                        color: "#cc0000",
-                        margin: 0,
-                      }}
-                    >
-                      {nameError}
-                    </p>
-                  )}
-                  <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-                    <Button variant="green" onClick={saveEdit}>Save</Button>
-                    <Button variant="default" onClick={cancelEdit}>Cancel</Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <SettingsField
-                label="NAME"
-                value={name}
-                onEditStart={() => startEdit("name")}
-                onSave={saveEdit}
-                onCancel={cancelEdit}
-              />
-            )}
-            <SettingsField
-              label="PHONE"
-              value={editingField === "phone" ? editValue : phone}
-              isEditing={editingField === "phone"}
-              onChange={setEditValue}
-              onEditStart={() => startEdit("phone")}
-              onSave={saveEdit}
-              onCancel={cancelEdit}
-            />
-            {editingField === "address" ? (
-              <div
-                style={{
-                  borderBottom: `2px solid ${B}`,
-                  paddingBottom: 20,
-                }}
-              >
-                <label
-                  style={{
-                    display: "block",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.14em",
-                    color: "#000000",
-                    marginBottom: 8,
-                  }}
-                >
-                  ADDRESS
-                </label>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 8,
-                  }}
-                >
-                  <input
-                    autoFocus
-                    required
-                    placeholder="Address line 1"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveEdit();
-                      if (e.key === "Escape") cancelEdit();
-                    }}
-                    onMouseEnter={(e) => {
-                      if (document.activeElement !== e.currentTarget)
-                        e.currentTarget.style.borderColor = G;
-                    }}
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.borderColor = B)
-                    }
-                    onFocus={(e) => (e.currentTarget.style.borderColor = B)}
-                    style={{
-                      border: `3px solid ${B}`,
-                      borderRadius: 0,
-                      padding: "10px 12px",
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.88rem",
-                      background: W,
-                      outline: "none",
-                      boxSizing: "border-box",
-                      transition: "border-color 0.15s",
-                    }}
-                  />
-                  <input
-                    placeholder="Address line 2 (optional)"
-                    value={editAddress2}
-                    onChange={(e) => setEditAddress2(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveEdit();
-                      if (e.key === "Escape") cancelEdit();
-                    }}
-                    onMouseEnter={(e) => {
-                      if (document.activeElement !== e.currentTarget)
-                        e.currentTarget.style.borderColor = G;
-                    }}
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.borderColor = B)
-                    }
-                    onFocus={(e) => (e.currentTarget.style.borderColor = B)}
-                    style={{
-                      border: `3px solid ${B}`,
-                      borderRadius: 0,
-                      padding: "10px 12px",
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.88rem",
-                      background: W,
-                      outline: "none",
-                      boxSizing: "border-box",
-                      transition: "border-color 0.15s",
-                    }}
-                  />
-                  <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
-                    <Button variant="green" onClick={saveEdit}>Save</Button>
-                    <Button variant="default" onClick={cancelEdit}>Cancel</Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <SettingsField
-                label="ADDRESS"
-                value={[address, address2].filter(Boolean).join(", ")}
-                onEditStart={() => startEdit("address")}
-                onSave={saveEdit}
-                onCancel={cancelEdit}
-              />
-            )}
-            <SettingsField
-              label="CITY"
-              value={editingField === "city" ? editValue : city}
-              isEditing={editingField === "city"}
-              onChange={setEditValue}
-              onEditStart={() => startEdit("city")}
-              onSave={saveEdit}
-              onCancel={cancelEdit}
-            />
-            <SettingsField
-              label="POSTAL CODE"
-              value={editingField === "postal_code" ? editValue : postalCode}
-              isEditing={editingField === "postal_code"}
-              onChange={setEditValue}
-              onEditStart={() => startEdit("postal_code")}
-              onSave={saveEdit}
-              onCancel={cancelEdit}
-            />
-          </div>
-        </>
+      {success && (
+        <div className="rounded-md border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary font-medium mb-5">
+          {success}
+        </div>
       )}
-    </>
+
+      <div className="flex flex-col">
+        {/* Name — custom two-field edit */}
+        {editingField === "name" ? (
+          <div className="py-4 border-b border-border">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Name</p>
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="firstName">First name</Label>
+                <Input
+                  id="firstName"
+                  autoFocus
+                  value={editFirstName}
+                  onChange={(e) => setEditFirstName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") cancelEdit(); }}
+                  placeholder="First name"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="lastName">Last name</Label>
+                <Input
+                  id="lastName"
+                  value={editLastName}
+                  onChange={(e) => setEditLastName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") cancelEdit(); }}
+                  placeholder="Last name"
+                />
+              </div>
+              {nameError && <p className="text-xs text-destructive">{nameError}</p>}
+              <div className="flex gap-2 mt-1">
+                <Button variant="green" onClick={saveEdit}>Save</Button>
+                <Button variant="default" onClick={cancelEdit}>Cancel</Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <SettingsField label="Name" value={name} onEditStart={() => startEdit("name")} onSave={saveEdit} onCancel={cancelEdit} />
+        )}
+
+        <SettingsField
+          label="Phone"
+          value={editingField === "phone" ? editValue : phone}
+          isEditing={editingField === "phone"}
+          onChange={setEditValue}
+          onEditStart={() => startEdit("phone")}
+          onSave={saveEdit}
+          onCancel={cancelEdit}
+        />
+
+        {/* Address — custom two-field edit */}
+        {editingField === "address" ? (
+          <div className="py-4 border-b border-border">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Address</p>
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="addr1">Address line 1</Label>
+                <Input
+                  id="addr1"
+                  autoFocus
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") cancelEdit(); }}
+                  placeholder="Address line 1"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="addr2">Address line 2 <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                <Input
+                  id="addr2"
+                  value={editAddress2}
+                  onChange={(e) => setEditAddress2(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") cancelEdit(); }}
+                  placeholder="Address line 2"
+                />
+              </div>
+              <div className="flex gap-2 mt-1">
+                <Button variant="green" onClick={saveEdit}>Save</Button>
+                <Button variant="default" onClick={cancelEdit}>Cancel</Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <SettingsField
+            label="Address"
+            value={[address, address2].filter(Boolean).join(", ")}
+            onEditStart={() => startEdit("address")}
+            onSave={saveEdit}
+            onCancel={cancelEdit}
+          />
+        )}
+
+        <SettingsField
+          label="City"
+          value={editingField === "city" ? editValue : city}
+          isEditing={editingField === "city"}
+          onChange={setEditValue}
+          onEditStart={() => startEdit("city")}
+          onSave={saveEdit}
+          onCancel={cancelEdit}
+        />
+        <SettingsField
+          label="Postal code"
+          value={editingField === "postal_code" ? editValue : postalCode}
+          isEditing={editingField === "postal_code"}
+          onChange={setEditValue}
+          onEditStart={() => startEdit("postal_code")}
+          onSave={saveEdit}
+          onCancel={cancelEdit}
+        />
+      </div>
+    </div>
   );
 }

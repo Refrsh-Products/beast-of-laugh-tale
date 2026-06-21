@@ -1,6 +1,4 @@
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { cn } from "../../lib/utils";
 
 export type ProfileTab = "profile" | "account" | "payment" | "support";
 
@@ -13,41 +11,12 @@ interface ProfileSidebarProps {
   onTabChange: (tab: ProfileTab) => void;
 }
 
-function NavItem({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <div
-      onClick={onClick}
-      onMouseEnter={(e) => {
-        if (!active) (e.currentTarget as HTMLElement).style.color = B;
-      }}
-      onMouseLeave={(e) => {
-        if (!active) (e.currentTarget as HTMLElement).style.color = "#000000";
-      }}
-      style={{
-        padding: "10px 0 10px 14px",
-        borderLeft: `3px solid ${active ? B : "transparent"}`,
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: "0.75rem",
-        fontWeight: 700,
-        letterSpacing: "0.1em",
-        color: B,
-        cursor: "pointer",
-        userSelect: "none",
-        transition: "color 0.12s",
-      }}
-    >
-      {label}
-    </div>
-  );
-}
+const NAV_ITEMS: { id: ProfileTab; label: string }[] = [
+  { id: "profile", label: "Profile" },
+  { id: "account", label: "Account" },
+  { id: "payment", label: "Upgrade Plan" },
+  { id: "support", label: "Support" },
+];
 
 export default function ProfileSidebar({
   avatar,
@@ -57,126 +26,63 @@ export default function ProfileSidebar({
   activeTab,
   onTabChange,
 }: ProfileSidebarProps) {
+  const isUrl = avatar.startsWith("http");
+
   return (
-    <div
-      style={{
-        width: 220,
-        minWidth: 220,
-        background: W,
-        borderRight: `2px solid ${B}`,
-        padding: "40px 24px",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <div className="w-60 shrink-0 border-r border-border bg-card flex flex-col p-5 gap-1">
       {/* Avatar */}
-      <div
-        style={{
-          width: 60,
-          height: 60,
-          background: G,
-          border: `3px solid ${B}`,
-          borderRadius: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
-          position: "relative",
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 800,
-          fontSize: "1.4rem",
-          color: B,
-          boxShadow: `3px 3px 0 ${B}`,
-          userSelect: "none",
-          marginBottom: 16,
-          flexShrink: 0,
-        }}
-      >
-        {avatar.startsWith("http") ? (
+      <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-base font-semibold text-foreground overflow-hidden select-none shrink-0 mb-3">
+        {isUrl ? (
           <img
             src={avatar}
             alt={name}
             referrerPolicy="no-referrer"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            className="w-full h-full object-cover"
           />
         ) : (
-          avatar // This is the single letter fallback
+          avatar
         )}
       </div>
 
       {/* Name */}
-      <div
-        style={{
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 800,
-          fontSize: "1rem",
-          letterSpacing: "-0.01em",
-          lineHeight: 1.2,
-          marginBottom: 6,
-          wordBreak: "break-word",
-        }}
-      >
+      <p className="text-sm font-medium text-foreground leading-snug break-words">
         {name || "Your Name"}
-      </div>
+      </p>
 
       {/* Email */}
-      <div
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#000000",
-          marginBottom: 16,
-          wordBreak: "break-all",
-          lineHeight: 1.6,
-        }}
-      >
+      <p className="text-xs text-muted-foreground break-all leading-relaxed">
         {email}
-      </div>
+      </p>
 
       {/* Plan badge */}
-      <div
-        style={{
-          display: "inline-block",
-          border: `2px solid ${B}`,
-          padding: "4px 10px",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          letterSpacing: "0.1em",
-          background: plan === "FREE" ? W : G,
-          marginBottom: 32,
-          alignSelf: "flex-start",
-        }}
-      >
+      <span className={cn(
+        "self-start mt-1 mb-4 text-xs rounded-full px-2.5 py-0.5 border",
+        plan === "FREE"
+          ? "bg-secondary text-muted-foreground border-border"
+          : "bg-primary/10 text-primary border-primary/20",
+      )}>
         {plan} PLAN
-      </div>
+      </span>
 
-      {/* Divider */}
-      <div style={{ height: 1, background: "#e5e5e5", marginBottom: 16 }} />
+      <div className="h-px bg-border mb-2" />
 
       {/* Nav */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <NavItem
-          label="PROFILE"
-          active={activeTab === "profile"}
-          onClick={() => onTabChange("profile")}
-        />
-        <NavItem
-          label="ACCOUNT"
-          active={activeTab === "account"}
-          onClick={() => onTabChange("account")}
-        />
-        <NavItem
-          label="UPGRADE PLAN"
-          active={activeTab === "payment"}
-          onClick={() => onTabChange("payment")}
-        />
-        <NavItem
-          label="SUPPORT"
-          active={activeTab === "support"}
-          onClick={() => onTabChange("support")}
-        />
-      </div>
+      <nav className="flex flex-col gap-0.5">
+        {NAV_ITEMS.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onTabChange(item.id)}
+            className={cn(
+              "w-full text-left px-3 py-2 text-sm rounded-md transition-colors",
+              activeTab === item.id
+                ? "bg-secondary text-foreground font-medium"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50",
+            )}
+          >
+            {item.label}
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }
