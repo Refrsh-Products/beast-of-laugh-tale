@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Check } from "lucide-react";
 import type { PresentationSession } from "@freshr/shared";
 import Button from "../ui/Button";
-import { DialogContent, DialogFooter } from "../ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "../ui/dialog";
 import { cn } from "../../lib/utils";
 
 function timeAgo(isoDate: string): string {
@@ -142,7 +142,7 @@ export default function PastPresentationsColumn({
         )}
       </div>
 
-      {showConfirm && (
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent onClose={() => setShowConfirm(false)} className="max-w-xs">
           <p className="text-base font-semibold text-foreground mb-1">
             Delete {selectedIds.length} presentation{selectedIds.length > 1 ? "s" : ""}?
@@ -153,7 +153,7 @@ export default function PastPresentationsColumn({
             <Button variant="default" fullWidth onClick={() => setShowConfirm(false)}>Cancel</Button>
           </DialogFooter>
         </DialogContent>
-      )}
+      </Dialog>
     </div>
   );
 }

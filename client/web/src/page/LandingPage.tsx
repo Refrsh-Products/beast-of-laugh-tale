@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import Button from "../components/ui/Button";
@@ -12,7 +12,6 @@ import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 export default function LandingPage() {
   const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
-  const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 60);
@@ -42,7 +41,8 @@ export default function LandingPage() {
       </nav>
 
       {/* ── HERO — pulls up by nav height so LightRays covers nav area too ── */}
-      <div className="relative" style={{ marginTop: "-56px" }}>
+      {/* -mt-14 pulls hero up by nav height (h-14 = 56px) so LightRays covers the nav area */}
+      <div className="relative -mt-14">
         {/* LightRays fills nav+hero (starts behind the nav) */}
         <div className="absolute inset-0 z-0">
           <LightRays
@@ -59,7 +59,6 @@ export default function LandingPage() {
         </div>
 
         <section
-          ref={heroRef}
           className="relative z-10 min-h-dvh flex flex-col justify-center px-6 md:px-16 pt-20 pb-24 border-b border-border"
         >
 

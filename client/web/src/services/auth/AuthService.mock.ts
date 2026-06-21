@@ -10,8 +10,13 @@ import {
 } from "../../storage";
 import type { AuthService } from "@freshr/shared";
 
-// Auto-seed dev session so login is never required in mock mode
-if (!isLoggedIn() || !getUser()) {
+// Auto-seed dev session once per install so pages load without logging in.
+// Guard: only seed if no user has ever been stored by a real signup — i.e.
+// no freshr_password exists (SignupPage always writes one). This prevents
+// the seed from overwriting a real mock-mode user after they log out.
+const DEV_SEED_KEY = "freshr_dev_seeded";
+if (!localStorage.getItem(DEV_SEED_KEY) && !getPassword()) {
+  localStorage.setItem(DEV_SEED_KEY, "1");
   saveUser({
     id: "dev-user",
     email: "dev@freshr.com",

@@ -3,7 +3,7 @@ import { Check } from "lucide-react";
 import type { QuizSession } from "@freshr/shared";
 import QuizCard from "../quiz/QuizCard";
 import Button from "../ui/Button";
-import { DialogContent, DialogFooter } from "../ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "../ui/dialog";
 
 interface PreviousQuizzesColumnProps {
   quizzes: QuizSession[];
@@ -82,7 +82,7 @@ export default function PreviousQuizzesColumn({
         )}
       </div>
 
-      {showConfirm && (
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent onClose={() => setShowConfirm(false)} className="max-w-xs">
           <p className="text-base font-semibold text-foreground mb-1">
             Delete {selectedIds.length} quiz{selectedIds.length > 1 ? "zes" : ""}?
@@ -93,7 +93,7 @@ export default function PreviousQuizzesColumn({
             <Button variant="default" fullWidth onClick={() => setShowConfirm(false)}>Cancel</Button>
           </DialogFooter>
         </DialogContent>
-      )}
+      </Dialog>
     </div>
   );
 }

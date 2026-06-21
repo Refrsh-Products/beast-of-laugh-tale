@@ -132,8 +132,7 @@ export default function QuizTakingScreen({
         {/* Header */}
         <div className="bg-card border-b border-border shrink-0">
           <div
-            className="px-8 h-13"
-            style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center" }}
+            className="grid grid-cols-[1fr_auto_1fr] items-center px-8 h-13"
           >
             <span className="text-sm font-semibold text-foreground truncate">{topicLabel}</span>
             <span className="text-xs text-muted-foreground font-medium">Q {currentQ + 1} of {numQuestions}</span>

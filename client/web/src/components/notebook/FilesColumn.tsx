@@ -4,7 +4,7 @@ import type { NotebookFile } from "@freshr/shared";
 import FileItem from "./FileItem";
 import UploadConfirmModal from "./UploadConfirmModal";
 import Button from "../ui/Button";
-import { DialogContent, DialogFooter } from "../ui/dialog";
+import { Dialog, DialogContent, DialogFooter } from "../ui/dialog";
 import { ACCEPTED_FILE_TYPES } from "../../lib/constants";
 import { cn } from "../../lib/utils";
 
@@ -170,7 +170,7 @@ export default function FilesColumn({
         <UploadConfirmModal files={pendingUpload} onConfirm={confirmUpload} onCancel={() => setPendingUpload(null)} />
       )}
 
-      {showConfirm && (
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
         <DialogContent onClose={() => setShowConfirm(false)} className="max-w-xs">
           <p className="text-base font-semibold text-foreground mb-1">
             Delete {selectedIds.length} file{selectedIds.length > 1 ? "s" : ""}?
@@ -181,7 +181,7 @@ export default function FilesColumn({
             <Button variant="default" fullWidth onClick={() => setShowConfirm(false)}>Cancel</Button>
           </DialogFooter>
         </DialogContent>
-      )}
+      </Dialog>
     </div>
   );
 }
