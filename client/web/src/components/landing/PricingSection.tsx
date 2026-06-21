@@ -1,11 +1,12 @@
 import { useNavigate } from "react-router-dom";
-import { GREEN as G, BLACK as B, WHITE as W } from "../../constants/theme";
+import { Check } from "lucide-react";
 import LineWaves from "./LineWaves";
+import { cn } from "../../lib/utils";
 
 const PLANS = [
   {
     id: "free",
-    label: "BASIC",
+    label: "Basic",
     price: "0",
     originalPrice: null,
     unit: "forever",
@@ -19,13 +20,13 @@ const PLANS = [
   },
   {
     id: "monthly",
-    label: "PRO",
+    label: "Pro",
     price: "350",
     originalPrice: null,
     unit: "/ month",
     outcome: "Study without limits.",
     detail: "Full access. Cancel any time.",
-    badge: "POPULAR",
+    badge: "Popular",
     saving: null,
     features: ["Unlimited notebooks", "Unlimited AI queries", "Unlimited quizzes", "5 GB storage", "Priority support"],
     cta: "Subscribe monthly →",
@@ -33,15 +34,15 @@ const PLANS = [
   },
   {
     id: "semester",
-    label: "SCHOLAR",
+    label: "Scholar",
     price: "1,200",
     originalPrice: "1,400",
     unit: "/ 4 months",
     outcome: "Own the whole semester.",
     detail: "One payment. One less thing to think about.",
-    badge: "BEST VALUE",
+    badge: "Best Value",
     saving: "Save 200 BDT vs monthly",
-    features: ["Everything in Monthly", "10 GB storage", "Priority support"],
+    features: ["Everything in Pro", "10 GB storage", "Priority support"],
     cta: "Subscribe — one semester →",
     highlighted: true,
   },
@@ -51,272 +52,97 @@ export default function PricingSection() {
   const navigate = useNavigate();
 
   return (
-    <section
-      id="pricing"
-      style={{
-        background: B,
-        borderBottom: `3px solid ${B}`,
-        padding: "80px 0 64px",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      {/* Line Waves background */}
-      <div style={{ position: "absolute", inset: 0, zIndex: 0, opacity: 0.4 }}>
+    <section className="relative py-24 px-6 md:px-16 border-b border-border overflow-hidden bg-background">
+      {/* Subtle LineWaves background */}
+      <div className="absolute inset-0 z-0 opacity-[0.07]">
         <LineWaves
           color1="#84e487"
           color2="#84e487"
           color3="#84e487"
-          brightness={0.28}
-          speed={0.3}
-          warpIntensity={1}
-          rotation={-45}
+          brightness={0.5}
+          speed={0.2}
+          warpIntensity={0.8}
+          rotation={-30}
           edgeFadeWidth={0}
-          innerLineCount={32}
-          outerLineCount={36}
+          innerLineCount={28}
+          outerLineCount={32}
+          enableMouseInteraction={false}
         />
       </div>
-      {/* Header */}
-      <div style={{ padding: "0 clamp(16px, 5vw, 48px)", maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
-        <div
-          style={{
-            display: "inline-block",
-            background: G,
-            color: B,
-            border: `2px solid ${G}`,
-            padding: "6px 14px",
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            letterSpacing: "0.15em",
-            marginBottom: 20,
-          }}
-        >
-          ◆ Pricing
-        </div>
-        <h2
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "clamp(2rem, 4vw, 3.5rem)",
-            lineHeight: 1.05,
-            letterSpacing: "-0.02em",
-            color: W,
-            marginBottom: 12,
-          }}
-        >
-          One semester.
-          <br />
-          One price.
-          <br />
-          <span style={{ color: G }}>Total clarity.</span>
-        </h2>
-        <p
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.82rem",
-            color: "#FFFFFF",
-            marginBottom: 56,
-            maxWidth: 420,
-            lineHeight: 1.7,
-          }}
-        >
-          Built for students. Priced like it.
-          All plans include the full AI-powered RAG experience.
-        </p>
 
-        {/* Cards */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))",
-            gap: 20,
-            alignItems: "stretch",
-          }}
-        >
+      <div className="relative z-10 max-w-5xl mx-auto">
+        <div className="mb-12">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider border border-border rounded-full px-3 py-1 mb-4">
+            ◆ Pricing
+          </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-tight mb-3">
+            One semester.<br />
+            One price.<br />
+            <span className="text-primary">Total clarity.</span>
+          </h2>
+          <p className="text-sm text-muted-foreground max-w-sm leading-relaxed">
+            Built for students. Priced like it. All plans include the full AI-powered experience.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {PLANS.map((plan) => (
             <div
               key={plan.id}
-              style={{
-                background: plan.highlighted ? G : W,
-                border: `3px solid ${plan.highlighted ? B : "#333"}`,
-                padding: "32px 28px",
-                display: "flex",
-                flexDirection: "column",
-                position: "relative",
-                boxShadow: plan.highlighted ? `6px 6px 0 ${B}` : "none",
-              }}
+              className={cn(
+                "relative rounded-lg border flex flex-col p-6",
+                plan.highlighted
+                  ? "border-primary/50 bg-primary/5"
+                  : "border-border bg-card",
+              )}
             >
               {plan.badge && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: -13,
-                    left: 24,
-                    background: plan.highlighted ? B : W,
-                    color: plan.highlighted ? W : B,
-                    border: `2px solid ${plan.highlighted ? B : "#333"}`,
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.14em",
-                    padding: "3px 10px",
-                  }}
-                >
-                  {plan.badge}
+                <div className="absolute -top-3 left-4">
+                  <span className={cn(
+                    "rounded-full px-2.5 py-0.5 text-xs font-medium border",
+                    plan.highlighted
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-secondary text-foreground border-border",
+                  )}>
+                    {plan.badge}
+                  </span>
                 </div>
               )}
 
-              {/* Label */}
-              <div
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.16em",
-                  color: B,
-                  marginBottom: 16,
-                }}
-              >
-                {plan.label}
-              </div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">{plan.label}</p>
 
-              {/* Price */}
-              {plan.originalPrice && (
-                <div
-                  style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.9rem",
-                    fontWeight: 700,
-                    color: "#000000",
-                    textDecoration: "line-through",
-                    marginBottom: 2,
-                  }}
-                >
-                  ৳{plan.originalPrice}
-                </div>
-              )}
-              <div
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 800,
-                  fontSize: "2.8rem",
-                  lineHeight: 1,
-                  color: B,
-                  marginBottom: 2,
-                }}
-              >
-                ৳{plan.price}
+              <div className="mb-1">
+                {plan.originalPrice && (
+                  <p className="text-sm text-muted-foreground line-through mb-0.5">৳{plan.originalPrice}</p>
+                )}
+                <span className="text-4xl font-bold text-foreground">৳{plan.price}</span>
               </div>
-              <div
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  color: plan.highlighted ? "#1a4a1a" : B,
-                  marginBottom: plan.saving ? 6 : 20,
-                }}
-              >
-                {plan.unit}
-              </div>
+              <p className="text-xs text-muted-foreground mb-2">{plan.unit}</p>
 
               {plan.saving && (
-                <div
-                  style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: "#1a4a1a",
-                    marginBottom: 20,
-                  }}
-                >
-                  ↓ {plan.saving}
-                </div>
+                <p className="text-xs font-medium text-primary mb-4">↓ {plan.saving}</p>
               )}
 
-              {/* Outcome */}
-              <p
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  color: B,
-                  marginBottom: 6,
-                  lineHeight: 1.2,
-                }}
-              >
-                {plan.outcome}
-              </p>
-              <p
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  color: plan.highlighted ? "#1a4a1a" : B,
-                  marginBottom: 24,
-                  lineHeight: 1.65,
-                }}
-              >
-                {plan.detail}
-              </p>
+              <p className="text-sm font-semibold text-foreground mb-1">{plan.outcome}</p>
+              <p className="text-xs text-muted-foreground mb-5 leading-relaxed">{plan.detail}</p>
 
-              {/* Features */}
-              <div
-                style={{
-                  borderTop: `2px solid ${plan.highlighted ? B : "#ddd"}`,
-                  paddingTop: 16,
-                  marginBottom: 28,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 9,
-                  flex: 1,
-                }}
-              >
+              <div className="border-t border-border pt-4 mb-5 flex flex-col gap-2 flex-1">
                 {plan.features.map((f) => (
-                  <div
-                    key={f}
-                    style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.75rem",
-                      color: B,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <span style={{ fontWeight: 700, color: plan.highlighted ? B : G }}>◆</span>
+                  <div key={f} className="flex items-center gap-2 text-xs text-foreground">
+                    <Check className="h-3.5 w-3.5 text-primary shrink-0" />
                     {f}
                   </div>
                 ))}
               </div>
 
-              {/* CTA */}
               <button
                 onClick={() => navigate("/signup")}
-                style={{
-                  background: plan.highlighted ? B : "transparent",
-                  color: plan.highlighted ? W : B,
-                  border: `2px solid ${plan.highlighted ? B : "#333"}`,
-                  padding: "12px 16px",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  cursor: "pointer",
-                  width: "100%",
-                  textAlign: "center",
-                  transition: "background 0.12s, color 0.12s",
-                }}
-                onMouseEnter={(e) => {
-                  if (!plan.highlighted) {
-                    e.currentTarget.style.background = B;
-                    e.currentTarget.style.color = W;
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!plan.highlighted) {
-                    e.currentTarget.style.background = "transparent";
-                    e.currentTarget.style.color = B;
-                  }
-                }}
+                className={cn(
+                  "w-full rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
+                  plan.highlighted
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                    : "bg-secondary text-foreground border border-border hover:bg-secondary/80",
+                )}
               >
                 {plan.cta}
               </button>
@@ -324,43 +150,14 @@ export default function PricingSection() {
           ))}
         </div>
 
-        {/* Footer note */}
-        <p
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            color: "#FFFFFF",
-            marginTop: 40,
-            textAlign: "center",
-          }}
-        >
-          * Pricing in Bangladeshi Taka (BDT). Features subject to change before launch.
-        </p>
-        <p
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            color: "#FFFFFF",
-            marginTop: 8,
-            textAlign: "center",
-          }}
-        >
-          <span
+        <p className="text-xs text-muted-foreground mt-8 text-center">
+          * Pricing in Bangladeshi Taka (BDT). Features subject to change before launch.{" "}
+          <button
             onClick={() => navigate("/refund-policy")}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.textDecoration = "underline")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.textDecoration = "none")
-            }
-            style={{
-              cursor: "pointer",
-              fontWeight: 700,
-              textUnderlineOffset: 3,
-            }}
+            className="underline underline-offset-4 hover:text-foreground transition-colors"
           >
-            Read our Refund Policy →
-          </span>
+            Refund Policy →
+          </button>
         </p>
       </div>
     </section>

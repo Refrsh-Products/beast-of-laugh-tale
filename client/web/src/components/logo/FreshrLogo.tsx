@@ -1,27 +1,13 @@
 import { useNavigate } from "react-router-dom";
 
-interface FreshrLogoProps {
-  color?: string;
-}
-
-export default function FreshrLogo({ color = "#FFFFFF" }: FreshrLogoProps) {
+export default function FreshrLogo() {
   const navigate = useNavigate();
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 32,
-        left: 36,
-        fontFamily: "'Syne', sans-serif",
-        fontWeight: 800,
-        fontSize: "1.5rem",
-        letterSpacing: "-0.02em",
-        color,
-        cursor: "pointer",
-      }}
+    <button
       onClick={() => navigate("/")}
+      className="text-base font-bold text-foreground tracking-tight hover:opacity-80 transition-opacity self-start"
     >
       FRESHR
-    </div>
+    </button>
   );
 }

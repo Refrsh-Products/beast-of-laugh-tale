@@ -1,10 +1,6 @@
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { BP_PHONE } from "../../constants/breakpoints";
 
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
-
 const TESTIMONIALS = [
   {
     name: "Mushfiqur Rahman Zaed",
@@ -38,21 +34,13 @@ const TESTIMONIALS = [
   },
 ];
 
-// Row 1: columns 1-2, 3-4, 5-6. Row 2: columns 2-3, 4-5 (centered).
 const GRID_COLUMNS = ["1 / span 2", "3 / span 2", "5 / span 2", "2 / span 2", "4 / span 2"];
 
 function Stars({ count }: { count: number }) {
   return (
-    <div style={{ display: "flex", gap: 4 }}>
+    <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((i) => (
-        <span
-          key={i}
-          style={{
-            fontSize: "1.35rem",
-            color: i <= count ? G : B,
-            WebkitTextStroke: i <= count ? `1px ${B}` : "1px #ccc",
-          }}
-        >
+        <span key={i} className={i <= count ? "text-primary" : "text-border"}>
           ★
         </span>
       ))}
@@ -62,56 +50,23 @@ function Stars({ count }: { count: number }) {
 
 function TestimonialCard({
   t,
-  layoutStyle,
+  style,
 }: {
   t: (typeof TESTIMONIALS)[number];
-  layoutStyle: React.CSSProperties;
+  style?: React.CSSProperties;
 }) {
   return (
     <div
-      style={{
-        border: `3px solid ${B}`,
-        padding: "28px 24px",
-        background: W,
-        display: "flex",
-        flexDirection: "column",
-        gap: 10,
-        ...layoutStyle,
-      }}
+      className="rounded-lg border border-border bg-card p-6 flex flex-col gap-3"
+      style={style}
     >
-      <div
-        style={{
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 800,
-          fontSize: "1rem",
-          letterSpacing: "-0.01em",
-        }}
-      >
-        {t.name}
+      <div className="flex-1">
+        <p className="text-sm text-foreground leading-relaxed">"{t.quote}"</p>
       </div>
-      <div
-        style={{
-          fontSize: "0.75rem",
-          color: "#000000",
-          fontWeight: 400,
-          marginTop: -4,
-        }}
-      >
-        {t.university}
-      </div>
-      <p
-        style={{
-          fontSize: "0.78rem",
-          lineHeight: 1.85,
-          color: B,
-          margin: "8px 0 0",
-          flex: 1,
-        }}
-      >
-        {t.quote}
-      </p>
-      <div style={{ marginTop: 8 }}>
+      <div>
         <Stars count={t.stars} />
+        <p className="text-sm font-medium text-foreground mt-2">{t.name}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{t.university}</p>
       </div>
     </div>
   );
@@ -121,87 +76,32 @@ export default function TestimonialSection() {
   const isPhone = useMediaQuery(BP_PHONE);
 
   return (
-    <section
-      className="py-20 px-6 md:px-16"
-      style={{ background: "#f5f5f0", borderBottom: `3px solid ${B}` }}
-    >
+    <section className="py-24 px-6 md:px-16 border-b border-border">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div style={{ marginBottom: 52 }}>
-          <div
-            style={{
-              display: "inline-block",
-              background: B,
-              color: W,
-              border: `2px solid ${B}`,
-              padding: "6px 14px",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.15em",
-              marginBottom: 18,
-            }}
-          >
-            Testimonials
-          </div>
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "clamp(2rem, 4vw, 3.5rem)",
-              lineHeight: 1.05,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            What students
-            <br />
-            are saying.
+        <div className="mb-12">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider border border-border rounded-full px-3 py-1 mb-4">
+            ◆ Testimonials
+          </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-tight">
+            What students<br />are saying.
           </h2>
         </div>
 
         {isPhone ? (
-          /* Phone: horizontal scroll-snap carousel */
           <div
-            style={{
-              display: "flex",
-              gap: 16,
-              overflowX: "auto",
-              scrollSnapType: "x mandatory",
-              WebkitOverflowScrolling: "touch",
-              paddingBottom: 12,
-              marginLeft: -24,
-              marginRight: -24,
-              paddingLeft: 24,
-              paddingRight: 24,
-              scrollPaddingLeft: 24,
-            }}
+            className="flex gap-4 overflow-x-auto pb-3 -mx-6 px-6"
+            style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" as React.CSSStyleDeclaration["webkitOverflowScrolling"] }}
           >
             {TESTIMONIALS.map((t) => (
-              <TestimonialCard
-                key={t.name}
-                t={t}
-                layoutStyle={{
-                  flex: "0 0 auto",
-                  width: "min(85vw, 320px)",
-                  scrollSnapAlign: "start",
-                }}
-              />
+              <div key={t.name} style={{ flex: "0 0 auto", width: "min(85vw, 320px)", scrollSnapAlign: "start" }}>
+                <TestimonialCard t={t} />
+              </div>
             ))}
           </div>
         ) : (
-          /* Desktop: 6-column grid — row 1: 3 cards, row 2: 2 cards centered */
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(6, 1fr)",
-              gap: 20,
-            }}
-          >
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 16 }}>
             {TESTIMONIALS.map((t, i) => (
-              <TestimonialCard
-                key={t.name}
-                t={t}
-                layoutStyle={{ gridColumn: GRID_COLUMNS[i] }}
-              />
+              <TestimonialCard key={t.name} t={t} style={{ gridColumn: GRID_COLUMNS[i] }} />
             ))}
           </div>
         )}
