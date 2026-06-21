@@ -118,7 +118,9 @@ export default function NotebookPage() {
       try {
         const updated = await notebookService.listFiles(notebookId);
         setFiles([...updated]);
-      } catch {}
+      } catch (err) {
+        console.error("[NotebookPage] polling listFiles failed:", err);
+      }
     }, 3000);
     return () => clearInterval(interval);
   }, [hasProcessingFiles, notebookId]);
@@ -160,7 +162,6 @@ export default function NotebookPage() {
     showToast("Notebook renamed", "neutral");
   }
 
-  // this function needs comments and can be refactored better, rename it to have the word file
   async function handleUpload(uploaded: File[]) {
     setUploadProgress(uploaded.map((f) => ({ name: f.name, status: "uploading" })));
     let successCount = 0;
@@ -186,7 +187,7 @@ export default function NotebookPage() {
             );
           }
         } catch (err) {
-          const data = (err as any)?.response?.data;
+          const data = (err as { response?: { data?: { code?: string; message?: string; detail?: string } } })?.response?.data;
           const code = data?.code;
           const errMsg =
             data?.message ?? data?.detail ?? (err instanceof Error ? err.message : "Upload failed");
@@ -352,7 +353,7 @@ export default function NotebookPage() {
             );
             if (detail.notes_status === "failed") throw new Error(detail.notes_error || "Notes generation failed.");
             showToast("Notes saved to notebook", "success");
-            try { setFiles(await notebookService.listFiles(notebookId)); } catch {}
+            try { setFiles(await notebookService.listFiles(notebookId)); } catch (err) { console.error("[NotebookPage] listFiles after notes generation failed:", err); }
             return detail.notes_text;
           }}
           onUpdateTranscript={(transcriptId, fields) =>

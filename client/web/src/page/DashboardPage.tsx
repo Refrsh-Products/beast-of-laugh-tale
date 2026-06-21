@@ -220,7 +220,7 @@ export default function DashboardPage() {
       fetchUsage();
       showToast("Notebook restored", "neutral");
     } catch (err) {
-      const code = (err as any)?.response?.data?.code;
+      const code = (err as { response?: { data?: { code?: string } } })?.response?.data?.code;
       if (code === "notebook_quota_exceeded") {
         setUpgradeModal({
           title: "Notebook limit reached",
@@ -248,7 +248,7 @@ export default function DashboardPage() {
       fetchUsage();
       showToast("Notebook created");
     } catch (err) {
-      const code = (err as any)?.response?.data?.code;
+      const code = (err as { response?: { data?: { code?: string } } })?.response?.data?.code;
       if (code === "notebook_quota_exceeded") {
         setShowCreateModal(false);
         setCreateTitle("");

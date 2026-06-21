@@ -67,13 +67,16 @@ export default function LoginPage() {
           <p className="text-sm text-muted-foreground mt-1">Sign in to your account</p>
         </div>
 
-        <GoogleAuthBtn />
-
-        <div className="flex items-center gap-3">
-          <div className="flex-1 h-px bg-border" />
-          <span className="text-xs text-muted-foreground">or</span>
-          <div className="flex-1 h-px bg-border" />
-        </div>
+        {import.meta.env.VITE_USE_MOCK !== "true" && (
+          <>
+            <GoogleAuthBtn />
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-border" />
+              <span className="text-xs text-muted-foreground">or</span>
+              <div className="flex-1 h-px bg-border" />
+            </div>
+          </>
+        )}
 
         {error && <p className="text-sm text-destructive">{error}</p>}
 
