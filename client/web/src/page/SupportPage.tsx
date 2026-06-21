@@ -1,19 +1,32 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../components/ui/Button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Textarea } from "../components/ui/textarea";
 import { sendSupportEmail } from "../lib/supportEmail";
 
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
-
 const SUPPORT_EMAIL = "team@freshr.cc";
-// TODO: replace with real values
-const BUSINESS_ADDRESS_LINES = [
-  "Ground floor, Setara’s Dream, 1/11 Pallabi Mirpur",
-];
+const BUSINESS_ADDRESS_LINES = ["Ground floor, Setara's Dream, 1/11 Pallabi Mirpur"];
 const BUSINESS_PHONE = "+8801813884557 +8801873070777";
 const BUSINESS_HOURS = "Sun–Thu, 10:00–18:00 (GMT+6)";
+
+function ContactCard({
+  label,
+  accent = false,
+  children,
+}: {
+  label: string;
+  accent?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={`rounded-lg border border-border p-5 ${accent ? "bg-primary/10" : "bg-card"}`}>
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">{label}</p>
+      {children}
+    </div>
+  );
+}
 
 export default function SupportPage() {
   const navigate = useNavigate();
@@ -27,12 +40,7 @@ export default function SupportPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (
-      !fullName.trim() ||
-      !email.trim() ||
-      !mobile.trim() ||
-      !message.trim()
-    ) {
+    if (!fullName.trim() || !email.trim() || !mobile.trim() || !message.trim()) {
       setError("Please fill in every field.");
       return;
     }
@@ -44,305 +52,95 @@ export default function SupportPage() {
       setMobile("");
       setMessage("");
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Could not send your message. Please try again.",
-      );
+      setError(err instanceof Error ? err.message : "Could not send your message. Please try again.");
     } finally {
       setIsSending(false);
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    border: `3px solid ${B}`,
-    borderRadius: 0,
-    padding: "12px 14px",
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.82rem",
-    background: W,
-    outline: "none",
-    boxSizing: "border-box",
-    transition: "border-color 0.15s",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    letterSpacing: "0.12em",
-    marginBottom: 6,
-  };
-
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: W,
-        fontFamily: "'IBM Plex Mono', monospace",
-        color: B,
-      }}
-    >
-      {/* ── NAV ── */}
-      <nav
-        className="sticky top-0 z-50 flex items-center justify-between px-6 md:px-16 py-4 bg-white"
-        style={{ borderBottom: `3px solid ${B}` }}
-      >
-        <span
+    <div className="min-h-dvh bg-background text-foreground flex flex-col">
+      {/* Nav */}
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 md:px-16 h-14 border-b border-border bg-background/80 backdrop-blur-sm shrink-0">
+        <button
           onClick={() => navigate("/")}
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.5rem",
-            letterSpacing: "-0.02em",
-            cursor: "pointer",
-          }}
+          className="text-base font-bold text-foreground tracking-tight"
         >
           FRESHR
-        </span>
-        <span onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
-          <Button variant="default">← Home</Button>
-        </span>
+        </button>
+        <Button variant="default" onClick={() => navigate("/")}>← Home</Button>
       </nav>
 
-      {/* ── CONTENT ── */}
-      <div className="px-6 md:px-16 py-16">
-        <div className="max-w-6xl mx-auto">
+      {/* Content */}
+      <div className="px-6 md:px-16 py-16 flex-1">
+        <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <div style={{ marginBottom: 40 }}>
-            <div
-              style={{
-                display: "inline-block",
-                background: B,
-                color: W,
-                border: `2px solid ${B}`,
-                padding: "6px 14px",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.15em",
-                marginBottom: 18,
-              }}
-            >
-              ◆ SUPPORT
-            </div>
-            <h1
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "clamp(2.5rem, 5vw, 4.5rem)",
-                lineHeight: 1.05,
-                letterSpacing: "-0.03em",
-                marginBottom: 16,
-              }}
-            >
-              How can we
-              <br />
-              <span
-                style={{
-                  background: G,
-                  padding: "2px 10px",
-                  border: `2px solid ${B}`,
-                  display: "inline-block",
-                  marginTop: 8,
-                }}
-              >
-                help?
-              </span>
+          <div className="mb-10">
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider border border-border rounded-full px-3 py-1 mb-4">
+              ◆ Support
+            </span>
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight leading-tight mb-4">
+              How can we{" "}
+              <span className="text-primary">help?</span>
             </h1>
-            <p
-              style={{
-                fontSize: "0.85rem",
-                lineHeight: 1.9,
-                maxWidth: 560,
-              }}
-            >
-              Drop us a message and our team will get back to you. You can also
-              reach us directly using the details on the right.
+            <p className="text-sm text-muted-foreground leading-relaxed max-w-lg">
+              Drop us a message and our team will get back to you. You can also reach us directly using the details on the right.
             </p>
           </div>
 
-          <div
-            className="grid grid-cols-1 lg:grid-cols-2 gap-10"
-            style={{ alignItems: "start" }}
-          >
-            {/* ── FORM ── */}
-            <div
-              style={{
-                background: W,
-                border: `3px solid ${B}`,
-                boxShadow: `8px 8px 0 ${G}`,
-                padding: "36px 32px",
-              }}
-            >
-              <h2
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 800,
-                  fontSize: "1.5rem",
-                  letterSpacing: "-0.02em",
-                  marginBottom: 24,
-                }}
-              >
-                Send us a message
-              </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+            {/* Form */}
+            <div className="rounded-lg border border-border bg-card p-8">
+              <h2 className="text-lg font-semibold text-foreground mb-6">Send us a message</h2>
 
-              {error && (
-                <p
-                  style={{
-                    color: "#cc0000",
-                    fontSize: "0.75rem",
-                    marginBottom: 16,
-                  }}
-                >
-                  {error}
-                </p>
-              )}
+              {error && <p className="text-sm text-destructive mb-4">{error}</p>}
 
               {sent && (
-                <div
-                  style={{
-                    border: `2px solid ${B}`,
-                    background: G,
-                    padding: "12px 14px",
-                    marginBottom: 16,
-                    fontSize: "0.78rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.04em",
-                  }}
-                >
+                <div className="rounded-md border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-primary font-medium mb-4">
                   Message sent. We'll get back to you soon.
                 </div>
               )}
 
-              <form
-                onSubmit={handleSubmit}
-                style={{ display: "flex", flexDirection: "column", gap: 16 }}
-              >
-                <div>
-                  <label style={labelStyle}>FULL NAME</label>
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Jane Doe"
-                    style={inputStyle}
-                  />
+              <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="fullName">Full name</Label>
+                  <Input id="fullName" type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Jane Doe" />
                 </div>
-
-                <div>
-                  <label style={labelStyle}>EMAIL</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    style={inputStyle}
-                  />
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
                 </div>
-
-                <div>
-                  <label style={labelStyle}>MOBILE NUMBER</label>
-                  <input
-                    type="tel"
-                    value={mobile}
-                    onChange={(e) => setMobile(e.target.value)}
-                    placeholder="+880 1XXX-XXXXXX"
-                    style={inputStyle}
-                  />
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="mobile">Mobile number</Label>
+                  <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} placeholder="+880 1XXX-XXXXXX" />
                 </div>
-
-                <div>
-                  <label style={labelStyle}>MESSAGE</label>
-                  <textarea
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Tell us how we can help..."
-                    rows={6}
-                    style={{ ...inputStyle, resize: "vertical" }}
-                  />
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="message">Message</Label>
+                  <Textarea id="message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Tell us how we can help..." rows={6} />
                 </div>
-
-                <div style={{ marginTop: 8 }}>
-                  <Button
-                    variant="green"
-                    fullWidth
-                    type="submit"
-                    disabled={isSending}
-                  >
-                    {isSending ? "Sending..." : "Send message →"}
-                  </Button>
-                </div>
-
-                <p
-                  style={{
-                    fontSize: "0.7rem",
-                    color: "#555",
-                    lineHeight: 1.6,
-                    margin: 0,
-                  }}
-                >
+                <Button variant="green" fullWidth type="submit" disabled={isSending}>
+                  {isSending ? "Sending..." : "Send message →"}
+                </Button>
+                <p className="text-xs text-muted-foreground">
                   Your message will be sent directly to {SUPPORT_EMAIL}.
                 </p>
               </form>
             </div>
 
-            {/* ── CONTACT INFO ── */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <ContactCard label="EMAIL" accent>
-                <span
-                  style={{
-                    fontWeight: 800,
-                    fontSize: "1.4rem",
-                    color: B,
-
-                    textUnderlineOffset: 4,
-                    wordBreak: "break-all",
-                  }}
-                >
-                  {SUPPORT_EMAIL}
-                </span>
+            {/* Contact info */}
+            <div className="flex flex-col gap-4">
+              <ContactCard label="Email" accent>
+                <p className="text-lg font-semibold text-foreground break-all">{SUPPORT_EMAIL}</p>
               </ContactCard>
-
-              <ContactCard label="PHONE">
-                <span
-                  style={{
-                    fontFamily: "'Syne', sans-serif",
-                    fontWeight: 800,
-                    fontSize: "1.2rem",
-                    color: B,
-                    textUnderlineOffset: 4,
-                  }}
-                >
-                  {BUSINESS_PHONE}
-                </span>
+              <ContactCard label="Phone">
+                <p className="text-base font-semibold text-foreground">{BUSINESS_PHONE}</p>
               </ContactCard>
-
-              <ContactCard label="BUSINESS HOURS">
-                <p
-                  style={{
-                    fontSize: "0.95rem",
-                    lineHeight: 1.6,
-                    margin: 0,
-                    fontWeight: 600,
-                  }}
-                >
-                  {BUSINESS_HOURS}
-                </p>
+              <ContactCard label="Business hours">
+                <p className="text-sm text-foreground leading-relaxed">{BUSINESS_HOURS}</p>
               </ContactCard>
-
-              <ContactCard label="ADDRESS">
-                <address
-                  style={{
-                    fontStyle: "normal",
-                    fontSize: "0.9rem",
-                    lineHeight: 1.7,
-                    margin: 0,
-                  }}
-                >
-                  {BUSINESS_ADDRESS_LINES.map((line, i) => (
-                    <div key={i}>{line}</div>
-                  ))}
+              <ContactCard label="Address">
+                <address className="not-italic text-sm text-foreground leading-relaxed">
+                  {BUSINESS_ADDRESS_LINES.map((line, i) => <div key={i}>{line}</div>)}
                 </address>
               </ContactCard>
             </div>
@@ -350,55 +148,11 @@ export default function SupportPage() {
         </div>
       </div>
 
-      {/* ── FOOTER ── */}
-      <footer
-        className="px-6 md:px-16 py-7 flex flex-wrap items-center justify-between gap-4"
-        style={{ borderTop: `3px solid ${B}`, marginTop: 40 }}
-      >
-        <span
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.25rem",
-          }}
-        >
-          FRESHR
-        </span>
-        <span style={{ fontSize: "0.75rem" }}>© 2026 FRESHR</span>
+      {/* Footer */}
+      <footer className="px-6 md:px-16 py-6 flex flex-wrap items-center justify-between gap-4 border-t border-border">
+        <span className="text-base font-bold text-foreground">FRESHR</span>
+        <span className="text-xs text-muted-foreground">© 2026 FRESHR</span>
       </footer>
-    </div>
-  );
-}
-
-function ContactCard({
-  label,
-  accent = false,
-  children,
-}: {
-  label: string;
-  accent?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      style={{
-        background: accent ? G : W,
-        border: `3px solid ${B}`,
-        boxShadow: `6px 6px 0 ${B}`,
-        padding: "22px 24px",
-      }}
-    >
-      <div
-        style={{
-          fontSize: "0.7rem",
-          fontWeight: 700,
-          letterSpacing: "0.15em",
-          marginBottom: 8,
-        }}
-      >
-        {label}
-      </div>
-      {children}
     </div>
   );
 }

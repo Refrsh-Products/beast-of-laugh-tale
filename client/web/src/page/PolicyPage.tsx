@@ -4,9 +4,6 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { POLICY_LINKS, type PolicyKey } from "../constants/policies";
 import { getActivePolicy, type PolicyDto } from "../services/policy";
-import { BLACK as B, WHITE as W } from "../constants/theme";
-
-const LINK_BLUE = "#1a5fff";
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -68,9 +65,7 @@ export default function PolicyPage({ policy }: PolicyPageProps) {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [slug]);
 
   useEffect(() => {
@@ -79,239 +74,98 @@ export default function PolicyPage({ policy }: PolicyPageProps) {
   }, [data, fallbackTitle]);
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: W,
-        fontFamily: "'IBM Plex Mono', monospace",
-        color: B,
-        padding: "32px 24px 80px",
-        boxSizing: "border-box",
-      }}
-    >
-      <div style={{ maxWidth: 720, margin: "0 auto" }}>
-        <div
+    <div className="min-h-dvh bg-background text-foreground">
+      <div className="max-w-2xl mx-auto px-6 py-12">
+        <button
           onClick={() => navigate("/")}
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.35rem",
-            letterSpacing: "-0.02em",
-            color: B,
-            cursor: "pointer",
-            marginBottom: 32,
-            display: "inline-block",
-          }}
+          className="text-sm text-muted-foreground hover:text-foreground transition-colors mb-8 block"
         >
           ← FRESHR
-        </div>
+        </button>
 
         {loading && !data && (
-          <p style={{ fontSize: "0.85rem", color: "#555" }}>Loading…</p>
+          <p className="text-sm text-muted-foreground">Loading…</p>
         )}
 
         {error && !data && (
-          <div
-            style={{
-              border: `2px solid ${B}`,
-              padding: "16px 18px",
-              fontSize: "0.82rem",
-              lineHeight: 1.6,
-            }}
-          >
-            <p style={{ margin: "0 0 12px" }}>{error}</p>
-            <span
+          <div className="rounded-lg border border-border bg-card p-5">
+            <p className="text-sm text-muted-foreground mb-3">{error}</p>
+            <button
               onClick={() => navigate("/")}
-              style={{
-                fontWeight: 700,
-                cursor: "pointer",
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
+              className="text-sm font-medium text-foreground hover:underline underline-offset-4"
             >
               ← Back to home
-            </span>
+            </button>
           </div>
         )}
 
         {data && (
           <>
-            <h1
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "2.4rem",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-                margin: "0 0 8px",
-              }}
-            >
+            <h1 className="text-3xl font-bold text-foreground tracking-tight leading-tight mb-2">
               {data.title}
             </h1>
-            <p
-              style={{
-                fontSize: "0.72rem",
-                color: "#555",
-                letterSpacing: "0.08em",
-                marginBottom: 32,
-              }}
-            >
-              VERSION {data.version} · EFFECTIVE {data.effective_date}
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-8">
+              Version {data.version} · Effective {data.effective_date}
             </p>
 
-            <div style={{ fontSize: "0.9rem", lineHeight: 1.75 }}>
+            <div className="text-sm leading-relaxed text-foreground">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
                   h1: ({ children }) => (
-                    <h2
-                      style={{
-                        fontFamily: "'Syne', sans-serif",
-                        fontWeight: 800,
-                        fontSize: "1.5rem",
-                        letterSpacing: "-0.02em",
-                        margin: "2em 0 0.6em",
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      {children}
-                    </h2>
+                    <h2 className="text-xl font-semibold text-foreground mt-8 mb-3 leading-snug">{children}</h2>
                   ),
                   h2: ({ children }) => (
-                    <h3
-                      style={{
-                        fontFamily: "'Syne', sans-serif",
-                        fontWeight: 700,
-                        fontSize: "1.2rem",
-                        margin: "1.6em 0 0.5em",
-                        lineHeight: 1.2,
-                      }}
-                    >
-                      {children}
-                    </h3>
+                    <h3 className="text-base font-semibold text-foreground mt-6 mb-2 leading-snug">{children}</h3>
                   ),
                   h3: ({ children }) => (
-                    <h4
-                      style={{
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontWeight: 700,
-                        fontSize: "0.95rem",
-                        letterSpacing: "0.04em",
-                        margin: "1.3em 0 0.4em",
-                      }}
-                    >
-                      {children}
-                    </h4>
+                    <h4 className="text-sm font-semibold text-foreground mt-5 mb-1.5">{children}</h4>
                   ),
                   p: ({ children }) => (
-                    <p style={{ margin: "0 0 1em", lineHeight: 1.75 }}>
-                      {children}
-                    </p>
+                    <p className="mb-4 text-muted-foreground leading-relaxed">{children}</p>
                   ),
                   strong: ({ children }) => (
-                    <strong style={{ fontWeight: 700 }}>{children}</strong>
+                    <strong className="font-semibold text-foreground">{children}</strong>
                   ),
                   ul: ({ children }) => (
-                    <ul style={{ margin: "0.6em 0 1em", paddingLeft: "1.4em" }}>
-                      {children}
-                    </ul>
+                    <ul className="my-3 pl-5 list-disc text-muted-foreground">{children}</ul>
                   ),
                   ol: ({ children }) => (
-                    <ol style={{ margin: "0.6em 0 1em", paddingLeft: "1.4em" }}>
-                      {children}
-                    </ol>
+                    <ol className="my-3 pl-5 list-decimal text-muted-foreground">{children}</ol>
                   ),
                   li: ({ children }) => (
-                    <li style={{ marginBottom: "0.35em", lineHeight: 1.7 }}>
-                      {children}
-                    </li>
+                    <li className="mb-1.5 leading-relaxed">{children}</li>
                   ),
                   a: ({ children, href }) => (
-                    <a
-                      href={href}
-                      style={{
-                        color: LINK_BLUE,
-                        fontWeight: 700,
-                        textDecoration: "underline",
-                        textUnderlineOffset: 3,
-                      }}
-                    >
+                    <a href={href} className="text-primary underline underline-offset-4 hover:text-primary/80 transition-colors">
                       {children}
                     </a>
                   ),
                   table: ({ children }) => (
-                    <div
-                      style={{
-                        overflowX: "auto",
-                        margin: "1em 0 1.4em",
-                        border: `2px solid ${B}`,
-                      }}
-                    >
-                      <table
-                        style={{
-                          width: "100%",
-                          borderCollapse: "collapse",
-                          fontSize: "0.82rem",
-                        }}
-                      >
-                        {children}
-                      </table>
+                    <div className="overflow-x-auto my-4 rounded-lg border border-border">
+                      <table className="w-full border-collapse text-sm">{children}</table>
                     </div>
                   ),
                   thead: ({ children }) => (
-                    <thead style={{ background: B, color: W }}>
-                      {children}
-                    </thead>
+                    <thead className="bg-secondary text-foreground">{children}</thead>
                   ),
                   tbody: ({ children }) => <tbody>{children}</tbody>,
                   tr: ({ children }) => (
-                    <tr style={{ borderBottom: `1px solid #ddd` }}>
-                      {children}
-                    </tr>
+                    <tr className="border-b border-border">{children}</tr>
                   ),
                   th: ({ children }) => (
-                    <th
-                      style={{
-                        textAlign: "left",
-                        padding: "10px 12px",
-                        fontWeight: 700,
-                        letterSpacing: "0.04em",
-                        borderRight: `1px solid #333`,
-                      }}
-                    >
+                    <th className="text-left px-4 py-2.5 font-medium text-xs uppercase tracking-wider border-r border-border last:border-r-0">
                       {children}
                     </th>
                   ),
                   td: ({ children }) => (
-                    <td
-                      style={{
-                        padding: "10px 12px",
-                        verticalAlign: "top",
-                        borderRight: `1px solid #eee`,
-                        lineHeight: 1.6,
-                      }}
-                    >
+                    <td className="px-4 py-2.5 text-muted-foreground border-r border-border last:border-r-0 leading-relaxed">
                       {children}
                     </td>
                   ),
-                  hr: () => (
-                    <hr
-                      style={{
-                        border: "none",
-                        borderTop: `2px solid ${B}`,
-                        margin: "2em 0",
-                      }}
-                    />
-                  ),
+                  hr: () => <hr className="border-border my-8" />,
                   blockquote: ({ children }) => (
-                    <blockquote
-                      style={{
-                        borderLeft: `3px solid ${B}`,
-                        margin: "1em 0",
-                        padding: "0.4em 0 0.4em 1em",
-                        color: "#333",
-                      }}
-                    >
+                    <blockquote className="border-l-2 border-border pl-4 my-4 text-muted-foreground italic">
                       {children}
                     </blockquote>
                   ),
