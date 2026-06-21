@@ -1,6 +1,5 @@
 import { useNavigate } from "react-router-dom";
 import { Check } from "lucide-react";
-import LineWaves from "./LineWaves";
 import { cn } from "../../lib/utils";
 
 const PLANS = [
@@ -52,25 +51,8 @@ export default function PricingSection() {
   const navigate = useNavigate();
 
   return (
-    <section className="relative py-24 px-6 md:px-16 border-b border-border overflow-hidden bg-background">
-      {/* Subtle LineWaves background */}
-      <div className="absolute inset-0 z-0 opacity-[0.07]">
-        <LineWaves
-          color1="#84e487"
-          color2="#84e487"
-          color3="#84e487"
-          brightness={0.5}
-          speed={0.2}
-          warpIntensity={0.8}
-          rotation={-30}
-          edgeFadeWidth={0}
-          innerLineCount={28}
-          outerLineCount={32}
-          enableMouseInteraction={false}
-        />
-      </div>
-
-      <div className="relative z-10 max-w-5xl mx-auto">
+    <section className="py-24 px-6 md:px-16 border-b border-border bg-background">
+      <div className="max-w-5xl mx-auto">
         <div className="mb-12">
           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider border border-border rounded-full px-3 py-1 mb-4">
             ◆ Pricing
