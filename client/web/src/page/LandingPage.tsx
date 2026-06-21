@@ -28,7 +28,7 @@ export default function LandingPage() {
   return (
     <div className="bg-background text-foreground">
       {/* ── NAV + HERO wrapper — LightRays covers both ── */}
-      <div className="relative min-h-dvh overflow-hidden">
+      <div className="relative min-h-dvh">
         {/* LightRays fills the full nav+hero area */}
         <div className="absolute inset-0 z-0">
           <LightRays
@@ -45,7 +45,7 @@ export default function LandingPage() {
         </div>
 
         {/* NAV */}
-        <nav className="sticky top-0 z-50 flex items-center justify-between px-6 md:px-16 h-14 bg-background/15 backdrop-blur-sm">
+        <nav className="sticky top-0 z-50 flex items-center justify-between px-6 md:px-16 h-14 bg-background/40 backdrop-blur-sm">
           <button
             onClick={() => navigate("/")}
             className="text-base font-bold text-foreground tracking-tight"
