@@ -1,10 +1,8 @@
 import { useState } from "react";
+import { Check } from "lucide-react";
 import type { QuizSession } from "@freshr/shared";
 import QuizCard from "../quiz/QuizCard";
-
-const B = "#000000";
-const W = "#FFFFFF";
-const R = "#FF4D4D";
+import Button from "../ui/Button";
 
 interface PreviousQuizzesColumnProps {
   quizzes: QuizSession[];
@@ -24,16 +22,11 @@ export default function PreviousQuizzesColumn({
   const [showConfirm, setShowConfirm] = useState(false);
 
   function toggleSelect(id: string) {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   }
 
   function toggleBulkMode() {
-    setBulkMode((v) => {
-      if (v) setSelectedIds([]);
-      return !v;
-    });
+    setBulkMode((v) => { if (v) setSelectedIds([]); return !v; });
   }
 
   function confirmDelete() {
@@ -44,126 +37,33 @@ export default function PreviousQuizzesColumn({
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        background: W,
-        borderLeft: `2px solid ${B}`,
-        overflow: "hidden",
-        position: "relative",
-      }}
-    >
-      {/* Title */}
-      <div
-        style={{
-          height: 44,
-          padding: "0 14px",
-          borderBottom: `2px solid ${B}`,
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: "#000000",
-          }}
-        >
-          YOUR QUIZZES
-        </span>
+    <div className="flex flex-col h-full bg-card border-l border-border overflow-hidden relative">
+      <div className="h-11 flex items-center justify-between px-4 border-b border-border shrink-0">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Your Quizzes</span>
 
-        {/* Bulk controls — only shown when quizzes exist */}
         {quizzes.length > 0 && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-            }}
-          >
+          <div className="flex items-center gap-2">
             {bulkMode && selectedIds.length > 0 && (
-              <button
-                onClick={() => setShowConfirm(true)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translate(-2px, -2px)";
-                  e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "none";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-                style={{
-                  background: R,
-                  color: W,
-                  border: `1.5px solid ${B}`,
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  padding: "3px 8px",
-                  cursor: "pointer",
-                  letterSpacing: "0.04em",
-                  whiteSpace: "nowrap",
-                  transition: "transform 0.15s, box-shadow 0.15s",
-                }}
-              >
+              <Button variant="danger" onClick={() => setShowConfirm(true)}>
                 Delete ({selectedIds.length})
-              </button>
+              </Button>
             )}
-            <div
+            <button
               onClick={toggleBulkMode}
               title="Bulk delete"
-              style={{
-                width: 16,
-                height: 16,
-                border: `2px solid ${R}`,
-                background: bulkMode ? R : "transparent",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                transition: "background 0.12s",
-              }}
+              className={`w-4 h-4 rounded-sm border border-destructive/50 flex items-center justify-center transition-colors ${bulkMode ? "bg-destructive/20" : "hover:bg-destructive/10"}`}
             >
-              {bulkMode && (
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path
-                    d="M1.5 5l2.5 2.5 4.5-5"
-                    stroke={W}
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              )}
-            </div>
+              {bulkMode && <Check className="h-2.5 w-2.5 text-destructive" />}
+            </button>
           </div>
         )}
       </div>
 
-      {/* Content */}
-      <div style={{ flex: 1, overflowY: "auto" }}>
+      <div className="flex-1 overflow-y-auto">
         {quizzes.length === 0 ? (
-          <div style={{ padding: "32px 16px", textAlign: "center" }}>
-            <p
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                color: "#000000",
-                lineHeight: 1.8,
-                margin: 0,
-              }}
-            >
-              No quizzes yet.
-              <br />
-              Generate your first one.
+          <div className="py-8 px-4 text-center">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              No quizzes yet.<br />Generate your first one.
             </p>
           </div>
         ) : (
@@ -181,103 +81,16 @@ export default function PreviousQuizzesColumn({
         )}
       </div>
 
-      {/* Bulk delete confirmation modal */}
       {showConfirm && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 2000,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <div
-            style={{
-              background: W,
-              border: `2px solid ${B}`,
-              boxShadow: `6px 6px 0 ${B}`,
-              padding: "28px 32px",
-              maxWidth: 300,
-              width: "90%",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "1rem",
-                marginBottom: 8,
-              }}
-            >
-              Delete {selectedIds.length} quiz
-              {selectedIds.length > 1 ? "zes" : ""}?
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-xs rounded-lg border border-border bg-card p-6 shadow-xl">
+            <p className="text-base font-semibold text-foreground mb-1">
+              Delete {selectedIds.length} quiz{selectedIds.length > 1 ? "zes" : ""}?
             </p>
-            <p
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                color: "#000000",
-                marginBottom: 24,
-                lineHeight: 1.5,
-              }}
-            >
-              This cannot be undone.
-            </p>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button
-                onClick={confirmDelete}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translate(-3px, -3px)";
-                  e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "none";
-                  e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
-                }}
-                style={{
-                  flex: 1,
-                  background: R,
-                  color: W,
-                  border: `2px solid ${B}`,
-                  boxShadow: `3px 3px 0 ${B}`,
-                  padding: "10px",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontWeight: 700,
-                  fontSize: "0.75rem",
-                  cursor: "pointer",
-                  transition: "transform 0.15s, box-shadow 0.15s",
-                }}
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => setShowConfirm(false)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translate(-3px, -3px)";
-                  e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "none";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-                style={{
-                  flex: 1,
-                  background: W,
-                  color: B,
-                  border: `2px solid ${B}`,
-                  padding: "10px",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontWeight: 700,
-                  fontSize: "0.75rem",
-                  cursor: "pointer",
-                  transition: "transform 0.15s, box-shadow 0.15s",
-                }}
-              >
-                Cancel
-              </button>
+            <p className="text-sm text-muted-foreground mb-5">This cannot be undone.</p>
+            <div className="flex gap-2">
+              <Button variant="danger" fullWidth onClick={confirmDelete}>Delete</Button>
+              <Button variant="default" fullWidth onClick={() => setShowConfirm(false)}>Cancel</Button>
             </div>
           </div>
         </div>

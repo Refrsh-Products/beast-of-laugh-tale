@@ -1,27 +1,10 @@
 import { useState } from "react";
-import type { QuizDifficulty } from "@freshr/shared";
-import type {
-  QuizGenerateOptions,
-  NotebookTopic,
-} from "@freshr/shared";
+import type { QuizDifficulty, QuizGenerateOptions, NotebookTopic } from "@freshr/shared";
 import QuizTopicChip from "../quiz/QuizTopicChip";
 import Dropdown from "../ui/Dropdown";
 import Divider from "../quiz/Divider";
 
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
-const COLLAPSED_MAX = 4; // Number of topics to show when topic chip is collapsed
-
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontFamily: "'IBM Plex Mono', monospace",
-  fontSize: "0.75rem",
-  fontWeight: 700,
-  letterSpacing: "0.12em",
-  color: "#000000",
-  marginBottom: 6,
-};
+const COLLAPSED_MAX = 4;
 
 interface QuizColumnProps {
   topics: NotebookTopic[];
@@ -45,15 +28,11 @@ export default function QuizColumn({
   const [timeLimit, setTimeLimit] = useState<number | null>(null);
 
   const canGenerate = !isGenerating;
-
-  const isAllTopicsMode =
-    selectedTopics.length === 0 && prompt.trim().length === 0;
+  const isAllTopicsMode = selectedTopics.length === 0 && prompt.trim().length === 0;
 
   function toggleTopic(topic: NotebookTopic) {
     setSelectedTopics((prev) =>
-      prev.some((t) => t.id === topic.id)
-        ? prev.filter((t) => t.id !== topic.id)
-        : [...prev, topic],
+      prev.some((t) => t.id === topic.id) ? prev.filter((t) => t.id !== topic.id) : [...prev, topic],
     );
   }
 
@@ -69,133 +48,42 @@ export default function QuizColumn({
     });
   }
 
-  // Collapsed preview: selected topics first, then unselected, up to COLLAPSED_MAX
   const selectedIds = new Set(selectedTopics.map((t) => t.id));
   const previewTopics = topics.slice(0, COLLAPSED_MAX);
-
   const hiddenCount = topics.length - COLLAPSED_MAX;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        background: "#f5f5f0",
-        overflow: "hidden",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          height: 44,
-          padding: "0 16px",
-          borderBottom: `2px solid ${B}`,
-          background: W,
-          display: "flex",
-          alignItems: "center",
-          flexShrink: 0,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: "#000000",
-          }}
-        >
-          QUIZ GENERATOR
-        </span>
+    <div className="flex flex-col h-full bg-background overflow-hidden">
+      <div className="h-11 flex items-center px-4 border-b border-border bg-card shrink-0">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Quiz Generator</span>
       </div>
 
-      {/* Scrollable content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "36px 32px 24px" }}>
-        <div style={{ maxWidth: 580, margin: "0 auto" }}>
-          {/* Title */}
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "1.4rem",
-              color: B,
-              margin: "0 0 28px",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Generate a Quiz
-          </h2>
+      <div className="flex-1 overflow-y-auto px-8 py-8">
+        <div className="max-w-xl mx-auto">
+          <h2 className="text-lg font-semibold text-foreground mb-6">Generate a Quiz</h2>
 
-          {/* Topics section */}
-          <div style={{ marginBottom: 4 }}>
-            {/* Label row — shows × Collapse only when expanded */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: 10,
-              }}
-            >
-              <span style={labelStyle}>TOPICS</span>
+          {/* Topics */}
+          <div className="mb-1">
+            <div className="flex items-center justify-between mb-3">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Topics</label>
               {topicsExpanded && (
-                <span
+                <button
                   onClick={() => setTopicsExpanded(false)}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color = "#000000")
-                  }
-                  style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    color: "#000000",
-                    cursor: "pointer",
-                    userSelect: "none",
-                  }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                   × Collapse
-                </span>
+                </button>
               )}
             </div>
 
             {isLoadingTopics ? (
-              <p
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  color: "#000000",
-                  margin: 0,
-                }}
-              >
-                Loading topics...
-              </p>
+              <p className="text-xs text-muted-foreground">Loading topics...</p>
             ) : topics.length === 0 ? (
-              <p
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  color: "#000000",
-                  margin: 0,
-                  lineHeight: 1.6,
-                }}
-              >
+              <p className="text-xs text-muted-foreground leading-relaxed">
                 No topics found. Upload files to your notebook first.
               </p>
             ) : topicsExpanded ? (
-              // Expanded: scrollable box, full chip labels, no max-width
-              <div
-                style={{
-                  border: `2px solid ${B}`,
-                  background: W,
-                  maxHeight: 130,
-                  overflowY: "auto",
-                  padding: "10px 12px",
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 6,
-                }}
-              >
+              <div className="border border-border bg-secondary/20 rounded-md max-h-32 overflow-y-auto p-2.5 flex flex-wrap gap-1.5">
                 {topics.map((topic) => (
                   <QuizTopicChip
                     key={topic.id}
@@ -207,126 +95,56 @@ export default function QuizColumn({
                 ))}
               </div>
             ) : (
-              // Collapsed: up to 8 compact chips, then +x more button
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 6,
-                  alignItems: "center",
-                }}
-              >
+              <div className="flex flex-wrap gap-1.5 items-center">
                 {previewTopics.map((topic) => (
                   <QuizTopicChip
                     key={topic.id}
                     label={topic.name}
                     selected={selectedIds.has(topic.id)}
                     onToggle={() => toggleTopic(topic)}
-                    compact={true}
+                    compact
                   />
                 ))}
                 {hiddenCount > 0 && (
-                  <span
+                  <button
                     onClick={() => setTopicsExpanded(true)}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.color = "#000000")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.color = "#000000")
-                    }
-                    style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.75rem",
-                      color: "#000000",
-                      textDecoration: "underline",
-                      textUnderlineOffset: "3px",
-                      cursor: "pointer",
-                      userSelect: "none",
-                    }}
+                    className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4 transition-colors"
                   >
                     +{hiddenCount} more
-                  </span>
+                  </button>
                 )}
               </div>
             )}
 
-            {selectedTopics.length > 0 ? (
-              <p
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  color: "#000000",
-                  margin: "8px 0 0",
-                }}
-              >
-                {selectedTopics.length} topic
-                {selectedTopics.length > 1 ? "s" : ""} selected
-              </p>
-            ) : (
-              topics.length > 0 && (
-                <p
-                  style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    color: "#000000",
-                    margin: "8px 0 0",
-                  }}
-                >
-                  No topics selected — quiz will cover all topics
-                </p>
-              )
-            )}
+            <p className="text-xs text-muted-foreground mt-2">
+              {selectedTopics.length > 0
+                ? `${selectedTopics.length} topic${selectedTopics.length > 1 ? "s" : ""} selected`
+                : topics.length > 0
+                  ? "No topics selected — quiz will cover all topics"
+                  : ""}
+            </p>
           </div>
 
           <Divider />
 
-          {/* Prompt section */}
-          <div>
-            <label style={labelStyle}>
-              OR DESCRIBE WHAT YOU WANT TO BE QUIZZED ON
+          <div className="mb-1">
+            <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              Or describe what you want to be quizzed on
             </label>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
               placeholder="e.g. Focus on the differences between mitosis and meiosis..."
               rows={3}
-              onMouseEnter={(e) => {
-                if (document.activeElement !== e.currentTarget)
-                  e.currentTarget.style.borderColor = G;
-              }}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
-              onFocus={(e) => (e.currentTarget.style.borderColor = B)}
-              style={{
-                width: "100%",
-                border: `2px solid ${B}`,
-                borderRadius: 0,
-                padding: "10px 12px",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.78rem",
-                background: W,
-                outline: "none",
-                resize: "vertical",
-                boxSizing: "border-box",
-                transition: "border-color 0.15s",
-                lineHeight: 1.6,
-                color: B,
-              }}
+              className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground resize-vertical transition-colors leading-relaxed"
             />
           </div>
 
           <Divider />
 
-          {/* Settings — one row: Questions | Difficulty | Timer | Time Limit */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr 1fr 1fr",
-              gap: 16,
-            }}
-          >
-            {/* Questions */}
+          <div className="grid grid-cols-4 gap-4">
             <div>
-              <label style={labelStyle}>QUESTIONS</label>
+              <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Questions</label>
               <Dropdown
                 value={String(questionCount)}
                 onChange={(v) => setQuestionCount(Number(v))}
@@ -339,10 +157,8 @@ export default function QuizColumn({
                 ]}
               />
             </div>
-
-            {/* Difficulty */}
             <div>
-              <label style={labelStyle}>DIFFICULTY</label>
+              <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Difficulty</label>
               <Dropdown
                 value={difficulty}
                 onChange={(v) => setDifficulty(v as QuizDifficulty)}
@@ -354,20 +170,13 @@ export default function QuizColumn({
                 ]}
               />
             </div>
-
-            {/* Mode */}
             <div>
-              <label style={labelStyle}>MODE</label>
+              <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Mode</label>
               <Dropdown
                 value={quizType === "TIMED" ? "yes" : "no"}
                 onChange={(v) => {
-                  if (v === "yes") {
-                    setQuizType("TIMED");
-                    setTimeLimit(5);
-                  } else {
-                    setQuizType("PRACTICE");
-                    setTimeLimit(null);
-                  }
+                  if (v === "yes") { setQuizType("TIMED"); setTimeLimit(5); }
+                  else { setQuizType("PRACTICE"); setTimeLimit(null); }
                 }}
                 placeholder="Practice"
                 options={[
@@ -376,10 +185,8 @@ export default function QuizColumn({
                 ]}
               />
             </div>
-
-            {/* Time Limit — always visible, disabled when no timer */}
             <div>
-              <label style={{ ...labelStyle, color: B }}>TIME LIMIT</label>
+              <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Time Limit</label>
               <Dropdown
                 value={timeLimit !== null ? String(timeLimit) : ""}
                 onChange={(v) => setTimeLimit(v === "" ? null : Number(v))}
@@ -397,63 +204,13 @@ export default function QuizColumn({
         </div>
       </div>
 
-      {/* Bottom bar — pinned Generate button */}
-      <div
-        style={{
-          borderTop: `2px solid ${B}`,
-          padding: "16px 32px",
-          background: W,
-          display: "flex",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
+      <div className="border-t border-border px-8 py-4 bg-card flex justify-center shrink-0">
         <button
           onClick={handleGenerate}
           disabled={!canGenerate}
-          onMouseEnter={(e) => {
-            if (canGenerate) {
-              e.currentTarget.style.transform = "translate(-3px, -3px)";
-              e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`;
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "none";
-            e.currentTarget.style.boxShadow = canGenerate
-              ? `4px 4px 0 ${B}`
-              : "none";
-          }}
-          onMouseDown={(e) => {
-            if (canGenerate) {
-              e.currentTarget.style.transform = "translate(2px, 2px)";
-              e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`;
-            }
-          }}
-          onMouseUp={(e) => {
-            if (canGenerate) {
-              e.currentTarget.style.transform = "translate(-3px, -3px)";
-              e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`;
-            }
-          }}
-          style={{
-            background: canGenerate ? G : "#eee",
-            color: B,
-            border: `2px solid ${canGenerate ? B : "#ccc"}`,
-            boxShadow: canGenerate ? `4px 4px 0 ${B}` : "none",
-            padding: "14px 40px",
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontWeight: 700,
-            fontSize: "0.82rem",
-            letterSpacing: "0.06em",
-            cursor: canGenerate ? "pointer" : "not-allowed",
-            transition: "transform 0.15s, box-shadow 0.15s",
-          }}
+          className="rounded-md bg-primary px-8 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {isGenerating
-            ? "Generating..."
-            : isAllTopicsMode
-              ? "Generate from Entire Notebook →"
-              : "Generate Quiz →"}
+          {isGenerating ? "Generating..." : isAllTopicsMode ? "Generate from Entire Notebook →" : "Generate Quiz →"}
         </button>
       </div>
     </div>

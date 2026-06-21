@@ -1,8 +1,4 @@
-import { useEffect, useState } from "react";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { cn } from "../../../lib/utils";
 
 export default function NavButton({
   onClick,
@@ -15,72 +11,18 @@ export default function NavButton({
   green?: boolean;
   children: React.ReactNode;
 }) {
-  const [hovered, setHovered] = useState(false);
-  const [pressed, setPressed] = useState(false);
-
-  // Reset hover/press when disabled changes (e.g. Prev becomes enabled on Q2)
-  useEffect(() => {
-    setHovered(false);
-    setPressed(false);
-  }, [disabled]);
-
-  const restingShadow = green ? `4px 4px 0 ${B}` : `3px 3px 0 ${B}`;
-  const hoverShadow = green ? `7px 7px 0 ${B}` : `5px 5px 0 ${B}`;
-  const hoverTranslate = green
-    ? "translate(-3px, -3px)"
-    : "translate(-2px, -2px)";
-
-  const shadow = disabled
-    ? "none"
-    : pressed
-      ? `2px 2px 0 ${B}`
-      : hovered
-        ? hoverShadow
-        : restingShadow;
-
-  const transform = disabled
-    ? "none"
-    : pressed
-      ? "translate(2px, 2px)"
-      : hovered
-        ? hoverTranslate
-        : "none";
-
   return (
     <button
       disabled={disabled}
-      onClick={
+      onClick={disabled ? undefined : onClick}
+      className={cn(
+        "w-52 px-8 py-3 rounded-md text-sm font-medium transition-colors whitespace-nowrap",
         disabled
-          ? undefined
-          : () => {
-              setHovered(false);
-              setPressed(false);
-              onClick();
-            }
-      }
-      onMouseEnter={() => !disabled && setHovered(true)}
-      onMouseLeave={() => {
-        setHovered(false);
-        setPressed(false);
-      }}
-      onMouseDown={() => !disabled && setPressed(true)}
-      onMouseUp={() => setPressed(false)}
-      style={{
-        padding: "12px 32px",
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontWeight: 700,
-        fontSize: "0.82rem",
-        letterSpacing: "0.06em",
-        border: `2px solid ${disabled ? "#ccc" : B}`,
-        background: disabled ? "#eee" : green ? G : W,
-        color: B,
-        boxShadow: shadow,
-        transform,
-        cursor: disabled ? "not-allowed" : "pointer",
-        transition: "transform 0.15s, box-shadow 0.15s",
-        width: 210,
-        whiteSpace: "nowrap",
-      }}
+          ? "bg-secondary/50 text-muted-foreground cursor-not-allowed"
+          : green
+            ? "bg-primary text-primary-foreground hover:bg-primary/90"
+            : "bg-secondary text-foreground border border-border hover:bg-secondary/80",
+      )}
     >
       {children}
     </button>

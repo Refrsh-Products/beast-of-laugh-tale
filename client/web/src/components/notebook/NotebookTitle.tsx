@@ -1,7 +1,5 @@
 import { useState, useRef } from "react";
-
-const G = "#84e487";
-const B = "#000000";
+import { Pencil } from "lucide-react";
 
 interface NotebookTitleProps {
   title: string;
@@ -36,85 +34,26 @@ export default function NotebookTitle({ title, onSave }: NotebookTitleProps) {
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            confirmEdit();
-          }
-          if (e.key === "Escape") {
-            escapeRef.current = true;
-            e.currentTarget.blur();
-          }
+          if (e.key === "Enter") { e.preventDefault(); confirmEdit(); }
+          if (e.key === "Escape") { escapeRef.current = true; e.currentTarget.blur(); }
         }}
         onBlur={() => {
-          if (escapeRef.current) {
-            escapeRef.current = false;
-            cancelEdit();
-          } else {
-            confirmEdit();
-          }
+          if (escapeRef.current) { escapeRef.current = false; cancelEdit(); }
+          else confirmEdit();
         }}
-        style={{
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 800,
-          fontSize: "1.2rem",
-          letterSpacing: "-0.02em",
-          border: "none",
-          borderBottom: `2px solid ${G}`,
-          outline: "none",
-          background: "transparent",
-          padding: "2px 4px",
-          minWidth: 0,
-          width: "100%",
-          maxWidth: 320,
-          color: B,
-        }}
+        className="bg-transparent border-0 border-b border-primary text-sm font-medium text-foreground outline-none py-0.5 w-full max-w-xs text-center"
       />
     );
   }
 
   return (
-    <div
+    <button
       onClick={startEdit}
       title="Click to rename"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        cursor: "pointer",
-      }}
+      className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors group"
     >
-      <span
-        style={{
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 800,
-          fontSize: "1.2rem",
-          letterSpacing: "-0.02em",
-          color: B,
-        }}
-      >
-        {title}
-      </span>
-      {/* Pencil icon */}
-      <svg
-        width="14"
-        height="14"
-        viewBox="0 0 14 14"
-        fill="none"
-        style={{ opacity: 0.4, flexShrink: 0 }}
-      >
-        <path
-          d="M9.5 2.5 11.5 4.5 4.5 11.5H2.5V9.5L9.5 2.5Z"
-          stroke={B}
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-        <path
-          d="M8 4 10 6"
-          stroke={B}
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-      </svg>
-    </div>
+      <span>{title}</span>
+      <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+    </button>
   );
 }

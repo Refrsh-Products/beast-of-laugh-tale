@@ -2,10 +2,8 @@ import { useState } from "react";
 import type { NotebookTopic } from "@freshr/shared";
 import QuizTopicChip from "../quiz/QuizTopicChip";
 import Dropdown from "../ui/Dropdown";
+import { cn } from "../../lib/utils";
 
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
 const COLLAPSED_MAX = 4;
 
 type PresentationTheme = "freshr" | "minimal" | "dark" | "academic" | "serif";
@@ -18,95 +16,32 @@ const THEMES: Record<PresentationTheme, { label: string; bg: string; text: strin
   serif:    { label: "Serif",    bg: "#faf7f2", text: "#3b2f1e", accent: "#8b6a1f" },
 };
 
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontFamily: "'IBM Plex Mono', monospace",
-  fontSize: "0.75rem",
-  fontWeight: 700,
-  letterSpacing: "0.12em",
-  color: "#000000",
-  marginBottom: 6,
-};
-
 function ThemeCard({
-  themeKey,
-  selected,
-  onClick,
-}: {
-  themeKey: PresentationTheme;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  const [hovered, setHovered] = useState(false);
+  themeKey, selected, onClick,
+}: { themeKey: PresentationTheme; selected: boolean; onClick: () => void }) {
   const t = THEMES[themeKey];
   const isFreshr = themeKey === "freshr";
   const isDark = themeKey === "dark";
 
-  const shadow = selected
-    ? hovered ? `6px 6px 0 ${B}` : `4px 4px 0 ${B}`
-    : hovered ? `4px 4px 0 ${B}` : "none";
-
   return (
-    <div
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{ cursor: "pointer", userSelect: "none" }}
-    >
+    <button onClick={onClick} type="button" className="text-left w-full">
       <div
-        style={{
-          width: "100%",
-          aspectRatio: "16 / 9",
-          border: `2px solid ${selected || hovered ? B : "#d0d0d0"}`,
-          background: t.bg,
-          boxSizing: "border-box",
-          display: "flex",
-          overflow: "hidden",
-          boxShadow: shadow,
-          transform: hovered ? "translate(-2px, -2px)" : "none",
-          transition: "transform 0.1s, box-shadow 0.1s, border-color 0.1s",
-        }}
-      >
-        {isFreshr && (
-          <div style={{ width: 7, background: t.accent, flexShrink: 0 }} />
+        className={cn(
+          "w-full overflow-hidden rounded border-2 transition-all",
+          selected ? "border-primary shadow-md" : "border-border hover:border-primary/50",
         )}
+        style={{ aspectRatio: "16/9", background: t.bg, display: "flex" }}
+      >
+        {isFreshr && <div style={{ width: 6, background: t.accent, flexShrink: 0 }} />}
         <div style={{ flex: 1, padding: "8px 10px", display: "flex", flexDirection: "column", gap: 4 }}>
-          <div
-            style={{
-              height: 4,
-              width: "55%",
-              background: isDark ? t.accent : isFreshr ? B : t.accent,
-              borderRadius: 1,
-            }}
-          />
+          <div style={{ height: 4, width: "55%", background: isDark ? t.accent : isFreshr ? "#000" : t.accent, borderRadius: 1 }} />
           {[78, 62, 70].map((w, i) => (
-            <div
-              key={i}
-              style={{
-                height: 3,
-                width: `${w}%`,
-                background: t.text,
-                opacity: isDark ? 0.5 : 0.22,
-                borderRadius: 1,
-              }}
-            />
+            <div key={i} style={{ height: 3, width: `${w}%`, background: t.text, opacity: isDark ? 0.5 : 0.22, borderRadius: 1 }} />
           ))}
         </div>
       </div>
-
-      <span
-        style={{
-          display: "block",
-          marginTop: 6,
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          fontWeight: selected ? 700 : 400,
-          color: B,
-        }}
-      >
-        {t.label}
-      </span>
-    </div>
+      <span className={cn("block mt-1.5 text-xs text-foreground", selected && "font-medium")}>{t.label}</span>
+    </button>
   );
 }
 
@@ -143,9 +78,7 @@ export default function PresentationColumn({
 
   function toggleTopic(topic: NotebookTopic) {
     setSelectedTopics((prev) =>
-      prev.some((t) => t.id === topic.id)
-        ? prev.filter((t) => t.id !== topic.id)
-        : [...prev, topic],
+      prev.some((t) => t.id === topic.id) ? prev.filter((t) => t.id !== topic.id) : [...prev, topic],
     );
   }
 
@@ -159,211 +92,92 @@ export default function PresentationColumn({
   const hiddenCount = topics.length - COLLAPSED_MAX;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        background: "#f5f5f0",
-        overflow: "hidden",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          height: 44,
-          padding: "0 16px",
-          borderBottom: `2px solid ${B}`,
-          background: W,
-          display: "flex",
-          alignItems: "center",
-          flexShrink: 0,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: "#000000",
-          }}
-        >
-          PRESENTATION GENERATOR
-        </span>
+    <div className="flex flex-col h-full bg-background overflow-hidden">
+      <div className="h-11 flex items-center px-4 border-b border-border bg-card shrink-0">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Presentation Generator</span>
       </div>
 
-      {/* Scrollable content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "28px 32px 24px" }}>
-        <div style={{ maxWidth: 580, margin: "0 auto" }}>
-
-          {/* Title */}
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "1.4rem",
-              color: B,
-              margin: "0 0 24px",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Generate a Presentation
-          </h2>
+      <div className="flex-1 overflow-y-auto px-8 py-8">
+        <div className="max-w-xl mx-auto space-y-5">
+          <h2 className="text-lg font-semibold text-foreground">Generate a Presentation</h2>
 
           {/* Topics */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <span style={labelStyle}>TOPICS</span>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Topics</label>
               {topicsExpanded && (
-                <span
-                  onClick={() => setTopicsExpanded(false)}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
-                  style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    color: "#000000",
-                    cursor: "pointer",
-                    userSelect: "none",
-                  }}
-                >
+                <button onClick={() => setTopicsExpanded(false)} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
                   × Collapse
-                </span>
+                </button>
               )}
             </div>
 
             {isLoadingTopics ? (
-              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", color: "#000000", margin: 0 }}>
-                Loading topics...
-              </p>
+              <p className="text-xs text-muted-foreground">Loading topics...</p>
             ) : topics.length === 0 ? (
-              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", color: "#000000", margin: 0, lineHeight: 1.6 }}>
-                No topics found. Upload files to your notebook first.
-              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">No topics found. Upload files to your notebook first.</p>
             ) : topicsExpanded ? (
-              <div
-                style={{
-                  border: `2px solid ${B}`,
-                  background: W,
-                  maxHeight: 120,
-                  overflowY: "auto",
-                  padding: "8px 10px",
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 5,
-                }}
-              >
+              <div className="border border-border rounded-md bg-secondary/20 max-h-28 overflow-y-auto p-2.5 flex flex-wrap gap-1.5">
                 {topics.map((topic) => (
-                  <QuizTopicChip
-                    key={topic.id}
-                    label={topic.name}
-                    selected={selectedIds.has(topic.id)}
-                    onToggle={() => toggleTopic(topic)}
-                    compact={false}
-                  />
+                  <QuizTopicChip key={topic.id} label={topic.name} selected={selectedIds.has(topic.id)} onToggle={() => toggleTopic(topic)} compact={false} />
                 ))}
               </div>
             ) : (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 5, alignItems: "center" }}>
+              <div className="flex flex-wrap gap-1.5 items-center">
                 {previewTopics.map((topic) => (
-                  <QuizTopicChip
-                    key={topic.id}
-                    label={topic.name}
-                    selected={selectedIds.has(topic.id)}
-                    onToggle={() => toggleTopic(topic)}
-                    compact={true}
-                  />
+                  <QuizTopicChip key={topic.id} label={topic.name} selected={selectedIds.has(topic.id)} onToggle={() => toggleTopic(topic)} compact />
                 ))}
                 {hiddenCount > 0 && (
-                  <span
-                    onClick={() => setTopicsExpanded(true)}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = "#000000")}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
-                    style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.75rem",
-                      color: "#000000",
-                      textDecoration: "underline",
-                      textUnderlineOffset: "3px",
-                      cursor: "pointer",
-                      userSelect: "none",
-                    }}
-                  >
+                  <button onClick={() => setTopicsExpanded(true)} className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4">
                     +{hiddenCount} more
-                  </span>
+                  </button>
                 )}
               </div>
             )}
 
-            {selectedTopics.length > 0 ? (
-              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", color: "#000000", margin: "6px 0 0" }}>
-                {selectedTopics.length} topic{selectedTopics.length > 1 ? "s" : ""} selected
-              </p>
-            ) : topics.length > 0 && (
-              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", color: "#000000", margin: "6px 0 0" }}>
-                No topics selected — presentation will cover all topics
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground mt-1.5">
+              {selectedTopics.length > 0
+                ? `${selectedTopics.length} topic${selectedTopics.length > 1 ? "s" : ""} selected`
+                : topics.length > 0 ? "No topics selected — presentation will cover all topics" : ""}
+            </p>
           </div>
 
           {/* Custom topic */}
-          <div style={{ marginBottom: 20 }}>
-            <label style={labelStyle}>OR DESCRIBE YOUR OWN TOPIC</label>
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+              Or describe your own topic
+            </label>
             <textarea
               value={customTopic}
               onChange={(e) => setCustomTopic(e.target.value)}
               placeholder="e.g. Compare the causes and effects of WWI and WWII..."
               rows={3}
-              onMouseEnter={(e) => {
-                if (document.activeElement !== e.currentTarget)
-                  e.currentTarget.style.borderColor = G;
-              }}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
-              onFocus={(e) => (e.currentTarget.style.borderColor = B)}
-              style={{
-                width: "100%",
-                border: `2px solid ${B}`,
-                borderRadius: 0,
-                padding: "8px 10px",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                background: W,
-                outline: "none",
-                resize: "vertical",
-                boxSizing: "border-box",
-                transition: "border-color 0.15s",
-                lineHeight: 1.6,
-                color: B,
-              }}
+              className="w-full rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground resize-vertical transition-colors leading-relaxed"
             />
           </div>
 
           {/* Slides + Length */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label style={labelStyle}>SLIDES</label>
+              <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Slides</label>
               <Dropdown
                 value={String(numSlides)}
                 onChange={(v) => setNumSlides(Number(v))}
                 placeholder="10"
                 options={[
-                  { value: "5",  label: "5"  },
-                  { value: "8",  label: "8"  },
-                  { value: "10", label: "10" },
-                  { value: "15", label: "15" },
-                  { value: "20", label: "20" },
+                  { value: "5", label: "5" }, { value: "8", label: "8" },
+                  { value: "10", label: "10" }, { value: "15", label: "15" }, { value: "20", label: "20" },
                 ]}
               />
             </div>
             <div>
-              <label style={labelStyle}>LENGTH</label>
+              <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Length</label>
               <Dropdown
                 value={textLength}
                 onChange={(v) => setTextLength(v as "brief" | "balanced" | "detailed")}
                 placeholder="Balanced"
                 options={[
-                  { value: "brief",    label: "Brief"    },
+                  { value: "brief", label: "Brief" },
                   { value: "balanced", label: "Balanced" },
                   { value: "detailed", label: "Detailed" },
                 ]}
@@ -373,77 +187,23 @@ export default function PresentationColumn({
 
           {/* Style cards */}
           <div>
-            <span style={labelStyle}>STYLE</span>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12 }}>
+            <label className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Style</label>
+            <div className="grid grid-cols-3 gap-3">
               {(Object.keys(THEMES) as PresentationTheme[]).map((key) => (
-                <ThemeCard
-                  key={key}
-                  themeKey={key}
-                  selected={theme === key}
-                  onClick={() => setTheme(key)}
-                />
+                <ThemeCard key={key} themeKey={key} selected={theme === key} onClick={() => setTheme(key)} />
               ))}
             </div>
           </div>
-
         </div>
       </div>
 
-      {/* Pinned footer — Generate button */}
-      <div
-        style={{
-          borderTop: `2px solid ${B}`,
-          padding: "16px 32px",
-          background: W,
-          display: "flex",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
+      <div className="border-t border-border px-8 py-4 bg-card flex justify-center shrink-0">
         <button
           onClick={handleGenerate}
           disabled={!canGenerate}
-          onMouseEnter={(e) => {
-            if (canGenerate) {
-              e.currentTarget.style.transform = "translate(-3px, -3px)";
-              e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`;
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "none";
-            e.currentTarget.style.boxShadow = canGenerate ? `4px 4px 0 ${B}` : "none";
-          }}
-          onMouseDown={(e) => {
-            if (canGenerate) {
-              e.currentTarget.style.transform = "translate(2px, 2px)";
-              e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`;
-            }
-          }}
-          onMouseUp={(e) => {
-            if (canGenerate) {
-              e.currentTarget.style.transform = "translate(-3px, -3px)";
-              e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`;
-            }
-          }}
-          style={{
-            background: canGenerate ? G : "#eee",
-            color: B,
-            border: `2px solid ${canGenerate ? B : "#ccc"}`,
-            boxShadow: canGenerate ? `4px 4px 0 ${B}` : "none",
-            padding: "14px 40px",
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontWeight: 700,
-            fontSize: "0.82rem",
-            letterSpacing: "0.06em",
-            cursor: canGenerate ? "pointer" : "not-allowed",
-            transition: "transform 0.15s, box-shadow 0.15s",
-          }}
+          className="rounded-md bg-primary px-8 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {isGenerating
-            ? "Generating..."
-            : isAllTopicsMode
-              ? "Generate from Entire Notebook →"
-              : "Generate Presentation →"}
+          {isGenerating ? "Generating..." : isAllTopicsMode ? "Generate from Entire Notebook →" : "Generate Presentation →"}
         </button>
       </div>
     </div>

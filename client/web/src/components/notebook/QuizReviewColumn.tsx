@@ -1,9 +1,7 @@
 import { useState } from "react";
+import { ChevronRight } from "lucide-react";
 import type { QuizSession } from "@freshr/shared";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { cn } from "../../lib/utils";
 
 function formatDate(isoDate: string): string {
   return new Date(isoDate).toLocaleDateString("en-US", {
@@ -12,7 +10,6 @@ function formatDate(isoDate: string): string {
     year: "numeric",
   });
 }
-
 
 interface QuizReviewColumnProps {
   quiz: QuizSession;
@@ -42,311 +39,92 @@ export default function QuizReviewColumn({
   const scoreCount = Math.round((quiz.score ?? 0) * numQuestions);
   const scorePercent = Math.round((quiz.score ?? 0) * 100);
   const timed = quiz.quiz_type === "TIMED" || quiz.quiz_type === "timed";
-  const timeLimitMinutes = quiz.time_limit
-    ? Math.round(quiz.time_limit / 60)
-    : null;
+  const timeLimitMinutes = quiz.time_limit ? Math.round(quiz.time_limit / 60) : null;
   const dateStr = quiz.started_at ?? quiz.generated_at ?? "";
   const topics = quiz.topics ?? (quiz.topic ? [quiz.topic] : []);
   const topicLabel = topics.length > 0 ? topics.join(", ") : "General";
   const questions = quiz.questions ?? [];
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        background: "#f5f5f0",
-        overflow: "hidden",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          height: 44,
-          padding: "0 16px",
-          borderBottom: `2px solid ${B}`,
-          background: W,
-          display: "flex",
-          alignItems: "center",
-          flexShrink: 0,
-        }}
-      >
-        <span
+    <div className="flex flex-col h-full bg-background overflow-hidden">
+      <div className="h-11 flex items-center px-4 border-b border-border bg-card shrink-0">
+        <button
           onClick={onBack}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.textDecoration = "underline")
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            color: B,
-            cursor: "pointer",
-            textDecoration: "none",
-            textUnderlineOffset: "3px",
-            letterSpacing: "0.04em",
-          }}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors hover:underline underline-offset-4"
         >
           ← Back to generator
-        </span>
+        </button>
       </div>
 
-      {/* Scrollable content */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "36px 32px 24px" }}>
-        <div style={{ maxWidth: 580, margin: "0 auto" }}>
-          {/* Quiz title / topics */}
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "1.4rem",
-              color: B,
-              margin: "0 0 6px",
-              letterSpacing: "-0.02em",
-              lineHeight: 1.3,
-            }}
-          >
-            {topicLabel}
-          </h2>
+      <div className="flex-1 overflow-y-auto px-8 py-8">
+        <div className="max-w-xl mx-auto">
+          <h2 className="text-lg font-semibold text-foreground mb-1">{topicLabel}</h2>
 
-          {/* Meta row */}
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-              marginBottom: 28,
-              flexWrap: "wrap",
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                color: "#000000",
-                textTransform: "capitalize",
-              }}
-            >
-              {quiz.difficulty}
-            </span>
-            <span style={{ color: "#000000" }}>·</span>
-            <span
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                color: "#000000",
-              }}
-            >
-              {numQuestions} questions
-            </span>
+          <div className="flex items-center gap-2 flex-wrap mb-6 text-xs text-muted-foreground">
+            <span className="capitalize">{quiz.difficulty}</span>
+            <span>·</span>
+            <span>{numQuestions} questions</span>
             {timed && timeLimitMinutes && (
               <>
-                <span style={{ color: "#000000" }}>·</span>
-                <span
-                  style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    color: "#000000",
-                  }}
-                >
-                  {timeLimitMinutes} min limit
-                </span>
+                <span>·</span>
+                <span>{timeLimitMinutes} min limit</span>
               </>
             )}
             {dateStr && (
               <>
-                <span style={{ color: "#000000" }}>·</span>
-                <span
-                  style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    color: "#000000",
-                  }}
-                >
-                  {formatDate(dateStr)}
-                </span>
+                <span>·</span>
+                <span>{formatDate(dateStr)}</span>
               </>
             )}
           </div>
 
           {/* Score box */}
-          <div
-            style={{
-              border: `2px solid ${B}`,
-              background: W,
-              padding: "20px 24px",
-              marginBottom: 36,
-              display: "flex",
-              alignItems: "center",
-              gap: 24,
-              boxShadow: `4px 4px 0 ${B}`,
-            }}
-          >
-            <div>
-              <span
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: "2.2rem",
-                  fontWeight: 800,
-                  color: B,
-                  letterSpacing: "-0.03em",
-                  lineHeight: 1,
-                }}
-              >
-                {scoreCount}/{numQuestions}
-              </span>
-            </div>
-            <div
-              style={{
-                width: 1,
-                height: 40,
-                background: "#ddd",
-                flexShrink: 0,
-              }}
-            />
-            <div>
-              <span
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontSize: "1.6rem",
-                  fontWeight: 800,
-                  color: B,
-                  letterSpacing: "-0.02em",
-                  lineHeight: 1,
-                }}
-              >
-                {scorePercent}%
-              </span>
-            </div>
+          <div className="flex items-center gap-6 rounded-lg border border-border bg-card px-6 py-4 mb-8">
+            <span className="text-3xl font-bold text-foreground">{scoreCount}/{numQuestions}</span>
+            <div className="w-px h-8 bg-border shrink-0" />
+            <span className="text-2xl font-bold text-foreground">{scorePercent}%</span>
           </div>
 
           {/* Questions */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          <div className="flex flex-col gap-4">
             {questions.map((q, qi) => {
               const correct = q.is_correct ?? (q.user_answer != null && q.user_answer === q.correct_answer);
-
               return (
-                <div
-                  key={q.id}
-                  style={{
-                    border: `2px solid ${B}`,
-                    background: W,
-                    padding: "16px 18px",
-                  }}
-                >
-                  {/* Question header */}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: 10,
-                      alignItems: "flex-start",
-                      marginBottom: 14,
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        color: correct ? "#2a9e30" : "#cc3333",
-                        flexShrink: 0,
-                        marginTop: 1,
-                      }}
-                    >
+                <div key={q.id} className="rounded-lg border border-border bg-card p-4">
+                  <div className="flex items-start gap-2 mb-3">
+                    <span className={cn("text-xs font-semibold shrink-0 mt-0.5", correct ? "text-primary" : "text-destructive")}>
                       {correct ? "✓" : "✗"}
                     </span>
-                    <p
-                      style={{
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.78rem",
-                        fontWeight: 600,
-                        color: B,
-                        margin: 0,
-                        lineHeight: 1.6,
-                      }}
-                    >
+                    <p className="text-sm font-medium text-foreground leading-relaxed">
                       Q{qi + 1}. {q.question_text}
                     </p>
                   </div>
 
-                  {/* Options */}
-                  <div
-                    style={{ display: "flex", flexDirection: "column", gap: 6 }}
-                  >
+                  <div className="flex flex-col gap-1.5">
                     {(q.choices.length > 0 ? q.choices : ["True", "False"]).map((opt: string, oi: number) => {
                       const isUserAnswer = opt === q.user_answer;
                       const isCorrectAnswer = opt === q.correct_answer;
 
-                      let bg = "transparent";
-                      let borderColor = "#ddd";
-                      let textColor = "#555";
+                      let optClass = "border-border/50 text-muted-foreground";
                       let label: string | null = null;
 
                       if (correct && isUserAnswer) {
-                        bg = "#f0fdf0";
-                        borderColor = G;
-                        textColor = B;
+                        optClass = "border-primary/50 bg-primary/5 text-foreground";
                         label = "your answer";
                       } else if (!correct && isUserAnswer) {
-                        bg = "#fff5f5";
-                        borderColor = "#cc3333";
-                        textColor = B;
+                        optClass = "border-destructive/50 bg-destructive/5 text-foreground";
                         label = "your answer";
                       } else if (!correct && isCorrectAnswer) {
-                        bg = "#f0fdf0";
-                        borderColor = G;
-                        textColor = B;
+                        optClass = "border-primary/50 bg-primary/5 text-foreground";
                         label = "correct answer";
                       }
 
                       return (
-                        <div
-                          key={oi}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 10,
-                            padding: "7px 10px",
-                            border: `1.5px solid ${borderColor}`,
-                            background: bg,
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: "0.75rem",
-                              fontWeight: 700,
-                              color: textColor,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {String.fromCharCode(65 + oi)}
-                          </span>
-                          <span
-                            style={{
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: "0.75rem",
-                              color: textColor,
-                              flex: 1,
-                              lineHeight: 1.5,
-                            }}
-                          >
-                            {opt}
-                          </span>
+                        <div key={oi} className={cn("flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs", optClass)}>
+                          <span className="font-semibold shrink-0">{String.fromCharCode(65 + oi)}</span>
+                          <span className="flex-1 leading-relaxed">{opt}</span>
                           {label && (
-                            <span
-                              style={{
-                                fontFamily: "'IBM Plex Mono', monospace",
-                                fontSize: "0.75rem",
-                                color:
-                                  !correct && isUserAnswer
-                                    ? "#cc3333"
-                                    : "#2a9e30",
-                                flexShrink: 0,
-                              }}
-                            >
+                            <span className={cn("shrink-0 text-xs", !correct && isUserAnswer ? "text-destructive" : "text-primary")}>
                               {label}
                             </span>
                           )}
@@ -355,49 +133,21 @@ export default function QuizReviewColumn({
                     })}
                   </div>
 
-                  {/* Explanation + Take to Chat */}
                   {(q.explanation || onTakeToChat) && (
-                    <div style={{ marginTop: 14 }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          marginBottom: openExplanations.has(qi) ? 10 : 0,
-                        }}
-                      >
+                    <div className="mt-3">
+                      <div className="flex items-center justify-between">
                         {q.explanation ? (
                           <button
                             onClick={() => toggleExplanation(qi)}
-                            style={{
-                              background: "none",
-                              border: "none",
-                              padding: 0,
-                              cursor: "pointer",
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: "0.75rem",
-                              fontWeight: 600,
-                              color: "#000000",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 6,
-                            }}
+                            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                           >
-                            <span
-                              style={{
-                                display: "inline-block",
-                                transition: "transform 0.2s",
-                                transform: openExplanations.has(qi) ? "rotate(90deg)" : "rotate(0deg)",
-                                fontSize: "0.75rem",
-                              }}
-                            >
-                              ▶
-                            </span>
-                            {openExplanations.has(qi) ? "Hide Explanation" : "Show Explanation"}
+                            <ChevronRight
+                              className="h-3 w-3 transition-transform duration-150"
+                              style={{ transform: openExplanations.has(qi) ? "rotate(90deg)" : "none" }}
+                            />
+                            {openExplanations.has(qi) ? "Hide explanation" : "Show explanation"}
                           </button>
-                        ) : (
-                          <span />
-                        )}
+                        ) : <span />}
 
                         {onTakeToChat && (
                           <button
@@ -405,27 +155,7 @@ export default function QuizReviewColumn({
                               const choices = q.choices?.length > 0 ? q.choices : ["True", "False"];
                               onTakeToChat(q.question_text, choices, topicLabel);
                             }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.color = B;
-                              e.currentTarget.style.borderColor = B;
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.color = "#000000";
-                              e.currentTarget.style.borderColor = "#bbb";
-                            }}
-                            style={{
-                              background: "transparent",
-                              border: "1.5px solid #bbb",
-                              color: "#000000",
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: "0.75rem",
-                              fontWeight: 600,
-                              letterSpacing: "0.04em",
-                              padding: "6px 14px",
-                              cursor: "pointer",
-                              transition: "color 0.15s, border-color 0.15s",
-                              whiteSpace: "nowrap",
-                            }}
+                            className="text-xs text-muted-foreground hover:text-foreground border border-border rounded px-2.5 py-1 transition-colors hover:bg-secondary"
                           >
                             💬 Take to Chat →
                           </button>
@@ -433,24 +163,8 @@ export default function QuizReviewColumn({
                       </div>
 
                       {openExplanations.has(qi) && q.explanation && (
-                        <div
-                          style={{
-                            background: "#f0fdf4",
-                            border: `2px solid ${G}`,
-                            padding: "14px 18px",
-                          }}
-                        >
-                          <p
-                            style={{
-                              fontFamily: "'IBM Plex Mono', monospace",
-                              fontSize: "0.78rem",
-                              color: "#000000",
-                              margin: 0,
-                              lineHeight: 1.7,
-                            }}
-                          >
-                            {q.explanation}
-                          </p>
+                        <div className="mt-2 rounded-md border border-primary/30 bg-primary/5 px-4 py-3">
+                          <p className="text-xs text-foreground leading-relaxed">{q.explanation}</p>
                         </div>
                       )}
                     </div>
@@ -462,48 +176,10 @@ export default function QuizReviewColumn({
         </div>
       </div>
 
-      {/* Bottom bar — Retake button */}
-      <div
-        style={{
-          borderTop: `2px solid ${B}`,
-          padding: "16px 32px",
-          background: W,
-          display: "flex",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
+      <div className="border-t border-border px-8 py-4 bg-card flex justify-center shrink-0">
         <button
           onClick={onRetake}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "translate(-3px, -3px)";
-            e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`;
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "none";
-            e.currentTarget.style.boxShadow = `4px 4px 0 ${B}`;
-          }}
-          onMouseDown={(e) => {
-            e.currentTarget.style.transform = "translate(2px, 2px)";
-            e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`;
-          }}
-          onMouseUp={(e) => {
-            e.currentTarget.style.transform = "translate(-3px, -3px)";
-            e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`;
-          }}
-          style={{
-            background: G,
-            color: B,
-            border: `2px solid ${B}`,
-            boxShadow: `4px 4px 0 ${B}`,
-            padding: "14px 40px",
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontWeight: 700,
-            fontSize: "0.82rem",
-            letterSpacing: "0.06em",
-            cursor: "pointer",
-            transition: "transform 0.15s, box-shadow 0.15s",
-          }}
+          className="rounded-md bg-primary px-8 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
         >
           Retake Quiz →
         </button>

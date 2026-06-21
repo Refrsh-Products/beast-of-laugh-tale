@@ -1,9 +1,8 @@
 import { useState, useRef } from "react";
+import { FileText, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { createPortal } from "react-dom";
 import type { NotebookFile } from "@freshr/shared";
-
-const B = "#000000";
-const R = "#FF4D4D";
-const W = "#FFFFFF";
+import { cn } from "../../lib/utils";
 
 interface FileItemProps {
   file: NotebookFile;
@@ -14,64 +13,6 @@ interface FileItemProps {
   onRename: (id: string, newName: string) => void;
 }
 
-function FileIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      style={{ flexShrink: 0 }}
-    >
-      <rect
-        x="2"
-        y="1"
-        width="9"
-        height="13"
-        rx="1"
-        fill="#f0f0f0"
-        stroke={B}
-        strokeWidth="1.5"
-      />
-      <path
-        d="M8 1v4h3"
-        stroke={B}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <line
-        x1="4"
-        y1="8"
-        x2="10"
-        y2="8"
-        stroke={B}
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
-      <line
-        x1="4"
-        y1="10.5"
-        x2="8"
-        y2="10.5"
-        stroke={B}
-        strokeWidth="1.2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
-
-function DotsIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-      <circle cx="7" cy="3" r="1.2" fill={B} />
-      <circle cx="7" cy="7" r="1.2" fill={B} />
-      <circle cx="7" cy="11" r="1.2" fill={B} />
-    </svg>
-  );
-}
-
 export default function FileItem({
   file,
   bulkMode,
@@ -80,11 +21,8 @@ export default function FileItem({
   onDelete,
   onRename,
 }: FileItemProps) {
-  const [hovered, setHovered] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(
-    null,
-  );
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState(file.name);
   const renameInputRef = useRef<HTMLInputElement>(null);
@@ -92,7 +30,7 @@ export default function FileItem({
   function handleDotsClick(e: React.MouseEvent) {
     e.stopPropagation();
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setMenuPos({ top: rect.bottom + 4, left: rect.right - 120 });
+    setMenuPos({ top: rect.bottom + 4, left: rect.right - 128 });
     setMenuOpen(true);
   }
 
@@ -113,9 +51,7 @@ export default function FileItem({
 
   function submitRename() {
     const trimmed = renameValue.trim();
-    if (trimmed && trimmed !== file.name) {
-      onRename(file.id, trimmed);
-    }
+    if (trimmed && trimmed !== file.name) onRename(file.id, trimmed);
     setIsRenaming(false);
   }
 
@@ -124,32 +60,21 @@ export default function FileItem({
     if (e.key === "Escape") setIsRenaming(false);
   }
 
+  const isProcessing =
+    file.ingestion_status === "pending" || file.ingestion_status === "processing";
+
   return (
     <>
       <div
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
         onClick={() => bulkMode && onToggleSelect(file.id)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "8px 10px",
-          background: selected
-            ? "#fff0f0"
-            : hovered && !bulkMode
-              ? "#f9f9f9"
-              : W,
-          border: `1.5px solid ${selected ? R : hovered && !bulkMode ? "#ccc" : B}`,
-          cursor: bulkMode ? "pointer" : "default",
-          userSelect: "none",
-          transition: "background 0.1s, border-color 0.1s",
-          position: "relative",
-        }}
+        className={cn(
+          "group flex items-center gap-2 px-3 py-2 rounded-sm transition-colors",
+          bulkMode && "cursor-pointer",
+          selected ? "bg-destructive/10" : "hover:bg-secondary/50",
+        )}
       >
-        <FileIcon />
+        <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
 
-        {/* Filename or rename input */}
         {isRenaming ? (
           <input
             ref={renameInputRef}
@@ -158,221 +83,70 @@ export default function FileItem({
             onBlur={submitRename}
             onKeyDown={handleRenameKeyDown}
             onClick={(e) => e.stopPropagation()}
-            style={{
-              flex: 1,
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              border: `1.5px solid ${B}`,
-              padding: "2px 6px",
-              outline: "none",
-              background: W,
-              minWidth: 0,
-            }}
+            className="flex-1 min-w-0 bg-transparent border-0 border-b border-primary text-xs text-foreground outline-none py-0.5"
           />
         ) : (
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              color: B,
-              flex: 1,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {file.name}
-          </span>
+          <span className="flex-1 min-w-0 truncate text-xs text-foreground">{file.name}</span>
         )}
 
-        {/* Bulk mode checkbox — right side */}
         {bulkMode && (
           <input
             type="checkbox"
             checked={selected}
             onChange={() => onToggleSelect(file.id)}
             onClick={(e) => e.stopPropagation()}
-            style={{
-              cursor: "pointer",
-              accentColor: R,
-              width: 14,
-              height: 14,
-              flexShrink: 0,
-            }}
+            className="cursor-pointer accent-destructive w-3.5 h-3.5 shrink-0"
           />
         )}
 
-        {/* Ingestion status indicator */}
-        {(file.ingestion_status === "pending" ||
-          file.ingestion_status === "processing") && (
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            style={{ flexShrink: 0 }}
-          >
-            <title>Processing...</title>
-            <circle cx="6" cy="6" r="4" fill="none" stroke="#ddd" strokeWidth="1.8" />
-            <path
-              d="M6 2 A4 4 0 0 1 10 6"
-              fill="none"
-              stroke="#888"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            >
-              <animateTransform
-                attributeName="transform"
-                type="rotate"
-                from="0 6 6"
-                to="360 6 6"
-                dur="0.8s"
-                repeatCount="indefinite"
-              />
-            </path>
-          </svg>
-        )}
-        {file.ingestion_status === "failed" && (
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            style={{ flexShrink: 0 }}
-          >
-            <title>{file.ingestion_error || "Ingestion failed"}</title>
-            <circle cx="6" cy="6" r="5" fill="#FF4D4D" stroke={B} strokeWidth="1.2" />
-            <path
-              d="M6 3.5v3"
-              stroke="#fff"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-            />
-            <circle cx="6" cy="8.5" r="0.7" fill="#fff" />
-          </svg>
+        {isProcessing && (
+          <div className="w-3 h-3 rounded-full border border-border border-t-muted-foreground animate-spin shrink-0" title="Processing..." />
         )}
 
-        {/* 3-dot button — only in normal mode, visible on hover */}
+        {file.ingestion_status === "failed" && (
+          <div
+            className="w-3 h-3 rounded-full bg-destructive shrink-0"
+            title={file.ingestion_error || "Ingestion failed"}
+          />
+        )}
+
         {!bulkMode && !isRenaming && (
           <button
             onClick={handleDotsClick}
-            style={{
-              background: menuOpen ? "#eee" : "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "2px 4px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              opacity: hovered || menuOpen ? 1 : 0,
-              transition: "opacity 0.1s",
-              flexShrink: 0,
-            }}
+            className={cn(
+              "flex items-center justify-center h-5 w-5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-all shrink-0",
+              menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            )}
           >
-            <DotsIcon />
+            <MoreVertical className="h-3 w-3" />
           </button>
         )}
       </div>
 
-      {/* Overlay to close menu on outside click */}
-      {menuOpen && (
-        <div
-          style={{ position: "fixed", inset: 0, zIndex: 199 }}
-          onClick={closeMenu}
-        />
-      )}
-
-      {/* Popover menu */}
-      {menuOpen && menuPos && (
-        <div
-          style={{
-            position: "fixed",
-            top: menuPos.top,
-            left: menuPos.left,
-            width: 120,
-            background: W,
-            border: `2px solid ${B}`,
-            boxShadow: `3px 3px 0 ${B}`,
-            zIndex: 200,
-            overflow: "hidden",
-          }}
-        >
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleRenameClick();
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              width: "100%",
-              padding: "9px 12px",
-              background: "none",
-              border: "none",
-              borderBottom: `1px solid #eee`,
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              color: B,
-              cursor: "pointer",
-              textAlign: "left",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background =
-                "#f5f5f5";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "none";
-            }}
+      {menuOpen && createPortal(
+        <>
+          <div className="fixed inset-0 z-[199]" onClick={closeMenu} />
+          <div
+            style={{ top: menuPos?.top, left: menuPos?.left }}
+            className="fixed z-[200] w-32 overflow-hidden rounded-md border border-border bg-popover shadow-lg"
           >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M8.5 1.5l2 2L4 10H2V8L8.5 1.5z"
-                stroke={B}
-                strokeWidth="1.4"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Rename
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              closeMenu();
-              onDelete(file.id);
-            }}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              width: "100%",
-              padding: "9px 12px",
-              background: "none",
-              border: "none",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              color: R,
-              cursor: "pointer",
-              textAlign: "left",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background =
-                "#fff5f5";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = "none";
-            }}
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-              <path
-                d="M2 3h8M5 3V2h2v1M4.5 10.5h3a1 1 0 0 0 1-1V4h-5v5.5a1 1 0 0 0 1 1z"
-                stroke={R}
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Delete
-          </button>
-        </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleRenameClick(); }}
+              className="flex items-center gap-2 w-full px-3 py-2 text-xs text-foreground hover:bg-secondary transition-colors text-left border-b border-border"
+            >
+              <Pencil className="h-3 w-3" />
+              Rename
+            </button>
+            <button
+              onClick={(e) => { e.stopPropagation(); closeMenu(); onDelete(file.id); }}
+              className="flex items-center gap-2 w-full px-3 py-2 text-xs text-destructive hover:bg-destructive/10 transition-colors text-left"
+            >
+              <Trash2 className="h-3 w-3" />
+              Delete
+            </button>
+          </div>
+        </>,
+        document.body,
       )}
     </>
   );

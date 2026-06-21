@@ -1,13 +1,11 @@
 import { useState, useRef } from "react";
+import { Upload, Check, X, Loader2 } from "lucide-react";
 import type { NotebookFile } from "@freshr/shared";
 import FileItem from "./FileItem";
 import UploadConfirmModal from "./UploadConfirmModal";
+import Button from "../ui/Button";
 import { ACCEPTED_FILE_TYPES } from "../../lib/constants";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
-const R = "#FF4D4D";
+import { cn } from "../../lib/utils";
 
 export interface FileUploadState {
   name: string;
@@ -24,137 +22,28 @@ interface FilesColumnProps {
   uploadProgress?: FileUploadState[];
 }
 
-function SpinnerIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 14 14" style={{ flexShrink: 0 }}>
-      <circle cx="7" cy="7" r="5" fill="none" stroke="#ddd" strokeWidth="2" />
-      <path
-        d="M7 2 A5 5 0 0 1 12 7"
-        fill="none"
-        stroke={B}
-        strokeWidth="2"
-        strokeLinecap="round"
-      >
-        <animateTransform
-          attributeName="transform"
-          type="rotate"
-          from="0 7 7"
-          to="360 7 7"
-          dur="0.7s"
-          repeatCount="indefinite"
-        />
-      </path>
-    </svg>
-  );
-}
-
 function UploadProgressItem({ item }: { item: FileUploadState }) {
   return (
     <div
-      style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 8,
-        padding: "8px 10px",
-        background:
-          item.status === "error"
-            ? "#fff5f5"
-            : item.status === "done"
-              ? "#f5fff5"
-              : "#fafafa",
-        border: `1.5px solid ${item.status === "error" ? R : item.status === "done" ? G : "#ccc"}`,
-      }}
+      className={cn(
+        "flex items-start gap-2 px-3 py-2 rounded-sm border text-xs",
+        item.status === "error"
+          ? "bg-destructive/10 border-destructive/30"
+          : item.status === "done"
+            ? "bg-primary/10 border-primary/30"
+            : "bg-secondary/50 border-border",
+      )}
     >
-      {item.status === "uploading" && <SpinnerIcon />}
-      {item.status === "done" && (
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 14 14"
-          fill="none"
-          style={{ flexShrink: 0, marginTop: 1 }}
-        >
-          <circle cx="7" cy="7" r="6" fill={G} stroke={B} strokeWidth="1.5" />
-          <path
-            d="M4 7l2 2 4-4"
-            stroke={B}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      )}
-      {item.status === "error" && (
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 14 14"
-          fill="none"
-          style={{ flexShrink: 0, marginTop: 1 }}
-        >
-          <circle cx="7" cy="7" r="6" fill={R} stroke={B} strokeWidth="1.5" />
-          <path
-            d="M5 5l4 4M9 5l-4 4"
-            stroke={W}
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      )}
-      <div style={{ flex: 1, overflow: "hidden" }}>
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            color: B,
-            display: "block",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {item.name}
-        </span>
+      {item.status === "uploading" && <Loader2 className="h-3.5 w-3.5 text-muted-foreground animate-spin shrink-0 mt-0.5" />}
+      {item.status === "done" && <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />}
+      {item.status === "error" && <X className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />}
+      <div className="flex-1 min-w-0 overflow-hidden">
+        <span className="block truncate text-foreground">{item.name}</span>
         {item.status === "error" && item.error && (
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              color: R,
-              display: "block",
-              marginTop: 2,
-              lineHeight: 1.4,
-            }}
-          >
-            {item.error}
-          </span>
+          <span className="block text-destructive mt-0.5 leading-snug">{item.error}</span>
         )}
-        {item.status === "uploading" && (
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              color: "#000000",
-              display: "block",
-              marginTop: 2,
-            }}
-          >
-            Uploading...
-          </span>
-        )}
-        {item.status === "done" && (
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              color: "#000000",
-              display: "block",
-              marginTop: 2,
-            }}
-          >
-            Processing
-          </span>
-        )}
+        {item.status === "uploading" && <span className="block text-muted-foreground mt-0.5">Uploading...</span>}
+        {item.status === "done" && <span className="block text-muted-foreground mt-0.5">Processing</span>}
       </div>
     </div>
   );
@@ -194,16 +83,11 @@ export default function FilesColumn({
   }
 
   function toggleSelect(id: string) {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   }
 
   function toggleBulkMode() {
-    setBulkMode((v) => {
-      if (v) setSelectedIds([]);
-      return !v;
-    });
+    setBulkMode((v) => { if (v) setSelectedIds([]); return !v; });
   }
 
   function confirmDelete() {
@@ -214,209 +98,58 @@ export default function FilesColumn({
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        background: W,
-        overflow: "hidden",
-      }}
-    >
-      {/* Column header */}
-      <div
-        style={{
-          height: 44,
-          padding: "0 14px",
-          borderBottom: `2px solid ${B}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexShrink: 0,
-          gap: 8,
-        }}
-      >
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: "#000000",
-          }}
-        >
-          FILES
-        </span>
-        {/* Bulk controls — only shown when files exist */}
+    <div className="flex flex-col h-full bg-card border-l border-border overflow-hidden">
+      {/* Header */}
+      <div className="h-11 flex items-center justify-between px-4 border-b border-border shrink-0">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Files</span>
         {files.length > 0 && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "flex-end",
-              gap: 8,
-              padding: "6px 0 2px",
-            }}
-          >
+          <div className="flex items-center gap-2">
             {bulkMode && selectedIds.length > 0 && (
-              <button
-                onClick={() => setShowConfirm(true)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translate(-2px, -2px)";
-                  e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "none";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-                style={{
-                  background: R,
-                  color: W,
-                  border: `1.5px solid ${B}`,
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  padding: "3px 8px",
-                  cursor: "pointer",
-                  letterSpacing: "0.04em",
-                  whiteSpace: "nowrap",
-                  transition: "transform 0.15s, box-shadow 0.15s",
-                }}
-              >
+              <Button variant="danger" onClick={() => setShowConfirm(true)}>
                 Delete ({selectedIds.length})
-              </button>
+              </Button>
             )}
-            <div
+            <button
               onClick={toggleBulkMode}
               title="Bulk delete"
-              style={{
-                width: 16,
-                height: 16,
-                border: `2px solid ${R}`,
-                background: bulkMode ? R : "transparent",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                transition: "background 0.12s",
-              }}
-            >
-              {bulkMode && (
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path
-                    d="M1.5 5l2.5 2.5 4.5-5"
-                    stroke={W}
-                    strokeWidth="1.6"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+              className={cn(
+                "w-4 h-4 rounded-sm border border-destructive/50 flex items-center justify-center transition-colors",
+                bulkMode ? "bg-destructive/20" : "hover:bg-destructive/10",
               )}
-            </div>
+            >
+              {bulkMode && <Check className="h-2.5 w-2.5 text-destructive" />}
+            </button>
           </div>
         )}
       </div>
+
       {/* Drop zone */}
       <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setIsDragging(true);
-        }}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        onMouseEnter={(e) => {
-          if (!isDragging) {
-            (e.currentTarget as HTMLElement).style.borderColor = B;
-            (e.currentTarget as HTMLElement).style.background = "#f0f0eb";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isDragging) {
-            (e.currentTarget as HTMLElement).style.borderColor = "#ccc";
-            (e.currentTarget as HTMLElement).style.background = "#fafafa";
-          }
-        }}
-        style={{
-          margin: 12,
-          border: `2px dashed ${isDragging ? G : "#ccc"}`,
-          background: isDragging ? "#f0fff0" : "#fafafa",
-          padding: "16px 8px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 6,
-          cursor: "pointer",
-          flexShrink: 0,
-          transition: "border-color 0.15s, background 0.15s",
-        }}
+        className={cn(
+          "m-3 rounded-md border-2 border-dashed flex flex-col items-center justify-center gap-1.5 py-4 cursor-pointer transition-all shrink-0",
+          isDragging
+            ? "border-primary bg-primary/5"
+            : "border-border hover:border-primary/40 hover:bg-secondary/30",
+        )}
       >
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path
-            d="M12 16V8M12 8L9 11M12 8L15 11"
-            stroke={isDragging ? G : "#aaa"}
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
-            stroke={isDragging ? G : "#aaa"}
-            strokeWidth="1.8"
-            strokeLinecap="round"
-          />
-        </svg>
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            color: isDragging ? G : B,
-            textAlign: "center",
-            lineHeight: 1.5,
-          }}
-        >
-          Drop files here
-          <br />
-          or click to upload
+        <Upload className={cn("h-5 w-5", isDragging ? "text-primary" : "text-muted-foreground")} />
+        <span className={cn("text-xs text-center leading-relaxed", isDragging ? "text-primary" : "text-muted-foreground")}>
+          Drop files here<br />or click to upload
         </span>
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          accept={ACCEPTED_FILE_TYPES}
-          onChange={handleFileInput}
-          style={{ display: "none" }}
-        />
+        <input ref={fileInputRef} type="file" multiple accept={ACCEPTED_FILE_TYPES} onChange={handleFileInput} className="hidden" />
       </div>
 
       {/* File list */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: 4,
-          padding: "0 12px 12px",
-        }}
-      >
+      <div className="flex-1 overflow-y-auto flex flex-col gap-0.5 px-2 pb-3">
         {uploadProgress.map((item, i) => (
           <UploadProgressItem key={`upload-${i}`} item={item} />
         ))}
         {files.length === 0 && uploadProgress.length === 0 ? (
-          <p
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              color: "#000000",
-              textAlign: "center",
-              marginTop: 12,
-            }}
-          >
-            No files yet
-          </p>
+          <p className="text-xs text-muted-foreground text-center mt-3">No files yet</p>
         ) : (
           files.map((file) => (
             <FileItem
@@ -432,112 +165,20 @@ export default function FilesColumn({
         )}
       </div>
 
-      {/* Upload confirmation modal */}
       {pendingUpload && (
-        <UploadConfirmModal
-          files={pendingUpload}
-          onConfirm={confirmUpload}
-          onCancel={() => setPendingUpload(null)}
-        />
+        <UploadConfirmModal files={pendingUpload} onConfirm={confirmUpload} onCancel={() => setPendingUpload(null)} />
       )}
 
-      {/* Bulk delete confirmation modal */}
       {showConfirm && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            background: "rgba(0,0,0,0.4)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 100,
-          }}
-        >
-          <div
-            style={{
-              background: W,
-              border: `2px solid ${B}`,
-              boxShadow: `6px 6px 0 ${B}`,
-              padding: "28px 32px",
-              maxWidth: 300,
-              width: "90%",
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "1rem",
-                marginBottom: 8,
-              }}
-            >
-              Delete {selectedIds.length} file
-              {selectedIds.length > 1 ? "s" : ""}?
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-xs rounded-lg border border-border bg-card p-6 shadow-xl">
+            <p className="text-base font-semibold text-foreground mb-1">
+              Delete {selectedIds.length} file{selectedIds.length > 1 ? "s" : ""}?
             </p>
-            <p
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                color: "#000000",
-                marginBottom: 24,
-                lineHeight: 1.5,
-              }}
-            >
-              This cannot be undone.
-            </p>
-            <div style={{ display: "flex", gap: 10 }}>
-              <button
-                onClick={confirmDelete}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translate(-3px, -3px)";
-                  e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "none";
-                  e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
-                }}
-                style={{
-                  flex: 1,
-                  background: R,
-                  color: W,
-                  border: `2px solid ${B}`,
-                  boxShadow: `3px 3px 0 ${B}`,
-                  padding: "10px",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontWeight: 700,
-                  fontSize: "0.75rem",
-                  cursor: "pointer",
-                  transition: "transform 0.15s, box-shadow 0.15s",
-                }}
-              >
-                Delete
-              </button>
-              <button
-                onClick={() => setShowConfirm(false)}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translate(-3px, -3px)";
-                  e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "none";
-                  e.currentTarget.style.boxShadow = "none";
-                }}
-                style={{
-                  flex: 1,
-                  background: W,
-                  color: B,
-                  border: `2px solid ${B}`,
-                  padding: "10px",
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontWeight: 700,
-                  fontSize: "0.75rem",
-                  cursor: "pointer",
-                  transition: "transform 0.15s, box-shadow 0.15s",
-                }}
-              >
-                Cancel
-              </button>
+            <p className="text-sm text-muted-foreground mb-5">This cannot be undone.</p>
+            <div className="flex gap-2">
+              <Button variant="danger" fullWidth onClick={confirmDelete}>Delete</Button>
+              <Button variant="default" fullWidth onClick={() => setShowConfirm(false)}>Cancel</Button>
             </div>
           </div>
         </div>

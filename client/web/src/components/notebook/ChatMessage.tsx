@@ -1,8 +1,5 @@
 import MathMarkdown from "../common/MathMarkdown";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { cn } from "../../lib/utils";
 
 export interface Message {
   id: number;
@@ -14,24 +11,14 @@ export default function ChatMessage({ message }: { message: Message }) {
   const isUser = message.role === "user";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: isUser ? "flex-end" : "flex-start",
-      }}
-    >
+    <div className={cn("flex", isUser ? "justify-end" : "justify-start")}>
       <div
-        style={{
-          maxWidth: "78%",
-          background: isUser ? B : W,
-          color: isUser ? W : B,
-          border: `2px solid ${B}`,
-          boxShadow: isUser ? `3px 3px 0 ${G}` : `3px 3px 0 ${B}`,
-          padding: "10px 14px",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.78rem",
-          lineHeight: 1.6,
-        }}
+        className={cn(
+          "max-w-[80%] rounded-lg px-3 py-2 text-sm leading-relaxed",
+          isUser
+            ? "bg-secondary text-foreground"
+            : "text-foreground",
+        )}
       >
         {isUser ? (
           message.text
@@ -39,53 +26,37 @@ export default function ChatMessage({ message }: { message: Message }) {
           <MathMarkdown
             components={{
               p: ({ children }: { children?: React.ReactNode }) => (
-                <p style={{ margin: "0 0 0.5em", lineHeight: 1.6 }}>{children}</p>
+                <p className="mb-2 last:mb-0 leading-relaxed">{children}</p>
               ),
               strong: ({ children }: { children?: React.ReactNode }) => (
-                <strong style={{ fontWeight: 700 }}>{children}</strong>
+                <strong className="font-semibold">{children}</strong>
               ),
               ul: ({ children }: { children?: React.ReactNode }) => (
-                <ul style={{ margin: "0.4em 0", paddingLeft: "1.4em" }}>{children}</ul>
+                <ul className="my-1 pl-5 list-disc">{children}</ul>
               ),
               ol: ({ children }: { children?: React.ReactNode }) => (
-                <ol style={{ margin: "0.4em 0", paddingLeft: "1.4em" }}>{children}</ol>
+                <ol className="my-1 pl-5 list-decimal">{children}</ol>
               ),
               li: ({ children }: { children?: React.ReactNode }) => (
-                <li style={{ marginBottom: "0.2em" }}>{children}</li>
+                <li className="mb-0.5">{children}</li>
               ),
               h1: ({ children }: { children?: React.ReactNode }) => (
-                <h1 style={{ fontSize: "1em", fontWeight: 700, margin: "0.6em 0 0.3em" }}>{children}</h1>
+                <h1 className="text-sm font-semibold mt-3 mb-1">{children}</h1>
               ),
               h2: ({ children }: { children?: React.ReactNode }) => (
-                <h2 style={{ fontSize: "0.9em", fontWeight: 700, margin: "0.6em 0 0.3em" }}>{children}</h2>
+                <h2 className="text-sm font-semibold mt-3 mb-1">{children}</h2>
               ),
               h3: ({ children }: { children?: React.ReactNode }) => (
-                <h3 style={{ fontSize: "0.85em", fontWeight: 700, margin: "0.5em 0 0.2em" }}>{children}</h3>
+                <h3 className="text-xs font-semibold mt-2 mb-1">{children}</h3>
               ),
               code: ({ children, className }: { children?: React.ReactNode; className?: string }) => {
                 const isBlock = className?.startsWith("language-");
                 return isBlock ? (
-                  <pre
-                    style={{
-                      background: "#f0f0eb",
-                      border: "1px solid #ccc",
-                      padding: "8px 10px",
-                      overflowX: "auto",
-                      margin: "0.5em 0",
-                      fontSize: "0.75rem",
-                    }}
-                  >
+                  <pre className="bg-secondary rounded-md border border-border px-3 py-2 overflow-x-auto my-2 text-xs">
                     <code>{children}</code>
                   </pre>
                 ) : (
-                  <code
-                    style={{
-                      background: "#f0f0eb",
-                      border: "1px solid #ddd",
-                      padding: "1px 4px",
-                      fontSize: "0.75rem",
-                    }}
-                  >
+                  <code className="bg-secondary border border-border rounded px-1 py-px text-xs">
                     {children}
                   </code>
                 );

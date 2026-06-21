@@ -1,20 +1,12 @@
 import { useState, useRef, useEffect } from "react";
+import { MoreVertical, Plus, Send, Pencil, X } from "lucide-react";
 import ChatMessage from "./ChatMessage";
 import type { Message } from "./ChatMessage";
-import type {
-  ChatSession,
-  ChatMessage as ApiChatMessage,
-} from "@freshr/shared";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import type { ChatSession, ChatMessage as ApiChatMessage } from "@freshr/shared";
+import { cn } from "../../lib/utils";
 
 interface ChatColumnProps {
-  onSend: (
-    message: string,
-    onChunk?: (text: string) => void,
-  ) => Promise<{ reply: string; sessionId: string }>;
+  onSend: (message: string, onChunk?: (text: string) => void) => Promise<{ reply: string; sessionId: string }>;
   sessions: ChatSession[];
   activeSessionId: string | null;
   onSessionSelect: (sessionId: string) => void;
@@ -69,17 +61,12 @@ export default function ChatColumn({
 
   useEffect(() => {
     function handleOutsideClick(e: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
         setEditingId(null);
       }
     }
-    if (dropdownOpen) {
-      document.addEventListener("mousedown", handleOutsideClick);
-    }
+    if (dropdownOpen) document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [dropdownOpen]);
 
@@ -102,28 +89,14 @@ export default function ChatColumn({
   }, [messages]);
 
   useEffect(() => {
-    if (!activeSessionId) {
-      setMessages([]);
-      return;
-    }
-    if (skipFetchRef.current === activeSessionId) {
-      skipFetchRef.current = null;
-      return;
-    }
+    if (!activeSessionId) { setMessages([]); return; }
+    if (skipFetchRef.current === activeSessionId) { skipFetchRef.current = null; return; }
     setMessages([]);
     setIsLoading(true);
     getChatMessages(activeSessionId)
       .then((apiMessages) => {
-        const sorted = [...apiMessages].sort(
-          (a, b) => a.order_index - b.order_index,
-        );
-        setMessages(
-          sorted.map((m, i) => ({
-            id: i,
-            role: m.role === "user" ? "user" : "ai",
-            text: m.content,
-          })),
-        );
+        const sorted = [...apiMessages].sort((a, b) => a.order_index - b.order_index);
+        setMessages(sorted.map((m, i) => ({ id: i, role: m.role === "user" ? "user" : "ai", text: m.content })));
         nextId.current = sorted.length;
       })
       .finally(() => setIsLoading(false));
@@ -133,229 +106,79 @@ export default function ChatColumn({
     const trimmed = input.trim();
     if (!trimmed || isLoading) return;
 
-    const userMessage: Message = {
-      id: nextId.current++,
-      role: "user",
-      text: trimmed,
-    };
+    const userMessage: Message = { id: nextId.current++, role: "user", text: trimmed };
     const aiMessageId = nextId.current++;
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
-
     setMessages((prev) => [...prev, { id: aiMessageId, role: "ai", text: "" }]);
 
     try {
-      const { sessionId: returnedSessionId } = await onSend(
-        trimmed,
-        (chunk) => {
-          setMessages((prev) =>
-            prev.map((m) =>
-              m.id === aiMessageId ? { ...m, text: m.text + chunk } : m,
-            ),
-          );
-        },
-      );
-
+      const { sessionId: returnedSessionId } = await onSend(trimmed, (chunk) => {
+        setMessages((prev) => prev.map((m) => m.id === aiMessageId ? { ...m, text: m.text + chunk } : m));
+      });
       if (returnedSessionId !== activeSessionId) {
         skipFetchRef.current = returnedSessionId;
         onSessionCreated(returnedSessionId);
       }
     } catch {
-      setMessages((prev) =>
-        prev.filter((m) => m.id !== userMessage.id && m.id !== aiMessageId),
-      );
+      setMessages((prev) => prev.filter((m) => m.id !== userMessage.id && m.id !== aiMessageId));
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-        background: "#f5f5f0",
-        borderRight: `2px solid ${B}`,
-        overflow: "hidden",
-      }}
-    >
-      {/* Header: session name + ⋮ menu */}
-      <div
-        style={{
-          height: 44,
-          padding: "0 16px",
-          borderBottom: `2px solid ${B}`,
-          background: W,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          flexShrink: 0,
-          gap: 10,
-        }}
-      >
-        {/* Left: session name or naming input */}
+    <div className="flex flex-col h-full bg-background border-r border-border overflow-hidden">
+      {/* Header: session name + menu */}
+      <div className="h-11 flex items-center justify-between px-4 border-b border-border bg-card shrink-0 gap-2">
         {isNaming ? (
-          <div style={{ display: "flex", gap: 6, flex: 1 }}>
+          <div className="flex gap-1.5 flex-1">
             <input
               autoFocus
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleConfirmNew();
-                if (e.key === "Escape") {
-                  setIsNaming(false);
-                  setNewTitle("");
-                }
+                if (e.key === "Escape") { setIsNaming(false); setNewTitle(""); }
               }}
               placeholder="Session title (optional)"
-              style={{
-                flex: 1,
-                border: `1.5px solid ${B}`,
-                padding: "4px 8px",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                outline: "none",
-                background: W,
-              }}
+              className="flex-1 bg-input border border-border rounded-sm px-2 py-1 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
             />
-            <button
-              onClick={handleConfirmNew}
-              style={{
-                border: `1.5px solid ${B}`,
-                background: B,
-                color: W,
-                padding: "4px 10px",
-                cursor: "pointer",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-              }}
-            >
-              ✓
-            </button>
-            <button
-              onClick={() => {
-                setIsNaming(false);
-                setNewTitle("");
-              }}
-              style={{
-                border: `1.5px solid #ccc`,
-                background: "transparent",
-                color: "#000000",
-                padding: "4px 8px",
-                cursor: "pointer",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-              }}
-            >
-              ✕
-            </button>
+            <button onClick={handleConfirmNew} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-sm">✓</button>
+            <button onClick={() => { setIsNaming(false); setNewTitle(""); }} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground">✕</button>
           </div>
         ) : (
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              color: B,
-              letterSpacing: "0.02em",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              flex: 1,
-            }}
-          >
+          <span className="text-xs font-medium text-foreground truncate flex-1">
             {currentSession?.title || "No session selected"}
           </span>
         )}
-        {/* Right: ⋮ button + floating dropdown */}
+
         {!isNaming && (
-          <div
-            ref={dropdownRef}
-            style={{ position: "relative", flexShrink: 0 }}
-          >
+          <div ref={dropdownRef} className="relative shrink-0">
             <button
               onClick={() => setDropdownOpen((o) => !o)}
-              style={{
-                background: dropdownOpen ? B : "transparent",
-                border: `1.5px solid ${dropdownOpen ? B : "#ddd"}`,
-                color: dropdownOpen ? W : B,
-                width: 28,
-                height: 28,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "1rem",
-                lineHeight: 1,
-                transition: "background 0.1s, border-color 0.1s",
-                flexShrink: 0,
-              }}
+              className={cn(
+                "flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
+                dropdownOpen && "bg-secondary text-foreground",
+              )}
             >
-              ⋮
+              <MoreVertical className="h-3.5 w-3.5" />
             </button>
 
             {dropdownOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  right: 0,
-                  top: "calc(100% + 6px)",
-                  background: W,
-                  border: `2px solid ${B}`,
-                  boxShadow: `4px 4px 0 ${B}`,
-                  minWidth: 210,
-                  maxWidth: "calc(100vw - 32px)",
-                  zIndex: 100,
-                  overflow: "hidden",
-                }}
-              >
-                {/* New chat */}
+              <div className="absolute right-0 top-[calc(100%+6px)] z-50 w-52 rounded-md border border-border bg-popover shadow-lg overflow-hidden">
                 <button
-                  onClick={() => {
-                    setDropdownOpen(false);
-                    setIsNaming(true);
-                    setNewTitle("");
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "10px 14px",
-                    background: "transparent",
-                    border: "none",
-                    borderBottom: `1.5px solid #eee`,
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: B,
-                    cursor: "pointer",
-                    textAlign: "left",
-                    letterSpacing: "0.02em",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.background = "#f5f5f0")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = "transparent")
-                  }
+                  onClick={() => { setDropdownOpen(false); setIsNaming(true); setNewTitle(""); }}
+                  className="flex items-center gap-2 w-full px-3 py-2.5 text-xs text-foreground hover:bg-secondary transition-colors border-b border-border text-left"
                 >
-                  + New chat
+                  <Plus className="h-3 w-3" />
+                  New chat
                 </button>
 
-                {/* Session list */}
-                <div style={{ maxHeight: 220, overflowY: "auto" }}>
+                <div className="max-h-56 overflow-y-auto">
                   {sessions.length === 0 ? (
-                    <div
-                      style={{
-                        padding: "10px 14px",
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.75rem",
-                        color: "#000000",
-                      }}
-                    >
-                      No sessions yet
-                    </div>
+                    <div className="px-3 py-2.5 text-xs text-muted-foreground">No sessions yet</div>
                   ) : (
                     sessions.map((s) => {
                       const isActive = s.id === activeSessionId;
@@ -366,19 +189,10 @@ export default function ChatColumn({
                           key={s.id}
                           onMouseEnter={() => setHoveredId(s.id)}
                           onMouseLeave={() => setHoveredId(null)}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            background: isActive
-                              ? B
-                              : isHovered
-                                ? "#f5f5f0"
-                                : W,
-                            borderLeft: isActive
-                              ? `3px solid ${G}`
-                              : "3px solid transparent",
-                            borderBottom: "1px solid #f0f0f0",
-                          }}
+                          className={cn(
+                            "flex items-center border-l-2 border-b border-border/50 transition-colors",
+                            isActive ? "border-l-primary bg-secondary" : "border-l-transparent hover:bg-secondary/50",
+                          )}
                         >
                           {isEditing ? (
                             <input
@@ -386,82 +200,33 @@ export default function ChatColumn({
                               value={editTitle}
                               onChange={(e) => setEditTitle(e.target.value)}
                               onKeyDown={(e) => {
-                                if (e.key === "Enter")
-                                  handleConfirmRename(s.id);
+                                if (e.key === "Enter") handleConfirmRename(s.id);
                                 if (e.key === "Escape") setEditingId(null);
                               }}
                               onBlur={() => handleConfirmRename(s.id)}
-                              style={{
-                                flex: 1,
-                                border: "none",
-                                borderBottom: `1.5px solid ${B}`,
-                                padding: "8px 14px",
-                                fontFamily: "'IBM Plex Mono', monospace",
-                                fontSize: "0.75rem",
-                                background: "transparent",
-                                color: isActive ? W : B,
-                                outline: "none",
-                              }}
+                              className="flex-1 bg-transparent border-b border-primary px-3 py-2 text-xs text-foreground outline-none"
                             />
                           ) : (
                             <>
                               <div
-                                onClick={() => {
-                                  onSessionSelect(s.id);
-                                  setDropdownOpen(false);
-                                }}
-                                style={{
-                                  flex: 1,
-                                  padding: "9px 14px",
-                                  fontFamily: "'IBM Plex Mono', monospace",
-                                  fontSize: "0.75rem",
-                                  cursor: "pointer",
-                                  color: isActive ? W : B,
-                                  whiteSpace: "nowrap",
-                                  overflow: "hidden",
-                                  textOverflow: "ellipsis",
-                                }}
+                                onClick={() => { onSessionSelect(s.id); setDropdownOpen(false); }}
+                                className="flex-1 px-3 py-2 text-xs cursor-pointer text-foreground truncate"
                               >
                                 {s.title || "Untitled session"}
                               </div>
                               {(isHovered || isActive) && (
                                 <>
                                   <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setEditingId(s.id);
-                                      setEditTitle(s.title || "");
-                                    }}
-                                    title="Rename"
-                                    style={{
-                                      background: "transparent",
-                                      border: "none",
-                                      cursor: "pointer",
-                                      color: isActive ? W : B,
-                                      padding: "0 6px",
-                                      fontSize: "0.75rem",
-                                      flexShrink: 0,
-                                    }}
+                                    onClick={(e) => { e.stopPropagation(); setEditingId(s.id); setEditTitle(s.title || ""); }}
+                                    className="text-muted-foreground hover:text-foreground p-1.5"
                                   >
-                                    ✎
+                                    <Pencil className="h-3 w-3" />
                                   </button>
                                   <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      onDeleteSession(s.id);
-                                    }}
-                                    title="Delete"
-                                    style={{
-                                      background: "transparent",
-                                      border: "none",
-                                      cursor: "pointer",
-                                      color: isActive ? "#ff8080" : "#ccc",
-                                      padding: "0 10px 0 0",
-                                      fontSize: "0.75rem",
-                                      flexShrink: 0,
-                                    }}
+                                    onClick={(e) => { e.stopPropagation(); onDeleteSession(s.id); }}
+                                    className="text-muted-foreground hover:text-destructive p-1.5 pr-2"
                                   >
-                                    ✕
+                                    <X className="h-3 w-3" />
                                   </button>
                                 </>
                               )}
@@ -480,227 +245,60 @@ export default function ChatColumn({
 
       {/* Processing banner */}
       {chatDisabled && (
-        <div
-          style={{
-            padding: "8px 16px",
-            background: "#fffbe6",
-            borderBottom: `1.5px solid #f0c040`,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            flexShrink: 0,
-          }}
-        >
-          <svg
-            width="12"
-            height="12"
-            viewBox="0 0 12 12"
-            style={{ flexShrink: 0 }}
-          >
-            <circle
-              cx="6"
-              cy="6"
-              r="4"
-              fill="none"
-              stroke="#ccc"
-              strokeWidth="1.8"
-            />
-            <path
-              d="M6 2 A4 4 0 0 1 10 6"
-              fill="none"
-              stroke="#888"
-              strokeWidth="1.8"
-              strokeLinecap="round"
-            >
-              <animateTransform
-                attributeName="transform"
-                type="rotate"
-                from="0 6 6"
-                to="360 6 6"
-                dur="0.8s"
-                repeatCount="indefinite"
-              />
-            </path>
-          </svg>
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              color: "#7a6000",
-            }}
-          >
+        <div className="flex items-center gap-2 px-4 py-2 bg-amber-500/10 border-b border-amber-500/20 shrink-0">
+          <div className="w-3 h-3 rounded-full border border-border border-t-muted-foreground animate-spin shrink-0" />
+          <span className="text-xs text-amber-600 dark:text-amber-400">
             Indexing your files — chat will unlock once ready.
           </span>
         </div>
       )}
 
-      {/* Messages area */}
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          padding: "20px 16px",
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-        }}
-      >
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
         {messages.length === 0 && !isLoading ? (
-          <EmptyState />
+          <div className="flex-1 flex flex-col items-center justify-center gap-2.5 py-10 text-center">
+            <p className="text-sm font-medium text-foreground">
+              Your notes are loaded.<br />Your brain is not.
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Ask something. Anything.<br />Even a bad question beats no question.
+            </p>
+          </div>
         ) : (
           <>
-            {messages.map((msg) => (
-              <ChatMessage key={msg.id} message={msg} />
-            ))}
-            {isLoading && <TypingIndicator />}
+            {messages.map((msg) => <ChatMessage key={msg.id} message={msg} />)}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="rounded-lg px-3 py-2 text-sm text-muted-foreground">
+                  thinking...
+                </div>
+              </div>
+            )}
           </>
         )}
         <div ref={bottomRef} />
       </div>
 
       {/* Input bar */}
-      <div
-        style={{
-          borderTop: `2px solid ${B}`,
-          padding: "12px 16px",
-          background: W,
-          display: "flex",
-          gap: 10,
-          flexShrink: 0,
-        }}
-      >
+      <div className="border-t border-border p-3 bg-card flex gap-2 shrink-0">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
+          onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
           disabled={chatDisabled}
-          placeholder={
-            chatDisabled
-              ? "Waiting for files to finish indexing..."
-              : "Ask a question about your notes..."
-          }
-          style={{
-            flex: 1,
-            border: `2px solid ${chatDisabled ? "#ccc" : B}`,
-            borderRadius: 0,
-            padding: "10px 12px",
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.78rem",
-            background: chatDisabled ? "#f5f5f5" : W,
-            outline: "none",
-            boxSizing: "border-box",
-            color: B,
-            cursor: chatDisabled ? "not-allowed" : "text",
-          }}
+          placeholder={chatDisabled ? "Waiting for files to finish indexing..." : "Ask a question about your notes..."}
+          className={cn(
+            "flex-1 rounded-md border border-border bg-input px-3 py-2 text-sm text-foreground outline-none transition-colors focus:ring-1 focus:ring-ring placeholder:text-muted-foreground",
+            chatDisabled && "opacity-50 cursor-not-allowed",
+          )}
         />
         <button
           onClick={handleSend}
           disabled={!input.trim() || isLoading || chatDisabled}
-          onMouseEnter={(e) => {
-            if (input.trim() && !isLoading) {
-              e.currentTarget.style.transform = "translate(-1.5px, -1.5px)";
-              e.currentTarget.style.boxShadow = `4px 4px 0 ${G}`;
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "none";
-            e.currentTarget.style.boxShadow =
-              input.trim() && !isLoading ? `3px 3px 0 ${G}` : "none";
-          }}
-          style={{
-            background:
-              input.trim() && !isLoading && !chatDisabled ? B : "#ccc",
-            color: W,
-            border: `2px solid ${input.trim() && !isLoading && !chatDisabled ? B : "#ccc"}`,
-            boxShadow:
-              input.trim() && !isLoading && !chatDisabled
-                ? `3px 3px 0 ${G}`
-                : "none",
-            padding: "10px 16px",
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontWeight: 700,
-            fontSize: "0.78rem",
-            cursor:
-              input.trim() && !isLoading && !chatDisabled
-                ? "pointer"
-                : "not-allowed",
-            flexShrink: 0,
-            lineHeight: 1,
-            transition: "transform 0.15s, box-shadow 0.15s",
-          }}
+          className="flex items-center justify-center h-9 w-9 rounded-md bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
         >
-          →
+          <Send className="h-4 w-4" />
         </button>
-      </div>
-    </div>
-  );
-}
-
-function EmptyState() {
-  return (
-    <div
-      style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 10,
-        padding: "40px 20px",
-        textAlign: "center",
-      }}
-    >
-      <p
-        style={{
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 800,
-          fontSize: "1rem",
-          color: "#222",
-          margin: 0,
-        }}
-      >
-        Your notes are loaded.
-        <br />
-        Your brain is not.
-      </p>
-      <p
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#000000",
-          margin: 0,
-          lineHeight: 1.6,
-        }}
-      >
-        Ask something. Anything.
-        <br />
-        Even a bad question beats no question.
-      </p>
-    </div>
-  );
-}
-
-function TypingIndicator() {
-  return (
-    <div style={{ display: "flex", justifyContent: "flex-start" }}>
-      <div
-        style={{
-          background: "#fff",
-          border: "2px solid #000",
-          boxShadow: "3px 3px 0 #000",
-          padding: "10px 16px",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.78rem",
-          color: "#000000",
-          letterSpacing: "0.1em",
-        }}
-      >
-        thinking...
       </div>
     </div>
   );
