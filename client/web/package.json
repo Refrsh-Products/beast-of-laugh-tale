@@ -12,14 +12,17 @@
     "test:coverage": "vitest --coverage"
   },
   "dependencies": {
+    "@freshr/shared": "*",
     "@react-oauth/google": "^0.13.4",
     "@revealjs/react": "^0.2.1",
-    "@freshr/shared": "*",
     "@tailwindcss/vite": "^4.2.1",
     "axios": "1.13.6",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "katex": "^0.17.0",
+    "lucide-react": "^1.21.0",
     "ogl": "^1.0.11",
     "pptxgenjs": "^4.0.1",
     "react": "^19.2.0",
@@ -30,6 +33,7 @@
     "remark-gfm": "^4.0.1",
     "remark-math": "^6.0.0",
     "reveal.js": "^6.0.1",
+    "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.2.1"
   },
   "devDependencies": {
