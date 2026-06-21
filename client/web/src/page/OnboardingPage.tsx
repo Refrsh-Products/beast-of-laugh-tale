@@ -7,9 +7,9 @@ import FreshrLogo from "../components/logo/FreshrLogo";
 import LoadErrorScreen from "../components/ui/LoadErrorScreen";
 import { getGoogleProfile, clearGoogleProfile } from "../storage";
 import Button from "../components/ui/Button";
-
-const B = "#000000";
-const W = "#FFFFFF";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { cn } from "../lib/utils";
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -81,187 +81,116 @@ export default function OnboardingPage() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    border: `3px solid ${B}`,
-    borderRadius: 0,
-    padding: "12px 14px",
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.82rem",
-    background: W,
-    outline: "none",
-    boxSizing: "border-box",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    letterSpacing: "0.12em",
-    marginBottom: 6,
-    color: B,
-  };
+  const fieldError = (val: string) =>
+    showErrors && !val.trim() ? "border-destructive focus:ring-destructive" : "";
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: "#f5f5f0",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "32px 16px",
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 480,
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${B}`,
-          padding: "40px 40px 36px",
-          boxSizing: "border-box",
-        }}
-      >
-        {/* Logo */}
+    <div className="min-h-dvh bg-background flex items-center justify-center px-6 py-12">
+      <div className="w-full max-w-md flex flex-col gap-6">
         <FreshrLogo />
 
-        <h1
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.75rem",
-            letterSpacing: "-0.02em",
-            margin: "0 0 8px",
-            lineHeight: 1.1,
-            color: B,
-          }}
-        >
-          One last step
-        </h1>
-        <p
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            color: "#000000",
-            margin: "0 0 32px",
-            lineHeight: 1.6,
-          }}
-        >
-          Tell us a bit about yourself to complete your profile.
-        </p>
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">One last step</h1>
+          <p className="text-sm text-muted-foreground mt-1">Tell us a bit about yourself to complete your profile.</p>
+        </div>
 
-        {error && (
-          <p
-            style={{
-              color: "#cc0000",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              margin: "0 0 20px",
-            }}
-          >
-            {error}
-          </p>
-        )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
         <form
-          style={{ display: "flex", flexDirection: "column", gap: 20 }}
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }}
+          onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
+          className="flex flex-col gap-4"
         >
-          <div style={{ display: "flex", gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>FIRST NAME <span style={{ color: "#cc0000" }}>*</span></label>
-              <input
+          <div className="flex gap-3">
+            <div className="flex flex-col gap-1.5 flex-1">
+              <Label htmlFor="firstName">First name <span className="text-destructive">*</span></Label>
+              <Input
+                id="firstName"
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="Jane"
-                style={{ ...inputStyle, borderColor: showErrors && !firstName.trim() ? "#cc0000" : B }}
+                className={cn(fieldError(firstName))}
                 autoFocus
               />
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>LAST NAME <span style={{ color: "#cc0000" }}>*</span></label>
-              <input
+            <div className="flex flex-col gap-1.5 flex-1">
+              <Label htmlFor="lastName">Last name <span className="text-destructive">*</span></Label>
+              <Input
+                id="lastName"
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Smith"
-                style={{ ...inputStyle, borderColor: showErrors && !lastName.trim() ? "#cc0000" : B }}
+                className={cn(fieldError(lastName))}
               />
             </div>
           </div>
 
-          <div>
-            <label style={labelStyle}>PHONE NUMBER <span style={{ color: "#cc0000" }}>*</span></label>
-            <input
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="phone">Phone number <span className="text-destructive">*</span></Label>
+            <Input
+              id="phone"
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value.replace(/[^\d+\-\s().]/g, ""))}
               placeholder="+1 (555) 000-0000"
-              style={{ ...inputStyle, borderColor: showErrors && !phone.trim() ? "#cc0000" : B }}
+              className={cn(fieldError(phone))}
             />
           </div>
 
-          <div>
-            <label style={labelStyle}>ADDRESS LINE 1 <span style={{ color: "#cc0000" }}>*</span></label>
-            <input
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="address1">Address line 1 <span className="text-destructive">*</span></Label>
+            <Input
+              id="address1"
               type="text"
               value={address1}
               onChange={(e) => setAddress1(e.target.value)}
               placeholder="123 Main St"
-              style={{ ...inputStyle, borderColor: showErrors && !address1.trim() ? "#cc0000" : B }}
+              className={cn(fieldError(address1))}
             />
           </div>
 
-          <div>
-            <label style={labelStyle}>
-              ADDRESS LINE 2{" "}
-              <span style={{ fontWeight: 400, opacity: 0.5 }}>(OPTIONAL)</span>
-            </label>
-            <input
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="address2">
+              Address line 2 <span className="text-muted-foreground">(optional)</span>
+            </Label>
+            <Input
+              id="address2"
               type="text"
               value={address2}
               onChange={(e) => setAddress2(e.target.value)}
               placeholder="Apt 4B"
-              style={inputStyle}
             />
           </div>
 
-          <div style={{ display: "flex", gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>CITY <span style={{ color: "#cc0000" }}>*</span></label>
-              <input
+          <div className="flex gap-3">
+            <div className="flex flex-col gap-1.5 flex-1">
+              <Label htmlFor="city">City <span className="text-destructive">*</span></Label>
+              <Input
+                id="city"
                 type="text"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="New York"
-                style={{ ...inputStyle, borderColor: showErrors && !city.trim() ? "#cc0000" : B }}
+                className={cn(fieldError(city))}
               />
             </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>POSTAL CODE <span style={{ color: "#cc0000" }}>*</span></label>
-              <input
+            <div className="flex flex-col gap-1.5 flex-1">
+              <Label htmlFor="postalCode">Postal code <span className="text-destructive">*</span></Label>
+              <Input
+                id="postalCode"
                 type="text"
                 value={postalCode}
                 onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
                 placeholder="1234"
-                style={{ ...inputStyle, borderColor: showErrors && !postalCode.trim() ? "#cc0000" : B }}
+                className={cn(fieldError(postalCode))}
               />
             </div>
           </div>
 
-          <div style={{ marginTop: 8 }}>
-            <Button variant="green" fullWidth type="submit">
-              Go to dashboard →
-            </Button>
-          </div>
+          <Button variant="green" fullWidth type="submit">
+            Go to dashboard →
+          </Button>
         </form>
       </div>
     </div>
