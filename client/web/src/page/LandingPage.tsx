@@ -60,7 +60,7 @@ export default function LandingPage() {
 
         <section
           ref={heroRef}
-          className="relative z-10 min-h-dvh flex flex-col justify-center px-6 md:px-16 pb-24 border-b border-border"
+          className="relative z-10 min-h-dvh flex flex-col justify-center px-6 md:px-16 pt-20 pb-24 border-b border-border"
         >
 
         <div className="relative z-10 max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
