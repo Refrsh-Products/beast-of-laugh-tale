@@ -6,7 +6,7 @@ import FeatureCard from "../components/landing/FeatureCard";
 import TestimonialSection from "../components/landing/TestimonialSection";
 import RotatingText from "../components/landing/RotatingText";
 import PricingSection from "../components/landing/PricingSection";
-import LineWaves from "../components/landing/LineWaves";
+import LightRays from "../components/landing/LightRays";
 import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 
 export default function LandingPage() {
@@ -60,19 +60,18 @@ export default function LandingPage() {
         ref={heroRef}
         className="relative min-h-[calc(100dvh-56px)] flex flex-col justify-center px-6 md:px-16 pt-16 pb-24 border-b border-border overflow-hidden"
       >
-        {/* LineWaves — very subtle in hero */}
-        <div className="absolute inset-0 z-0 opacity-[0.12]">
-          <LineWaves
-            color1="#84e487"
-            color2="#84e487"
-            color3="#2A2A30"
-            brightness={0.4}
-            speed={0.15}
-            warpIntensity={0.6}
-            rotation={-20}
-            edgeFadeWidth={0.3}
-            innerLineCount={24}
-            outerLineCount={28}
+        {/* LightRays background */}
+        <div className="absolute inset-0 z-0">
+          <LightRays
+            raysOrigin="top-center"
+            raysColor="#6efb73"
+            raysSpeed={1.5}
+            lightSpread={0.8}
+            rayLength={1.2}
+            followMouse={true}
+            mouseInfluence={0.1}
+            noiseAmount={0.1}
+            distortion={0.05}
           />
         </div>
 
