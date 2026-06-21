@@ -61,7 +61,7 @@ export default function ProfileSidebar({
           ? "bg-secondary text-muted-foreground border-border"
           : "bg-primary/10 text-primary border-primary/20",
       )}>
-        {plan} PLAN
+          {plan.charAt(0).toUpperCase() + plan.slice(1).toLowerCase()} Plan
       </span>
 
       <div className="h-px bg-border mb-2" />
