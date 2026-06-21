@@ -38,8 +38,8 @@ export default function LandingPage() {
     <div className="bg-background text-foreground overflow-x-hidden">
       {/* ── NAV ── */}
       <nav
-        className={`sticky top-0 z-50 flex items-center justify-between px-6 md:px-16 h-14 transition-all duration-300 ${
-          scrolled ? "bg-background/90 backdrop-blur-sm border-b border-border" : "bg-transparent"
+        className={`sticky top-0 z-50 flex items-center justify-between px-6 md:px-16 h-14 transition-all duration-300 backdrop-blur-sm ${
+          scrolled ? "bg-background/90 border-b border-border" : "bg-background/40"
         }`}
       >
         <button
