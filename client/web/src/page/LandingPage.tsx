@@ -27,9 +27,23 @@ export default function LandingPage() {
 
   return (
     <div className="bg-background text-foreground">
-      {/* ── NAV + HERO wrapper — LightRays covers both ── */}
-      <div className="relative min-h-dvh">
-        {/* LightRays fills the full nav+hero area */}
+      {/* ── NAV — at root level so sticky spans entire page ── */}
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 md:px-16 h-14 bg-background/40 backdrop-blur-sm">
+        <button
+          onClick={() => navigate("/")}
+          className="text-base font-bold text-foreground tracking-tight"
+        >
+          FRESHR
+        </button>
+        <div className="flex items-center gap-2">
+          <Button variant="default" onClick={() => navigate("/login")}>Log in</Button>
+          <Button variant="green" onClick={() => navigate("/signup")}>Sign up</Button>
+        </div>
+      </nav>
+
+      {/* ── HERO — pulls up by nav height so LightRays covers nav area too ── */}
+      <div className="relative" style={{ marginTop: "-56px" }}>
+        {/* LightRays fills nav+hero (starts behind the nav) */}
         <div className="absolute inset-0 z-0">
           <LightRays
             raysOrigin="top-center"
@@ -44,25 +58,9 @@ export default function LandingPage() {
           />
         </div>
 
-        {/* NAV */}
-        <nav className="sticky top-0 z-50 flex items-center justify-between px-6 md:px-16 h-14 bg-background/40 backdrop-blur-sm">
-          <button
-            onClick={() => navigate("/")}
-            className="text-base font-bold text-foreground tracking-tight"
-          >
-            FRESHR
-          </button>
-
-          <div className="flex items-center gap-2">
-            <Button variant="default" onClick={() => navigate("/login")}>Log in</Button>
-            <Button variant="green" onClick={() => navigate("/signup")}>Sign up</Button>
-          </div>
-        </nav>
-
-        {/* HERO */}
         <section
           ref={heroRef}
-          className="relative z-10 min-h-[calc(100dvh-56px)] flex flex-col justify-center px-6 md:px-16 pb-24 border-b border-border"
+          className="relative z-10 min-h-dvh flex flex-col justify-center px-6 md:px-16 pb-24 border-b border-border"
         >
 
         <div className="relative z-10 max-w-6xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
@@ -153,7 +151,7 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-      </div>{/* end nav+hero wrapper */}
+      </div>{/* end hero wrapper */}
 
       {/* ── TICKER ── */}
       <div className="border-b border-border bg-card overflow-x-hidden py-3">
