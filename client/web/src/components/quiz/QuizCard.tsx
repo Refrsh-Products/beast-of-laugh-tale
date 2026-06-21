@@ -1,4 +1,5 @@
 import type { QuizSession } from "@freshr/shared";
+import { Badge } from "../ui/badge";
 import { cn } from "../../lib/utils";
 
 function timeAgo(isoDate: string): string {
@@ -61,9 +62,9 @@ export default function QuizCard({
     >
       <div className="flex items-start justify-between gap-2 mb-2">
         <p className="text-xs font-medium text-foreground truncate flex-1">{topicLabel}</p>
-        <span className="text-xs font-medium text-foreground border border-border rounded px-1.5 py-0.5 shrink-0">
+        <Badge variant="outline" className="shrink-0 font-medium">
           {scoreCount}/{numQuestions}
-        </span>
+        </Badge>
       </div>
 
       <div className="flex items-center gap-1.5 flex-wrap text-xs text-muted-foreground">

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { cn } from "../../lib/utils";
+import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 
 interface TopNavbarProps {
   userEmail: string;
@@ -36,23 +36,16 @@ export default function TopNavbar({ userEmail, userName, profilePictureUrl }: To
         onClick={() => navigate("/profile")}
         className="flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-secondary select-none"
       >
-        <div
-          className={cn(
-            "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold overflow-hidden",
-            hasAvatar ? "bg-transparent" : "bg-secondary text-foreground",
-          )}
-        >
-          {hasAvatar ? (
-            <img
+        <Avatar className="h-7 w-7">
+          {hasAvatar && (
+            <AvatarImage
               src={profilePictureUrl}
               alt={displayLabel}
               onError={() => setAvatarError(true)}
-              className="h-full w-full object-cover"
             />
-          ) : (
-            avatarLetter
           )}
-        </div>
+          <AvatarFallback className="text-xs">{avatarLetter}</AvatarFallback>
+        </Avatar>
         <span className="hidden sm:block max-w-36 truncate text-sm text-foreground">
           {displayLabel}
         </span>

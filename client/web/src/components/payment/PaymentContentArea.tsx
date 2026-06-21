@@ -4,6 +4,7 @@ import { Check } from "lucide-react";
 import type { ProfileTab } from "../profile-account/ProfileSidebar";
 import usePaymentService from "../../services/payment";
 import useAccountService from "../../services/account";
+import { Badge } from "../ui/badge";
 import { cn } from "../../lib/utils";
 
 interface PaymentContentAreaProps {
@@ -171,16 +172,11 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
               )}
             >
               {plan.badge && (
-                <span
-                  className={cn(
-                    "absolute -top-3 left-4 rounded-full px-2.5 py-0.5 text-xs font-medium border",
-                    isFeatured
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-secondary text-foreground border-border",
-                  )}
-                >
-                  {plan.badge}
-                </span>
+                <div className="absolute -top-3 left-4">
+                  <Badge variant={isFeatured ? "default" : "secondary"}>
+                    {plan.badge}
+                  </Badge>
+                </div>
               )}
 
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">

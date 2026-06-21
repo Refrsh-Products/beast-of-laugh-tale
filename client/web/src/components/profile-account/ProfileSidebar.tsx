@@ -1,3 +1,5 @@
+import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
+import { Badge } from "../ui/badge";
 import { cn } from "../../lib/utils";
 
 export type ProfileTab = "profile" | "account" | "payment" | "support";
@@ -27,46 +29,29 @@ export default function ProfileSidebar({
   onTabChange,
 }: ProfileSidebarProps) {
   const isUrl = avatar.startsWith("http");
+  const avatarLetter = (name || email || "?")[0].toUpperCase();
+  const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1).toLowerCase();
 
   return (
     <div className="w-60 shrink-0 border-r border-border bg-card flex flex-col p-5 gap-1">
-      {/* Avatar */}
-      <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center text-base font-semibold text-foreground overflow-hidden select-none shrink-0 mb-3">
-        {isUrl ? (
-          <img
-            src={avatar}
-            alt={name}
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          avatar
-        )}
-      </div>
+      <Avatar className="w-12 h-12 mb-3">
+        {isUrl && <AvatarImage src={avatar} alt={name} referrerPolicy="no-referrer" />}
+        <AvatarFallback className="text-base font-semibold">{avatarLetter}</AvatarFallback>
+      </Avatar>
 
-      {/* Name */}
       <p className="text-sm font-medium text-foreground leading-snug break-words">
         {name || "Your Name"}
       </p>
+      <p className="text-xs text-muted-foreground break-all leading-relaxed">{email}</p>
 
-      {/* Email */}
-      <p className="text-xs text-muted-foreground break-all leading-relaxed">
-        {email}
-      </p>
-
-      {/* Plan badge */}
-      <span className={cn(
-        "self-start mt-1 mb-4 text-xs rounded-full px-2.5 py-0.5 border",
-        plan === "FREE"
-          ? "bg-secondary text-muted-foreground border-border"
-          : "bg-primary/10 text-primary border-primary/20",
-      )}>
-          {plan.charAt(0).toUpperCase() + plan.slice(1).toLowerCase()} Plan
-      </span>
+      <div className="mt-1 mb-4">
+        <Badge variant={plan.toLowerCase() === "free" ? "secondary" : "default"}>
+          {planLabel} Plan
+        </Badge>
+      </div>
 
       <div className="h-px bg-border mb-2" />
 
-      {/* Nav */}
       <nav className="flex flex-col gap-0.5">
         {NAV_ITEMS.map((item) => (
           <button

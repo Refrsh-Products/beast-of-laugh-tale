@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Check } from "lucide-react";
 import type { PresentationSession } from "@freshr/shared";
 import Button from "../ui/Button";
+import { DialogContent, DialogFooter } from "../ui/dialog";
 import { cn } from "../../lib/utils";
 
 function timeAgo(isoDate: string): string {
@@ -142,18 +143,16 @@ export default function PastPresentationsColumn({
       </div>
 
       {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-xs rounded-lg border border-border bg-card p-6 shadow-xl">
-            <p className="text-base font-semibold text-foreground mb-1">
-              Delete {selectedIds.length} presentation{selectedIds.length > 1 ? "s" : ""}?
-            </p>
-            <p className="text-sm text-muted-foreground mb-5">This cannot be undone.</p>
-            <div className="flex gap-2">
-              <Button variant="danger" fullWidth onClick={confirmDelete}>Delete</Button>
-              <Button variant="default" fullWidth onClick={() => setShowConfirm(false)}>Cancel</Button>
-            </div>
-          </div>
-        </div>
+        <DialogContent onClose={() => setShowConfirm(false)} className="max-w-xs">
+          <p className="text-base font-semibold text-foreground mb-1">
+            Delete {selectedIds.length} presentation{selectedIds.length > 1 ? "s" : ""}?
+          </p>
+          <p className="text-sm text-muted-foreground mb-2">This cannot be undone.</p>
+          <DialogFooter>
+            <Button variant="danger" fullWidth onClick={confirmDelete}>Delete</Button>
+            <Button variant="default" fullWidth onClick={() => setShowConfirm(false)}>Cancel</Button>
+          </DialogFooter>
+        </DialogContent>
       )}
     </div>
   );
