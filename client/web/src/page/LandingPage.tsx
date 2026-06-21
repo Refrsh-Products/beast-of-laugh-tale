@@ -45,7 +45,7 @@ export default function LandingPage() {
       {/* ── HERO ── */}
       <section
         ref={heroRef}
-        className="relative min-h-[calc(100dvh-56px)] flex flex-col justify-center px-6 md:px-16 pt-16 pb-24 border-b border-border overflow-hidden"
+        className="relative min-h-[calc(100dvh-56px)] flex flex-col justify-center px-6 md:px-16 pb-24 border-b border-border overflow-hidden"
       >
         {/* LightRays background */}
         <div className="absolute inset-0 z-0">
