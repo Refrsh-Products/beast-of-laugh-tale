@@ -12,20 +12,11 @@ import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 export default function LandingPage() {
   const navigate = useNavigate();
   const [loaded, setLoaded] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 60);
     return () => clearTimeout(t);
-  }, []);
-
-  useEffect(() => {
-    function handleScroll() {
-      setScrolled(window.scrollY > 20);
-    }
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const fadeIn = (delay = 0): React.CSSProperties => ({
@@ -35,13 +26,9 @@ export default function LandingPage() {
   });
 
   return (
-    <div className="bg-background text-foreground overflow-x-hidden">
+    <div className="bg-background text-foreground">
       {/* ── NAV ── */}
-      <nav
-        className={`sticky top-0 z-50 flex items-center justify-between px-6 md:px-16 h-14 transition-all duration-300 backdrop-blur-sm ${
-          scrolled ? "bg-background/90 border-b border-border" : "bg-background/40"
-        }`}
-      >
+      <nav className="sticky top-0 z-50 flex items-center justify-between px-6 md:px-16 h-14 bg-background/15 backdrop-blur-sm">
         <button
           onClick={() => navigate("/")}
           className="text-base font-bold text-foreground tracking-tight"
@@ -165,7 +152,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── TICKER ── */}
-      <div className="border-b border-border bg-card overflow-hidden py-3">
+      <div className="border-b border-border bg-card overflow-x-hidden py-3">
         <div
           className="inline-flex whitespace-nowrap"
           style={{ animation: "ticker 26s linear infinite" }}
