@@ -1,134 +1,59 @@
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
+import { Check } from "lucide-react";
 import Button from "../ui/Button";
 
-const B = "#000000";
-const W = "#FFFFFF";
-const G = "#84e487";
+const PRO_FEATURES = [
+  "Unlimited notebooks",
+  "50 GB storage",
+  "Unlimited daily quizzes",
+  "Unlimited presentations",
+  "Priority support",
+];
 
-export default function UpgradeModal({
-  onClose,
-  title,
-  description,
-}: {
+interface UpgradeModalProps {
   onClose: () => void;
   title?: string;
   description?: string;
-}) {
+}
+
+export default function UpgradeModal({ onClose, title, description }: UpgradeModalProps) {
   const navigate = useNavigate();
+
   return createPortal(
     <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 2000,
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onMouseDown={onClose}
     >
       <div
-        style={{
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${B}`,
-          padding: "32px",
-          maxWidth: 420,
-          width: "90%",
-          display: "flex",
-          flexDirection: "column",
-          gap: 20,
-        }}
+        className="w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-xl flex flex-col gap-5"
         onMouseDown={(e) => e.stopPropagation()}
       >
         <div>
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "1.2rem",
-              margin: "0 0 8px",
-            }}
-          >
-            {title}
-          </h2>
-          <p
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              color: "#000000",
-              margin: 0,
-              lineHeight: 1.6,
-            }}
-          >
-            {description}
-          </p>
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{description}</p>
         </div>
 
-        <div
-          style={{
-            border: `2px solid ${B}`,
-            padding: "16px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "#000000",
-            }}
-          >
+        <div className="rounded-md border border-border bg-secondary/30 p-4 flex flex-col gap-2">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
             Pro plan includes
           </span>
-          {[
-            "Unlimited notebooks",
-            "50 GB storage",
-            "Unlimited daily quizzes",
-            "Unlimited presentations",
-            "Priority support",
-          ].map((feature) => (
-            <div
-              key={feature}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-              }}
-            >
-              <span
-                style={{
-                  width: 14,
-                  height: 14,
-                  background: G,
-                  border: `1.5px solid ${B}`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                }}
-              >
-                ✓
-              </span>
+          {PRO_FEATURES.map((feature) => (
+            <div key={feature} className="flex items-center gap-2 text-sm text-foreground">
+              <Check className="h-3.5 w-3.5 text-primary shrink-0" />
               {feature}
             </div>
           ))}
         </div>
 
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+        <div className="flex justify-end gap-2">
           <Button variant="default" onClick={onClose}>Not now</Button>
-          <Button variant="green" onClick={() => navigate("/profile", { state: { tab: "payment" } })}>Upgrade to Pro →</Button>
+          <Button
+            variant="green"
+            onClick={() => navigate("/profile", { state: { tab: "payment" } })}
+          >
+            Upgrade to Pro →
+          </Button>
         </div>
       </div>
     </div>,

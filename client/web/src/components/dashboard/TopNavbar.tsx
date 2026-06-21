@@ -1,11 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMediaQuery } from "../../hooks/useMediaQuery";
-import { BP_PHONE } from "../../constants/breakpoints";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { cn } from "../../lib/utils";
 
 interface TopNavbarProps {
   userEmail: string;
@@ -13,141 +8,55 @@ interface TopNavbarProps {
   profilePictureUrl?: string;
 }
 
-export default function TopNavbar({
-  userEmail,
-  userName,
-  profilePictureUrl,
-}: TopNavbarProps) {
+export default function TopNavbar({ userEmail, userName, profilePictureUrl }: TopNavbarProps) {
   const navigate = useNavigate();
-  const isPhone = useMediaQuery(BP_PHONE);
   const displayLabel = userName?.trim() || userEmail;
   const avatarLetter = (userName || userEmail || "?")[0].toUpperCase();
   const [avatarError, setAvatarError] = useState(false);
-  const [profileHovered, setProfileHovered] = useState(false);
 
-  const hasAvatar =
-    !!profilePictureUrl && profilePictureUrl.trim() !== "" && !avatarError;
+  const hasAvatar = !!profilePictureUrl && profilePictureUrl.trim() !== "" && !avatarError;
 
   useEffect(() => {
     setAvatarError(false);
   }, [profilePictureUrl]);
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: isPhone ? "0 16px" : "0 64px",
-        height: 56,
-        background: W,
-        color: B,
-        flexShrink: 0,
-        borderBottom: `3px solid ${B}`,
-      }}
-    >
-      {/* Logo */}
-      <div
+    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur-sm">
+      <button
         onClick={() => navigate("/dashboard")}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 4,
-          cursor: "pointer",
-          userSelect: "none",
-        }}
+        className="flex items-center gap-1.5 select-none"
       >
-        <span
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: isPhone ? "1.25rem" : "1.5rem",
-            letterSpacing: "-0.02em",
-            color: G,
-            lineHeight: 1,
-          }}
-        >
-          FRESHR
-        </span>
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.6rem",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            background: B,
-            color: G,
-            padding: "2px 4px",
-            alignSelf: "flex-start",
-            marginTop: -8,
-          }}
-        >
+        <span className="text-base font-bold text-foreground tracking-tight">FRESHR</span>
+        <span className="self-start mt-0.5 rounded-sm bg-secondary px-1 py-px text-[10px] font-semibold text-muted-foreground">
           BETA
         </span>
-      </div>
+      </button>
 
-      {/* Profile */}
-      <div
+      <button
         onClick={() => navigate("/profile")}
-        onMouseEnter={() => setProfileHovered(true)}
-        onMouseLeave={() => setProfileHovered(false)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          cursor: "pointer",
-          userSelect: "none",
-          padding: "5px 8px",
-          background: profileHovered ? "#f0f0f0" : "transparent",
-          transition: "background 0.12s",
-          minWidth: 0,
-        }}
+        className="flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors hover:bg-secondary select-none"
       >
         <div
-          style={{
-            width: 28,
-            height: 28,
-            background: hasAvatar ? "transparent" : G,
-            color: B,
-            borderRadius: 0,
-            border: `2px solid ${B}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "0.75rem",
-            flexShrink: 0,
-            overflow: "hidden",
-          }}
+          className={cn(
+            "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold overflow-hidden",
+            hasAvatar ? "bg-transparent" : "bg-secondary text-foreground",
+          )}
         >
           {hasAvatar ? (
             <img
               src={profilePictureUrl}
               alt={displayLabel}
               onError={() => setAvatarError(true)}
-              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+              className="h-full w-full object-cover"
             />
           ) : (
             avatarLetter
           )}
         </div>
-        {!isPhone && (
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              color: "#000000",
-              maxWidth: 160,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {displayLabel}
-          </span>
-        )}
-      </div>
-    </div>
+        <span className="hidden sm:block max-w-36 truncate text-sm text-foreground">
+          {displayLabel}
+        </span>
+      </button>
+    </header>
   );
 }

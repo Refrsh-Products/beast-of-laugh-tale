@@ -1,39 +1,13 @@
-import { useState } from 'react'
-
-const G = '#84e487'
-const B = '#000000'
-const W = '#FFFFFF'
+import { Plus } from "lucide-react";
 
 export default function CreateCard({ onCreate }: { onCreate: () => void }) {
-  const [hovered, setHovered] = useState(false)
   return (
-    <div
+    <button
       onClick={onCreate}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        height: 140,
-        border: hovered ? `2px dashed ${G}` : `2px dashed ${B}`,
-        background: W,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        cursor: 'pointer',
-        transition: 'border-color 0.1s',
-      }}
+      className="flex h-36 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border text-left transition-all hover:border-primary/50 hover:bg-secondary/30"
     >
-      <span style={{ fontSize: '1.8rem', color: '#aaa', lineHeight: 1 }}>+</span>
-      <span
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: '0.72rem',
-          color: '#888',
-        }}
-      >
-        New notebook
-      </span>
-    </div>
-  )
+      <Plus className="h-5 w-5 text-muted-foreground" />
+      <span className="text-sm text-muted-foreground">New notebook</span>
+    </button>
+  );
 }

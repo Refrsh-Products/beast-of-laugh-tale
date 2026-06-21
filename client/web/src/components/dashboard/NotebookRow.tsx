@@ -1,17 +1,27 @@
-import { useState, useRef } from "react";
+import { useRef } from "react";
+import { MoreHorizontal, Pin } from "lucide-react";
 import type { Notebook } from "@freshr/shared";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { cn } from "../../lib/utils";
 
 function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", {
+  return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
+}
+
+interface NotebookRowProps {
+  notebook: Notebook;
+  fileCount: number;
+  openMenuId: string | null;
+  onMenuOpen: (id: string | null, anchor?: { top: number; right: number }) => void;
+  editingId: string | null;
+  editValue: string;
+  onEditChange: (val: string) => void;
+  onEditConfirm: () => void;
+  onEditCancel: () => void;
+  onClick?: (notebook: Notebook) => void;
 }
 
 export default function NotebookRow({
@@ -25,62 +35,27 @@ export default function NotebookRow({
   onEditConfirm,
   onEditCancel,
   onClick,
-}: {
-  notebook: Notebook;
-  fileCount: number;
-  openMenuId: string | null;
-  onMenuOpen: (
-    id: string | null,
-    anchor?: { top: number; right: number },
-  ) => void;
-  editingId: string | null;
-  editValue: string;
-  onEditChange: (val: string) => void;
-  onEditConfirm: () => void;
-  onEditCancel: () => void;
-  onClick?: (notebook: Notebook) => void;
-}) {
-  const [hovered, setHovered] = useState(false);
+}: NotebookRowProps) {
   const menuOpen = openMenuId === notebook.id;
   const isEditing = editingId === notebook.id;
   const escapeRef = useRef(false);
 
   return (
     <div
-      style={{
-        position: "relative",
-        padding: "14px 20px",
-        background: W,
-        border:
-          hovered || menuOpen || isEditing
-            ? `2px solid ${G}`
-            : `2px solid ${B}`,
-        boxShadow:
-          hovered || menuOpen || isEditing
-            ? `6px 6px 0 ${B}`
-            : `3px 3px 0 ${B}`,
-        transform:
-          hovered || menuOpen || isEditing ? "translate(-2px, -2px)" : "none",
-        transition: "transform 0.1s, box-shadow 0.1s, border-color 0.1s",
-        cursor: isEditing ? "default" : "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       onClick={() => !isEditing && onClick?.(notebook)}
+      className={cn(
+        "group flex items-center gap-3 rounded-md border px-4 py-3 transition-colors",
+        isEditing || menuOpen
+          ? "border-primary/50 cursor-default bg-secondary/30"
+          : "border-transparent hover:bg-secondary/50 cursor-pointer",
+      )}
     >
-      {/* Pin icon */}
-      <div style={{ width: 14, flexShrink: 0 }}>
-        {notebook.pinned && (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill={G}>
-            <path d="M9 1H3a1 1 0 0 0-1 1v1.5l2 2V10l2 1 2-1V5.5l2-2V2a1 1 0 0 0-1-1Z" />
-          </svg>
-        )}
+      {/* Pin */}
+      <div className="w-4 shrink-0">
+        {notebook.pinned && <Pin className="h-3 w-3 text-primary fill-primary" />}
       </div>
 
-      {/* Title or rename input */}
+      {/* Title or rename */}
       {isEditing ? (
         <input
           autoFocus
@@ -104,61 +79,21 @@ export default function NotebookRow({
             }
           }}
           onClick={(e) => e.stopPropagation()}
-          style={{
-            flex: 1,
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 700,
-            fontSize: "0.9rem",
-            border: "none",
-            borderBottom: `2px solid ${G}`,
-            outline: "none",
-            background: "transparent",
-            padding: "2px 0",
-            minWidth: 0,
-          }}
+          className="flex-1 min-w-0 bg-transparent border-0 border-b border-primary text-sm font-medium text-foreground outline-none py-0.5"
         />
       ) : (
-        <div
-          style={{
-            flex: 1,
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 700,
-            fontSize: "0.9rem",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            minWidth: 0,
-          }}
-        >
+        <span className="flex-1 min-w-0 truncate text-sm font-medium text-foreground">
           {notebook.title}
-        </div>
+        </span>
       )}
 
-      {/* File count */}
-      <span
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#000000",
-          flexShrink: 0,
-        }}
-      >
-        {fileCount} files
+      <span className="shrink-0 text-xs text-muted-foreground">
+        {fileCount} {fileCount === 1 ? "file" : "files"}
       </span>
-
-      {/* Date */}
-      <span
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#000000",
-          flexShrink: 0,
-        }}
-      >
+      <span className="shrink-0 text-xs text-muted-foreground hidden sm:block">
         {formatDate(notebook.created_at)}
       </span>
 
-      {/* Three-dot */}
       {!isEditing && (
         <button
           onClick={(e) => {
@@ -173,20 +108,12 @@ export default function NotebookRow({
               right: window.innerWidth - rect.right,
             });
           }}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "0 2px",
-            fontSize: "1rem",
-            lineHeight: 1,
-            color: "#000000",
-            opacity: hovered || menuOpen ? 1 : 0,
-            transition: "opacity 0.1s",
-            flexShrink: 0,
-          }}
+          className={cn(
+            "shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-secondary hover:text-foreground",
+            menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+          )}
         >
-          ⋮
+          <MoreHorizontal className="h-4 w-4" />
         </button>
       )}
     </div>

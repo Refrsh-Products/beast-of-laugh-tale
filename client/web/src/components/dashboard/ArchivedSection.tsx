@@ -1,91 +1,31 @@
 import type { Notebook } from "@freshr/shared";
+import Button from "../ui/Button";
 
-const B = "#000000";
-const W = "#FFFFFF";
-
-export default function ArchivedSection({
-  notebooks,
-  onUnarchive,
-}: {
+interface ArchivedSectionProps {
   notebooks: Notebook[];
   onUnarchive: (id: string) => void;
-}) {
+}
+
+export default function ArchivedSection({ notebooks, onUnarchive }: ArchivedSectionProps) {
   if (notebooks.length === 0) return null;
 
   return (
-    <div style={{ marginTop: 40 }}>
-      <div
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          letterSpacing: "0.14em",
-          color: "#000000",
-          marginBottom: 12,
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-        }}
-      >
-        ARCHIVED
-        <span style={{ fontWeight: 400 }}>({notebooks.length})</span>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <div className="mt-10">
+      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+        Archived <span className="font-normal">({notebooks.length})</span>
+      </p>
+      <div className="flex flex-col gap-1.5">
         {notebooks.map((nb) => (
           <div
             key={nb.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "10px 16px",
-              background: W,
-              border: `2px solid #ccc`,
-              boxShadow: `2px 2px 0 #ccc`,
-            }}
+            className="flex items-center gap-3 rounded-md border border-border bg-card/50 px-4 py-2.5"
           >
-            <span
-              style={{
-                flex: 1,
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 700,
-                fontSize: "0.88rem",
-                color: "#000000",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                minWidth: 0,
-              }}
-            >
+            <span className="flex-1 min-w-0 truncate text-sm text-muted-foreground">
               {nb.title}
             </span>
-            <button
-              onClick={() => onUnarchive(nb.id)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translate(-3px, -3px)";
-                e.currentTarget.style.boxShadow = `4px 4px 0 ${B}`;
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "none";
-                e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`;
-              }}
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                background: "none",
-                border: `2px solid ${B}`,
-                boxShadow: `2px 2px 0 ${B}`,
-                padding: "4px 10px",
-                cursor: "pointer",
-                flexShrink: 0,
-                color: B,
-                transition: "transform 0.15s, box-shadow 0.15s",
-              }}
-            >
+            <Button variant="default" onClick={() => onUnarchive(nb.id)}>
               Unarchive
-            </button>
+            </Button>
           </div>
         ))}
       </div>

@@ -1,37 +1,13 @@
-import { useState } from 'react'
-
-const G = '#84e487'
-const B = '#000000'
-const W = '#FFFFFF'
+import { Plus } from "lucide-react";
 
 export default function CreateRow({ onCreate }: { onCreate: () => void }) {
-  const [hovered, setHovered] = useState(false)
   return (
-    <div
+    <button
       onClick={onCreate}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        padding: '14px 20px',
-        border: hovered ? `2px dashed ${G}` : `2px dashed ${B}`,
-        background: W,
-        display: 'flex',
-        alignItems: 'center',
-        gap: 10,
-        cursor: 'pointer',
-        transition: 'border-color 0.1s',
-      }}
+      className="flex w-full items-center gap-3 rounded-md border border-dashed border-border px-4 py-3 text-left transition-all hover:border-primary/50 hover:bg-secondary/30"
     >
-      <span style={{ fontSize: '1.1rem', color: '#aaa', lineHeight: 1 }}>+</span>
-      <span
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: '0.72rem',
-          color: '#888',
-        }}
-      >
-        New notebook
-      </span>
-    </div>
-  )
+      <Plus className="h-4 w-4 text-muted-foreground" />
+      <span className="text-sm text-muted-foreground">New notebook</span>
+    </button>
+  );
 }

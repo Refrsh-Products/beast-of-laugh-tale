@@ -1,8 +1,5 @@
+import { cn } from "../../lib/utils";
 import type { AccountUseage } from "@freshr/shared";
-
-const B = "#000000";
-const TRACK = "#e8e8e4";
-const FILL = "#000000";
 
 function formatBytes(bytes: number): string {
   if (bytes >= 1_073_741_824) return `${(bytes / 1_073_741_824).toFixed(1)} GB`;
@@ -10,54 +7,31 @@ function formatBytes(bytes: number): string {
   return `${(bytes / 1_024).toFixed(0)} KB`;
 }
 
-function UsageBar({
-  label,
-  used,
-  limit,
-  formatValue = (n) => String(n),
-}: {
+interface UsageBarProps {
   label: string;
   used: number;
   limit: number;
   formatValue?: (n: number) => string;
-}) {
+}
+
+function UsageBar({ label, used, limit, formatValue = String }: UsageBarProps) {
   const pct = limit > 0 ? Math.min((used / limit) * 100, 100) : 0;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 140 }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#000000",
-        }}
-      >
+    <div className="flex flex-col gap-1 min-w-32">
+      <div className="flex justify-between text-xs text-muted-foreground">
         <span>{label}</span>
         <span>
           {formatValue(used)} / {formatValue(limit)}
         </span>
       </div>
-      <div
-        style={{
-          height: 4,
-          background: TRACK,
-          border: `1px solid ${B}`,
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
+      <div className="h-1 w-full rounded-full bg-secondary overflow-hidden">
         <div
-          style={{
-            position: "absolute",
-            left: 0,
-            top: 0,
-            height: "100%",
-            width: `${pct}%`,
-            background: FILL,
-            transition: "width 0.3s ease",
-          }}
+          className={cn(
+            "h-full rounded-full transition-all duration-300",
+            pct >= 80 ? "bg-destructive" : pct >= 55 ? "bg-amber-500" : "bg-primary",
+          )}
+          style={{ width: `${pct}%` }}
         />
       </div>
     </div>
@@ -66,57 +40,22 @@ function UsageBar({
 
 export default function UsageBanner({ usage }: { usage: AccountUseage }) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 24,
-        padding: "12px 16px",
-        border: `2px solid ${B}`,
-        background: "#fff",
-        marginBottom: 20,
-        flexWrap: "wrap",
-      }}
-    >
-      <span
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          textTransform: "uppercase",
-          letterSpacing: "0.08em",
-          whiteSpace: "nowrap",
-        }}
-      >
+    <div className="flex flex-wrap items-center gap-6 rounded-lg border border-border bg-secondary/20 px-4 py-3 mb-6">
+      <span className="text-xs font-semibold text-foreground uppercase tracking-wider">
         {usage.plan}
       </span>
 
-      <div style={{ width: 1, height: 28, background: B, flexShrink: 0 }} />
+      <div className="w-px h-5 bg-border shrink-0" />
 
-      <UsageBar
-        label="Notebooks"
-        used={usage.notebooks.used}
-        limit={usage.notebooks.limit}
-      />
-
+      <UsageBar label="Notebooks" used={usage.notebooks.used} limit={usage.notebooks.limit} />
       <UsageBar
         label="Storage"
         used={Number(usage.storage.used_bytes)}
         limit={Number(usage.storage.limit_bytes)}
         formatValue={formatBytes}
       />
-
-      <UsageBar
-        label="Daily Quizzes"
-        used={usage.daily_quizzes.used}
-        limit={usage.daily_quizzes.limit}
-      />
-
-      <UsageBar
-        label="Presentations"
-        used={usage.presentations.used}
-        limit={usage.presentations.limit}
-      />
+      <UsageBar label="Quizzes" used={usage.daily_quizzes.used} limit={usage.daily_quizzes.limit} />
+      <UsageBar label="Presentations" used={usage.presentations.used} limit={usage.presentations.limit} />
     </div>
   );
 }

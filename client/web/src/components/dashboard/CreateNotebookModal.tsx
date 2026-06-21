@@ -1,8 +1,16 @@
-import { createPortal } from 'react-dom'
-import Button from '../ui/Button'
+import { createPortal } from "react-dom";
+import Button from "../ui/Button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { cn } from "../../lib/utils";
 
-const B = '#000000'
-const W = '#FFFFFF'
+interface CreateNotebookModalProps {
+  title: string;
+  error: string;
+  onTitleChange: (val: string) => void;
+  onSubmit: () => void;
+  onClose: () => void;
+}
 
 export default function CreateNotebookModal({
   title,
@@ -10,94 +18,43 @@ export default function CreateNotebookModal({
   onTitleChange,
   onSubmit,
   onClose,
-}: {
-  title: string
-  error: string
-  onTitleChange: (val: string) => void
-  onSubmit: () => void
-  onClose: () => void
-}) {
+}: CreateNotebookModalProps) {
   return createPortal(
     <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 2000,
-      }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
       onMouseDown={onClose}
     >
       <div
-        style={{
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${B}`,
-          padding: '32px',
-          maxWidth: 420,
-          width: '90%',
-        }}
+        className="w-full max-w-md rounded-lg border border-border bg-card p-6 shadow-xl"
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <h2
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: '1.2rem',
-            margin: '0 0 20px',
-          }}
-        >
-          New notebook
-        </h2>
+        <h2 className="text-base font-semibold text-foreground mb-5">New notebook</h2>
+
         <form
-          onSubmit={(e) => { e.preventDefault(); onSubmit() }}
-          style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+          onSubmit={(e) => { e.preventDefault(); onSubmit(); }}
+          className="flex flex-col gap-4"
         >
-          <div>
-            <label
-              style={{
-                display: 'block',
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                letterSpacing: '0.12em',
-                marginBottom: 6,
-              }}
-            >
-              TITLE
-            </label>
-            <input
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="notebook-title">Title</Label>
+            <Input
+              id="notebook-title"
               autoFocus
               type="text"
               value={title}
               onChange={(e) => onTitleChange(e.target.value)}
               placeholder="e.g. Physics — Semester 2"
-              style={{
-                width: '100%',
-                border: error ? '3px solid #cc0000' : `3px solid ${B}`,
-                borderRadius: 0,
-                padding: '10px 12px',
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: '0.82rem',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
+              className={cn(error && "border-destructive focus:ring-destructive")}
             />
-            {error && (
-              <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '0.72rem', color: '#cc0000', margin: '6px 0 0' }}>
-                {error}
-              </p>
-            )}
+            {error && <p className="text-xs text-destructive">{error}</p>}
           </div>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+
+          <div className="flex justify-end gap-2 mt-2">
             <Button variant="default" type="button" onClick={onClose}>Cancel</Button>
             <Button variant="green" type="submit">Create →</Button>
           </div>
         </form>
       </div>
     </div>,
-    document.body
-  )
+    document.body,
+  );
 }

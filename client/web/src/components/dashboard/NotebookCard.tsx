@@ -1,17 +1,27 @@
-import { useState, useRef } from "react";
+import { useRef } from "react";
+import { MoreHorizontal, Pin } from "lucide-react";
 import type { Notebook } from "@freshr/shared";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { cn } from "../../lib/utils";
 
 function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", {
+  return new Date(iso).toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
+}
+
+interface NotebookCardProps {
+  notebook: Notebook;
+  fileCount: number;
+  openMenuId: string | null;
+  onMenuOpen: (id: string | null, anchor?: { top: number; right: number }) => void;
+  editingId: string | null;
+  editValue: string;
+  onEditChange: (val: string) => void;
+  onEditConfirm: () => void;
+  onEditCancel: () => void;
+  onClick?: (notebook: Notebook) => void;
 }
 
 export default function NotebookCard({
@@ -25,68 +35,27 @@ export default function NotebookCard({
   onEditConfirm,
   onEditCancel,
   onClick,
-}: {
-  notebook: Notebook;
-  fileCount: number;
-  openMenuId: string | null;
-  onMenuOpen: (
-    id: string | null,
-    anchor?: { top: number; right: number },
-  ) => void;
-  editingId: string | null;
-  editValue: string;
-  onEditChange: (val: string) => void;
-  onEditConfirm: () => void;
-  onEditCancel: () => void;
-  onClick?: (notebook: Notebook) => void;
-}) {
-  const [hovered, setHovered] = useState(false);
+}: NotebookCardProps) {
   const menuOpen = openMenuId === notebook.id;
   const isEditing = editingId === notebook.id;
   const escapeRef = useRef(false);
 
   return (
     <div
-      style={{
-        height: 140,
-        position: "relative",
-        padding: 16,
-        background: W,
-        border:
-          hovered || menuOpen || isEditing
-            ? `2px solid ${G}`
-            : `2px solid ${B}`,
-        boxShadow:
-          hovered || menuOpen || isEditing
-            ? `6px 6px 0 ${B}`
-            : `3px 3px 0 ${B}`,
-        transform:
-          hovered || menuOpen || isEditing ? "translate(-2px, -2px)" : "none",
-        transition: "transform 0.1s, box-shadow 0.1s, border-color 0.1s",
-        cursor: isEditing ? "default" : "pointer",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
       onClick={() => !isEditing && onClick?.(notebook)}
+      className={cn(
+        "group relative flex h-36 flex-col justify-between rounded-lg border bg-card p-4 transition-all duration-150",
+        isEditing || menuOpen
+          ? "border-primary/50 cursor-default"
+          : "border-border hover:border-border/60 hover:bg-card/80 cursor-pointer",
+      )}
     >
-      {/* Top row */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-        }}
-      >
-        <div style={{ width: 16 }}>
-          {notebook.pinned && (
-            <svg width="12" height="12" viewBox="0 0 12 12" fill={G}>
-              <path d="M9 1H3a1 1 0 0 0-1 1v1.5l2 2V10l2 1 2-1V5.5l2-2V2a1 1 0 0 0-1-1Z" />
-            </svg>
-          )}
+      {/* Top row: pin + menu */}
+      <div className="flex items-start justify-between">
+        <div className="w-4">
+          {notebook.pinned && <Pin className="h-3 w-3 text-primary fill-primary" />}
         </div>
+
         {!isEditing && (
           <button
             onClick={(e) => {
@@ -101,19 +70,12 @@ export default function NotebookCard({
                 right: window.innerWidth - rect.right,
               });
             }}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "0 2px",
-              fontSize: "1rem",
-              lineHeight: 1,
-              color: "#000000",
-              opacity: hovered || menuOpen ? 1 : 0,
-              transition: "opacity 0.1s",
-            }}
+            className={cn(
+              "flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-secondary hover:text-foreground",
+              menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+            )}
           >
-            ⋮
+            <MoreHorizontal className="h-4 w-4" />
           </button>
         )}
       </div>
@@ -142,53 +104,18 @@ export default function NotebookCard({
             }
           }}
           onClick={(e) => e.stopPropagation()}
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 700,
-            fontSize: "0.95rem",
-            lineHeight: 1.3,
-            flex: 1,
-            width: "100%",
-            border: "none",
-            borderBottom: `2px solid ${G}`,
-            outline: "none",
-            background: "transparent",
-            padding: "2px 0",
-            marginTop: 4,
-          }}
+          className="flex-1 bg-transparent border-0 border-b border-primary text-sm font-medium text-foreground outline-none py-0.5"
         />
       ) : (
-        <div
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 700,
-            fontSize: "0.95rem",
-            lineHeight: 1.3,
-            flex: 1,
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            marginTop: 4,
-          }}
-        >
+        <p className="flex-1 text-sm font-medium text-foreground line-clamp-2 mt-1">
           {notebook.title}
-        </div>
+        </p>
       )}
 
-      {/* Bottom row */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#000000",
-          marginTop: 8,
-        }}
-      >
+      {/* Bottom row: date + file count */}
+      <div className="flex items-center justify-between text-xs text-muted-foreground">
         <span>Created {formatDate(notebook.created_at)}</span>
-        <span>{fileCount} files</span>
+        <span>{fileCount} {fileCount === 1 ? "file" : "files"}</span>
       </div>
     </div>
   );
