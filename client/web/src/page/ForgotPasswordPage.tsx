@@ -2,10 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthService from "../services/auth";
 import Button from "../components/ui/Button";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import FreshrLogo from "../components/logo/FreshrLogo";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
@@ -31,153 +30,43 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: B,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
-        fontFamily: "'IBM Plex Mono', monospace",
-      }}
-    >
-      <div
-        style={{
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${G}`,
-          padding: "48px 40px",
-          width: "100%",
-          maxWidth: 420,
-          boxSizing: "border-box",
-        }}
-      >
-        {/* Logo */}
-        <div
-          onClick={() => navigate("/")}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.4rem",
-            letterSpacing: "-0.02em",
-            color: G,
-            cursor: "pointer",
-            userSelect: "none",
-            marginBottom: 32,
-            transition: "opacity 0.12s",
-          }}
-        >
-          FRESHR
+    <div className="min-h-dvh bg-background flex items-center justify-center px-6 py-16">
+      <div className="w-full max-w-sm flex flex-col gap-6">
+        <FreshrLogo />
+
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Forgot your password?</h1>
+          <p className="text-sm text-muted-foreground mt-1">Enter your email and we'll send you a reset link.</p>
         </div>
 
-        {/* Title */}
-        <h1
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.75rem",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-            marginBottom: 10,
-          }}
-        >
-          Forgot your
-          <br />
-          password?
-        </h1>
-        <p
-          style={{
-            fontSize: "0.75rem",
-            color: "#000000",
-            marginBottom: 32,
-            lineHeight: 1.6,
-          }}
-        >
-          Enter your email and we'll send you a reset link.
-        </p>
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-        {/* Error */}
-        {error && (
-          <p
-            style={{ color: "#cc0000", fontSize: "0.75rem", marginBottom: 16 }}
-          >
-            {error}
-          </p>
-        )}
-
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: 16 }}
-        >
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                marginBottom: 6,
-              }}
-            >
-              EMAIL
-            </label>
-            <input
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              onMouseEnter={(e) => {
-                if (document.activeElement !== e.currentTarget)
-                  e.currentTarget.style.borderColor = G;
-              }}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
-              onFocus={(e) => (e.currentTarget.style.borderColor = B)}
-              style={{
-                width: "100%",
-                border: `3px solid ${B}`,
-                borderRadius: 0,
-                padding: "12px 14px",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.82rem",
-                background: W,
-                outline: "none",
-                boxSizing: "border-box",
-                transition: "border-color 0.15s",
-              }}
+              autoComplete="email"
             />
           </div>
 
-          <div style={{ marginTop: 8 }}>
-            <Button
-              variant="green"
-              fullWidth
-              type="submit"
-              disabled={isLoading}
-            >
-              {isLoading ? "Sending..." : "Send reset link →"}
-            </Button>
-          </div>
+          <Button variant="green" fullWidth type="submit" disabled={isLoading}>
+            {isLoading ? "Sending..." : "Send reset link →"}
+          </Button>
         </form>
 
-        {/* Back to login */}
-        <p style={{ marginTop: 24, fontSize: "0.75rem", color: "#000000" }}>
-          <span
+        <p className="text-sm text-center">
+          <button
+            type="button"
             onClick={() => navigate("/login")}
-            onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "inherit")}
-            style={{
-              cursor: "pointer",
-              textDecoration: "underline",
-              textUnderlineOffset: 3,
-              transition: "color 0.12s",
-            }}
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             ← Back to login
-          </span>
+          </button>
         </p>
       </div>
     </div>

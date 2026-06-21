@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import useAuthService from "../services/auth";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import FreshrLogo from "../components/logo/FreshrLogo";
+import { CheckCircle2 } from "lucide-react";
 
 export default function VerifyEmailSentPage() {
   const navigate = useNavigate();
@@ -12,17 +10,13 @@ export default function VerifyEmailSentPage() {
   const authService = useAuthService();
   const email = (location.state as { email?: string })?.email ?? "";
 
-  const [resendState, setResendState] = useState<
-    "idle" | "sending" | "sent" | "rate-limited" | "error"
-  >("idle");
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent" | "rate-limited" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
   async function handleResend() {
     if (!email) {
       setResendState("error");
-      setErrorMessage(
-        "No email on file for this session. Please sign up again.",
-      );
+      setErrorMessage("No email on file for this session. Please sign up again.");
       return;
     }
     setResendState("sending");
@@ -33,9 +27,7 @@ export default function VerifyEmailSentPage() {
     } catch (err: any) {
       if (err?.response?.status === 429) {
         setResendState("rate-limited");
-        setErrorMessage(
-          "Too many resend attempts. Please wait a few minutes and try again.",
-        );
+        setErrorMessage("Too many resend attempts. Please wait a few minutes and try again.");
       } else {
         setResendState("error");
         setErrorMessage("Could not resend right now. Please try again.");
@@ -44,144 +36,46 @@ export default function VerifyEmailSentPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: B,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
-        fontFamily: "'IBM Plex Mono', monospace",
-      }}
-    >
-      <div
-        style={{
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${G}`,
-          padding: "48px 40px",
-          width: "100%",
-          maxWidth: 420,
-          boxSizing: "border-box",
-        }}
-      >
-        {/* Logo */}
-        <div
-          onClick={() => navigate("/")}
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.4rem",
-            letterSpacing: "-0.02em",
-            color: G,
-            cursor: "pointer",
-            userSelect: "none",
-            marginBottom: 32,
-          }}
-        >
-          FRESHR
+    <div className="min-h-dvh bg-background flex items-center justify-center px-6 py-16">
+      <div className="w-full max-w-sm flex flex-col gap-6">
+        <FreshrLogo />
+
+        <CheckCircle2 className="w-10 h-10 text-primary" />
+
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Verify your email</h1>
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+            We sent a verification link to{" "}
+            <span className="text-foreground font-medium">{email || "your email"}</span>.
+            Click the link to activate your account.
+          </p>
         </div>
 
-        {/* Title */}
-        <h1
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.75rem",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-            marginBottom: 16,
-          }}
-        >
-          Verify your
-          <br />
-          email
-        </h1>
+        <div className="h-px bg-border" />
 
-        <p
-          style={{
-            fontSize: "0.75rem",
-            color: "#555",
-            lineHeight: 1.7,
-            marginBottom: 8,
-          }}
-        >
-          We sent a verification link to
-        </p>
-        <p
-          style={{
-            fontSize: "0.82rem",
-            fontWeight: 700,
-            color: B,
-            marginBottom: 32,
-            wordBreak: "break-all",
-          }}
-        >
-          {email || "your email"}
-        </p>
-
-        <p
-          style={{
-            fontSize: "0.72rem",
-            color: "#555",
-            lineHeight: 1.6,
-            marginBottom: 24,
-          }}
-        >
-          Click the link in the email to activate your account and continue to
-          onboarding.
-        </p>
-
-        {/* Divider */}
-        <div style={{ height: 3, background: B, marginBottom: 24 }} />
-
-        <p style={{ fontSize: "0.72rem", color: "#888", marginBottom: 6 }}>
-          Didn't get it?
-        </p>
-        <span
-          onClick={resendState === "sending" ? undefined : handleResend}
-          style={{
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            color: resendState === "sending" ? "#888" : B,
-            textDecoration: "underline",
-            textUnderlineOffset: 3,
-            cursor: resendState === "sending" ? "default" : "pointer",
-          }}
-        >
-          {resendState === "sending"
-            ? "Sending..."
-            : resendState === "sent"
-              ? "Sent! Check your inbox again."
-              : "Resend verification link"}
-        </span>
-
-        {(resendState === "rate-limited" || resendState === "error") && (
-          <p
-            style={{
-              marginTop: 12,
-              fontSize: "0.72rem",
-              color: "#cc0000",
-              lineHeight: 1.5,
-            }}
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-muted-foreground">Didn't get it?</p>
+          <button
+            type="button"
+            onClick={resendState === "sending" ? undefined : handleResend}
+            className="text-sm text-foreground hover:underline underline-offset-4 text-left w-fit disabled:cursor-default disabled:opacity-60"
+            disabled={resendState === "sending"}
           >
-            {errorMessage}
-          </p>
-        )}
+            {resendState === "sending" ? "Sending..." : resendState === "sent" ? "Sent! Check your inbox again." : "Resend verification link"}
+          </button>
+          {(resendState === "rate-limited" || resendState === "error") && (
+            <p className="text-xs text-destructive leading-relaxed">{errorMessage}</p>
+          )}
+        </div>
 
-        {/* Back to login */}
-        <p style={{ marginTop: 32, fontSize: "0.75rem", color: "#555" }}>
-          <span
+        <p className="text-sm text-center">
+          <button
+            type="button"
             onClick={() => navigate("/login")}
-            style={{
-              cursor: "pointer",
-              textDecoration: "underline",
-              textUnderlineOffset: 3,
-            }}
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             ← Back to login
-          </span>
+          </button>
         </p>
       </div>
     </div>

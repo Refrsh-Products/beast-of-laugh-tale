@@ -1,8 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { CheckCircle2 } from "lucide-react";
+import FreshrLogo from "../components/logo/FreshrLogo";
 
 export default function ForgotPasswordSentPage() {
   const navigate = useNavigate();
@@ -10,115 +8,40 @@ export default function ForgotPasswordSentPage() {
   const email = (location.state as { email?: string })?.email ?? "your email";
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: B,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
-        fontFamily: "'IBM Plex Mono', monospace",
-      }}
-    >
-      <div
-        style={{
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${G}`,
-          padding: "48px 40px",
-          width: "100%",
-          maxWidth: 420,
-          boxSizing: "border-box",
-        }}
-      >
-        {/* Logo */}
-        <div
-          onClick={() => navigate("/")}
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.4rem",
-            letterSpacing: "-0.02em",
-            color: G,
-            cursor: "pointer",
-            userSelect: "none",
-            marginBottom: 32,
-          }}
-        >
-          FRESHR
+    <div className="min-h-dvh bg-background flex items-center justify-center px-6 py-16">
+      <div className="w-full max-w-sm flex flex-col gap-6">
+        <FreshrLogo />
+
+        <CheckCircle2 className="w-10 h-10 text-primary" />
+
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Check your email</h1>
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+            We sent a reset link to <span className="text-foreground font-medium">{email}</span>.
+          </p>
         </div>
 
-        {/* Title */}
-        <h1
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.75rem",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-            marginBottom: 16,
-          }}
-        >
-          Check your
-          <br />
-          email
-        </h1>
+        <div className="h-px bg-border" />
 
-        <p
-          style={{
-            fontSize: "0.75rem",
-            color: "#000000",
-            lineHeight: 1.7,
-            marginBottom: 8,
-          }}
-        >
-          We sent a reset link to
-        </p>
-        <p
-          style={{
-            fontSize: "0.82rem",
-            fontWeight: 700,
-            color: B,
-            marginBottom: 32,
-            wordBreak: "break-all",
-          }}
-        >
-          {email}
-        </p>
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-muted-foreground">Didn't get it?</p>
+          <button
+            type="button"
+            onClick={() => navigate("/forgot-password")}
+            className="text-sm text-foreground hover:underline underline-offset-4 text-left w-fit"
+          >
+            Resend reset link
+          </button>
+        </div>
 
-        {/* Divider */}
-        <div style={{ height: 3, background: B, marginBottom: 24 }} />
-
-        <p style={{ fontSize: "0.75rem", color: "#000000", marginBottom: 6 }}>
-          Didn't get it?
-        </p>
-        <span
-          onClick={() => navigate("/forgot-password")}
-          style={{
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            color: B,
-            textDecoration: "underline",
-            textUnderlineOffset: 3,
-            cursor: "pointer",
-          }}
-        >
-          Resend reset link
-        </span>
-
-        {/* Back to login */}
-        <p style={{ marginTop: 32, fontSize: "0.75rem", color: "#000000" }}>
-          <span
+        <p className="text-sm text-center">
+          <button
+            type="button"
             onClick={() => navigate("/login")}
-            style={{
-              cursor: "pointer",
-              textDecoration: "underline",
-              textUnderlineOffset: 3,
-            }}
+            className="text-muted-foreground hover:text-foreground transition-colors"
           >
             ← Back to login
-          </span>
+          </button>
         </p>
       </div>
     </div>

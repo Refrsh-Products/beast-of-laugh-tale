@@ -5,8 +5,8 @@ import FreshrLogo from "../components/logo/FreshrLogo";
 import Button from "../components/ui/Button";
 import useAuthService from "../services/auth";
 import Loading from "../components/loading/Loading";
-import { BLACK as B, WHITE as W } from "../constants/theme";
-import { inputStyle, labelStyle, inputHandlers } from "../styles/form";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 
 export default function SignupPage() {
   const navigate = useNavigate();
@@ -21,28 +21,19 @@ export default function SignupPage() {
 
   const handleSubmit = async () => {
     setError("");
-
     if (!email || !password || !confirm) {
       setError("Please fill in all fields.");
       return;
     }
-    if (
-      !/^(?=.*?[a-z])(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(
-        password,
-      )
-    ) {
-      setError(
-        "Password must be at least 8 characters long, contain 1 uppercase letter, 1 lowercase letter, 1 special character, and 1 number.",
-      );
+    if (!/^(?=.*?[a-z])(?=.*?[A-Z])(?=.*?[0-9])(?=.*?[#?!@$%^&*-]).{8,}$/.test(password)) {
+      setError("Password must be at least 8 characters long, contain 1 uppercase letter, 1 lowercase letter, 1 special character, and 1 number.");
       return;
     }
     if (password !== confirm) {
       setError("Passwords do not match.");
       return;
     }
-
     setIsLoading(true);
-
     try {
       await authService.register(email, password, confirm);
       navigate("/verify-email/sent", { state: { email } });
@@ -54,317 +45,105 @@ export default function SignupPage() {
     }
   };
 
-
   if (isLoading) return <Loading />;
 
   return (
-    <div
-      style={{
-        display: "flex",
-        minHeight: "100dvh",
-        fontFamily: "'IBM Plex Mono', monospace",
-      }}
-    >
-      {/* ── LEFT HALF ── */}
-      <div
-        style={{
-          flex: "0 0 50%",
-          boxSizing: "border-box",
-          background: B,
-          display: "none",
-          position: "relative",
-          borderRight: `3px solid ${B}`,
-        }}
-        className="signup-left"
-      >
-        {/* Logo */}
+    <div className="min-h-dvh bg-background flex items-center justify-center px-6 py-16">
+      <div className="w-full max-w-sm flex flex-col gap-6">
         <FreshrLogo />
-      </div>
 
-      {/* ── RIGHT HALF ── */}
-      <div
-        style={{
-          flex: "1 1 100%",
-          background: W,
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          padding: "48px 24px",
-          position: "relative",
-          boxSizing: "border-box",
-        }}
-        className="signup-right"
-      >
-        {/* Mobile logo */}
-        <div
-          style={{
-            position: "absolute",
-            top: 28,
-            left: 28,
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.35rem",
-            letterSpacing: "-0.02em",
-            color: B,
-            cursor: "pointer",
-          }}
-          className="signup-mobile-logo"
-          onClick={() => navigate("/")}
-        >
-          FRESHR
+        <div>
+          <h1 className="text-xl font-semibold text-foreground">Create your account</h1>
+          <p className="text-sm text-muted-foreground mt-1">Get started with Freshr for free</p>
         </div>
 
-        {/* Form container */}
-        <div style={{ width: "100%", maxWidth: 420 }}>
-          <h1
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "2rem",
-              letterSpacing: "-0.02em",
-              marginBottom: 32,
-              lineHeight: 1.1,
-            }}
-          >
-            Create your account
-          </h1>
+        <GoogleAuthBtn />
 
-          {/* Google button */}
-          <GoogleAuthBtn />
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-muted-foreground">or</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
 
-          {/* Divider */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              marginBottom: 24,
-            }}
-          >
-            <div style={{ flex: 1, height: 2, background: B }} />
-            <span
-              style={{
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                color: "#000000",
-              }}
-            >
-              or
-            </span>
-            <div style={{ flex: 1, height: 2, background: B }} />
+        {error && <p className="text-sm text-destructive">{error}</p>}
+
+        <form
+          onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}
+          className="flex flex-col gap-4"
+        >
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
           </div>
 
-          {/* Error message */}
-          {error && (
-            <p
-              style={{
-                color: "#cc0000",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                margin: "0 0 16px",
-              }}
-            >
-              {error}
-            </p>
-          )}
-
-          {/* Fields */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-            style={{ display: "flex", flexDirection: "column", gap: 16 }}
-          >
-            <div>
-              <label style={labelStyle}>EMAIL</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                style={inputStyle}
-                {...inputHandlers}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="pr-14"
+                autoComplete="new-password"
               />
-            </div>
-
-            <div>
-              <label style={labelStyle}>PASSWORD</label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  style={{ ...inputStyle, paddingRight: 48 }}
-                  {...inputHandlers}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
-                  style={{
-                    position: "absolute",
-                    right: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    color: "#000000",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.05em",
-                    transition: "color 0.12s",
-                  }}
-                >
-                  {showPassword ? "HIDE" : "SHOW"}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label style={labelStyle}>CONFIRM PASSWORD</label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type={showConfirm ? "text" : "password"}
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="••••••••"
-                  style={{ ...inputStyle, paddingRight: 48 }}
-                  {...inputHandlers}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm((v) => !v)}
-                  style={{
-                    position: "absolute",
-                    right: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    color: "#000000",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.05em",
-                    transition: "color 0.12s",
-                  }}
-                >
-                  {showConfirm ? "HIDE" : "SHOW"}
-                </button>
-              </div>
-            </div>
-
-            <div style={{ marginTop: 8 }}>
-              <Button
-                variant="green"
-                fullWidth
-                type="submit"
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                Sign up →
-              </Button>
+                {showPassword ? "HIDE" : "SHOW"}
+              </button>
             </div>
+          </div>
 
-            <p
-              style={{
-                marginTop: 4,
-                fontSize: "0.7rem",
-                color: "#555",
-                lineHeight: 1.6,
-                textAlign: "center",
-              }}
-            >
-              By signing up, you agree to FRESHR's{" "}
-              <Link
-                to="/terms-of-service"
-                style={{
-                  color: B,
-                  fontWeight: 700,
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
-                }}
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="confirm">Confirm password</Label>
+            <div className="relative">
+              <Input
+                id="confirm"
+                type={showConfirm ? "text" : "password"}
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                placeholder="••••••••"
+                className="pr-14"
+                autoComplete="new-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground transition-colors"
               >
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link
-                to="/privacy-policy"
-                style={{
-                  color: B,
-                  fontWeight: 700,
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
-                }}
-              >
-                Privacy Policy
-              </Link>
-              .
-            </p>
-          </form>
+                {showConfirm ? "HIDE" : "SHOW"}
+              </button>
+            </div>
+          </div>
 
-          {/* Footer */}
-          <p
-            style={{
-              marginTop: 28,
-              fontSize: "0.75rem",
-              color: "#000000",
-              textAlign: "center",
-            }}
-          >
-            Already have an account?{" "}
-            <Link
-              to="/login"
-              style={{
-                color: B,
-                fontWeight: 700,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
-            >
-              Log in
-            </Link>
+          <Button variant="green" fullWidth type="submit">
+            Sign up →
+          </Button>
+
+          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+            By signing up, you agree to FRESHR's{" "}
+            <Link to="/terms-of-service" className="text-foreground hover:underline underline-offset-4">Terms of Service</Link>
+            {" "}and{" "}
+            <Link to="/privacy-policy" className="text-foreground hover:underline underline-offset-4">Privacy Policy</Link>.
           </p>
+        </form>
 
-          <p
-            style={{
-              marginTop: 10,
-              fontSize: "0.72rem",
-              color: "#555",
-              textAlign: "center",
-            }}
-          >
-            Need help?{" "}
-            <Link
-              to="/support"
-              style={{
-                color: B,
-                fontWeight: 700,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
-            >
-              Contact support
-            </Link>
-          </p>
+        <div className="flex flex-col gap-2 text-center text-sm text-muted-foreground">
+          <p>Already have an account? <Link to="/login" className="text-foreground hover:underline underline-offset-4">Log in</Link></p>
+          <p>Need help? <Link to="/support" className="text-foreground hover:underline underline-offset-4">Contact support</Link></p>
         </div>
       </div>
-
-      <style>{`
-        @media (min-width: 768px) {
-          .signup-left { display: block !important; }
-          .signup-right { flex: 0 0 50% !important; padding: 48px 32px !important; }
-          .signup-mobile-logo { display: none !important; }
-        }
-      `}</style>
     </div>
   );
 }

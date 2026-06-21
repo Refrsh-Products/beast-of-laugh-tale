@@ -2,10 +2,9 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useAuthService from "../services/auth";
 import Button from "../components/ui/Button";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import FreshrLogo from "../components/logo/FreshrLogo";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -40,9 +39,7 @@ export default function ResetPasswordPage() {
     }
     setIsLoading(true);
     try {
-      console.log(
-        `uid: ${uid}, token: ${token}, pass: ${password}, confirm: ${confirm}`,
-      );
+      console.log(`uid: ${uid}, token: ${token}, pass: ${password}, confirm: ${confirm}`);
       authService.resetPassword(uid, token, password, confirm);
       navigate("/login", { state: { resetSuccess: true } });
     } finally {
@@ -50,264 +47,84 @@ export default function ResetPasswordPage() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    border: `3px solid ${B}`,
-    borderRadius: 0,
-    padding: "12px 14px",
-    paddingRight: 52,
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.82rem",
-    background: W,
-    outline: "none",
-    boxSizing: "border-box",
-    transition: "border-color 0.15s",
-  };
-
-  const inputHandlers = {
-    onMouseEnter: (e: React.MouseEvent<HTMLInputElement>) => {
-      if (document.activeElement !== e.currentTarget)
-        e.currentTarget.style.borderColor = G;
-    },
-    onMouseLeave: (e: React.MouseEvent<HTMLInputElement>) => {
-      e.currentTarget.style.borderColor = B;
-    },
-    onFocus: (e: React.FocusEvent<HTMLInputElement>) => {
-      e.currentTarget.style.borderColor = B;
-    },
-  };
-
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: B,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
-        fontFamily: "'IBM Plex Mono', monospace",
-      }}
-    >
-      <div
-        style={{
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${G}`,
-          padding: "48px 40px",
-          width: "100%",
-          maxWidth: 420,
-          boxSizing: "border-box",
-        }}
-      >
-        {/* Logo */}
-        <div
-          onClick={() => navigate("/")}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.4rem",
-            letterSpacing: "-0.02em",
-            color: G,
-            cursor: "pointer",
-            userSelect: "none",
-            marginBottom: 32,
-            transition: "opacity 0.12s",
-          }}
-        >
-          FRESHR
-        </div>
+    <div className="min-h-dvh bg-background flex items-center justify-center px-6 py-16">
+      <div className="w-full max-w-sm flex flex-col gap-6">
+        <FreshrLogo />
 
         {invalidLink ? (
-          /* Invalid / missing token state */
           <>
-            <h1
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "1.75rem",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-                marginBottom: 16,
-              }}
-            >
-              Invalid link
-            </h1>
-            <p
-              style={{
-                fontSize: "0.75rem",
-                color: "#000000",
-                lineHeight: 1.6,
-                marginBottom: 24,
-              }}
-            >
-              This reset link is invalid or has expired.
-            </p>
-            <span
+            <div>
+              <h1 className="text-xl font-semibold text-foreground">Invalid link</h1>
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                This reset link is invalid or has expired.
+              </p>
+            </div>
+            <button
+              type="button"
               onClick={() => navigate("/forgot-password")}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.6")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-              style={{
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                color: B,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-                cursor: "pointer",
-                transition: "opacity 0.12s",
-              }}
+              className="text-sm text-foreground hover:underline underline-offset-4 text-left w-fit"
             >
               Request a new reset link →
-            </span>
+            </button>
           </>
         ) : (
-          /* Main form */
           <>
-            <h1
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "1.75rem",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-                marginBottom: 10,
-              }}
-            >
-              Choose a new
-              <br />
-              password
-            </h1>
-            <p
-              style={{
-                fontSize: "0.75rem",
-                color: "#000000",
-                marginBottom: 32,
-                lineHeight: 1.6,
-              }}
-            >
-              Pick something strong and memorable.
-            </p>
+            <div>
+              <h1 className="text-xl font-semibold text-foreground">Choose a new password</h1>
+              <p className="text-sm text-muted-foreground mt-1">Pick something strong and memorable.</p>
+            </div>
 
-            {/* Error */}
-            {error && (
-              <p
-                style={{
-                  color: "#cc0000",
-                  fontSize: "0.75rem",
-                  marginBottom: 16,
-                }}
-              >
-                {error}
-              </p>
-            )}
+            {error && <p className="text-sm text-destructive">{error}</p>}
 
-            <form
-              onSubmit={handleSubmit}
-              style={{ display: "flex", flexDirection: "column", gap: 16 }}
-            >
-              {/* New password */}
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.12em",
-                    marginBottom: 6,
-                  }}
-                >
-                  NEW PASSWORD
-                </label>
-                <div style={{ position: "relative" }}>
-                  <input
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="password">New password</Label>
+                <div className="relative">
+                  <Input
+                    id="password"
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    style={inputStyle}
-                    {...inputHandlers}
+                    className="pr-14"
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
-                    style={{
-                      position: "absolute",
-                      right: 12,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: 0,
-                      color: "#000000",
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      letterSpacing: "0.05em",
-                      transition: "color 0.12s",
-                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {showPassword ? "HIDE" : "SHOW"}
                   </button>
                 </div>
               </div>
 
-              {/* Confirm password */}
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.12em",
-                    marginBottom: 6,
-                  }}
-                >
-                  CONFIRM PASSWORD
-                </label>
-                <div style={{ position: "relative" }}>
-                  <input
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="confirm">Confirm password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirm"
                     type={showConfirm ? "text" : "password"}
                     value={confirm}
                     onChange={(e) => setConfirm(e.target.value)}
                     placeholder="••••••••"
-                    style={inputStyle}
-                    {...inputHandlers}
+                    className="pr-14"
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirm((v) => !v)}
-                    style={{
-                      position: "absolute",
-                      right: 12,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                      padding: 0,
-                      color: "#000000",
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      letterSpacing: "0.05em",
-                      transition: "color 0.12s",
-                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {showConfirm ? "HIDE" : "SHOW"}
                   </button>
                 </div>
               </div>
 
-              <div style={{ marginTop: 8 }}>
-                <Button variant="green" fullWidth type="submit" disabled={isLoading}>
-                  {isLoading ? "Saving..." : "Set new password →"}
-                </Button>
-              </div>
+              <Button variant="green" fullWidth type="submit" disabled={isLoading}>
+                {isLoading ? "Saving..." : "Set new password →"}
+              </Button>
             </form>
           </>
         )}
