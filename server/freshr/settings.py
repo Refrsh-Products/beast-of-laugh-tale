@@ -86,7 +86,8 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "payments",
     "policies",
-    "transcription"
+    "transcription",
+    "campus_champions"
 ]
 
 # Custom User Model
@@ -288,6 +289,8 @@ GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
 ZINIPAY_API_KEY = os.getenv('ZINIPAY_API_KEY', '')
 ZINIPAY_MONTHLY_PRICE = os.getenv('ZINIPAY_MONTHLY_PRICE', '350')
 ZINIPAY_YEARLY_PRICE = os.getenv('ZINIPAY_YEARLY_PRICE', '1200')
+
+USE_MOCK_PAYMENT_GATEWAY = os.getenv('USE_MOCK_PAYMENT_GATEWAY', '').lower() in ('true', '1', 'yes')
 
 # Public URL of this backend (used for webhook registration)
 BACKEND_URL = os.getenv('BACKEND_URL', 'http://localhost:8000')
