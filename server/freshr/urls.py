@@ -33,6 +33,7 @@ api_urlpatterns = [
 
     path('payments/', include(("payments.urls", "payments"), namespace="payments")),
     path('policies/', include(("policies.urls", "policies"), namespace="policies")),
+    path('referral/', include(("campus_champions.urls", "campus_champions"), namespace="campus_champions")),
 
     # authentication endpoints
     path('auth/', include('users.urls')),
