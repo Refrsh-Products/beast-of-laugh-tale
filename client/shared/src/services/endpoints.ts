@@ -107,6 +107,12 @@ export const PaymentServiceApiEndpoints = {
   initiatePayment: `${PaymentServiceApiBase}/initiate/`,
 };
 
+// Referral
+export const ReferralServiceApiBase = `${ApiPrefix}/referral`;
+export const ReferralServiceApiEndpoints = {
+  validateReferralCode: `${ReferralServiceApiBase}/validate/`,
+};
+
 // Quizzes
 export const QuizServiceApiBase = `${ApiPrefix}/quizzes`;
 export const QuizServiceApiEndpoints = {
