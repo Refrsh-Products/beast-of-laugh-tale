@@ -252,3 +252,7 @@ IMG_1271.jpg
 git_context.txt
 client/docs/
 skills-lock.json
+
+# react native expo
+expo-env.d.ts
+.expo

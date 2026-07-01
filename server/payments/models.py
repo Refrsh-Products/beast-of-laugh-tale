@@ -20,6 +20,7 @@ class Payment(models.Model):
     billing_interval = models.CharField(max_length=10, choices=BillingInterval.choices)
     status = models.CharField(max_length=15, choices=PaymentStatus.choices, default=PaymentStatus.PENDING)
     payment_method = models.CharField(max_length=50, blank=True, default='')
+    referral_code = models.CharField(max_length=50, blank=True)
     metadata = models.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
