@@ -33,7 +33,7 @@ services:
       context: ./server
     command: >
       sh -c "python manage.py migrate --noinput &&
-             gunicorn freshr.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120"
+             gunicorn freshr.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120 --reload"
     volumes:
       - ./server:/app
       - media:/app/media

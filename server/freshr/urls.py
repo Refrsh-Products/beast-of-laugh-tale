@@ -40,13 +40,11 @@ api_urlpatterns = [
     path('auth/token/refresh/', jwt_views.TokenRefreshView.as_view(), name='token_refresh'),
 ]
 
-# `/api/` is unversioned for now — deliberately reverted from `/api/v1/`
-# after a prod incident where the frontend's hardcoded endpoint constants
-# weren't updated to match. If reintroducing versioning, update BOTH
-# freshr/urls.py and the frontend's endpoint constants in the same PR,
-# and verify on staging with the new frontend build before merging.
 urlpatterns = [
-    path('api/', include(api_urlpatterns)),
+    # The `api/` prefix is what nginx proxies to Django (everything else falls
+    # through to the SPA). `v{API_VERSION}` is the contract version underneath
+    # it — see API_VERSION in settings. Result: /api/v1/...
+    path(f'api/v{settings.API_VERSION}/', include(api_urlpatterns)),
 
     # Kept outside /api/ so nginx's SPA fallback hides them in production —
     # only reachable when hitting Django directly (i.e. local dev on :8000).
