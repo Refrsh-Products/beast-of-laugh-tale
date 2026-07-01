@@ -1,5 +1,8 @@
 import type { ServiceDeps } from "../platform/deps";
-import { PaymentServiceApiEndpoints } from "./endpoints";
+import {
+  PaymentServiceApiEndpoints,
+  ReferralServiceApiEndpoints,
+} from "./endpoints";
 
 export interface Payment {
   id: string;
@@ -16,9 +19,20 @@ export interface Payment {
   updated_at: string;
 }
 
+export interface ValidateReferralResponse {
+  valid: boolean;
+  discount_percentage?: number;
+  champion_name?: string;
+  reason?: string;
+}
+
 export interface PaymentService {
   listPayments(): Promise<Payment[]>;
-  initializePayment(billing_interval: string): Promise<{ payment_url: string }>;
+  initializePayment(
+    billing_interval: string,
+    referral_code?: string,
+  ): Promise<{ payment_url: string }>;
+  validateReferralCode(code: string): Promise<ValidateReferralResponse>;
 }
 
 export function createPaymentService(deps: ServiceDeps): PaymentService {
@@ -32,11 +46,22 @@ export function createPaymentService(deps: ServiceDeps): PaymentService {
       );
     },
 
-    initializePayment: async (billing_interval) => {
+    initializePayment: async (billing_interval, referral_code) => {
       return await http.request<{ payment_url: string }>(
         PaymentServiceApiEndpoints.initiatePayment,
         "POST",
-        { billing_interval: billing_interval },
+        {
+          billing_interval,
+          ...(referral_code ? { referral_code: referral_code } : {}),
+        },
+      );
+    },
+
+    validateReferralCode: async (code) => {
+      return await http.request<ValidateReferralResponse>(
+        ReferralServiceApiEndpoints.validateReferralCode,
+        "POST",
+        { referral_code: code },
       );
     },
   };
