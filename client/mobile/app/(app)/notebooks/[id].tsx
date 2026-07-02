@@ -1,4 +1,4 @@
-import { Link, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
@@ -9,8 +9,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { Header } from '@/components/notebook/header';
 import { FileCard } from '@/components/notebook/fileCard';
 import { BottomNav } from '@/components/notebook/bottomNav';
+import { FileUploadPreview } from '@/components/notebook/fileUploadPreview';
+import { useFileUpload } from '@/hooks/useFileUpload';
 import { Icon } from '../../../components/ui/icon';
 import { Camera, Trash } from 'lucide-react-native';
+import { getFileTypeLabel } from '@/lib/fileUpload';
+import { AlertDialog } from '@/components/ui/alert-dialog';
 
 export default function NotebookDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -18,6 +22,20 @@ export default function NotebookDetailScreen() {
 
   const [notebook, setNotebook] = useState<Notebook>();
   const [notebookFiles, setNotebookFiles] = useState<NotebookFile[]>([]);
+
+  // ── File upload hook ───────────────────────────────────────────────────
+  const {
+    pickFile,
+    selectedAsset,
+    validationError,
+    confirmUpload,
+    cancelSelection,
+    isConfirming,
+    uploadingFiles,
+    retryUpload,
+  } = useFileUpload(id);
+
+  // ── Data loading ───────────────────────────────────────────────────────
 
   const loadNotebookDetails = useCallback(
     async (id: string) => {
@@ -40,13 +58,25 @@ export default function NotebookDetailScreen() {
         console.error('Failed to load notebook files', err);
       }
     },
-    [notebookFiles]
+    [notebookService]
   );
 
   useEffect(() => {
     loadNotebookDetails(id);
     loadNotebookFiles(id);
-  }, [loadNotebookDetails, loadNotebookFiles]);
+  }, [id]);
+
+  // Refresh the file list whenever an upload completes successfully.
+  useEffect(() => {
+    const entries = Array.from(uploadingFiles.values());
+    const hasSuccess = entries.some((e) => e.status === 'success');
+    if (hasSuccess) {
+      loadNotebookFiles(id);
+    }
+  }, [uploadingFiles, id]);
+
+  // ── Derived data ──────────────────────────────────────────────────────
+  const uploadEntries = Array.from(uploadingFiles.values());
 
   return (
     <Screen>
@@ -63,7 +93,22 @@ export default function NotebookDetailScreen() {
 
           {/* Notebook Files List */}
           <ScrollView className="w-full" contentContainerClassName="gap-3 pt-4 pb-10">
-            {notebookFiles.length === 0 ? (
+            {/* In-progress / recently uploaded files (at the top) */}
+            {uploadEntries.map((entry) => (
+              <FileCard
+                key={entry.tempId}
+                fileName={entry.fileName}
+                fileSize={entry.fileSize}
+                fileType={getFileTypeLabel(entry.fileType, entry.fileName)}
+                uploadProgress={entry.progress}
+                uploadStatus={entry.status}
+                uploadError={entry.error ?? undefined}
+                onRetry={() => retryUpload(entry.tempId)}
+              />
+            ))}
+
+            {/* Existing server files */}
+            {notebookFiles.length === 0 && uploadEntries.length === 0 ? (
               <View className="items-center gap-1 py-16">
                 <Text className="text-center text-muted-foreground">No files uploaded yet.</Text>
               </View>
@@ -72,7 +117,7 @@ export default function NotebookDetailScreen() {
                 <FileCard
                   key={notebookFile.id}
                   fileName={notebookFile.name}
-                  fileSize={0}
+                  fileSize={10000}
                   fileType={notebookFile.file_type}
                 />
               ))
@@ -85,13 +130,23 @@ export default function NotebookDetailScreen() {
             <Button variant="outline" size="icon">
               <Icon as={Camera} />
             </Button>
-            <Button variant="default">
+            <Button variant="default" onPress={pickFile}>
               <Text>+ Add Files</Text>
             </Button>
           </View>
           <BottomNav />
         </View>
       </View>
+
+      {/* File upload preview / confirmation modal */}
+      <FileUploadPreview
+        visible={!!selectedAsset}
+        asset={selectedAsset}
+        validationError={validationError}
+        isUploading={isConfirming}
+        onConfirm={confirmUpload}
+        onCancel={cancelSelection}
+      />
     </Screen>
   );
 }

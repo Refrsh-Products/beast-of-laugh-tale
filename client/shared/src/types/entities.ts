@@ -22,7 +22,7 @@ export interface Notebook {
   is_archived: boolean;
 }
 
-export interface AccountUseage {
+export interface AccountUsage {
   plan: string;
   notebooks: {
     used: number;

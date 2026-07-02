@@ -4,6 +4,7 @@ import { ChevronLeft, EllipsisVerticalIcon } from 'lucide-react-native';
 import { Button } from '../ui/button';
 import { Text } from '../ui/text';
 import { Separator } from '../ui/separator';
+import { Icon } from '../ui/icon';
 
 interface HeaderProps {
   title: string;
@@ -16,7 +17,7 @@ function Header({ title }: HeaderProps) {
     <View className="w-full px-5">
       <View className="w-full flex-row items-center justify-between">
         <Button variant="ghost" size="icon" onPress={() => router.back()}>
-          <ChevronLeft size={30} className="text-foreground" />
+          <Icon as={ChevronLeft} size={30} />
         </Button>
 
         <Text variant="h3">{title}</Text>

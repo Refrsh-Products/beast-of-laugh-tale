@@ -1,19 +1,18 @@
 import { Link } from 'expo-router';
 import { Filter, Search } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, View, ActivityIndicator } from 'react-native';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Screen } from '@/components/ui/screen';
-import { UseageCard } from '@/components/notebook/useageCard';
+import { UsageCard } from '@/components/notebook/usageCard';
 import { Text } from '@/components/ui/text';
 import { useNotebookService } from '@/hooks/useNotebookService';
-import { Notebook } from '@freshr/shared';
+import { useAccountService } from '@/hooks/useAccountService';
+import { Notebook, AccountUsage } from '@freshr/shared';
 import { mobileSessionStore } from '@/lib/session';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-const NOTEBOOK_LIMIT = 4;
 
 type Tab = 'active' | 'archived';
 
@@ -43,38 +42,65 @@ function formatRelativeTime(iso: string): string {
 
 export default function NotebookListScreen() {
   const notebookService = useNotebookService();
+  const accountService = useAccountService();
 
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
+  const [usage, setUsage] = useState<AccountUsage | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingUsage, setLoadingUsage] = useState(true);
   const [value, setValue] = useState<Tab>('active');
 
-  const loadNotebooks = useCallback(async () => {
+  const getNotebookFiles = async (notebooksData: Notebook[]) => {
     try {
-      const data = await notebookService.list();
-      setNotebooks(data);
-    } catch (err) {
-      console.error('Failed to load notebooks', err);
+      const updatedNotebooks = await Promise.all(
+        notebooksData.map(async (notebook) => {
+          try {
+            const files = await notebookService.listFiles(notebook.id);
+            return {
+              ...notebook,
+              file_count: files.length,
+            };
+          } catch (error) {
+            console.error(`Failed to fetch files for notebook ${notebook.id}:`, error);
+            return notebook;
+          }
+        })
+      );
+      setNotebooks(updatedNotebooks);
+    } catch (error) {
+      console.error('Failed to update notebook files:', error);
     }
-  }, [notebookService]);
+  };
+
+  const loadData = useCallback(async () => {
+    try {
+      const [notebooksData, usageData] = await Promise.all([
+        notebookService.list(),
+        accountService.getAccountUsage(),
+      ]);
+      setNotebooks(notebooksData);
+      setUsage(usageData);
+      getNotebookFiles(notebooksData);
+    } catch (err) {
+      console.error('Failed to load data', err);
+    } finally {
+      setLoadingUsage(false);
+    }
+  }, [notebookService, accountService]);
 
   // Initial fetch on mount.
   useEffect(() => {
-    loadNotebooks();
-  }, [loadNotebooks]);
+    loadData();
+  }, [loadData]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     try {
-      await loadNotebooks();
+      await loadData();
     } finally {
       setRefreshing(false);
     }
-  }, [loadNotebooks]);
-
-  const activeCount = useMemo(
-    () => notebooks.filter((notebook) => !notebook.is_archived).length,
-    [notebooks]
-  );
+  }, [loadData]);
 
   const visibleNotebooks = useMemo(
     () =>
@@ -135,10 +161,52 @@ export default function NotebookListScreen() {
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerClassName="gap-3 px-5 py-4">
-          <UseageCard featureTitle="Notebooks" maxLimit={NOTEBOOK_LIMIT} used={activeCount} />
-          <UseageCard featureTitle="Quiz" maxLimit={NOTEBOOK_LIMIT} used={activeCount} />
-          <UseageCard featureTitle="Presentation" maxLimit={NOTEBOOK_LIMIT} used={activeCount} />
-          <UseageCard featureTitle="Storage" maxLimit={NOTEBOOK_LIMIT} used={activeCount} />
+          {loadingUsage ? (
+            <View className="w-64 items-center justify-center py-4">
+              <ActivityIndicator size="small" />
+              <Text className="mt-2 text-muted-foreground">Loading usage...</Text>
+            </View>
+          ) : usage ? (
+            [
+              {
+                id: 'notebooks',
+                title: 'Notebooks',
+                used: usage.notebooks.used,
+                limit: usage.notebooks.limit,
+              },
+              {
+                id: 'quizzes',
+                title: 'Quiz',
+                used: usage.daily_quizzes.used,
+                limit: usage.daily_quizzes.limit,
+              },
+              {
+                id: 'presentations',
+                title: 'Presentation',
+                used: usage.presentations.used,
+                limit: usage.presentations.limit,
+              },
+              {
+                id: 'storage',
+                title: 'Storage',
+                used: Number(usage.storage.used_bytes),
+                limit: Number(usage.storage.limit_bytes),
+                format: 'bytes' as const,
+              },
+            ].map((item) => (
+              <UsageCard
+                key={item.id}
+                featureTitle={item.title}
+                maxLimit={item.limit}
+                used={item.used}
+                format={item.format}
+              />
+            ))
+          ) : (
+            <View className="w-64 items-center justify-center py-4">
+              <Text className="text-muted-foreground">Failed to load usage data</Text>
+            </View>
+          )}
         </ScrollView>
 
         {/* Filters */}
@@ -225,9 +293,18 @@ export default function NotebookListScreen() {
                 asChild>
                 <Pressable className="gap-1 rounded-2xl border border-border bg-card p-4 active:opacity-70">
                   <Text className="text-lg font-semibold uppercase">{notebook.title}</Text>
-                  <Text className="text-sm text-muted-foreground">
-                    Last edited {formatRelativeTime(notebook.updated_at)}
-                  </Text>
+                  <View className="flex flex-row items-center justify-between">
+                    <Text className="text-sm text-muted-foreground">
+                      Last edited {formatRelativeTime(notebook.updated_at)}
+                    </Text>
+                    <Text className="text-sm text-muted-foreground">
+                      {notebook.file_count === undefined
+                        ? 'Loading...'
+                        : notebook.file_count === 0
+                        ? 'No Files'
+                        : `${notebook.file_count} File${notebook.file_count === 1 ? '' : 's'}`}
+                    </Text>
+                  </View>
                 </Pressable>
               </Link>
             ))
@@ -236,9 +313,9 @@ export default function NotebookListScreen() {
       </ScrollView>
 
       {/* Create notebook */}
-      <View className="border-t border-border px-5 py-4">
+      <View className="px-5 py-4">
         <Link href="/notebooks/create" asChild>
-          <Button variant="outline" size="lg">
+          <Button variant="default" size="lg">
             <Text>+ Create Notebook</Text>
           </Button>
         </Link>

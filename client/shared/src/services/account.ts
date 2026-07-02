@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { ServiceDeps } from "../platform/deps";
-import type { AccountUseage, StoredAccount } from "../types/entities";
+import type { AccountUsage, StoredAccount } from "../types/entities";
 import type { AccountMeResponse } from "../types/dto";
 import { UserServiceApiEndpoints } from "./endpoints";
 
@@ -24,7 +24,7 @@ export interface AccountService {
   saveAccount(account: StoredAccount): Promise<void>;
   updateAccount(account: AccountPatch): Promise<void>;
   getOnboardingStatus(): Promise<OnboardingStatus>;
-  getAccountUsage(): Promise<AccountUseage>;
+  getAccountUsage(): Promise<AccountUsage>;
 }
 
 export function createAccountService(deps: ServiceDeps): AccountService {
@@ -81,7 +81,7 @@ export function createAccountService(deps: ServiceDeps): AccountService {
     },
 
     getAccountUsage: async () => {
-      return await http.request<AccountUseage>(
+      return await http.request<AccountUsage>(
         UserServiceApiEndpoints.accountUsage,
       );
     },
