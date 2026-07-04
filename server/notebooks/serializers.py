@@ -9,6 +9,7 @@ class NotebookFileSerializer(serializers.ModelSerializer):
                 "id",
                 "name",
                 "file",
+                "file_size",
                 "file_type",
                 "ingestion_status",
                 "ingestion_error",

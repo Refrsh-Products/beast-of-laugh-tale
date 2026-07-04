@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 class NotebookFileService:
     @staticmethod
-    def add_notebook_file(notebook, uploaded_file):
+    def add_notebook_file(notebook, uploaded_file, file_size):
         try:
             file_name = Path(uploaded_file.name).name
             file_type = file_name.split(".")[-1]
@@ -15,6 +15,7 @@ class NotebookFileService:
                     notebook=notebook,
                     name=file_name,
                     file=uploaded_file,
+                    file_size=file_size,
                     file_type=file_type
                     )
             notebook_file.file_url = notebook_file.file.url
