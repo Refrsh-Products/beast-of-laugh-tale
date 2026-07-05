@@ -151,7 +151,8 @@ class NotebookFileCreateAPIView(APIView):
 
             notebook_file = NotebookFileService.add_notebook_file(
                     notebook=notebook,
-                    uploaded_file=uploaded_file
+                    uploaded_file=uploaded_file,
+                    file_size=uploaded_file.size,
                     )
             account.storage_bytes_used += uploaded_file.size
             account.save()

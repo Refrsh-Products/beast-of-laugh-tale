@@ -1,11 +1,14 @@
 import { View } from 'react-native';
+import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 
 export default function PresentationScreen() {
   return (
-    <View className="flex-1 items-center justify-center gap-4 p-6">
-      <Text className="text-2xl font-bold">Presentation</Text>
-      <Text className="text-muted-foreground">Placeholder — RAG chat comes later.</Text>
-    </View>
+    <Screen>
+      <View className="flex-1 items-center justify-center gap-4 p-6">
+        <Text className="text-2xl font-bold">Presentation</Text>
+        <Text className="text-muted-foreground">Placeholder — RAG chat comes later.</Text>
+      </View>
+    </Screen>
   );
 }

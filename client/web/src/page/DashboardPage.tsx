@@ -5,7 +5,7 @@ import useNotebookService from "../services/notebooks";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
 import type { OnboardingStatus } from "@freshr/shared";
-import type { Notebook, AccountUseage, StoredAccount } from "@freshr/shared";
+import type { Notebook, AccountUsage, StoredAccount } from "@freshr/shared";
 import { getAccount as getCachedAccount } from "../storage";
 import LoadErrorScreen from "../components/ui/LoadErrorScreen";
 
@@ -119,7 +119,7 @@ export default function DashboardPage() {
   const { toasts, showToast } = useToast();
   const [status, setStatus] = useState<OnboardingStatus | "loading">("loading");
   const [retrying, setRetrying] = useState(false);
-  const [usage, setUsage] = useState<AccountUseage | null>(null);
+  const [usage, setUsage] = useState<AccountUsage | null>(null);
 
   async function fetchUsage() {
     try {

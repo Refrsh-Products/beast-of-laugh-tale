@@ -1,4 +1,4 @@
-import type { AccountUseage } from "@freshr/shared";
+import type { AccountUsage } from "@freshr/shared";
 
 const B = "#000000";
 const TRACK = "#e8e8e4";
@@ -64,7 +64,7 @@ function UsageBar({
   );
 }
 
-export default function UsageBanner({ usage }: { usage: AccountUseage }) {
+export default function UsageBanner({ usage }: { usage: AccountUsage }) {
   return (
     <div
       style={{

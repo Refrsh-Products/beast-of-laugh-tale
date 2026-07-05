@@ -1,24 +1,10 @@
-import { Tabs } from 'expo-router';
-import { NotebookIcon, UserIcon } from 'lucide-react-native';
+import { Stack } from 'expo-router';
 
 export default function AppLayout() {
   return (
-    <Tabs>
-      <Tabs.Screen
-        name="notebooks"
-        options={{
-          title: 'Notebooks',
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => <NotebookIcon color={color} size={size} />,
-        }}
-      />
-      <Tabs.Screen
-        name="account"
-        options={{
-          title: 'Account',
-          tabBarIcon: ({ color, size }) => <UserIcon color={color} size={size} />,
-        }}
-      />
-    </Tabs>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="notebooks" options={{ title: 'Notebooks' }} />
+      <Stack.Screen name="account" options={{ title: 'Account' }} />
+    </Stack>
   );
 }

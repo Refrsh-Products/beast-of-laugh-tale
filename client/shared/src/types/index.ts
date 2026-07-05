@@ -1,7 +1,7 @@
 export type {
   StoredUser,
   StoredAccount,
-  AccountUseage,
+  AccountUsage,
   Notebook,
   NotebookFile,
   QuizDifficulty,
