@@ -64,6 +64,7 @@ export interface NotebookFile {
   id: string;
   notebook: string;
   name: string;
+  file_size: number;
   file_type: string;
   ingestion_status: "pending" | "processing" | "ready" | "failed";
   ingestion_error?: string;

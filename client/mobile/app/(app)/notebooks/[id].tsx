@@ -14,7 +14,6 @@ import { useFileUpload } from '@/hooks/useFileUpload';
 import { Icon } from '../../../components/ui/icon';
 import { Camera, Trash } from 'lucide-react-native';
 import { getFileTypeLabel } from '@/lib/fileUpload';
-import { AlertDialog } from '@/components/ui/alert-dialog';
 
 export default function NotebookDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -36,7 +35,6 @@ export default function NotebookDetailScreen() {
   } = useFileUpload(id);
 
   // ── Data loading ───────────────────────────────────────────────────────
-
   const loadNotebookDetails = useCallback(
     async (id: string) => {
       try {
@@ -117,7 +115,7 @@ export default function NotebookDetailScreen() {
                 <FileCard
                   key={notebookFile.id}
                   fileName={notebookFile.name}
-                  fileSize={10000}
+                  fileSize={notebookFile.file_size}
                   fileType={notebookFile.file_type}
                 />
               ))

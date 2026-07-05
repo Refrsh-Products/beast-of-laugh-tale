@@ -1,34 +1,34 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { View, ScrollView, ActivityIndicator, Pressable, Alert } from 'react-native';
+import { View, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useQuizService } from '@/hooks/useQuizService';
-import type { QuizSession, QuizDifficulty } from '@freshr/shared';
+import type { QuizSession, QuizGenerateOptions, QuizAnswerPayload } from '@freshr/shared';
+import { Header } from '@/components/notebook/header';
+import { BottomNav } from '@/components/notebook/bottomNav';
+import { GenerateQuizModal } from '@/components/quiz/GenerateQuizModal';
+import { QuizTakingScreen } from '@/components/quiz/QuizTakingScreen';
+import { QuizResultScreen } from '@/components/quiz/QuizResultScreen';
 
-type ViewState = 'list' | 'generate' | 'take' | 'review';
+type ViewState = 'list' | 'take' | 'review';
 
 export default function QuizScreen() {
   const { notebookId } = useLocalSearchParams<{ notebookId: string }>();
+  const router = useRouter();
   const quizService = useQuizService();
-  
+
   const [viewState, setViewState] = useState<ViewState>('list');
   const [isLoading, setIsLoading] = useState(true);
   const [quizzes, setQuizzes] = useState<QuizSession[]>([]);
   const [activeQuiz, setActiveQuiz] = useState<QuizSession | null>(null);
+  const [lastTimeTaken, setLastTimeTaken] = useState<number | undefined>(undefined);
 
   // Generate State
-  const [topic, setTopic] = useState('');
-  const [difficulty, setDifficulty] = useState<QuizDifficulty>('MEDIUM');
-  const [numQuestions, setNumQuestions] = useState('5');
+  const [isGenerateModalVisible, setIsGenerateModalVisible] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-
-  // Take State
-  const [currentQIndex, setCurrentQIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({}); // questionId -> optionId/text
 
   useEffect(() => {
     if (viewState === 'list' && notebookId) {
@@ -48,21 +48,27 @@ export default function QuizScreen() {
     }
   };
 
-  const handleGenerate = async () => {
+  // ─── Generate quiz ──
+  const handleGenerate = async (options: QuizGenerateOptions) => {
     if (!notebookId) return;
     setIsGenerating(true);
+
+    const isAllTopics = options.topics.length === 0 && !options.prompt;
+    const payload = {
+      notebook: notebookId,
+      topic: isAllTopics ? 'All Topics' : options.topics.map((t) => t.name).join(', '),
+      topic_id: isAllTopics ? undefined : options.topics[0]?.id,
+      difficulty: options.difficulty,
+      quiz_type: options.quizType,
+      time_limit: options.timeLimit ? options.timeLimit * 60 : undefined,
+      num_questions: options.questionCount,
+    };
+
     try {
-      const newQuiz = await quizService.createQuizSession({
-        notebook: notebookId,
-        topic: topic || 'All Topics',
-        difficulty,
-        num_questions: parseInt(numQuestions) || 5,
-        quiz_type: 'PRACTICE',
-      });
+      const newQuiz = await quizService.createQuizSession(payload);
       setActiveQuiz(newQuiz);
-      setAnswers({});
-      setCurrentQIndex(0);
       setViewState('take');
+      setIsGenerateModalVisible(false);
     } catch (err: any) {
       console.error('Failed to generate quiz', err);
       Alert.alert('Error', err?.message || 'Failed to generate quiz.');
@@ -71,23 +77,32 @@ export default function QuizScreen() {
     }
   };
 
-  const handleSubmit = async () => {
+  // ─── Quiz completed ──────
+  const handleQuizComplete = async (
+    userAnswers: (number | null)[],
+    timeTaken: number,
+    _flaggedQuestions: number[]
+  ) => {
     if (!activeQuiz) return;
     setIsLoading(true);
+
+    const questions = activeQuiz.questions ?? [];
+    const answers: QuizAnswerPayload[] = questions
+      .map((q, i) => {
+        const selectedIndex = userAnswers[i];
+        if (selectedIndex === null) return null;
+        const resolvedChoices = q.choices.length > 0 ? q.choices : ['True', 'False'];
+        return {
+          question_id: q.id,
+          user_answer: resolvedChoices[selectedIndex],
+        };
+      })
+      .filter((a): a is QuizAnswerPayload => a !== null);
+
     try {
-      // The answers array structure depends on the backend. 
-      // Usually it's an array of { question_id, selected_option } or similar.
-      // Assuming a generic submission format for now:
-      const formattedAnswers = Object.entries(answers).map(([qId, ans]) => ({
-        question_id: qId,
-        answer: ans,
-      }));
-      // Note: If the backend submit format is different, this might need tweaking.
-      await quizService.submitQuiz(activeQuiz.id as any, formattedAnswers as any);
-      
-      // Fetch the updated quiz with results
-      const updatedQuiz = await quizService.fetchQuizSession(activeQuiz.id as any);
-      setActiveQuiz(updatedQuiz);
+      const completedQuiz = await quizService.submitQuiz(activeQuiz.id!, answers);
+      setActiveQuiz(completedQuiz);
+      setLastTimeTaken(timeTaken);
       setViewState('review');
     } catch (err: any) {
       console.error('Failed to submit quiz', err);
@@ -97,6 +112,96 @@ export default function QuizScreen() {
     }
   };
 
+  // ─── Exit quiz-taking ─────────────────────────────────────────────
+  const handleQuizExit = async () => {
+    setActiveQuiz(null);
+    setViewState('list');
+  };
+
+  // ─── Retake quiz ──────────────────────────────────────────────────
+  const handleRetake = async () => {
+    if (!activeQuiz?.id) return;
+    setIsLoading(true);
+    try {
+      const newQuiz = await quizService.retakePastQuiz(activeQuiz.id);
+      setActiveQuiz(newQuiz);
+      setViewState('take');
+    } catch (err: any) {
+      console.error('Failed to retake quiz', err);
+      Alert.alert('Error', 'Failed to generate retake quiz.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ─── Take to Chat ─────────────────────────────────────────────────
+  const handleTakeToChat = (questionText: string, options: string[], topic: string) => {
+    const formatted = [
+      `I'm studying ${topic} and I need help with this question:`,
+      '',
+      `"${questionText}"`,
+      '',
+      'Options were:',
+      ...options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`),
+    ].join('\n');
+
+    // Navigate to chat with the formatted message
+    if (notebookId) {
+      router.replace({
+        pathname: '/notebooks/chat',
+        params: {
+          notebookId,
+          prefillMessage: formatted,
+        },
+      });
+    }
+  };
+
+  // ─── Select Quiz from List ────────────────────────────────────────
+  const handleSelectQuiz = async (quiz: QuizSession) => {
+    if (!quiz.id) return;
+    setIsLoading(true);
+    try {
+      // Fetch full quiz session to get the questions array
+      const fullQuiz = await quizService.fetchQuizSession(quiz.id);
+      setActiveQuiz(fullQuiz);
+      if (fullQuiz.status === 'COMPLETED') {
+        setViewState('review');
+      } else {
+        setViewState('take');
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch full quiz session', err);
+      Alert.alert('Error', 'Failed to load the quiz. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ─── Quiz Taking Screen ───────────────────────────────────────────
+  if (viewState === 'take' && activeQuiz) {
+    return (
+      <QuizTakingScreen quiz={activeQuiz} onComplete={handleQuizComplete} onExit={handleQuizExit} />
+    );
+  }
+
+  // ─── Quiz Result Screen ───────────────────────────────────────────
+  if (viewState === 'review' && activeQuiz) {
+    return (
+      <QuizResultScreen
+        quiz={activeQuiz}
+        onBack={() => {
+          setActiveQuiz(null);
+          setViewState('list');
+        }}
+        onRetake={handleRetake}
+        onTakeToChat={handleTakeToChat}
+        timeTaken={lastTimeTaken}
+      />
+    );
+  }
+
+  // ─── Quiz List (default) ──────────────────────────────────────────
   if (isLoading && viewState === 'list') {
     return (
       <Screen className="items-center justify-center">
@@ -107,196 +212,61 @@ export default function QuizScreen() {
 
   return (
     <Screen className="flex-1 bg-background">
+      <Header title="Notebook Title" />
       <ScrollView contentContainerClassName="p-4 gap-6">
-        
-        {viewState === 'list' && (
-          <View className="gap-4">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-2xl font-bold">Quizzes</Text>
-              <Button onPress={() => setViewState('generate')} size="sm">
-                <Text>+ New Quiz</Text>
-              </Button>
-            </View>
-            
-            {quizzes.length === 0 ? (
-              <Text className="text-center text-muted-foreground py-10">No quizzes yet.</Text>
-            ) : (
-              quizzes.map((q) => (
-                <Card key={q.id}>
-                  <CardHeader>
-                    <CardTitle>{q.title || q.topic || 'Quiz'}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Text className="text-muted-foreground">Difficulty: {q.difficulty}</Text>
-                    <Text className="text-muted-foreground">Score: {q.score !== undefined && q.score !== null ? `${q.score}%` : 'Not completed'}</Text>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      variant="secondary" 
-                      className="w-full"
-                      onPress={() => {
-                        setActiveQuiz(q);
-                        if (q.status === 'COMPLETED') {
-                          setViewState('review');
-                        } else {
-                          setAnswers({});
-                          setCurrentQIndex(0);
-                          setViewState('take');
-                        }
-                      }}
-                    >
-                      <Text>{q.status === 'COMPLETED' ? 'Review' : 'Continue'}</Text>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))
-            )}
-          </View>
-        )}
-
-        {viewState === 'generate' && (
-          <View className="gap-6">
-            <View className="flex-row items-center gap-4">
-              <Button variant="ghost" size="icon" onPress={() => setViewState('list')}>
-                <Text className="text-lg">←</Text>
-              </Button>
-              <Text className="text-2xl font-bold">Generate Quiz</Text>
-            </View>
-            
-            <View className="gap-2">
-              <Text className="font-medium">Topic (Optional)</Text>
-              <Input 
-                placeholder="e.g. Chapter 3, Photosynthesis" 
-                value={topic} 
-                onChangeText={setTopic} 
-              />
-            </View>
-            
-            <View className="gap-2">
-              <Text className="font-medium">Number of Questions</Text>
-              <Input 
-                keyboardType="numeric" 
-                value={numQuestions} 
-                onChangeText={setNumQuestions} 
-              />
-            </View>
-            
-            <View className="gap-2">
-              <Text className="font-medium">Difficulty</Text>
-              <View className="flex-row gap-2">
-                {(['EASY', 'MEDIUM', 'HARD'] as const).map((level) => (
-                  <Button 
-                    key={level} 
-                    variant={difficulty === level ? 'default' : 'outline'}
-                    className="flex-1"
-                    onPress={() => setDifficulty(level)}
-                  >
-                    <Text className={difficulty === level ? 'text-primary-foreground' : ''}>{level}</Text>
-                  </Button>
-                ))}
-              </View>
-            </View>
-            
-            <Button className="mt-4" onPress={handleGenerate} disabled={isGenerating}>
-              {isGenerating ? <ActivityIndicator color="#fff" /> : <Text>Generate</Text>}
+        <View className="gap-4">
+          <View className="flex-row items-center justify-between px-2">
+            <Text variant="h3">QUIZ</Text>
+            <Button onPress={() => setIsGenerateModalVisible(true)} size="icon" variant="outline">
+              <Text>+</Text>
             </Button>
           </View>
-        )}
 
-        {viewState === 'take' && activeQuiz && (
-          <View className="gap-6">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-lg font-bold">Question {currentQIndex + 1} of {activeQuiz.questions?.length || 0}</Text>
-              <Button variant="ghost" onPress={() => setViewState('list')}>
-                <Text className="text-destructive">Quit</Text>
-              </Button>
-            </View>
-            
-            {activeQuiz.questions?.[currentQIndex] ? (
-              <Card>
+          {quizzes.length === 0 ? (
+            <Text className="py-10 text-center text-muted-foreground">No quizzes yet.</Text>
+          ) : (
+            quizzes.map((q) => (
+              <Card key={q.id}>
                 <CardHeader>
-                  <CardTitle>{activeQuiz.questions[currentQIndex].question_text}</CardTitle>
+                  <CardTitle>{q.title || q.topic || 'Quiz'}</CardTitle>
                 </CardHeader>
-                <CardContent className="gap-3">
-                  {activeQuiz.questions[currentQIndex].choices?.map((choice: any, idx: number) => {
-                    const isSelected = answers[activeQuiz.questions![currentQIndex].id] === choice.id;
-                    return (
-                      <Pressable 
-                        key={idx}
-                        className={`p-4 rounded-xl border ${isSelected ? 'border-primary bg-primary/10' : 'border-border'}`}
-                        onPress={() => setAnswers({ ...answers, [activeQuiz.questions![currentQIndex].id]: choice.id })}
-                      >
-                        <Text>{choice.text}</Text>
-                      </Pressable>
-                    );
-                  })}
+                <CardContent>
+                  <Text className="text-muted-foreground">Difficulty: {q.difficulty}</Text>
+                  <Text className="text-muted-foreground">
+                    Score:{' '}
+                    {q.score !== undefined && q.score !== null
+                      ? `${Math.round(q.score * 100)}%`
+                      : 'Not completed'}
+                  </Text>
                 </CardContent>
-                <CardFooter className="flex-row justify-between">
-                  <Button 
-                    variant="outline" 
-                    disabled={currentQIndex === 0}
-                    onPress={() => setCurrentQIndex(prev => prev - 1)}
-                  >
-                    <Text>Prev</Text>
+                <CardFooter>
+                  <Button
+                    variant="secondary"
+                    className="w-full"
+                    onPress={() => handleSelectQuiz(q)}>
+                    <Text>{q.status === 'COMPLETED' ? 'Review' : 'Continue'}</Text>
                   </Button>
-                  
-                  {currentQIndex === (activeQuiz.questions?.length || 0) - 1 ? (
-                    <Button onPress={handleSubmit} disabled={isLoading}>
-                      {isLoading ? <ActivityIndicator color="#fff" /> : <Text>Submit</Text>}
-                    </Button>
-                  ) : (
-                    <Button onPress={() => setCurrentQIndex(prev => prev + 1)}>
-                      <Text>Next</Text>
-                    </Button>
-                  )}
                 </CardFooter>
               </Card>
-            ) : (
-              <Text>No questions found in this quiz.</Text>
-            )}
-          </View>
-        )}
-
-        {viewState === 'review' && activeQuiz && (
-          <View className="gap-6">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-2xl font-bold">Quiz Results</Text>
-              <Button variant="ghost" onPress={() => setViewState('list')}>
-                <Text>Done</Text>
-              </Button>
-            </View>
-            
-            <View className="items-center py-6 bg-muted rounded-2xl">
-              <Text className="text-4xl font-bold">{activeQuiz.score ?? 0}%</Text>
-              <Text className="text-muted-foreground mt-2">Final Score</Text>
-            </View>
-            
-            <View className="gap-4">
-              {activeQuiz.questions?.map((q: any, i: number) => (
-                <Card key={q.id}>
-                  <CardHeader>
-                    <CardTitle className="text-lg">
-                      {i + 1}. {q.question_text}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="gap-2">
-                    <Text className={q.is_correct ? 'text-green-600 font-medium' : 'text-destructive font-medium'}>
-                      {q.is_correct ? '✅ Correct' : '❌ Incorrect'}
-                    </Text>
-                    {q.explanation && (
-                      <View className="mt-2 p-3 bg-muted rounded-lg">
-                        <Text className="text-sm font-semibold">Explanation:</Text>
-                        <Text className="text-sm mt-1">{q.explanation}</Text>
-                      </View>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </View>
-          </View>
-        )}
-
+            ))
+          )}
+        </View>
       </ScrollView>
+
+      <View className="w-full items-center gap-2 pb-8 pt-4">
+        <Button onPress={() => setIsGenerateModalVisible(true)} size="lg">
+          <Text>+ New Quiz</Text>
+        </Button>
+        <BottomNav />
+      </View>
+
+      <GenerateQuizModal
+        visible={isGenerateModalVisible}
+        onClose={() => setIsGenerateModalVisible(false)}
+        onGenerate={handleGenerate}
+        isGenerating={isGenerating}
+        notebookId={notebookId}
+      />
     </Screen>
   );
 }

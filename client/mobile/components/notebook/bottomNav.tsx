@@ -8,6 +8,7 @@ import { Icon } from '../ui/icon';
 import {
   AudioLines,
   ChevronsUpDown,
+  LucideIcon,
   CircleQuestionMark,
   Presentation,
   Settings,
@@ -34,6 +35,7 @@ function BottomNav() {
   const activeNotebookId = notebookId ?? id;
   const [value, setValue] = useState(() => (pathname.includes('/chat') ? 'chat' : 'files'));
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [selectedToolIcon, setSelectedToolIcon] = useState<LucideIcon | null>(null);
   const insets = useSafeAreaInsets();
   const contentInsets = {
     top: insets.top,
@@ -125,7 +127,7 @@ function BottomNav() {
       <DropdownMenu onOpenChange={setIsMenuOpen}>
         <DropdownMenuTrigger asChild>
           <Button variant={isMenuOpen ? 'secondary' : 'outline'} size="icon">
-            <Icon as={ChevronsUpDown} />
+            <Icon as={selectedToolIcon ?? ChevronsUpDown} />
           </Button>
         </DropdownMenuTrigger>
 
@@ -141,19 +143,40 @@ function BottomNav() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onPress={() => {
+                setSelectedToolIcon(SquareCheckBig);
+                if (activeNotebookId) {
+                  router.push({ pathname: '/notebooks/quiz', params: { notebookId: activeNotebookId } });
+                }
+              }}>
               <Icon as={SquareCheckBig} />
               <Text variant="small">Quiz</Text>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onPress={() => {
+                setSelectedToolIcon(Presentation);
+                if (activeNotebookId) {
+                  router.push({ pathname: '/notebooks/presentation', params: { notebookId: activeNotebookId } });
+                }
+              }}>
               <Icon as={Presentation} />
               <Text variant="small">Presentation</Text>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onPress={() => {
+                setSelectedToolIcon(AudioLines);
+                if (activeNotebookId) {
+                  router.push({ pathname: '/notebooks/transcription', params: { notebookId: activeNotebookId } });
+                }
+              }}>
               <Icon as={AudioLines} />
               <Text variant="small">Audio Transcription</Text>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem
+              onPress={() => {
+                setSelectedToolIcon(CircleQuestionMark);
+              }}>
               <Icon as={CircleQuestionMark} />
               <Text variant="small">Help</Text>
             </DropdownMenuItem>

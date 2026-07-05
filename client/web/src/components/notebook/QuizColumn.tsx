@@ -1,8 +1,13 @@
 import { useState } from "react";
-import type { QuizDifficulty } from "@freshr/shared";
-import type {
-  QuizGenerateOptions,
-  NotebookTopic,
+import {
+  type QuizDifficulty,
+  type QuizGenerateOptions,
+  type NotebookTopic,
+  QUESTION_COUNT_OPTIONS,
+  DIFFICULTY_OPTIONS,
+  MODE_OPTIONS,
+  TIMER_OPTIONS,
+  COLLAPSED_MAX,
 } from "@freshr/shared";
 import QuizTopicChip from "../quiz/QuizTopicChip";
 import Dropdown from "../ui/Dropdown";
@@ -11,7 +16,6 @@ import Divider from "../quiz/Divider";
 const G = "#84e487";
 const B = "#000000";
 const W = "#FFFFFF";
-const COLLAPSED_MAX = 4; // Number of topics to show when topic chip is collapsed
 
 const labelStyle: React.CSSProperties = {
   display: "block",
@@ -331,12 +335,10 @@ export default function QuizColumn({
                 value={String(questionCount)}
                 onChange={(v) => setQuestionCount(Number(v))}
                 placeholder="5"
-                options={[
-                  { value: "5", label: "5" },
-                  { value: "10", label: "10" },
-                  { value: "15", label: "15" },
-                  { value: "20", label: "20" },
-                ]}
+                options={QUESTION_COUNT_OPTIONS.map((opt) => ({
+                  value: String(opt.value),
+                  label: opt.label,
+                }))}
               />
             </div>
 
@@ -347,11 +349,7 @@ export default function QuizColumn({
                 value={difficulty}
                 onChange={(v) => setDifficulty(v as QuizDifficulty)}
                 placeholder="Easy"
-                options={[
-                  { value: "EASY", label: "Easy" },
-                  { value: "MEDIUM", label: "Medium" },
-                  { value: "HARD", label: "Hard" },
-                ]}
+                options={DIFFICULTY_OPTIONS}
               />
             </div>
 
@@ -359,21 +357,17 @@ export default function QuizColumn({
             <div>
               <label style={labelStyle}>MODE</label>
               <Dropdown
-                value={quizType === "TIMED" ? "yes" : "no"}
+                value={quizType}
                 onChange={(v) => {
-                  if (v === "yes") {
-                    setQuizType("TIMED");
+                  setQuizType(v);
+                  if (v === "TIMED") {
                     setTimeLimit(5);
                   } else {
-                    setQuizType("PRACTICE");
                     setTimeLimit(null);
                   }
                 }}
                 placeholder="Practice"
-                options={[
-                  { value: "yes", label: "Timed" },
-                  { value: "no", label: "Practice" },
-                ]}
+                options={MODE_OPTIONS}
               />
             </div>
 
@@ -385,12 +379,10 @@ export default function QuizColumn({
                 onChange={(v) => setTimeLimit(v === "" ? null : Number(v))}
                 placeholder="Select..."
                 disabled={quizType !== "TIMED"}
-                options={[
-                  { value: "5", label: "5 min" },
-                  { value: "10", label: "10 min" },
-                  { value: "15", label: "15 min" },
-                  { value: "20", label: "20 min" },
-                ]}
+                options={TIMER_OPTIONS.map((opt) => ({
+                  value: String(opt.value),
+                  label: opt.label,
+                }))}
               />
             </div>
           </div>
