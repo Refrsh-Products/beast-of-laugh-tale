@@ -15,13 +15,14 @@ export { createChatService } from "./chat";
 export type { ChatServices, ChatSession, ChatMessage } from "./chat";
 
 export { createNotebookService } from "./notebooks";
-export type {
-  NotebookService,
-  NotebookFileCreateResponse,
-} from "./notebooks";
+export type { NotebookService, NotebookFileCreateResponse } from "./notebooks";
 
 export { createPaymentService } from "./payment";
-export type { PaymentService, Payment, ValidateReferralResponse } from "./payment";
+export type {
+  PaymentService,
+  Payment,
+  ValidateReferralResponse,
+} from "./payment";
 
 export { createPresentationService } from "./presentation";
 export type {

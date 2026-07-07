@@ -17,7 +17,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ...config,
     name: config.name ?? 'Freshr',
     slug: config.slug ?? 'freshr',
-    plugins: [...(config.plugins ?? []), 'expo-secure-store', 'expo-web-browser'],
+    plugins: [...(config.plugins ?? []), 'expo-secure-store', 'expo-web-browser', 'expo-sharing'],
     extra: {
       ...config.extra,
       apiBaseUrl,
