@@ -8,6 +8,7 @@ import {
   Alert,
   StatusBar,
   ActivityIndicator,
+  Animated,
 } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
@@ -42,6 +43,9 @@ export function PresentationViewerScreen({
   const [showNavigator, setShowNavigator] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [dimensions, setDimensions] = useState(() => Dimensions.get('window'));
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const controlsOpacity = useRef(new Animated.Value(1)).current;
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Lock to landscape on mount, restore on unmount
   useEffect(() => {
@@ -61,6 +65,46 @@ export function PresentationViewerScreen({
 
   const slideWidth = dimensions.width;
   const slideHeight = dimensions.height;
+
+  // ── Auto-hide controls ──
+  const resetHideTimer = useCallback(() => {
+    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    hideTimerRef.current = setTimeout(() => {
+      Animated.timing(controlsOpacity, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start(() => setControlsVisible(false));
+    }, 3000);
+  }, [controlsOpacity]);
+
+  const toggleControls = useCallback(() => {
+    if (controlsVisible) {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      Animated.timing(controlsOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => setControlsVisible(false));
+    } else {
+      setControlsVisible(true);
+      controlsOpacity.setValue(0);
+      Animated.timing(controlsOpacity, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+      resetHideTimer();
+    }
+  }, [controlsVisible, controlsOpacity, resetHideTimer]);
+
+  // Start auto-hide timer on mount
+  useEffect(() => {
+    resetHideTimer();
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
+  }, [resetHideTimer]);
 
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: any[] }) => {
@@ -121,11 +165,13 @@ export function PresentationViewerScreen({
     onClose();
   }
 
+  const safeInsets = { top: insets.top, bottom: insets.bottom, left: insets.left, right: insets.right };
+
   const renderSlide = useCallback(
     ({ item }: { item: PresentationSlide }) => (
-      <SlideRenderer slide={item} width={slideWidth} height={slideHeight} />
+      <SlideRenderer slide={item} width={slideWidth} height={slideHeight} safeInsets={safeInsets} />
     ),
-    [slideWidth, slideHeight]
+    [slideWidth, slideHeight, safeInsets]
   );
 
   const keyExtractor = useCallback((item: PresentationSlide) => item.id, []);
@@ -134,79 +180,85 @@ export function PresentationViewerScreen({
     <View style={styles.container}>
       <StatusBar hidden />
 
-      {/* Slides FlatList */}
-      <FlatList
-        ref={flatListRef}
-        data={slides}
-        renderItem={renderSlide}
-        keyExtractor={keyExtractor}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig}
-        getItemLayout={(_, index) => ({
-          length: slideWidth,
-          offset: slideWidth * index,
-          index,
-        })}
-      />
+      {/* Slides FlatList — tap to toggle controls */}
+      <Pressable style={StyleSheet.absoluteFill} onPress={toggleControls}>
+        <FlatList
+          ref={flatListRef}
+          data={slides}
+          renderItem={renderSlide}
+          keyExtractor={keyExtractor}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
+          getItemLayout={(_, index) => ({
+            length: slideWidth,
+            offset: slideWidth * index,
+            index,
+          })}
+        />
+      </Pressable>
 
       {/* Top bar overlay */}
-      <View style={[styles.topBar, { paddingTop: insets.top + 4, paddingLeft: insets.left + 12, paddingRight: insets.right + 12 }]}>
-        <Text style={styles.topBarTitle} numberOfLines={1}>
-          {presentation.topic || 'Presentation'}
-        </Text>
+      {controlsVisible && (
+        <Animated.View style={[styles.topBar, { paddingTop: insets.top + 4, paddingLeft: insets.left + 12, paddingRight: insets.right + 12, opacity: controlsOpacity }]}>
+          <Text style={styles.topBarTitle} numberOfLines={1}>
+            {presentation.topic || 'Presentation'}
+          </Text>
 
-        <View style={styles.topBarActions}>
-          {/* Slide navigator */}
-          <Pressable onPress={() => setShowNavigator(true)} style={styles.topBarButton}>
-            <Icon as={LayoutGrid} size={18} color="#FFFFFF" />
-          </Pressable>
+          <View style={styles.topBarActions}>
+            {/* Slide navigator */}
+            <Pressable onPress={() => { setShowNavigator(true); if (hideTimerRef.current) clearTimeout(hideTimerRef.current); }} style={styles.topBarButton}>
+              <Icon as={LayoutGrid} size={18} color="#FFFFFF" />
+            </Pressable>
 
-          {/* Edit */}
-          <Pressable onPress={handleEditCurrent} style={styles.topBarButton}>
-            <Icon as={Edit3} size={18} color="#FFFFFF" />
-          </Pressable>
+            {/* Edit */}
+            <Pressable onPress={() => { handleEditCurrent(); if (hideTimerRef.current) clearTimeout(hideTimerRef.current); }} style={styles.topBarButton}>
+              <Icon as={Edit3} size={18} color="#FFFFFF" />
+            </Pressable>
 
-          {/* Export */}
-          <Pressable onPress={handleExport} disabled={isExporting} style={styles.topBarButton}>
-            {isExporting ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Icon as={Download} size={18} color="#FFFFFF" />
-            )}
-          </Pressable>
+            {/* Export */}
+            <Pressable onPress={handleExport} disabled={isExporting} style={styles.topBarButton}>
+              {isExporting ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Icon as={Download} size={18} color="#FFFFFF" />
+              )}
+            </Pressable>
 
-          {/* Close */}
-          <Pressable onPress={handleClose} style={styles.topBarButton}>
-            <Icon as={X} size={18} color="#FFFFFF" />
-          </Pressable>
-        </View>
-      </View>
+            {/* Close */}
+            <Pressable onPress={handleClose} style={styles.topBarButton}>
+              <Icon as={X} size={18} color="#FFFFFF" />
+            </Pressable>
+          </View>
+        </Animated.View>
+      )}
 
       {/* Bottom bar overlay — slide counter + navigation arrows */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 4, paddingLeft: insets.left + 12, paddingRight: insets.right + 12 }]}>
-        <Pressable
-          onPress={goPrev}
-          disabled={currentIndex === 0}
-          style={[styles.navArrow, currentIndex === 0 && styles.navArrowDisabled]}
-        >
-          <Icon as={ChevronLeft} size={20} color={currentIndex === 0 ? '#666' : '#FFFFFF'} />
-        </Pressable>
+      {controlsVisible && (
+        <Animated.View style={[styles.bottomBar, { paddingBottom: insets.bottom + 4, paddingLeft: insets.left + 12, paddingRight: insets.right + 12, opacity: controlsOpacity }]}>
+          <Pressable
+            onPress={() => { goPrev(); resetHideTimer(); }}
+            disabled={currentIndex === 0}
+            style={[styles.navArrow, currentIndex === 0 && styles.navArrowDisabled]}
+          >
+            <Icon as={ChevronLeft} size={20} color={currentIndex === 0 ? '#666' : '#FFFFFF'} />
+          </Pressable>
 
-        <Text style={styles.slideCounter}>
-          {currentIndex + 1} / {slides.length}
-        </Text>
+          <Text style={styles.slideCounter}>
+            {currentIndex + 1} / {slides.length}
+          </Text>
 
-        <Pressable
-          onPress={goNext}
-          disabled={currentIndex === slides.length - 1}
-          style={[styles.navArrow, currentIndex === slides.length - 1 && styles.navArrowDisabled]}
-        >
-          <Icon as={ChevronRight} size={20} color={currentIndex === slides.length - 1 ? '#666' : '#FFFFFF'} />
-        </Pressable>
-      </View>
+          <Pressable
+            onPress={() => { goNext(); resetHideTimer(); }}
+            disabled={currentIndex === slides.length - 1}
+            style={[styles.navArrow, currentIndex === slides.length - 1 && styles.navArrowDisabled]}
+          >
+            <Icon as={ChevronRight} size={20} color={currentIndex === slides.length - 1 ? '#666' : '#FFFFFF'} />
+          </Pressable>
+        </Animated.View>
+      )}
 
       {/* Slide navigator grid */}
       <SlideNavigatorGrid

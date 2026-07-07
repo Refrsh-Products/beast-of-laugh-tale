@@ -1,4 +1,4 @@
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet, ScrollView } from 'react-native';
 import type { PresentationSlide } from '@freshr/shared';
 
 const G = '#84e487';
@@ -9,9 +9,11 @@ interface SlideRendererProps {
   slide: PresentationSlide;
   width: number;
   height: number;
+  /** Safe area insets to keep content clear of notch/rounded corners */
+  safeInsets?: { top: number; bottom: number; left: number; right: number };
 }
 
-export function SlideRenderer({ slide, width, height }: SlideRendererProps) {
+export function SlideRenderer({ slide, width, height, safeInsets }: SlideRendererProps) {
   // Scale font sizes relative to slide width (base = 960px web equivalent)
   const scale = width / 960;
   const fs = (base: number) => base * scale;
@@ -38,12 +40,12 @@ export function SlideRenderer({ slide, width, height }: SlideRendererProps) {
     </View>
   );
 
-  const bulletList = (items: string[], fontSize = fs(16)) => (
-    <View style={{ gap: fs(8) }}>
+  const bulletList = (items: string[], fontSize = fs(15)) => (
+    <View style={{ gap: fs(6) }}>
       {items.map((b, i) => (
-        <View key={i} style={{ flexDirection: 'row', gap: fs(8), alignItems: 'flex-start' }}>
+        <View key={i} style={{ flexDirection: 'row', gap: fs(6), alignItems: 'flex-start' }}>
           <Text style={{ color: G, fontWeight: '700', fontSize, flexShrink: 0 }}>•</Text>
-          <Text style={{ fontSize, color: B, lineHeight: fontSize * 1.55, flex: 1 }}>{b}</Text>
+          <Text style={{ fontSize, color: B, lineHeight: fontSize * 1.45, flex: 1 }}>{b}</Text>
         </View>
       ))}
     </View>
@@ -63,10 +65,10 @@ export function SlideRenderer({ slide, width, height }: SlideRendererProps) {
         return (
           <View style={{ flexDirection: 'row', flex: 1 }}>
             {greenStrip}
-            <View style={{ flex: 1, justifyContent: 'center', gap: fs(10), paddingLeft: fs(14), overflow: 'hidden' }}>
+            <ScrollView style={{ flex: 1, paddingLeft: fs(14) }} contentContainerStyle={{ gap: fs(8), justifyContent: 'center', flexGrow: 1 }} showsVerticalScrollIndicator={false}>
               {titleBlock}
               {bulletList(slide.bullets)}
-            </View>
+            </ScrollView>
           </View>
         );
 
@@ -94,12 +96,12 @@ export function SlideRenderer({ slide, width, height }: SlideRendererProps) {
         return (
           <View style={{ flexDirection: 'row', flex: 1 }}>
             {greenStrip}
-            <View style={{ flex: 1, justifyContent: 'center', gap: fs(10), paddingLeft: fs(14), overflow: 'hidden' }}>
+            <ScrollView style={{ flex: 1, paddingLeft: fs(14) }} contentContainerStyle={{ gap: fs(8), justifyContent: 'center', flexGrow: 1 }} showsVerticalScrollIndicator={false}>
               {titleBlock}
-              <Text style={{ fontSize: fs(14), color: '#333333', lineHeight: fs(25) }}>
+              <Text style={{ fontSize: fs(13), color: '#333333', lineHeight: fs(22) }}>
                 {slide.body_text || slide.bullets.join(' ')}
               </Text>
-            </View>
+            </ScrollView>
           </View>
         );
 
@@ -108,34 +110,34 @@ export function SlideRenderer({ slide, width, height }: SlideRendererProps) {
         const left = slide.bullets.slice(0, half);
         const right = slide.bullets.slice(half);
         return (
-          <View style={{ flex: 1, overflow: 'hidden' }}>
-            <View style={{ flexDirection: 'row', marginBottom: fs(8) }}>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', marginBottom: fs(6) }}>
               {greenStrip}
               <View style={{ paddingLeft: fs(14), flex: 1 }}>{titleBlock}</View>
             </View>
-            <View style={{ flexDirection: 'row', flex: 1, gap: fs(16), overflow: 'hidden' }}>
-              <View style={{ flex: 1, borderRightWidth: 1, borderRightColor: '#eeeeee', paddingRight: fs(16) }}>
-                {bulletList(left, fs(14))}
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexDirection: 'row', gap: fs(12) }} showsVerticalScrollIndicator={false}>
+              <View style={{ flex: 1, borderRightWidth: 1, borderRightColor: '#eeeeee', paddingRight: fs(12) }}>
+                {bulletList(left, fs(13))}
               </View>
               <View style={{ flex: 1 }}>
-                {bulletList(right, fs(14))}
+                {bulletList(right, fs(13))}
               </View>
-            </View>
+            </ScrollView>
           </View>
         );
       }
 
       case 'image-right':
         return (
-          <View style={{ flex: 1, overflow: 'hidden' }}>
-            <View style={{ flexDirection: 'row', marginBottom: fs(8) }}>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', marginBottom: fs(6) }}>
               {greenStrip}
               <View style={{ paddingLeft: fs(14), flex: 1 }}>{titleBlock}</View>
             </View>
-            <View style={{ flexDirection: 'row', flex: 1, gap: fs(16), overflow: 'hidden' }}>
-              <View style={{ flex: 1, justifyContent: 'center' }}>
+            <View style={{ flexDirection: 'row', flex: 1, gap: fs(12) }}>
+              <ScrollView style={{ flex: 1 }} contentContainerStyle={{ justifyContent: 'center', flexGrow: 1 }} showsVerticalScrollIndicator={false}>
                 {bulletList(slide.bullets)}
-              </View>
+              </ScrollView>
               <View style={{ width: '42%' }}>
                 {slide.images[0] && (
                   <Image source={{ uri: slide.images[0].url }} style={imageStyle('100%', '100%')} />
@@ -147,20 +149,20 @@ export function SlideRenderer({ slide, width, height }: SlideRendererProps) {
 
       case 'image-left':
         return (
-          <View style={{ flex: 1, overflow: 'hidden' }}>
-            <View style={{ flexDirection: 'row', marginBottom: fs(8) }}>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', marginBottom: fs(6) }}>
               {greenStrip}
               <View style={{ paddingLeft: fs(14), flex: 1 }}>{titleBlock}</View>
             </View>
-            <View style={{ flexDirection: 'row', flex: 1, gap: fs(16), overflow: 'hidden' }}>
+            <View style={{ flexDirection: 'row', flex: 1, gap: fs(12) }}>
               <View style={{ width: '42%' }}>
                 {slide.images[0] && (
                   <Image source={{ uri: slide.images[0].url }} style={imageStyle('100%', '100%')} />
                 )}
               </View>
-              <View style={{ flex: 1, justifyContent: 'center' }}>
+              <ScrollView style={{ flex: 1 }} contentContainerStyle={{ justifyContent: 'center', flexGrow: 1 }} showsVerticalScrollIndicator={false}>
                 {bulletList(slide.bullets)}
-              </View>
+              </ScrollView>
             </View>
           </View>
         );
@@ -262,10 +264,10 @@ export function SlideRenderer({ slide, width, height }: SlideRendererProps) {
         return (
           <View style={{ flexDirection: 'row', flex: 1 }}>
             {greenStrip}
-            <View style={{ flex: 1, justifyContent: 'center', gap: fs(10), paddingLeft: fs(14), overflow: 'hidden' }}>
+            <ScrollView style={{ flex: 1, paddingLeft: fs(14) }} contentContainerStyle={{ gap: fs(8), justifyContent: 'center', flexGrow: 1 }} showsVerticalScrollIndicator={false}>
               {titleBlock}
               {bulletList(slide.bullets)}
-            </View>
+            </ScrollView>
           </View>
         );
     }
@@ -277,10 +279,12 @@ export function SlideRenderer({ slide, width, height }: SlideRendererProps) {
         width,
         height,
         backgroundColor: W,
-        padding: fs(14),
+        paddingHorizontal: fs(14) + (safeInsets?.left ?? 0),
+        paddingTop: fs(14) + (safeInsets?.top ?? 0),
+        paddingBottom: fs(14) + (safeInsets?.bottom ?? 0),
       }}
     >
-      <View style={{ flex: 1, overflow: 'hidden' }}>
+      <View style={{ flex: 1 }}>
         {content}
       </View>
       {/* Footer */}
@@ -288,8 +292,8 @@ export function SlideRenderer({ slide, width, height }: SlideRendererProps) {
         style={{
           borderTopWidth: 1,
           borderTopColor: '#dddddd',
-          marginTop: fs(10),
-          paddingTop: fs(6),
+          marginTop: fs(6),
+          paddingTop: fs(4),
           flexDirection: 'row',
           justifyContent: 'space-between',
         }}
