@@ -1,30 +1,64 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { View, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Header } from '@/components/notebook/header';
+import { BottomNav } from '@/components/notebook/bottomNav';
+import { TranscriptionListItem } from '@/components/transcription/TranscriptionListItem';
+import { TranscriptDetailScreen } from '@/components/transcription/TranscriptDetailScreen';
 import { useTranscriptionService } from '@/hooks/useTranscriptionService';
+import type { AudioTranscriptSummary, AudioTranscriptDetail } from '@freshr/shared';
+import { Icon } from '@/components/ui/icon';
+import { X } from 'lucide-react-native';
 
-type ViewState = 'list' | 'upload' | 'view';
+// ─── Types ─────────────────────────────────────────────────────────
+
+type ViewState = 'list' | 'upload' | 'transcribing' | 'detail';
+
+// ─── Constants ─────────────────────────────────────────────────────
+
+const POLL_INTERVAL_MS = 2500;
+const POLL_TIMEOUT_MS = 10 * 60 * 1000; // 10 min
+const LIST_POLL_INTERVAL_MS = 3000;
+
+// ─── Screen ────────────────────────────────────────────────────────
 
 export default function TranscriptionScreen() {
   const { notebookId } = useLocalSearchParams<{ notebookId: string }>();
   const transcriptionService = useTranscriptionService();
-  
+
   const [viewState, setViewState] = useState<ViewState>('list');
   const [isLoading, setIsLoading] = useState(true);
-  const [transcripts, setTranscripts] = useState<any[]>([]);
-  const [activeTranscript, setActiveTranscript] = useState<any | null>(null);
+  const [transcripts, setTranscripts] = useState<AudioTranscriptSummary[]>([]);
+  const [activeDetail, setActiveDetail] = useState<AudioTranscriptDetail | null>(null);
 
-  // Upload State
+  // Upload state
   const [title, setTitle] = useState('');
   const [audioFile, setAudioFile] = useState<DocumentPicker.DocumentPickerAsset | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isGeneratingNotes, setIsGeneratingNotes] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // ─── Load list ──────────────────────────────────────────────────
+
+  const loadTranscripts = useCallback(
+    async (showSpinner = true) => {
+      if (!notebookId) return;
+      if (showSpinner) setIsLoading(true);
+      try {
+        const data = await transcriptionService.listAudioTranscripts(notebookId);
+        setTranscripts(data);
+      } catch (err) {
+        console.error('Failed to load transcripts', err);
+      } finally {
+        if (showSpinner) setIsLoading(false);
+      }
+    },
+    [notebookId, transcriptionService]
+  );
 
   useEffect(() => {
     if (viewState === 'list' && notebookId) {
@@ -32,17 +66,50 @@ export default function TranscriptionScreen() {
     }
   }, [viewState, notebookId]);
 
-  const loadTranscripts = async () => {
-    setIsLoading(true);
-    try {
-      const data = await transcriptionService.listAudioTranscripts(notebookId);
-      setTranscripts(data);
-    } catch (err) {
-      console.error('Failed to load transcripts', err);
-    } finally {
-      setIsLoading(false);
+  // ─── Polling for in-progress items ──────────────────────────────
+
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
+    const hasInProgress = transcripts.some(
+      (t) =>
+        t.transcription_status === 'pending' ||
+        t.transcription_status === 'processing' ||
+        t.notes_status === 'processing'
+    );
+
+    if (viewState === 'list' && notebookId && hasInProgress) {
+      intervalId = setInterval(() => {
+        loadTranscripts(false);
+      }, LIST_POLL_INTERVAL_MS);
     }
-  };
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [viewState, notebookId, transcripts, loadTranscripts]);
+
+  // ─── Poll helper (for upload flow) ─────────────────────────────
+
+  const pollUntilDone = useCallback(
+    async (
+      transcriptId: string,
+      isDone: (d: AudioTranscriptDetail) => boolean
+    ): Promise<AudioTranscriptDetail> => {
+      const deadline = Date.now() + POLL_TIMEOUT_MS;
+      while (true) {
+        const d = await transcriptionService.getAudioTranscript(notebookId, transcriptId);
+        if (isDone(d)) return d;
+        if (Date.now() > deadline) {
+          throw new Error('Still processing — check back in History in a few minutes.');
+        }
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+      }
+    },
+    [notebookId, transcriptionService]
+  );
+
+  // ─── Pick audio file ───────────────────────────────────────────
 
   const handlePickAudio = async () => {
     try {
@@ -51,16 +118,26 @@ export default function TranscriptionScreen() {
         copyToCacheDirectory: true,
       });
       if (result.assets && result.assets.length > 0) {
-        setAudioFile(result.assets[0]);
+        const file = result.assets[0];
+        setAudioFile(file);
+        // Auto-fill title from filename
+        if (!title) {
+          const nameWithoutExt = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ');
+          setTitle(nameWithoutExt);
+        }
       }
     } catch (err) {
       console.error('Failed to pick document', err);
     }
   };
 
+  // ─── Upload & transcribe ───────────────────────────────────────
+
   const handleUpload = async () => {
     if (!notebookId || !audioFile) return;
     setIsUploading(true);
+    setViewState('transcribing');
+
     try {
       // React Native FormData expects an object with uri, name, and type
       const fileToUpload = {
@@ -68,33 +145,119 @@ export default function TranscriptionScreen() {
         name: audioFile.name,
         type: audioFile.mimeType || 'audio/mpeg',
       };
-      
-      await transcriptionService.transcribeAudio(notebookId, fileToUpload as any, title || audioFile.name);
-      
+
+      // Kick off transcription (returns 202)
+      const kickoff = await transcriptionService.transcribeAudio(
+        notebookId,
+        fileToUpload as any,
+        title || audioFile.name
+      );
+
+      // Poll until transcription is ready or failed
+      const detail = await pollUntilDone(
+        kickoff.transcript_id,
+        (d) => d.transcription_status === 'ready' || d.transcription_status === 'failed'
+      );
+
+      if (detail.transcription_status === 'failed') {
+        throw new Error(detail.transcription_error || 'Transcription failed.');
+      }
+
+      // Success — navigate to detail view
+      setActiveDetail(detail);
       setAudioFile(null);
       setTitle('');
-      setViewState('list');
+      setViewState('detail');
     } catch (err: any) {
-      console.error('Failed to upload audio', err);
-      Alert.alert('Error', err?.message || 'Failed to upload audio.');
+      console.error('Failed to upload/transcribe audio', err);
+      Alert.alert('Error', err?.message || 'Failed to transcribe audio.');
+      setViewState('upload');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const handleGenerateNotes = async () => {
-    if (!notebookId || !activeTranscript) return;
-    setIsGeneratingNotes(true);
+  // ─── Select transcript from list ───────────────────────────────
+
+  const handleSelectTranscript = async (transcript: AudioTranscriptSummary) => {
+    if (!transcript.id) return;
+    setIsLoading(true);
     try {
-      const updated = await transcriptionService.generateNotesFromTranscript(notebookId, activeTranscript.id);
-      setActiveTranscript(updated);
+      const detail = await transcriptionService.getAudioTranscript(notebookId, transcript.id);
+      setActiveDetail(detail);
+      setViewState('detail');
     } catch (err: any) {
-      console.error('Failed to generate notes', err);
-      Alert.alert('Error', err?.message || 'Failed to generate notes.');
+      console.error('Failed to fetch transcript detail', err);
+      Alert.alert('Error', 'Failed to load transcript. Please try again.');
     } finally {
-      setIsGeneratingNotes(false);
+      setIsLoading(false);
     }
   };
+
+  // ─── Delete transcript ─────────────────────────────────────────
+
+  const handleDeleteTranscript = (transcriptId: string) => {
+    Alert.alert('Delete Transcript', 'Are you sure you want to delete this transcript?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          setDeletingId(transcriptId);
+          try {
+            await transcriptionService.deleteAudioTranscript(notebookId, transcriptId);
+            setTranscripts((prev) => prev.filter((t) => t.id !== transcriptId));
+          } catch (err: any) {
+            Alert.alert('Error', err?.message || 'Failed to delete transcript.');
+          } finally {
+            setDeletingId(null);
+          }
+        },
+      },
+    ]);
+  };
+
+  // ─── Back from detail ─────────────────────────────────────────
+
+  const handleBackFromDetail = () => {
+    setActiveDetail(null);
+    setViewState('list');
+  };
+
+  // ─── Detail screen (full-screen takeover) ─────────────────────
+
+  if (viewState === 'detail' && activeDetail) {
+    return (
+      <TranscriptDetailScreen
+        notebookId={notebookId}
+        detail={activeDetail}
+        transcriptionService={transcriptionService}
+        onBack={handleBackFromDetail}
+        onDeleted={() => {
+          setActiveDetail(null);
+          setViewState('list');
+        }}
+      />
+    );
+  }
+
+  // ─── Transcribing (full-screen spinner) ───────────────────────
+
+  if (viewState === 'transcribing') {
+    return (
+      <Screen className="flex-1 items-center justify-center bg-background">
+        <View className="items-center gap-4 px-8">
+          <ActivityIndicator size="large" />
+          <Text className="text-center text-lg font-bold">Transcribing your lecture…</Text>
+          <Text className="text-center text-sm text-muted-foreground">
+            This may take a minute for longer recordings.{'\n'}Please keep this screen open.
+          </Text>
+        </View>
+      </Screen>
+    );
+  }
+
+  // ─── Loading state ────────────────────────────────────────────
 
   if (isLoading && viewState === 'list') {
     return (
@@ -104,136 +267,125 @@ export default function TranscriptionScreen() {
     );
   }
 
+  // ─── Main screen (list + upload) ──────────────────────────────
+
   return (
     <Screen className="flex-1 bg-background">
+      <Header title="Notebook Title" />
+
       <ScrollView contentContainerClassName="p-4 gap-6">
-        
         {viewState === 'list' && (
           <View className="gap-4">
-            <View className="flex-row items-center justify-between">
-              <Text className="text-2xl font-bold">Transcriptions</Text>
-              <Button onPress={() => setViewState('upload')} size="sm">
-                <Text>+ Upload Audio</Text>
+            <View className="flex-row items-center justify-between px-2">
+              <Text variant="h3">AUDIO NOTES</Text>
+              <Button onPress={() => setViewState('upload')} size="icon" variant="outline">
+                <Text>+</Text>
               </Button>
             </View>
-            
+
             {transcripts.length === 0 ? (
-              <Text className="text-center text-muted-foreground py-10">No transcriptions yet.</Text>
+              <Text className="py-10 text-center text-muted-foreground">
+                No transcriptions yet.
+              </Text>
             ) : (
               transcripts.map((t) => (
-                <Card key={t.id}>
-                  <CardHeader>
-                    <CardTitle>{t.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <Text className="text-muted-foreground">Status: {t.status}</Text>
-                    <Text className="text-muted-foreground text-xs mt-1">
-                      {new Date(t.created_at).toLocaleString()}
-                    </Text>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      variant="secondary" 
-                      className="w-full"
-                      onPress={() => {
-                        setActiveTranscript(t);
-                        setViewState('view');
-                      }}
-                    >
-                      <Text>View Details</Text>
-                    </Button>
-                  </CardFooter>
-                </Card>
+                <TranscriptionListItem
+                  key={t.id}
+                  transcript={t}
+                  onPress={() => handleSelectTranscript(t)}
+                  onDelete={() => handleDeleteTranscript(t.id)}
+                  isDeleting={deletingId === t.id}
+                />
               ))
             )}
           </View>
         )}
 
         {viewState === 'upload' && (
-          <View className="gap-6">
-            <View className="flex-row items-center gap-4">
-              <Button variant="ghost" size="icon" onPress={() => setViewState('list')}>
-                <Text className="text-lg">←</Text>
+          <View className="gap-6 px-3">
+            <View className="flex-row items-center justify-between">
+              <Text variant="h3">New Transcription</Text>
+              <Button
+                variant="ghost"
+                size="icon"
+                onPress={() => {
+                  setViewState('list');
+                  setAudioFile(null);
+                  setTitle('');
+                }}>
+                <Icon as={X} size={20} />
               </Button>
-              <Text className="text-2xl font-bold">New Transcription</Text>
             </View>
-            
+
+            {/* Title input */}
             <View className="gap-2">
-              <Text className="font-medium">Title (Optional)</Text>
-              <Input 
-                placeholder="e.g. Lecture 5: Mitosis" 
-                value={title} 
-                onChangeText={setTitle} 
+              <Text className="text-sm font-semibold text-muted-foreground">LECTURE TITLE</Text>
+              <Input
+                placeholder="e.g. Data Structures — Lecture 5"
+                value={title}
+                onChangeText={setTitle}
               />
             </View>
-            
+
+            {/* Audio file picker */}
             <View className="gap-2">
-              <Text className="font-medium">Audio File</Text>
+              <Text className="text-sm font-semibold text-muted-foreground">AUDIO FILE</Text>
               <Button variant="outline" onPress={handlePickAudio}>
-                <Text>{audioFile ? audioFile.name : 'Select Audio File'}</Text>
+                <Text numberOfLines={1}>{audioFile ? audioFile.name : 'Select Audio File'}</Text>
               </Button>
+              {audioFile && (
+                <Text className="text-xs text-muted-foreground">
+                  {formatSize(audioFile.size ?? 0)}
+                </Text>
+              )}
             </View>
-            
-            <Button 
-              className="mt-4" 
-              onPress={handleUpload} 
-              disabled={isUploading || !audioFile}
-            >
-              {isUploading ? <ActivityIndicator color="#fff" /> : <Text>Upload & Transcribe</Text>}
+
+            {/* Tips */}
+            <View className="gap-2 rounded-md border border-input bg-card p-4">
+              <Text className="text-xs font-bold tracking-wider text-muted-foreground">
+                TIPS FOR BETTER TRANSCRIPTION
+              </Text>
+              <Text className="text-sm leading-5 text-muted-foreground">
+                • Record in a quiet room — background noise reduces accuracy.
+              </Text>
+              <Text className="text-sm leading-5 text-muted-foreground">
+                • Hold your phone close to the professor.
+              </Text>
+              <Text className="text-sm leading-5 text-muted-foreground">
+                • Avoid covering the mic during recording.
+              </Text>
+              <Text className="text-sm leading-5 text-muted-foreground">
+                • Start recording before the lecture begins.
+              </Text>
+            </View>
+
+            {/* Upload button */}
+            <Button onPress={handleUpload} disabled={isUploading || !audioFile} size="lg">
+              {isUploading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text>Upload & Transcribe →</Text>
+              )}
             </Button>
           </View>
         )}
-
-        {viewState === 'view' && activeTranscript && (
-          <View className="gap-6">
-            <View className="flex-row items-center gap-4">
-              <Button variant="ghost" size="icon" onPress={() => setViewState('list')}>
-                <Text className="text-lg">←</Text>
-              </Button>
-              <Text className="text-xl font-bold flex-1" numberOfLines={1}>{activeTranscript.title}</Text>
-            </View>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Transcript</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {activeTranscript.status === 'PROCESSING' ? (
-                  <View className="items-center py-4">
-                    <ActivityIndicator size="small" />
-                    <Text className="text-muted-foreground mt-2">Processing audio...</Text>
-                  </View>
-                ) : (
-                  <Text>{activeTranscript.transcript_text || 'No transcript available.'}</Text>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex-row items-center justify-between">
-                <CardTitle>AI Notes</CardTitle>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  disabled={isGeneratingNotes || activeTranscript.status !== 'COMPLETED'}
-                  onPress={handleGenerateNotes}
-                >
-                  {isGeneratingNotes ? <ActivityIndicator color="#fff" size="small" /> : <Text>Generate</Text>}
-                </Button>
-              </CardHeader>
-              <CardContent>
-                {activeTranscript.ai_notes ? (
-                  <Text>{activeTranscript.ai_notes}</Text>
-                ) : (
-                  <Text className="text-muted-foreground italic">No notes generated yet.</Text>
-                )}
-              </CardContent>
-            </Card>
-
-          </View>
-        )}
-
       </ScrollView>
+
+      {viewState === 'list' && (
+        <View className="w-full items-center gap-2 pb-8 pt-4">
+          <Button onPress={() => setViewState('upload')} size="lg">
+            <Text>+ Upload Audio</Text>
+          </Button>
+          <BottomNav />
+        </View>
+      )}
     </Screen>
   );
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────
+
+function formatSize(bytes: number): string {
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 }
