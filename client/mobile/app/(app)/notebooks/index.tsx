@@ -1,6 +1,6 @@
 import { Link, useFocusEffect } from 'expo-router';
-import { Filter, Search, Trash2 } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { Archive, ArchiveRestore, ArrowDownAZ, ArrowUpAZ, CalendarArrowDown, CalendarArrowUp, Search, Trash2 } from 'lucide-react-native';
+import { useCallback, useMemo, useState, useRef } from 'react';
 import { Pressable, RefreshControl, ScrollView, View, ActivityIndicator, Alert } from 'react-native';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,6 +16,15 @@ import { mobileSessionStore } from '@/lib/session';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 type Tab = 'active' | 'archived';
+type SortMode = 'newest' | 'oldest' | 'a-z' | 'z-a';
+
+const SORT_CYCLE: SortMode[] = ['newest', 'oldest', 'a-z', 'z-a'];
+const SORT_CONFIG: Record<SortMode, { icon: typeof ArrowDownAZ; label: string }> = {
+  newest: { icon: CalendarArrowDown, label: 'Newest' },
+  oldest: { icon: CalendarArrowUp, label: 'Oldest' },
+  'a-z': { icon: ArrowDownAZ, label: 'A → Z' },
+  'z-a': { icon: ArrowUpAZ, label: 'Z → A' },
+};
 
 /** Compact "Last edited 2m ago" style label from an ISO timestamp. */
 function formatRelativeTime(iso: string): string {
@@ -63,6 +72,7 @@ export default function NotebookListScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [loadingUsage, setLoadingUsage] = useState(true);
   const [value, setValue] = useState<Tab>('active');
+  const [sortMode, setSortMode] = useState<SortMode>('newest');
 
   const getNotebookFiles = async (notebooksData: Notebook[]) => {
     try {
@@ -88,13 +98,15 @@ export default function NotebookListScreen() {
 
   const loadData = useCallback(async () => {
     try {
-      const [notebooksData, usageData] = await Promise.all([
+      const [notebooksData, archivedNotebooksData, usageData] = await Promise.all([
         notebookService.list(),
+        notebookService.listArchived(),
         accountService.getAccountUsage(),
       ]);
-      setNotebooks(notebooksData);
+      const allNotebooks = [...notebooksData, ...archivedNotebooksData];
+      setNotebooks(allNotebooks);
       setUsage(usageData);
-      getNotebookFiles(notebooksData);
+      getNotebookFiles(allNotebooks);
     } catch (err) {
       console.error('Failed to load data', err);
     } finally {
@@ -118,16 +130,36 @@ export default function NotebookListScreen() {
     }
   }, [loadData]);
 
-  const visibleNotebooks = useMemo(
-    () =>
-      notebooks.filter((notebook) =>
-        value === 'archived' ? notebook.is_archived : !notebook.is_archived
-      ),
-    [notebooks, value]
-  );
+  const visibleNotebooks = useMemo(() => {
+    const filtered = notebooks.filter((notebook) =>
+      value === 'archived' ? notebook.is_archived : !notebook.is_archived
+    );
+
+    return [...filtered].sort((a, b) => {
+      switch (sortMode) {
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'a-z':
+          return a.title.localeCompare(b.title);
+        case 'z-a':
+          return b.title.localeCompare(a.title);
+        default:
+          return 0;
+      }
+    });
+  }, [notebooks, value, sortMode]);
 
   const handleTabChange = (nextValue: string) => {
     setValue(nextValue as Tab);
+  };
+
+  const cycleSortMode = () => {
+    setSortMode((current) => {
+      const idx = SORT_CYCLE.indexOf(current);
+      return SORT_CYCLE[(idx + 1) % SORT_CYCLE.length];
+    });
   };
 
   const handleDeleteNotebook = (notebook: Notebook) => {
@@ -151,6 +183,25 @@ export default function NotebookListScreen() {
         },
       ]
     );
+  };
+
+  const handleToggleArchive = async (notebook: Notebook) => {
+    const isArchiving = !notebook.is_archived;
+    try {
+      if (isArchiving) {
+        await notebookService.archive(notebook.id);
+      } else {
+        await notebookService.unarchive(notebook.id);
+      }
+      // Close the swipeable row before reloading
+      const row = swipeableRefs.current.get(notebook.id);
+      if (row) row.close();
+      openRowRef.current = null;
+      await loadData();
+    } catch (error) {
+      console.error(`Failed to ${isArchiving ? 'archive' : 'unarchive'} notebook:`, error);
+      Alert.alert('Error', `Failed to ${isArchiving ? 'archive' : 'unarchive'} notebook`);
+    }
   };
 
   return (
@@ -310,8 +361,11 @@ export default function NotebookListScreen() {
               </TabsList>
             </Tabs>
           </View>
-          <Pressable className="size-10 items-center justify-center rounded-xl active:opacity-70">
-            <Icon as={Filter} size={20} />
+          <Pressable
+            className="items-center justify-center rounded-xl px-3 py-2 active:opacity-70"
+            onPress={cycleSortMode}>
+            <Icon as={SORT_CONFIG[sortMode].icon} size={20} />
+            <Text className="mt-0.5 text-xs text-muted-foreground">{SORT_CONFIG[sortMode].label}</Text>
           </Pressable>
         </View>
 
@@ -340,6 +394,21 @@ export default function NotebookListScreen() {
                   closeCurrentRow(notebook.id);
                   openRowRef.current = notebook.id;
                 }}
+                renderLeftActions={() => (
+                  <Pressable
+                    className="mr-3 w-20 items-center justify-center rounded-2xl"
+                    style={{ backgroundColor: notebook.is_archived ? '#3b82f6' : '#f59e0b' }}
+                    onPress={() => handleToggleArchive(notebook)}>
+                    <Icon
+                      as={notebook.is_archived ? ArchiveRestore : Archive}
+                      color="white"
+                      size={22}
+                    />
+                    <Text className="mt-1 text-xs font-medium text-white">
+                      {notebook.is_archived ? 'Restore' : 'Archive'}
+                    </Text>
+                  </Pressable>
+                )}
                 renderRightActions={() => (
                   <Pressable
                     className="ml-3 w-20 items-center justify-center rounded-2xl bg-destructive"
@@ -347,7 +416,8 @@ export default function NotebookListScreen() {
                       closeCurrentRow();
                       handleDeleteNotebook(notebook);
                     }}>
-                    <Icon as={Trash2} color="white" size={24} />
+                    <Icon as={Trash2} color="white" size={22} />
+                    <Text className="mt-1 text-xs font-medium text-white">Delete</Text>
                   </Pressable>
                 )}>
                 <Link
