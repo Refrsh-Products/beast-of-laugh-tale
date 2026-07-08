@@ -28,6 +28,7 @@ export default function PresentationScreen() {
   const [activePresentation, setActivePresentation] = useState<PresentationSession | null>(null);
   const notebookService = useNotebookService();
   const [isArchived, setIsArchived] = useState(false);
+  const [notebookTitle, setNotebookTitle] = useState('');
 
   // Generate state
   const [isGenerateModalVisible, setIsGenerateModalVisible] = useState(false);
@@ -66,6 +67,7 @@ export default function PresentationScreen() {
 
       const nb = await notebookService.getNotebook(notebookId);
       setIsArchived(nb?.is_archived ?? false);
+      setNotebookTitle(nb?.title ?? 'Presentation');
     } catch (err) {
       console.error('Failed to load presentations', err);
     } finally {
@@ -182,7 +184,7 @@ export default function PresentationScreen() {
   // ─── Presentation list (default) ──
   return (
     <Screen className="flex-1 bg-background">
-      <Header title="Notebook Title" />
+      <Header title={notebookTitle} actualId={notebookId} onNotebookUpdate={loadPresentations} />
       <ArchiveBanner isArchived={isArchived} />
       <ScrollView contentContainerClassName="p-4 gap-6">
         <View className="gap-4">

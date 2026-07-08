@@ -29,6 +29,18 @@ export default function ChatScreen() {
   const [streamingText, setStreamingText] = useState('');
   const notebookService = useNotebookService();
   const [isArchived, setIsArchived] = useState(false);
+  const [notebookTitle, setNotebookTitle] = useState('');
+
+  const refreshNotebook = async () => {
+    if (!notebookId) return;
+    try {
+      const nb = await notebookService.getNotebook(notebookId);
+      setIsArchived(nb?.is_archived ?? false);
+      setNotebookTitle(nb?.title ?? 'Chat');
+    } catch (err) {
+      console.error('Failed to refresh notebook:', err);
+    }
+  };
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -49,6 +61,7 @@ export default function ChatScreen() {
 
         const nb = await notebookService.getNotebook(notebookId);
         setIsArchived(nb?.is_archived ?? false);
+        setNotebookTitle(nb?.title ?? 'Chat');
       } catch (err) {
         console.error('Failed to load chat:', err);
       } finally {
@@ -108,7 +121,7 @@ export default function ChatScreen() {
 
   return (
     <Screen>
-      <Header title="Untitled" />
+      <Header title={notebookTitle} actualId={notebookId} onNotebookUpdate={refreshNotebook} />
       <ArchiveBanner isArchived={isArchived} />
       <View className="flex w-full flex-row items-center justify-between px-5 pt-4">
         <Text variant="h3">CHAT</Text>
@@ -150,7 +163,11 @@ export default function ChatScreen() {
         <View className="flex-row items-end gap-2 border-t border-border bg-background p-4">
           <View className="flex-1">
             <Input
-              placeholder={isArchived ? "Chat is disabled for archived notebooks." : "Ask anything about your notebook..."}
+              placeholder={
+                isArchived
+                  ? 'Chat is disabled for archived notebooks.'
+                  : 'Ask anything about your notebook...'
+              }
               value={inputText}
               onChangeText={setInputText}
               multiline

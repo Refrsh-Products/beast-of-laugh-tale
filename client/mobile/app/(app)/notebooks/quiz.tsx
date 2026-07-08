@@ -29,6 +29,7 @@ export default function QuizScreen() {
   const [lastTimeTaken, setLastTimeTaken] = useState<number | undefined>(undefined);
   const notebookService = useNotebookService();
   const [isArchived, setIsArchived] = useState(false);
+  const [notebookTitle, setNotebookTitle] = useState('');
 
   // Generate State
   const [isGenerateModalVisible, setIsGenerateModalVisible] = useState(false);
@@ -48,6 +49,7 @@ export default function QuizScreen() {
 
       const nb = await notebookService.getNotebook(notebookId);
       setIsArchived(nb?.is_archived ?? false);
+      setNotebookTitle(nb?.title ?? 'Quiz');
     } catch (err) {
       console.error('Failed to load quizzes', err);
     } finally {
@@ -220,7 +222,7 @@ export default function QuizScreen() {
 
   return (
     <Screen className="flex-1 bg-background">
-      <Header title="Notebook Title" />
+      <Header title={notebookTitle} actualId={notebookId} onNotebookUpdate={loadQuizzes} />
       <ArchiveBanner isArchived={isArchived} />
       <ScrollView contentContainerClassName="p-4 gap-6">
         <View className="gap-4">
