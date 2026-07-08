@@ -1,7 +1,8 @@
-import { Link } from 'expo-router';
-import { Filter, Search } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, View, ActivityIndicator } from 'react-native';
+import { Link, useFocusEffect } from 'expo-router';
+import { Filter, Search, Trash2 } from 'lucide-react-native';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
+import { Pressable, RefreshControl, ScrollView, View, ActivityIndicator, Alert } from 'react-native';
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
@@ -43,6 +44,19 @@ function formatRelativeTime(iso: string): string {
 export default function NotebookListScreen() {
   const notebookService = useNotebookService();
   const accountService = useAccountService();
+
+  const openRowRef = useRef<string | null>(null);
+  const swipeableRefs = useRef<Map<string, any>>(new Map());
+
+  const closeCurrentRow = useCallback((excludeId?: string) => {
+    if (openRowRef.current && openRowRef.current !== excludeId) {
+      const row = swipeableRefs.current.get(openRowRef.current);
+      if (row) {
+        row.close();
+      }
+      openRowRef.current = null;
+    }
+  }, []);
 
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [usage, setUsage] = useState<AccountUsage | null>(null);
@@ -88,10 +102,12 @@ export default function NotebookListScreen() {
     }
   }, [notebookService, accountService]);
 
-  // Initial fetch on mount.
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  // Initial fetch on mount and when screen comes into focus.
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -112,6 +128,29 @@ export default function NotebookListScreen() {
 
   const handleTabChange = (nextValue: string) => {
     setValue(nextValue as Tab);
+  };
+
+  const handleDeleteNotebook = (notebook: Notebook) => {
+    Alert.alert(
+      'Delete Notebook',
+      `Are you sure you want to delete "${notebook.title}"?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await notebookService.delete(notebook.id);
+              await loadData();
+            } catch (error) {
+              console.error('Failed to delete notebook:', error);
+              Alert.alert('Error', 'Failed to delete notebook');
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -147,6 +186,7 @@ export default function NotebookListScreen() {
 
       <ScrollView
         contentContainerClassName="pb-6"
+        onScrollBeginDrag={() => closeCurrentRow()}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -287,26 +327,57 @@ export default function NotebookListScreen() {
             </View>
           ) : (
             visibleNotebooks.map((notebook) => (
-              <Link
+              <Swipeable
                 key={notebook.id}
-                href={{ pathname: '/notebooks/[id]', params: { id: notebook.id } }}
-                asChild>
-                <Pressable className="gap-1 rounded-2xl border border-border bg-card p-4 active:opacity-70">
-                  <Text className="text-lg font-semibold uppercase">{notebook.title}</Text>
-                  <View className="flex flex-row items-center justify-between">
-                    <Text className="text-sm text-muted-foreground">
-                      Last edited {formatRelativeTime(notebook.updated_at)}
-                    </Text>
-                    <Text className="text-sm text-muted-foreground">
-                      {notebook.file_count === undefined
-                        ? 'Loading...'
-                        : notebook.file_count === 0
-                        ? 'No Files'
-                        : `${notebook.file_count} File${notebook.file_count === 1 ? '' : 's'}`}
-                    </Text>
-                  </View>
-                </Pressable>
-              </Link>
+                ref={(ref) => {
+                  if (ref) {
+                    swipeableRefs.current.set(notebook.id, ref);
+                  } else {
+                    swipeableRefs.current.delete(notebook.id);
+                  }
+                }}
+                onSwipeableWillOpen={() => {
+                  closeCurrentRow(notebook.id);
+                  openRowRef.current = notebook.id;
+                }}
+                renderRightActions={() => (
+                  <Pressable
+                    className="ml-3 w-20 items-center justify-center rounded-2xl bg-destructive"
+                    onPress={() => {
+                      closeCurrentRow();
+                      handleDeleteNotebook(notebook);
+                    }}>
+                    <Icon as={Trash2} color="white" size={24} />
+                  </Pressable>
+                )}>
+                <Link
+                  href={{ pathname: '/notebooks/[id]', params: { id: notebook.id } }}
+                  asChild>
+                  <Pressable
+                    className="gap-1 rounded-2xl border border-border bg-card p-4 active:opacity-70"
+                    onPress={(e) => {
+                      if (openRowRef.current) {
+                        e.preventDefault();
+                        closeCurrentRow();
+                        return;
+                      }
+                    }}>
+                    <Text className="text-lg font-semibold uppercase">{notebook.title}</Text>
+                    <View className="flex flex-row items-center justify-between">
+                      <Text className="text-sm text-muted-foreground">
+                        Last edited {formatRelativeTime(notebook.updated_at)}
+                      </Text>
+                      <Text className="text-sm text-muted-foreground">
+                        {notebook.file_count === undefined
+                          ? 'Loading...'
+                          : notebook.file_count === 0
+                          ? 'No Files'
+                          : `${notebook.file_count} File${notebook.file_count === 1 ? '' : 's'}`}
+                      </Text>
+                    </View>
+                  </Pressable>
+                </Link>
+              </Swipeable>
             ))
           )}
         </View>
