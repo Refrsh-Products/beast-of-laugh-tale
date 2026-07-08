@@ -5,6 +5,7 @@ import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { usePresentationService } from '@/hooks/usePresentationService';
+import { useNotebookService } from '@/hooks/useNotebookService';
 import type { PresentationSession, PresentationSlide } from '@freshr/shared';
 import { Header } from '@/components/notebook/header';
 import { BottomNav } from '@/components/notebook/bottomNav';
@@ -12,6 +13,8 @@ import { GeneratePresentationModal } from '@/components/presentation/GeneratePre
 import type { PresentationGenerateOptions } from '@/components/presentation/GeneratePresentationModal';
 import { PresentationListItem } from '@/components/presentation/PresentationListItem';
 import { PresentationViewerScreen } from '@/components/presentation/PresentationViewerScreen';
+import { Icon } from '@/components/ui/icon';
+import { ArchiveBanner } from '@/components/notebook/archiveBanner';
 
 type ViewState = 'list' | 'view';
 
@@ -23,6 +26,8 @@ export default function PresentationScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [presentations, setPresentations] = useState<PresentationSession[]>([]);
   const [activePresentation, setActivePresentation] = useState<PresentationSession | null>(null);
+  const notebookService = useNotebookService();
+  const [isArchived, setIsArchived] = useState(false);
 
   // Generate state
   const [isGenerateModalVisible, setIsGenerateModalVisible] = useState(false);
@@ -58,6 +63,9 @@ export default function PresentationScreen() {
     try {
       const data = await presentationService.listPresentationsByNotebook(notebookId);
       setPresentations(data);
+
+      const nb = await notebookService.getNotebook(notebookId);
+      setIsArchived(nb?.is_archived ?? false);
     } catch (err) {
       console.error('Failed to load presentations', err);
     } finally {
@@ -157,6 +165,7 @@ export default function PresentationScreen() {
         onClose={handleCloseViewer}
         onUpdate={handleUpdateSlides}
         onRefineSlide={handleRefineSlide}
+        isArchived={isArchived}
       />
     );
   }
@@ -174,13 +183,16 @@ export default function PresentationScreen() {
   return (
     <Screen className="flex-1 bg-background">
       <Header title="Notebook Title" />
+      <ArchiveBanner isArchived={isArchived} />
       <ScrollView contentContainerClassName="p-4 gap-6">
         <View className="gap-4">
           <View className="flex-row items-center justify-between px-2">
             <Text variant="h3">PRESENTATIONS</Text>
-            <Button onPress={() => setIsGenerateModalVisible(true)} size="icon" variant="outline">
-              <Text>+</Text>
-            </Button>
+            {!isArchived && (
+              <Button onPress={() => setIsGenerateModalVisible(true)} size="icon" variant="outline">
+                <Text>+</Text>
+              </Button>
+            )}
           </View>
 
           {presentations.length === 0 ? (
@@ -198,9 +210,11 @@ export default function PresentationScreen() {
       </ScrollView>
 
       <View className="w-full items-center gap-2 pb-8 pt-4">
-        <Button onPress={() => setIsGenerateModalVisible(true)} size="lg">
-          <Text>+ New Presentation</Text>
-        </Button>
+        {!isArchived && (
+          <Button onPress={() => setIsGenerateModalVisible(true)} size="lg">
+            <Text>+ New Presentation</Text>
+          </Button>
+        )}
         <BottomNav />
       </View>
 

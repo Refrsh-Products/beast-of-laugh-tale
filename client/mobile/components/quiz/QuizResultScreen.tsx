@@ -14,6 +14,7 @@ interface QuizResultScreenProps {
   onRetake: () => void;
   onTakeToChat: (questionText: string, options: string[], topic: string) => void;
   timeTaken?: number; // seconds
+  isArchived?: boolean;
 }
 
 function formatTime(secs: number): string {
@@ -28,6 +29,7 @@ export function QuizResultScreen({
   onRetake,
   onTakeToChat,
   timeTaken,
+  isArchived,
 }: QuizResultScreenProps) {
   const insets = useSafeAreaInsets();
   const [openExplanations, setOpenExplanations] = useState<Set<number>>(new Set());
@@ -222,9 +224,11 @@ export function QuizResultScreen({
 
       {/* Bottom action buttons */}
       <View style={[styles.bottomActions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <Pressable style={[styles.actionButton, styles.actionButtonOutline]} onPress={onRetake}>
-          <Text style={styles.actionButtonOutlineText}>Retake Quiz</Text>
-        </Pressable>
+        {!isArchived && (
+          <Pressable style={[styles.actionButton, styles.actionButtonOutline]} onPress={onRetake}>
+            <Text style={styles.actionButtonOutlineText}>Retake Quiz</Text>
+          </Pressable>
+        )}
         <Pressable style={[styles.actionButton, styles.actionButtonFilled]} onPress={onBack}>
           <Text style={styles.actionButtonFilledText}>Back to Quiz</Text>
         </Pressable>
