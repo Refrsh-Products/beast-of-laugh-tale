@@ -12,7 +12,9 @@ import { FileCard } from '@/components/notebook/fileCard';
 import { BottomNav } from '@/components/notebook/bottomNav';
 import { FileUploadPreview } from '@/components/notebook/fileUploadPreview';
 import { ArchiveBanner } from '@/components/notebook/archiveBanner';
+import { ScanCameraModal } from '@/components/notebook/scan/ScanCameraModal';
 import { useFileUpload } from '@/hooks/useFileUpload';
+import { useScanNotes } from '@/hooks/useScanNotes';
 import { Icon } from '../../../components/ui/icon';
 import { Camera, Trash, Trash2, X } from 'lucide-react-native';
 import { getFileTypeLabel } from '@/lib/fileUpload';
@@ -80,6 +82,9 @@ export default function NotebookDetailScreen() {
     loadNotebookDetails(id);
     loadNotebookFiles(id);
   }, [id]);
+
+  // ── Camera scan hook ───────────────────────────────────────────────────
+  const scan = useScanNotes(id, { onSuccess: () => loadNotebookFiles(id) });
 
   // ── Selection helpers ──────────────────────────────────────────────────
   const enterSelection = useCallback(
@@ -294,7 +299,7 @@ export default function NotebookDetailScreen() {
         <View className="w-full items-center pb-8 pt-4">
           {!isArchived && (
             <View className="flex-row gap-4 py-2">
-              <Button variant="outline" size="icon">
+              <Button variant="outline" size="icon" onPress={scan.openScanner}>
                 <Icon as={Camera} />
               </Button>
               <Button variant="default" onPress={pickFile}>
@@ -315,6 +320,9 @@ export default function NotebookDetailScreen() {
         onConfirm={confirmUpload}
         onCancel={cancelSelection}
       />
+
+      {/* Camera scan flow (capture → review → upload) */}
+      <ScanCameraModal scan={scan} />
     </Screen>
   );
 }

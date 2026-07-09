@@ -50,3 +50,38 @@ class NotebookFileCreateErrorSerializer(serializers.Serializer):
         child=serializers.ListField(child=serializers.CharField()),
         default=dict
     )
+
+
+class NotebookScanInputSerializer(serializers.Serializer):
+    # Per-plan cap is enforced in the view; 10 is the absolute ceiling (PAID).
+    photos = serializers.ListField(
+        child=serializers.ImageField(),
+        min_length=1,
+        max_length=10,
+    )
+
+
+class ScanPhotoResultSerializer(serializers.Serializer):
+    index = serializers.IntegerField()
+    acceptable = serializers.BooleanField()
+    clarity = serializers.ChoiceField(choices=["clear", "blurry", "unreadable"])
+    relevance = serializers.ChoiceField(choices=["notes", "unrelated"])
+    reason = serializers.CharField(allow_blank=True)
+
+
+class NotebookScanCreateSuccessSerializer(serializers.Serializer):
+    success = serializers.BooleanField()
+    # Field name intentionally matches the wire contract in
+    # NotebookScanCreateResponse (client/shared); this class is schema-only
+    # (drf-spectacular docs) and never instantiated/is_valid()'d, so the
+    # shadowed Serializer.errors property is never actually accessed.
+    errors = serializers.ListField(default=list)  # type: ignore[assignment, misc]
+    id = serializers.UUIDField()
+    ingestion_status = serializers.CharField()
+    photo_count = serializers.IntegerField()
+
+
+class NotebookScanRejectionSerializer(serializers.Serializer):
+    code = serializers.CharField()
+    message = serializers.CharField()
+    photos = ScanPhotoResultSerializer(many=True)

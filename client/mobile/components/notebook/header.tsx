@@ -50,9 +50,12 @@ function Header({ title, actualId, onNotebookUpdate }: HeaderProps) {
 
   useEffect(() => {
     if (actualId) {
-      notebookService.getNotebook(actualId).then((nb) => {
-        if (nb) setNotebook(nb);
-      }).catch(err => console.error('Failed to load notebook in Header', err));
+      notebookService
+        .getNotebook(actualId)
+        .then((nb) => {
+          if (nb) setNotebook(nb);
+        })
+        .catch((err) => console.error('Failed to load notebook in Header', err));
     }
   }, [actualId, notebookService]);
 
@@ -118,7 +121,7 @@ function Header({ title, actualId, onNotebookUpdate }: HeaderProps) {
   return (
     <View className="w-full px-5">
       <View className="w-full flex-row items-center justify-between">
-        <Button variant="ghost" size="icon" onPress={() => router.back()}>
+        <Button variant="ghost" size="icon" onPress={() => router.dismissTo('/notebooks')}>
           <Icon as={ChevronLeft} size={30} />
         </Button>
 
@@ -138,8 +141,7 @@ function Header({ title, actualId, onNotebookUpdate }: HeaderProps) {
                 setNewName(notebook?.title || title);
                 setIsRenameDialogOpen(true);
               }}
-              disabled={isArchived}
-            >
+              disabled={isArchived}>
               <Icon as={Edit2} size={16} className="mr-2 text-foreground" />
               <Text>Rename</Text>
             </DropdownMenuItem>
