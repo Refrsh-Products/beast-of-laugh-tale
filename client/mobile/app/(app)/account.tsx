@@ -190,7 +190,7 @@ export default function AccountScreen() {
                   <Text>{usage.features?.audio_notes ? 'Enabled' : 'Disabled'}</Text>
                 </View>
                 <View className="flex-row justify-between">
-                  <Text className="text-muted-foreground">Notebooks</Text>
+                  <Text className="text-muted-foreground">Storage</Text>
                   <Text>
                     {formatBytes(Number(usage.storage.used_bytes))} /{' '}
                     {formatBytes(Number(usage.storage.limit_bytes))}
@@ -216,11 +216,7 @@ export default function AccountScreen() {
                     <View style={styles.backdrop} />
                   </TouchableWithoutFeedback>
 
-                  <Animated.View
-                    style={[
-                      styles.sheet,
-                      { transform: [{ translateY: slideAnim }] },
-                    ]}>
+                  <Animated.View style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}>
                     {/* Drag handle */}
                     <View style={styles.handle} />
 
@@ -228,17 +224,15 @@ export default function AccountScreen() {
                       Subscription changes happen outside the app
                     </Text>
                     <Text style={styles.sheetBody}>
-                      All subscription changes are handled through your account on the web,
-                      outside the app.
+                      All subscription changes are handled through your account on the web, outside
+                      the app.
                     </Text>
 
                     <Button
-                      variant='secondary'
-                      className="mt-6 h-13 rounded-full"
+                      variant="secondary"
+                      className="h-13 mt-6 rounded-full"
                       onPress={closeSheet}>
-                      <Text className="text-base font-bold">
-                        Got it
-                      </Text>
+                      <Text className="text-base font-bold">Got it</Text>
                     </Button>
                   </Animated.View>
                 </Modal>

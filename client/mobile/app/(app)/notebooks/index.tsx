@@ -1,11 +1,28 @@
 import { Link, useFocusEffect } from 'expo-router';
-import { Archive, ArchiveRestore, ArrowDownAZ, ArrowUpAZ, CalendarArrowDown, CalendarArrowUp, Search, Trash2 } from 'lucide-react-native';
+import {
+  Archive,
+  ArchiveRestore,
+  ArrowDownAZ,
+  ArrowUpAZ,
+  CalendarArrowDown,
+  CalendarArrowUp,
+  Search,
+  Trash2,
+} from 'lucide-react-native';
 import { useCallback, useMemo, useState, useRef } from 'react';
-import { Pressable, RefreshControl, ScrollView, View, ActivityIndicator, Alert } from 'react-native';
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  View,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
+import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
 import { UsageCard } from '@/components/notebook/usageCard';
 import { Text } from '@/components/ui/text';
@@ -73,6 +90,8 @@ export default function NotebookListScreen() {
   const [loadingUsage, setLoadingUsage] = useState(true);
   const [value, setValue] = useState<Tab>('active');
   const [sortMode, setSortMode] = useState<SortMode>('newest');
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const getNotebookFiles = async (notebooksData: Notebook[]) => {
     try {
@@ -131,9 +150,14 @@ export default function NotebookListScreen() {
   }, [loadData]);
 
   const visibleNotebooks = useMemo(() => {
-    const filtered = notebooks.filter((notebook) =>
+    let filtered = notebooks.filter((notebook) =>
       value === 'archived' ? notebook.is_archived : !notebook.is_archived
     );
+
+    if (searchQuery.trim()) {
+      const lowerQuery = searchQuery.toLowerCase();
+      filtered = filtered.filter((notebook) => notebook.title.toLowerCase().includes(lowerQuery));
+    }
 
     return [...filtered].sort((a, b) => {
       switch (sortMode) {
@@ -149,7 +173,7 @@ export default function NotebookListScreen() {
           return 0;
       }
     });
-  }, [notebooks, value, sortMode]);
+  }, [notebooks, value, sortMode, searchQuery]);
 
   const handleTabChange = (nextValue: string) => {
     setValue(nextValue as Tab);
@@ -163,26 +187,22 @@ export default function NotebookListScreen() {
   };
 
   const handleDeleteNotebook = (notebook: Notebook) => {
-    Alert.alert(
-      'Delete Notebook',
-      `Are you sure you want to delete "${notebook.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await notebookService.delete(notebook.id);
-              await loadData();
-            } catch (error) {
-              console.error('Failed to delete notebook:', error);
-              Alert.alert('Error', 'Failed to delete notebook');
-            }
-          },
+    Alert.alert('Delete Notebook', `Are you sure you want to delete "${notebook.title}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await notebookService.delete(notebook.id);
+            await loadData();
+          } catch (error) {
+            console.error('Failed to delete notebook:', error);
+            Alert.alert('Error', 'Failed to delete notebook');
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleToggleArchive = async (notebook: Notebook) => {
@@ -208,10 +228,29 @@ export default function NotebookListScreen() {
     <Screen className="bg-background">
       {/* Header */}
       <View className="flex-row items-center justify-between px-5 pb-4">
-        <Text className="text-3xl font-bold tracking-widest">FRESHR</Text>
+        {isSearching ? (
+          <View className="mr-3 flex-1 flex-row items-center pr-2">
+            <Input
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search notebooks..."
+              className="flex-1"
+              autoFocus
+            />
+          </View>
+        ) : (
+          <Text className="text-3xl font-bold tracking-widest">FRESHR</Text>
+        )}
         <View className="flex-row items-center gap-3">
-          <Pressable className="size-10 items-center justify-center rounded-xl bg-muted active:opacity-70">
-            <Icon as={Search} size={20} />
+          <Pressable
+            className={`size-10 items-center justify-center rounded-xl ${isSearching ? 'bg-primary' : 'bg-muted'} active:opacity-70`}
+            onPress={() => {
+              setIsSearching(!isSearching);
+              if (isSearching) {
+                setSearchQuery('');
+              }
+            }}>
+            <Icon as={Search} size={20} color={isSearching ? 'white' : undefined} />
           </Pressable>
           <Link href="/account" asChild>
             <Pressable className="rounded-xl active:opacity-70">
@@ -365,7 +404,9 @@ export default function NotebookListScreen() {
             className="items-center justify-center rounded-xl px-3 py-2 active:opacity-70"
             onPress={cycleSortMode}>
             <Icon as={SORT_CONFIG[sortMode].icon} size={20} />
-            <Text className="mt-0.5 text-xs text-muted-foreground">{SORT_CONFIG[sortMode].label}</Text>
+            <Text className="mt-0.5 text-xs text-muted-foreground">
+              {SORT_CONFIG[sortMode].label}
+            </Text>
           </Pressable>
         </View>
 
@@ -394,35 +435,33 @@ export default function NotebookListScreen() {
                   closeCurrentRow(notebook.id);
                   openRowRef.current = notebook.id;
                 }}
-                renderLeftActions={() => (
-                  <Pressable
-                    className="mr-3 w-20 items-center justify-center rounded-2xl"
-                    style={{ backgroundColor: notebook.is_archived ? '#3b82f6' : '#f59e0b' }}
-                    onPress={() => handleToggleArchive(notebook)}>
-                    <Icon
-                      as={notebook.is_archived ? ArchiveRestore : Archive}
-                      color="white"
-                      size={22}
-                    />
-                    <Text className="mt-1 text-xs font-medium text-white">
-                      {notebook.is_archived ? 'Restore' : 'Archive'}
-                    </Text>
-                  </Pressable>
-                )}
                 renderRightActions={() => (
-                  <Pressable
-                    className="ml-3 w-20 items-center justify-center rounded-2xl bg-destructive"
-                    onPress={() => {
-                      closeCurrentRow();
-                      handleDeleteNotebook(notebook);
-                    }}>
-                    <Icon as={Trash2} color="white" size={22} />
-                    <Text className="mt-1 text-xs font-medium text-white">Delete</Text>
-                  </Pressable>
+                  <View className="flex-row gap-2">
+                    <Pressable
+                      className="ml-3 w-20 items-center justify-center rounded-2xl"
+                      style={{ backgroundColor: notebook.is_archived ? '#3b82f6' : '#f59e0b' }}
+                      onPress={() => handleToggleArchive(notebook)}>
+                      <Icon
+                        as={notebook.is_archived ? ArchiveRestore : Archive}
+                        color="white"
+                        size={22}
+                      />
+                      <Text className="mt-1 text-xs font-medium text-white">
+                        {notebook.is_archived ? 'Restore' : 'Archive'}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      className="w-20 items-center justify-center rounded-2xl bg-destructive"
+                      onPress={() => {
+                        closeCurrentRow();
+                        handleDeleteNotebook(notebook);
+                      }}>
+                      <Icon as={Trash2} color="white" size={22} />
+                      <Text className="mt-1 text-xs font-medium text-white">Delete</Text>
+                    </Pressable>
+                  </View>
                 )}>
-                <Link
-                  href={{ pathname: '/notebooks/[id]', params: { id: notebook.id } }}
-                  asChild>
+                <Link href={{ pathname: '/notebooks/[id]', params: { id: notebook.id } }} asChild>
                   <Pressable
                     className="gap-1 rounded-2xl border border-border bg-card p-4 active:opacity-70"
                     onPress={(e) => {
@@ -441,8 +480,8 @@ export default function NotebookListScreen() {
                         {notebook.file_count === undefined
                           ? 'Loading...'
                           : notebook.file_count === 0
-                          ? 'No Files'
-                          : `${notebook.file_count} File${notebook.file_count === 1 ? '' : 's'}`}
+                            ? 'No Files'
+                            : `${notebook.file_count} File${notebook.file_count === 1 ? '' : 's'}`}
                       </Text>
                     </View>
                   </Pressable>
