@@ -15,7 +15,13 @@ export { createChatService } from "./chat";
 export type { ChatServices, ChatSession, ChatMessage } from "./chat";
 
 export { createNotebookService } from "./notebooks";
-export type { NotebookService, NotebookFileCreateResponse } from "./notebooks";
+export type {
+  NotebookService,
+  NotebookFileCreateResponse,
+  ScanPhotoValidationResult,
+  NotebookScanCreateResponse,
+  NotebookScanRejectionResponse,
+} from "./notebooks";
 
 export { createPaymentService } from "./payment";
 export type {

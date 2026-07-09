@@ -1,6 +1,6 @@
 {
   "name": "@freshr/mobile",
-  "main": "expo-router/entry",
+  "main": "index.js",
   "version": "1.0.0",
   "scripts": {
     "dev": "expo start -c",
@@ -13,6 +13,7 @@
     "@react-navigation/native": "^7.0.0",
     "@rn-primitives/alert-dialog": "^1.5.2",
     "@rn-primitives/avatar": "^1.4.0",
+    "@rn-primitives/checkbox": "^1.5.2",
     "@rn-primitives/dropdown-menu": "^1.4.0",
     "@rn-primitives/portal": "~1.4.0",
     "@rn-primitives/progress": "^1.4.0",
@@ -24,6 +25,7 @@
     "expo": "^56.0.12",
     "expo-auth-session": "~56.0.14",
     "expo-blur": "~56.0.3",
+    "expo-camera": "~56.0.8",
     "expo-constants": "~56.0.18",
     "expo-crypto": "~56.0.4",
     "expo-document-picker": "~56.0.4",
@@ -42,6 +44,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.85.3",
+    "react-native-gesture-handler": "~2.31.1",
     "react-native-markdown-display": "^7.0.2",
     "react-native-reanimated": "4.3.1",
     "react-native-safe-area-context": "~5.7.0",

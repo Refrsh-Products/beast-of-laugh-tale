@@ -7,9 +7,11 @@ import { Text } from '@/components/ui/text';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useChatService } from '@/hooks/useChatService';
+import { useNotebookService } from '@/hooks/useNotebookService';
 import type { ChatSession, ChatMessage } from '@freshr/shared';
-import { ArrowUp, MessageCirclePlus } from 'lucide-react-native';
+import { ArrowUp, MessageCirclePlus, Info } from 'lucide-react-native';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { ArchiveBanner } from '@/components/notebook/archiveBanner';
 import { Header } from '@/components/notebook/header';
 import { BottomNav } from '@/components/notebook/bottomNav';
 import { Icon } from '@/components/ui/icon';
@@ -25,6 +27,20 @@ export default function ChatScreen() {
   const [isSending, setIsSending] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [streamingText, setStreamingText] = useState('');
+  const notebookService = useNotebookService();
+  const [isArchived, setIsArchived] = useState(false);
+  const [notebookTitle, setNotebookTitle] = useState('');
+
+  const refreshNotebook = async () => {
+    if (!notebookId) return;
+    try {
+      const nb = await notebookService.getNotebook(notebookId);
+      setIsArchived(nb?.is_archived ?? false);
+      setNotebookTitle(nb?.title ?? 'Chat');
+    } catch (err) {
+      console.error('Failed to refresh notebook:', err);
+    }
+  };
 
   const flatListRef = useRef<FlatList>(null);
 
@@ -42,6 +58,10 @@ export default function ChatScreen() {
 
         const msgs = await chatService.getChatSessionMessages(currentSession.id);
         setMessages(msgs.sort((a, b) => a.order_index - b.order_index));
+
+        const nb = await notebookService.getNotebook(notebookId);
+        setIsArchived(nb?.is_archived ?? false);
+        setNotebookTitle(nb?.title ?? 'Chat');
       } catch (err) {
         console.error('Failed to load chat:', err);
       } finally {
@@ -49,7 +69,7 @@ export default function ChatScreen() {
       }
     }
     loadChat();
-  }, [notebookId, chatService]);
+  }, [notebookId, chatService, notebookService]);
 
   const handleSend = async () => {
     if (!inputText.trim() || !session || isSending) return;
@@ -101,7 +121,8 @@ export default function ChatScreen() {
 
   return (
     <Screen>
-      <Header title="Untitled" />
+      <Header title={notebookTitle} actualId={notebookId} onNotebookUpdate={refreshNotebook} />
+      <ArchiveBanner isArchived={isArchived} />
       <View className="flex w-full flex-row items-center justify-between px-5 pt-4">
         <Text variant="h3">CHAT</Text>
         <Button variant="outline" size="icon">
@@ -142,10 +163,15 @@ export default function ChatScreen() {
         <View className="flex-row items-end gap-2 border-t border-border bg-background p-4">
           <View className="flex-1">
             <Input
-              placeholder="Ask anything about your notebook..."
+              placeholder={
+                isArchived
+                  ? 'Chat is disabled for archived notebooks.'
+                  : 'Ask anything about your notebook...'
+              }
               value={inputText}
               onChangeText={setInputText}
               multiline
+              editable={!isArchived}
               className="max-h-32 min-h-[44px] rounded-2xl"
             />
           </View>
@@ -153,7 +179,7 @@ export default function ChatScreen() {
             size="icon"
             className="h-11 w-11 rounded-full"
             onPress={handleSend}
-            disabled={!inputText.trim() || isSending}>
+            disabled={!inputText.trim() || isSending || isArchived}>
             {isSending && !streamingText ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (

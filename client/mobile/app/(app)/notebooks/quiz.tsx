@@ -2,10 +2,12 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { Screen } from '@/components/ui/screen';
+import { ArchiveBanner } from '@/components/notebook/archiveBanner';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useQuizService } from '@/hooks/useQuizService';
+import { useNotebookService } from '@/hooks/useNotebookService';
 import type { QuizSession, QuizGenerateOptions, QuizAnswerPayload } from '@freshr/shared';
 import { Header } from '@/components/notebook/header';
 import { BottomNav } from '@/components/notebook/bottomNav';
@@ -25,6 +27,9 @@ export default function QuizScreen() {
   const [quizzes, setQuizzes] = useState<QuizSession[]>([]);
   const [activeQuiz, setActiveQuiz] = useState<QuizSession | null>(null);
   const [lastTimeTaken, setLastTimeTaken] = useState<number | undefined>(undefined);
+  const notebookService = useNotebookService();
+  const [isArchived, setIsArchived] = useState(false);
+  const [notebookTitle, setNotebookTitle] = useState('');
 
   // Generate State
   const [isGenerateModalVisible, setIsGenerateModalVisible] = useState(false);
@@ -41,6 +46,10 @@ export default function QuizScreen() {
     try {
       const data = await quizService.listQuizSessionsByNotebook(notebookId);
       setQuizzes(data);
+
+      const nb = await notebookService.getNotebook(notebookId);
+      setIsArchived(nb?.is_archived ?? false);
+      setNotebookTitle(nb?.title ?? 'Quiz');
     } catch (err) {
       console.error('Failed to load quizzes', err);
     } finally {
@@ -197,6 +206,7 @@ export default function QuizScreen() {
         onRetake={handleRetake}
         onTakeToChat={handleTakeToChat}
         timeTaken={lastTimeTaken}
+        isArchived={isArchived}
       />
     );
   }
@@ -212,14 +222,17 @@ export default function QuizScreen() {
 
   return (
     <Screen className="flex-1 bg-background">
-      <Header title="Notebook Title" />
+      <Header title={notebookTitle} actualId={notebookId} onNotebookUpdate={loadQuizzes} />
+      <ArchiveBanner isArchived={isArchived} />
       <ScrollView contentContainerClassName="p-4 gap-6">
         <View className="gap-4">
           <View className="flex-row items-center justify-between px-2">
             <Text variant="h3">QUIZ</Text>
-            <Button onPress={() => setIsGenerateModalVisible(true)} size="icon" variant="outline">
-              <Text>+</Text>
-            </Button>
+            {!isArchived && (
+              <Button onPress={() => setIsGenerateModalVisible(true)} size="icon" variant="outline">
+                <Text>+</Text>
+              </Button>
+            )}
           </View>
 
           {quizzes.length === 0 ? (
@@ -243,7 +256,8 @@ export default function QuizScreen() {
                   <Button
                     variant="secondary"
                     className="w-full"
-                    onPress={() => handleSelectQuiz(q)}>
+                    onPress={() => handleSelectQuiz(q)}
+                    disabled={isArchived && q.status !== 'COMPLETED'}>
                     <Text>{q.status === 'COMPLETED' ? 'Review' : 'Continue'}</Text>
                   </Button>
                 </CardFooter>
@@ -254,9 +268,11 @@ export default function QuizScreen() {
       </ScrollView>
 
       <View className="w-full items-center gap-2 pb-8 pt-4">
-        <Button onPress={() => setIsGenerateModalVisible(true)} size="lg">
-          <Text>+ New Quiz</Text>
-        </Button>
+        {!isArchived && (
+          <Button onPress={() => setIsGenerateModalVisible(true)} size="lg">
+            <Text>+ New Quiz</Text>
+          </Button>
+        )}
         <BottomNav />
       </View>
 

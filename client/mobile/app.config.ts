@@ -15,9 +15,21 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   return {
     ...config,
-    name: config.name ?? 'Freshr',
+    name: config.name ?? 'FRESHR',
     slug: config.slug ?? 'freshr',
-    plugins: [...(config.plugins ?? []), 'expo-secure-store', 'expo-web-browser', 'expo-sharing'],
+    plugins: [
+      ...(config.plugins ?? []),
+      'expo-secure-store',
+      'expo-web-browser',
+      'expo-sharing',
+      [
+        'expo-camera',
+        {
+          cameraPermission: 'FRESHR uses the camera to scan your notes into your notebook.',
+          recordAudioAndroid: false, // We only capture photos — no microphone / audio recording.
+        },
+      ],
+    ],
     extra: {
       ...config.extra,
       apiBaseUrl,

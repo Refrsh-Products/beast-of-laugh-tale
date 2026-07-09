@@ -11,6 +11,7 @@ import { BottomNav } from '@/components/notebook/bottomNav';
 import { TranscriptionListItem } from '@/components/transcription/TranscriptionListItem';
 import { TranscriptDetailScreen } from '@/components/transcription/TranscriptDetailScreen';
 import { useTranscriptionService } from '@/hooks/useTranscriptionService';
+import { useNotebookService } from '@/hooks/useNotebookService';
 import type { AudioTranscriptSummary, AudioTranscriptDetail } from '@freshr/shared';
 import { Icon } from '@/components/ui/icon';
 import { X } from 'lucide-react-native';
@@ -30,11 +31,13 @@ const LIST_POLL_INTERVAL_MS = 3000;
 export default function TranscriptionScreen() {
   const { notebookId } = useLocalSearchParams<{ notebookId: string }>();
   const transcriptionService = useTranscriptionService();
+  const notebookService = useNotebookService();
 
   const [viewState, setViewState] = useState<ViewState>('list');
   const [isLoading, setIsLoading] = useState(true);
   const [transcripts, setTranscripts] = useState<AudioTranscriptSummary[]>([]);
   const [activeDetail, setActiveDetail] = useState<AudioTranscriptDetail | null>(null);
+  const [notebookTitle, setNotebookTitle] = useState('');
 
   // Upload state
   const [title, setTitle] = useState('');
@@ -51,6 +54,9 @@ export default function TranscriptionScreen() {
       try {
         const data = await transcriptionService.listAudioTranscripts(notebookId);
         setTranscripts(data);
+
+        const nb = await notebookService.getNotebook(notebookId);
+        setNotebookTitle(nb?.title ?? 'Transcription');
       } catch (err) {
         console.error('Failed to load transcripts', err);
       } finally {
@@ -271,7 +277,7 @@ export default function TranscriptionScreen() {
 
   return (
     <Screen className="flex-1 bg-background">
-      <Header title="Notebook Title" />
+      <Header title={notebookTitle} actualId={notebookId} onNotebookUpdate={loadTranscripts} />
 
       <ScrollView contentContainerClassName="p-4 gap-6">
         {viewState === 'list' && (

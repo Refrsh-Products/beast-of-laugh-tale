@@ -236,6 +236,7 @@ FRESHR_TIER_LIMITS = {
         "max_presentations_total": 2,
         "storage_mega_bytes": 60,
         "audio_feature_enabled": False,
+        "max_photos_per_scan": 2,
     },
     "PAID": {
         "max_notebooks": "unlimited",
@@ -245,6 +246,9 @@ FRESHR_TIER_LIMITS = {
         "max_presentations_total": "unlimited",
         "storage_mega_bytes": 2000,
         "audio_feature_enabled": True,
+        # Hard int cap (never "unlimited") — each photo costs a synchronous
+        # Gemini validation call inside the upload request.
+        "max_photos_per_scan": 5,
     },
 }
 

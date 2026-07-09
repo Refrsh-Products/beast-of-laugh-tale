@@ -13,17 +13,31 @@ from notebooks.services.archive import (
     unarchive_notebook,
 )
 from .errors import (
+    ErrorCode,
     FileQuotaExceededError,
     FileSizeExceededError,
     NotebookQuotaExceededError,
+    ScanPhotoLimitExceededError,
     StorageQuotaExceededError,
 )
 from .models import Notebook, NotebookFile
 from accounts.models import Account
 from accounts.services import quota
-from .serializers import NotebookSerializer, NotebookFileSerializer, NotebookFileInputSerializer, NotebookFileCreateSuccessSerializer, NotebookFileCreateErrorSerializer
+from .serializers import (
+    NotebookSerializer,
+    NotebookFileSerializer,
+    NotebookFileInputSerializer,
+    NotebookFileCreateSuccessSerializer,
+    NotebookFileCreateErrorSerializer,
+    NotebookScanInputSerializer,
+    NotebookScanCreateSuccessSerializer,
+    NotebookScanRejectionSerializer,
+)
 
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from dataclasses import asdict
+from .services import photo_scan
 from .services.notebook_file import NotebookFileService
 from drf_spectacular.utils import extend_schema
 from rag.tasks import ingest_note_task
@@ -180,7 +194,128 @@ class NotebookFileCreateAPIView(APIView):
                     )
 
         return response
-    
+
+
+class NotebookScanCreateAPIView(APIView):
+    """Accept a batch of camera photos, validate each with Gemini (clarity +
+    study-relevance), merge the accepted batch into one multi-page PDF, and
+    ingest it as a single notebook file.
+
+    All-or-nothing: any rejected photo fails the whole batch with per-photo
+    results (422) so the client can retake/delete just the bad ones.
+    """
+
+    permission_classes = (IsAuthenticated,)
+    parser_classes = (MultiPartParser, FormParser)
+
+    @extend_schema(
+        request={'multipart/form-data': NotebookScanInputSerializer},
+        responses={
+            201: NotebookScanCreateSuccessSerializer,
+            400: NotebookFileCreateErrorSerializer,
+            422: NotebookScanRejectionSerializer,
+        }
+    )
+    def post(self, request, notebook_id):
+        notebook = get_object_or_404(Notebook, id=notebook_id, user=request.user)
+        assert_notebook_writable(notebook)
+
+        # Repeated multipart keys ("photos" appended N times by the mobile
+        # FormData) bind reliably via FILES.getlist, not request.data.
+        serializer = NotebookScanInputSerializer(
+            data={"photos": request.FILES.getlist("photos")}
+        )
+        if not serializer.is_valid():
+            return Response(
+                {"success": False, "errors": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        photos = serializer.validated_data["photos"]  # type: ignore
+
+        account = Account.objects.get(user=request.user)
+        plan = quota.get_effective_plan(account)
+        limits = quota.get_limits(plan)
+
+        scan_limit = limits["max_photos_per_scan"]
+        if len(photos) > scan_limit:
+            logger.warning(
+                "Scan photo limit exceeded for user %s: sent=%d limit=%d",
+                request.user.pk, len(photos), scan_limit,
+            )
+            raise ScanPhotoLimitExceededError(limit=scan_limit)
+
+        # Cheap pre-check before paying for Gemini: if the notebook is already
+        # at its file cap the transaction below would reject the PDF anyway.
+        if not quota.check_file_per_notebook_quota(account, notebook):
+            raise FileQuotaExceededError(limit=limits["max_files_per_notebook"])
+
+        normalized = photo_scan.normalize_photos(photos)
+
+        results = photo_scan.validate_photos_with_gemini(normalized)
+        if any(not r.acceptable for r in results):
+            logger.info(
+                "Scan batch rejected for user %s: %d/%d photos unacceptable",
+                request.user.pk,
+                sum(1 for r in results if not r.acceptable),
+                len(results),
+            )
+            # Return directly (not via APIException) so booleans/ints in the
+            # per-photo results survive JSON serialization — DRF stringifies
+            # every leaf value inside an APIException detail.
+            return Response(
+                {
+                    "code": ErrorCode.PHOTO_VALIDATION_FAILED,
+                    "message": "Some photos couldn't be used.",
+                    "photos": [asdict(r) for r in results],
+                },
+                status=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            )
+
+        filename = f"Scanned Notes {timezone.localtime():%Y-%m-%d %H.%M}.pdf"
+        pdf_file = photo_scan.build_scan_pdf(normalized, filename)
+        pdf_size = pdf_file.size
+
+        with transaction.atomic():
+            account = Account.objects.select_for_update().get(user=request.user)
+            if not quota.check_file_per_notebook_quota(account, notebook):
+                plan = quota.get_effective_plan(account)
+                limits = quota.get_limits(plan)
+                raise FileQuotaExceededError(limit=limits["max_files_per_notebook"])
+            if not quota.check_size_per_file(account, pdf_size):
+                plan = quota.get_effective_plan(account)
+                limits = quota.get_limits(plan)
+                raise FileSizeExceededError(max_mb=limits["max_size_per_file_mega_bytes"])
+            if not quota.check_storage_quota(account, pdf_size):
+                plan = quota.get_effective_plan(account)
+                limits = quota.get_limits(plan)
+                raise StorageQuotaExceededError(limit_bytes=limits["storage_mega_bytes"] * 1024 * 1024)
+
+            notebook_file = NotebookFileService.add_notebook_file(
+                notebook=notebook,
+                uploaded_file=pdf_file,
+                file_size=pdf_size,
+            )
+            account.storage_bytes_used += pdf_size
+            account.save()
+            touch_notebook_activity(notebook_id=notebook.id)
+
+        ingest_note_task.delay(notebook_file.pk)  # type: ignore[attr-defined]
+        logger.info(
+            "Scan of %d photos uploaded to notebook %s by user %s (%d bytes)",
+            len(photos), notebook_id, request.user.pk, pdf_size,
+        )
+        return Response(
+            {
+                "success": True,
+                "errors": [],
+                "id": str(notebook_file.pk),
+                "ingestion_status": notebook_file.ingestion_status,
+                "photo_count": len(photos),
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
 class NotebookFileListAPIView(generics.ListAPIView):
     queryset = NotebookFile.objects.none()
     serializer_class = NotebookFileSerializer

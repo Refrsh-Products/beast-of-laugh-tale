@@ -26,6 +26,7 @@ interface PresentationViewerScreenProps {
   onClose: () => void;
   onUpdate?: (updatedSlides: PresentationSlide[]) => void;
   onRefineSlide?: (slideId: string, feedback: string) => Promise<PresentationSlide>;
+  isArchived?: boolean;
 }
 
 export function PresentationViewerScreen({
@@ -33,6 +34,7 @@ export function PresentationViewerScreen({
   onClose,
   onUpdate,
   onRefineSlide,
+  isArchived,
 }: PresentationViewerScreenProps) {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
@@ -214,9 +216,11 @@ export function PresentationViewerScreen({
             </Pressable>
 
             {/* Edit */}
-            <Pressable onPress={() => { handleEditCurrent(); if (hideTimerRef.current) clearTimeout(hideTimerRef.current); }} style={styles.topBarButton}>
-              <Icon as={Edit3} size={18} color="#FFFFFF" />
-            </Pressable>
+            {!isArchived && (
+              <Pressable onPress={() => { handleEditCurrent(); if (hideTimerRef.current) clearTimeout(hideTimerRef.current); }} style={styles.topBarButton}>
+                <Icon as={Edit3} size={18} color="#FFFFFF" />
+              </Pressable>
+            )}
 
             {/* Export */}
             <Pressable onPress={handleExport} disabled={isExporting} style={styles.topBarButton}>
