@@ -85,6 +85,12 @@ export function GeneratePresentationModal({
   const previewTopics = topics.slice(0, COLLAPSED_MAX_PRESENTATION);
   const hiddenCount = topics.length - COLLAPSED_MAX_PRESENTATION;
 
+  // A notebook needs at least one file for topics to exist — no topics means
+  // there's nothing to build a presentation from, so generation (and the custom
+  // topic box) is blocked.
+  const hasTopics = topics.length > 0;
+  const canGenerate = hasTopics && !isGenerating && !isLoadingTopics;
+
   const handleGenerate = () => {
     onGenerate({
       topics: selectedTopics,
@@ -187,14 +193,18 @@ export function GeneratePresentationModal({
               Or describe your own topic
             </Text>
             <TextInput
-              style={styles.promptInput}
-              placeholder="e.g. Compare the causes and effects of WWI and WWII..."
+              style={[styles.promptInput, !hasTopics && styles.promptInputDisabled]}
+              placeholder={
+                hasTopics
+                  ? 'e.g. Compare the causes and effects of WWI and WWII...'
+                  : 'Upload files to your notebook to enable this'
+              }
               placeholderTextColor="#A1A1AA"
               value={customTopic}
               onChangeText={setCustomTopic}
               multiline
               numberOfLines={3}
-              editable={!isGenerating}
+              editable={!isGenerating && hasTopics}
               textAlignVertical="top"
             />
           </View>
@@ -231,9 +241,9 @@ export function GeneratePresentationModal({
         {/* Generate Button */}
         <View style={styles.buttonContainer}>
           <Pressable
-            style={[styles.generateButton, isGenerating && styles.generateButtonDisabled]}
+            style={[styles.generateButton, !canGenerate && styles.generateButtonDisabled]}
             onPress={handleGenerate}
-            disabled={isGenerating}
+            disabled={!canGenerate}
           >
             {isGenerating ? (
               <ActivityIndicator color="#FFFFFF" />
@@ -241,6 +251,11 @@ export function GeneratePresentationModal({
               <Text style={styles.generateButtonText}>Generate Presentation</Text>
             )}
           </Pressable>
+          {!hasTopics && !isLoadingTopics && (
+            <Text style={styles.generateHint}>
+              Add at least one file to your notebook to generate a presentation.
+            </Text>
+          )}
         </View>
       </View>
     </Modal>
@@ -360,6 +375,10 @@ const styles = StyleSheet.create({
     minHeight: 90,
     lineHeight: 20,
   },
+  promptInputDisabled: {
+    backgroundColor: '#F4F4F5',
+    borderColor: '#E4E4E7',
+  },
   settingsRow: {
     flexDirection: 'row',
   },
@@ -382,5 +401,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  generateHint: {
+    fontSize: 12,
+    color: '#A1A1AA',
+    textAlign: 'center',
+    marginTop: 8,
   },
 });

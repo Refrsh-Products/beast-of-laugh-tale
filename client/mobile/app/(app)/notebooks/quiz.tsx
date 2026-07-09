@@ -1,11 +1,15 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { View, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, ScrollView, ActivityIndicator, Alert, Pressable } from 'react-native';
+import { Plus, Trash2, X } from 'lucide-react-native';
 import { Screen } from '@/components/ui/screen';
 import { ArchiveBanner } from '@/components/notebook/archiveBanner';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Icon } from '@/components/ui/icon';
+import { cn } from '@/lib/utils';
 import { useQuizService } from '@/hooks/useQuizService';
 import { useNotebookService } from '@/hooks/useNotebookService';
 import type { QuizSession, QuizGenerateOptions, QuizAnswerPayload } from '@freshr/shared';
@@ -14,6 +18,7 @@ import { BottomNav } from '@/components/notebook/bottomNav';
 import { GenerateQuizModal } from '@/components/quiz/GenerateQuizModal';
 import { QuizTakingScreen } from '@/components/quiz/QuizTakingScreen';
 import { QuizResultScreen } from '@/components/quiz/QuizResultScreen';
+import { DeleteQuizDialog } from '@/components/quiz/DeleteQuizDialog';
 
 type ViewState = 'list' | 'take' | 'review';
 
@@ -34,6 +39,11 @@ export default function QuizScreen() {
   // Generate State
   const [isGenerateModalVisible, setIsGenerateModalVisible] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  // ─── Selection / delete state ─────────────────────────────────────
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isDeleteDialogVisible, setIsDeleteDialogVisible] = useState(false);
 
   useEffect(() => {
     if (viewState === 'list' && notebookId) {
@@ -187,6 +197,61 @@ export default function QuizScreen() {
     }
   };
 
+  // ─── Selection helpers ────────────────────────────────────────────
+  const enterSelection = (quizId: string) => {
+    setSelectionMode(true);
+    setSelectedIds(new Set([quizId]));
+  };
+
+  const toggleSelect = (quizId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(quizId)) {
+        next.delete(quizId);
+      } else {
+        next.add(quizId);
+      }
+      return next;
+    });
+  };
+
+  const exitSelection = () => {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  };
+
+  // ─── Delete quizzes ───────────────────────────────────────────────
+  // Deletes every currently-selected quiz. On partial failure it keeps only
+  // the ones that still failed selected + throws, so the dialog's "Try again"
+  // retries exactly those. On total success it clears selection + refreshes.
+  const performDelete = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+
+    const results = await Promise.allSettled(ids.map((id) => quizService.deleteQuizSession(id)));
+
+    const failedIds = ids.filter((_, i) => results[i].status === 'rejected');
+
+    // Optimistically drop the ones that succeeded from the visible list.
+    const succeededIds = new Set(ids.filter((_, i) => results[i].status === 'fulfilled'));
+    if (succeededIds.size > 0) {
+      setQuizzes((prev) => prev.filter((q) => !q.id || !succeededIds.has(q.id)));
+    }
+
+    if (failedIds.length > 0) {
+      // Narrow selection to just the failures so a retry only re-attempts those.
+      setSelectedIds(new Set(failedIds));
+      const n = failedIds.length;
+      throw new Error(`Couldn't delete ${n} of ${ids.length} ${n === 1 ? 'quiz' : 'quizzes'}.`);
+    }
+  };
+
+  const handleDeleteSuccess = () => {
+    setIsDeleteDialogVisible(false);
+    exitSelection();
+    loadQuizzes();
+  };
+
   // ─── Quiz Taking Screen ───────────────────────────────────────────
   if (viewState === 'take' && activeQuiz) {
     return (
@@ -227,42 +292,90 @@ export default function QuizScreen() {
       <ScrollView contentContainerClassName="p-4 gap-6">
         <View className="gap-4">
           <View className="flex-row items-center justify-between px-2">
-            <Text variant="h3">QUIZ</Text>
-            {!isArchived && (
-              <Button onPress={() => setIsGenerateModalVisible(true)} size="icon" variant="outline">
-                <Text>+</Text>
-              </Button>
-            )}
+            <Text variant={selectionMode ? 'h4' : 'h3'}>
+              {selectionMode ? `${selectedIds.size} selected` : 'QUIZ'}
+            </Text>
+            {!isArchived &&
+              (selectionMode ? (
+                <View className="flex-row items-center gap-2">
+                  <Button variant="ghost" size="sm" onPress={exitSelection}>
+                    <Icon as={X} size={18} />
+                    <Text>Cancel</Text>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={selectedIds.size === 0}
+                    onPress={() => setIsDeleteDialogVisible(true)}>
+                    <Icon as={Trash2} className="text-destructive" />
+                  </Button>
+                </View>
+              ) : (
+                <View className="flex-row items-center gap-2">
+                  {quizzes.length > 0 && (
+                    <Button variant="outline" size="icon" onPress={() => setSelectionMode(true)}>
+                      <Icon as={Trash2} />
+                    </Button>
+                  )}
+                  <Button
+                    onPress={() => setIsGenerateModalVisible(true)}
+                    size="icon"
+                    variant="outline">
+                    <Icon as={Plus} />
+                  </Button>
+                </View>
+              ))}
           </View>
 
           {quizzes.length === 0 ? (
             <Text className="py-10 text-center text-muted-foreground">No quizzes yet.</Text>
           ) : (
-            quizzes.map((q) => (
-              <Card key={q.id}>
-                <CardHeader>
-                  <CardTitle>{q.title || q.topic || 'Quiz'}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Text className="text-muted-foreground">Difficulty: {q.difficulty}</Text>
-                  <Text className="text-muted-foreground">
-                    Score:{' '}
-                    {q.score !== undefined && q.score !== null
-                      ? `${Math.round(q.score * 100)}%`
-                      : 'Not completed'}
-                  </Text>
-                </CardContent>
-                <CardFooter>
-                  <Button
-                    variant="secondary"
-                    className="w-full"
-                    onPress={() => handleSelectQuiz(q)}
-                    disabled={isArchived && q.status !== 'COMPLETED'}>
-                    <Text>{q.status === 'COMPLETED' ? 'Review' : 'Continue'}</Text>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))
+            quizzes.map((q) => {
+              const selected = !!q.id && selectedIds.has(q.id);
+              return (
+                <Pressable
+                  key={q.id}
+                  onLongPress={!isArchived && q.id ? () => enterSelection(q.id!) : undefined}
+                  onPress={selectionMode && q.id ? () => toggleSelect(q.id!) : undefined}
+                  delayLongPress={300}
+                  className={cn('flex-row items-center gap-3', selectionMode && 'active:opacity-70')}>
+                  {selectionMode && (
+                    <View pointerEvents="none">
+                      <Checkbox
+                        checked={selected}
+                        onCheckedChange={() => {}}
+                        className="h-5 w-5 rounded-sm border-muted-foreground"
+                      />
+                    </View>
+                  )}
+                  <Card className={cn('flex-1', selected && 'border-primary')}>
+                    <CardHeader>
+                      <CardTitle>{q.title || q.topic || 'Quiz'}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <Text className="text-muted-foreground">Difficulty: {q.difficulty}</Text>
+                      <Text className="text-muted-foreground">
+                        Score:{' '}
+                        {q.score !== undefined && q.score !== null
+                          ? `${Math.round(q.score * 100)}%`
+                          : 'Not completed'}
+                      </Text>
+                    </CardContent>
+                    {!selectionMode && (
+                      <CardFooter>
+                        <Button
+                          variant="secondary"
+                          className="w-full"
+                          onPress={() => handleSelectQuiz(q)}
+                          disabled={isArchived && q.status !== 'COMPLETED'}>
+                          <Text>{q.status === 'COMPLETED' ? 'Review' : 'Continue'}</Text>
+                        </Button>
+                      </CardFooter>
+                    )}
+                  </Card>
+                </Pressable>
+              );
+            })
           )}
         </View>
       </ScrollView>
@@ -282,6 +395,14 @@ export default function QuizScreen() {
         onGenerate={handleGenerate}
         isGenerating={isGenerating}
         notebookId={notebookId}
+      />
+
+      <DeleteQuizDialog
+        visible={isDeleteDialogVisible}
+        count={selectedIds.size}
+        onConfirm={performDelete}
+        onSuccess={handleDeleteSuccess}
+        onClose={() => setIsDeleteDialogVisible(false)}
       />
     </Screen>
   );
