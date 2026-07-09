@@ -86,6 +86,11 @@ export function GenerateQuizModal({
   const previewTopics = topics.slice(0, COLLAPSED_MAX);
   const hiddenCount = topics.length - COLLAPSED_MAX;
 
+  // A notebook needs at least one file for topics to exist — no topics means
+  // there's nothing to quiz on, so generation (and the prompt box) is blocked.
+  const hasTopics = topics.length > 0;
+  const canGenerate = hasTopics && !isGenerating && !isLoadingTopics;
+
   const handleGenerate = () => {
     onGenerate({
       topics: selectedTopics,
@@ -199,14 +204,18 @@ export function GenerateQuizModal({
               Or describe what you want to be quizzed on
             </Text>
             <TextInput
-              style={styles.promptInput}
-              placeholder="e.g. Generate a quiz on unit conversion"
+              style={[styles.promptInput, !hasTopics && styles.promptInputDisabled]}
+              placeholder={
+                hasTopics
+                  ? 'e.g. Generate a quiz on unit conversion'
+                  : 'Upload files to your notebook to enable this'
+              }
               placeholderTextColor="#A1A1AA"
               value={prompt}
               onChangeText={setPrompt}
               multiline
               numberOfLines={3}
-              editable={!isGenerating}
+              editable={!isGenerating && hasTopics}
               textAlignVertical="top"
             />
           </View>
@@ -269,15 +278,20 @@ export function GenerateQuizModal({
         {/* Generate Button */}
         <View style={styles.buttonContainer}>
           <Pressable
-            style={[styles.generateButton, isGenerating && styles.generateButtonDisabled]}
+            style={[styles.generateButton, !canGenerate && styles.generateButtonDisabled]}
             onPress={handleGenerate}
-            disabled={isGenerating}>
+            disabled={!canGenerate}>
             {isGenerating ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.generateButtonText}>Generate Quiz</Text>
             )}
           </Pressable>
+          {!hasTopics && !isLoadingTopics && (
+            <Text style={styles.generateHint}>
+              Add at least one file to your notebook to generate a quiz.
+            </Text>
+          )}
         </View>
       </View>
     </Modal>
@@ -397,6 +411,10 @@ const styles = StyleSheet.create({
     minHeight: 90,
     lineHeight: 20,
   },
+  promptInputDisabled: {
+    backgroundColor: '#F4F4F5',
+    borderColor: '#E4E4E7',
+  },
   settingsRow: {
     flexDirection: 'row',
   },
@@ -419,5 +437,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  generateHint: {
+    fontSize: 12,
+    color: '#A1A1AA',
+    textAlign: 'center',
+    marginTop: 8,
   },
 });
