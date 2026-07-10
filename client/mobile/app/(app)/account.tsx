@@ -5,20 +5,10 @@ import { useAuthService } from '@/hooks/useAuthService';
 import { useAccountService } from '@/hooks/useAccountService';
 import { useRouter } from 'expo-router';
 import { Screen } from '@/components/ui/screen';
-import { useEffect, useRef, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  View,
-  ScrollView,
-  Image,
-  Modal,
-  Animated,
-  TouchableWithoutFeedback,
-  Dimensions,
-  StyleSheet,
-} from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, View, ScrollView, Image } from 'react-native';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { UpgradeSheet } from '@/components/account/upgradeSheet';
 import type { StoredAccount, AccountUsage } from '@freshr/shared';
 import { Icon } from '@/components/ui/icon';
 import { ChevronLeft } from 'lucide-react-native';
@@ -35,26 +25,6 @@ export default function AccountScreen() {
   const [usage, setUsage] = useState<AccountUsage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showUpgradeSheet, setShowUpgradeSheet] = useState(false);
-
-  const SHEET_HEIGHT = 280;
-  const slideAnim = useRef(new Animated.Value(SHEET_HEIGHT)).current;
-
-  const openSheet = () => {
-    setShowUpgradeSheet(true);
-    Animated.spring(slideAnim, {
-      toValue: 0,
-      useNativeDriver: true,
-      bounciness: 4,
-    }).start();
-  };
-
-  const closeSheet = () => {
-    Animated.timing(slideAnim, {
-      toValue: SHEET_HEIGHT,
-      duration: 250,
-      useNativeDriver: true,
-    }).start(() => setShowUpgradeSheet(false));
-  };
 
   useEffect(() => {
     loadData();
@@ -201,41 +171,15 @@ export default function AccountScreen() {
                 <Button
                   variant="outline"
                   className="mt-2 h-11 rounded-xl border-primary/40"
-                  onPress={openSheet}>
+                  onPress={() => setShowUpgradeSheet(true)}>
                   <Text className="text-sm font-semibold text-primary">Upgrade Plan</Text>
                 </Button>
 
                 {/* Upgrade Plan Bottom Sheet */}
-                <Modal
+                <UpgradeSheet
                   visible={showUpgradeSheet}
-                  transparent
-                  animationType="none"
-                  statusBarTranslucent
-                  onRequestClose={closeSheet}>
-                  <TouchableWithoutFeedback onPress={closeSheet}>
-                    <View style={styles.backdrop} />
-                  </TouchableWithoutFeedback>
-
-                  <Animated.View style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}>
-                    {/* Drag handle */}
-                    <View style={styles.handle} />
-
-                    <Text style={styles.sheetTitle}>
-                      Subscription changes happen outside the app
-                    </Text>
-                    <Text style={styles.sheetBody}>
-                      All subscription changes are handled through your account on the web, outside
-                      the app.
-                    </Text>
-
-                    <Button
-                      variant="secondary"
-                      className="h-13 mt-6 rounded-full"
-                      onPress={closeSheet}>
-                      <Text className="text-base font-bold">Got it</Text>
-                    </Button>
-                  </Animated.View>
-                </Modal>
+                  onClose={() => setShowUpgradeSheet(false)}
+                />
               </View>
             </CardContent>
           </Card>
@@ -257,54 +201,3 @@ export default function AccountScreen() {
   );
 }
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-
-const styles = StyleSheet.create({
-  backdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
-  },
-  sheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#1a1a1a',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 36,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 20,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  sheetTitle: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 28,
-    marginBottom: 10,
-  },
-  sheetBody: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-});

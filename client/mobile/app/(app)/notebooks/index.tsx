@@ -24,7 +24,9 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
+import { UpgradeSheet } from '@/components/account/upgradeSheet';
 import { UsageCard } from '@/components/notebook/usageCard';
+import { getApiErrorCode, NOTEBOOK_QUOTA_EXCEEDED } from '@/lib/apiError';
 import { Text } from '@/components/ui/text';
 import { useNotebookService } from '@/hooks/useNotebookService';
 import { useAccountService } from '@/hooks/useAccountService';
@@ -92,6 +94,7 @@ export default function NotebookListScreen() {
   const [sortMode, setSortMode] = useState<SortMode>('newest');
   const [isSearching, setIsSearching] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showUpgradeSheet, setShowUpgradeSheet] = useState(false);
 
   const getNotebookFiles = async (notebooksData: Notebook[]) => {
     try {
@@ -219,6 +222,17 @@ export default function NotebookListScreen() {
       openRowRef.current = null;
       await loadData();
     } catch (error) {
+      if (!isArchiving && getApiErrorCode(error) === NOTEBOOK_QUOTA_EXCEEDED) {
+        Alert.alert(
+          'Notebook limit reached',
+          "Restoring this notebook would exceed your active notebook limit on the free plan. Upgrade for more notebooks, or archive another one first.",
+          [
+            { text: 'Not now', style: 'cancel' },
+            { text: 'Upgrade', onPress: () => setShowUpgradeSheet(true) },
+          ]
+        );
+        return;
+      }
       console.error(`Failed to ${isArchiving ? 'archive' : 'unarchive'} notebook:`, error);
       Alert.alert('Error', `Failed to ${isArchiving ? 'archive' : 'unarchive'} notebook`);
     }
@@ -500,6 +514,13 @@ export default function NotebookListScreen() {
           </Button>
         </Link>
       </View>
+
+      <UpgradeSheet
+        visible={showUpgradeSheet}
+        onClose={() => setShowUpgradeSheet(false)}
+        title="Upgrade your plan on the web"
+        body="Paid plans unlock more notebooks, storage, and daily quizzes. Upgrades are handled through your account on the web, outside the app."
+      />
     </Screen>
   );
 }

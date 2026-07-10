@@ -15,6 +15,8 @@ import { PresentationListItem } from '@/components/presentation/PresentationList
 import { PresentationViewerScreen } from '@/components/presentation/PresentationViewerScreen';
 import { Icon } from '@/components/ui/icon';
 import { ArchiveBanner } from '@/components/notebook/archiveBanner';
+import { UpgradeSheet } from '@/components/account/upgradeSheet';
+import { getApiErrorCode, PRESENTATION_QUOTA_EXCEEDED } from '@/lib/apiError';
 
 type ViewState = 'list' | 'view';
 
@@ -33,6 +35,7 @@ export default function PresentationScreen() {
   // Generate state
   const [isGenerateModalVisible, setIsGenerateModalVisible] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showUpgradeSheet, setShowUpgradeSheet] = useState(false);
 
   useEffect(() => {
     if (viewState === 'list' && notebookId) {
@@ -96,8 +99,20 @@ export default function PresentationScreen() {
       loadPresentations(false);
       setIsGenerateModalVisible(false);
     } catch (err: any) {
-      console.error('Failed to generate presentation', err);
-      Alert.alert('Error', err?.message || 'Failed to generate presentation.');
+      if (getApiErrorCode(err) === PRESENTATION_QUOTA_EXCEEDED) {
+        setIsGenerateModalVisible(false);
+        Alert.alert(
+          'Presentation limit reached',
+          "You've used all your presentations on the free plan. Upgrade to generate more presentations.",
+          [
+            { text: 'Not now', style: 'cancel' },
+            { text: 'Upgrade', onPress: () => setShowUpgradeSheet(true) },
+          ]
+        );
+      } else {
+        console.error('Failed to generate presentation', err);
+        Alert.alert('Error', err?.message || 'Failed to generate presentation.');
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -226,6 +241,13 @@ export default function PresentationScreen() {
         onGenerate={handleGenerate}
         isGenerating={isGenerating}
         notebookId={notebookId}
+      />
+
+      <UpgradeSheet
+        visible={showUpgradeSheet}
+        onClose={() => setShowUpgradeSheet(false)}
+        title="Upgrade your plan on the web"
+        body="Paid plans unlock more presentations, notebooks, and storage. Upgrades are handled through your account on the web, outside the app."
       />
     </Screen>
   );

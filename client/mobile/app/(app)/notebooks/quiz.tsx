@@ -4,6 +4,8 @@ import { View, ScrollView, ActivityIndicator, Alert, Pressable } from 'react-nat
 import { Plus, Trash2, X } from 'lucide-react-native';
 import { Screen } from '@/components/ui/screen';
 import { ArchiveBanner } from '@/components/notebook/archiveBanner';
+import { UpgradeSheet } from '@/components/account/upgradeSheet';
+import { getApiErrorCode, DAILY_QUIZ_QUOTA_EXCEEDED } from '@/lib/apiError';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -39,6 +41,7 @@ export default function QuizScreen() {
   // Generate State
   const [isGenerateModalVisible, setIsGenerateModalVisible] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showUpgradeSheet, setShowUpgradeSheet] = useState(false);
 
   // ─── Selection / delete state ─────────────────────────────────────
   const [selectionMode, setSelectionMode] = useState(false);
@@ -89,8 +92,20 @@ export default function QuizScreen() {
       setViewState('take');
       setIsGenerateModalVisible(false);
     } catch (err: any) {
-      console.error('Failed to generate quiz', err);
-      Alert.alert('Error', err?.message || 'Failed to generate quiz.');
+      if (getApiErrorCode(err) === DAILY_QUIZ_QUOTA_EXCEEDED) {
+        setIsGenerateModalVisible(false);
+        Alert.alert(
+          'Daily quiz limit reached',
+          "You've used all your quizzes for today on the free plan. Upgrade for more daily quizzes — or come back tomorrow.",
+          [
+            { text: 'Not now', style: 'cancel' },
+            { text: 'Upgrade', onPress: () => setShowUpgradeSheet(true) },
+          ]
+        );
+      } else {
+        console.error('Failed to generate quiz', err);
+        Alert.alert('Error', err?.message || 'Failed to generate quiz.');
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -403,6 +418,13 @@ export default function QuizScreen() {
         onConfirm={performDelete}
         onSuccess={handleDeleteSuccess}
         onClose={() => setIsDeleteDialogVisible(false)}
+      />
+
+      <UpgradeSheet
+        visible={showUpgradeSheet}
+        onClose={() => setShowUpgradeSheet(false)}
+        title="Upgrade your plan on the web"
+        body="Paid plans unlock more daily quizzes, notebooks, and storage. Upgrades are handled through your account on the web, outside the app."
       />
     </Screen>
   );
