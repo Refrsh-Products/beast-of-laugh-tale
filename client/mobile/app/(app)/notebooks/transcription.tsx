@@ -12,9 +12,12 @@ import { TranscriptionListItem } from '@/components/transcription/TranscriptionL
 import { TranscriptDetailScreen } from '@/components/transcription/TranscriptDetailScreen';
 import { useTranscriptionService } from '@/hooks/useTranscriptionService';
 import { useNotebookService } from '@/hooks/useNotebookService';
+import { useAccountService } from '@/hooks/useAccountService';
 import type { AudioTranscriptSummary, AudioTranscriptDetail } from '@freshr/shared';
 import { Icon } from '@/components/ui/icon';
 import { X } from 'lucide-react-native';
+import { UpgradeSheet } from '@/components/account/upgradeSheet';
+import { getApiErrorCode, PAID_ONLY_FEATURE } from '@/lib/apiError';
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -32,12 +35,17 @@ export default function TranscriptionScreen() {
   const { notebookId } = useLocalSearchParams<{ notebookId: string }>();
   const transcriptionService = useTranscriptionService();
   const notebookService = useNotebookService();
+  const accountService = useAccountService();
 
   const [viewState, setViewState] = useState<ViewState>('list');
   const [isLoading, setIsLoading] = useState(true);
   const [transcripts, setTranscripts] = useState<AudioTranscriptSummary[]>([]);
   const [activeDetail, setActiveDetail] = useState<AudioTranscriptDetail | null>(null);
   const [notebookTitle, setNotebookTitle] = useState('');
+  // Audio transcription is paid-only. Default to unlocked so a failed usage
+  // fetch never blocks a paying user — the server still gates every write.
+  const [audioUnlocked, setAudioUnlocked] = useState(true);
+  const [showUpgradeSheet, setShowUpgradeSheet] = useState(false);
 
   // Upload state
   const [title, setTitle] = useState('');
@@ -57,13 +65,16 @@ export default function TranscriptionScreen() {
 
         const nb = await notebookService.getNotebook(notebookId);
         setNotebookTitle(nb?.title ?? 'Transcription');
+
+        const usage = await accountService.getAccountUsage();
+        setAudioUnlocked(usage?.features?.audio_notes ?? true);
       } catch (err) {
         console.error('Failed to load transcripts', err);
       } finally {
         if (showSpinner) setIsLoading(false);
       }
     },
-    [notebookId, transcriptionService]
+    [notebookId, transcriptionService, accountService]
   );
 
   useEffect(() => {
@@ -114,6 +125,23 @@ export default function TranscriptionScreen() {
     },
     [notebookId, transcriptionService]
   );
+
+  // ─── Upload entry point (paid-only gate) ───────────────────────
+
+  const handleUploadPress = () => {
+    if (!audioUnlocked) {
+      Alert.alert(
+        'Audio transcription is a paid feature',
+        'Upgrade your plan to transcribe lectures and turn recordings into notes.',
+        [
+          { text: 'Not now', style: 'cancel' },
+          { text: 'Upgrade', onPress: () => setShowUpgradeSheet(true) },
+        ]
+      );
+      return;
+    }
+    setViewState('upload');
+  };
 
   // ─── Pick audio file ───────────────────────────────────────────
 
@@ -175,9 +203,16 @@ export default function TranscriptionScreen() {
       setTitle('');
       setViewState('detail');
     } catch (err: any) {
-      console.error('Failed to upload/transcribe audio', err);
-      Alert.alert('Error', err?.message || 'Failed to transcribe audio.');
-      setViewState('upload');
+      // Fallback in case the usage flag was stale and the server rejected us.
+      if (getApiErrorCode(err) === PAID_ONLY_FEATURE) {
+        setAudioUnlocked(false);
+        setViewState('list');
+        setShowUpgradeSheet(true);
+      } else {
+        console.error('Failed to upload/transcribe audio', err);
+        Alert.alert('Error', err?.message || 'Failed to transcribe audio.');
+        setViewState('upload');
+      }
     } finally {
       setIsUploading(false);
     }
@@ -284,14 +319,14 @@ export default function TranscriptionScreen() {
           <View className="gap-4">
             <View className="flex-row items-center justify-between px-2">
               <Text variant="h3">AUDIO NOTES</Text>
-              <Button onPress={() => setViewState('upload')} size="icon" variant="outline">
+              <Button onPress={handleUploadPress} size="icon" variant="outline">
                 <Text>+</Text>
               </Button>
             </View>
 
             {transcripts.length === 0 ? (
               <Text className="py-10 text-center text-muted-foreground">
-                No transcriptions yet.
+                {audioUnlocked ? 'No transcriptions yet.' : 'Upgrade to use this feature.'}
               </Text>
             ) : (
               transcripts.map((t) => (
@@ -379,12 +414,19 @@ export default function TranscriptionScreen() {
 
       {viewState === 'list' && (
         <View className="w-full items-center gap-2 pb-8 pt-4">
-          <Button onPress={() => setViewState('upload')} size="lg">
+          <Button onPress={handleUploadPress} size="lg">
             <Text>+ Upload Audio</Text>
           </Button>
           <BottomNav />
         </View>
       )}
+
+      <UpgradeSheet
+        visible={showUpgradeSheet}
+        onClose={() => setShowUpgradeSheet(false)}
+        title="Upgrade your plan on the web"
+        body="Audio transcription is available on paid plans. Upgrades are handled through your account on the web, outside the app."
+      />
     </Screen>
   );
 }
