@@ -53,6 +53,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8090",
     "http://127.0.0.1:8090",
     "https://freshr.cc",        # Production React (port 80)
+    "https://www.freshr.cc",        # Production React (www)
     "https://staging.freshr.cc",   # Staging React
 ]
 
