@@ -4,6 +4,11 @@ import type { StreamClient } from '@freshr/shared';
 /**
  * React Native implementation of the shared `StreamClient` port using `react-native-sse`.
  * Parses an SSE stream of `data: {...}` lines and emits each `text` fragment.
+ *
+ * react-native-sse re-polls every 5s after ANY terminal state — HTTP errors, but
+ * also a successfully completed stream. So we must explicitly close on the
+ * server's `[DONE]` sentinel and on errors, or the client silently re-hits the
+ * endpoint forever (generating duplicate LLM replies / spamming failed requests).
  */
 export const mobileStreamClient: StreamClient = {
   streamSse: (url, token, onChunk) => {
@@ -15,14 +20,28 @@ export const mobileStreamClient: StreamClient = {
 
       const eventSource = new EventSource(url, { headers });
 
+      const finish = (error?: Error) => {
+        eventSource.removeAllEventListeners();
+        eventSource.close();
+        if (error) {
+          reject(error);
+        } else {
+          resolve();
+        }
+      };
+
       eventSource.addEventListener('message', (event) => {
-        if (!event.data || event.data === '[DONE]') {
+        if (!event.data) return;
+        if (event.data === '[DONE]') {
+          finish();
           return;
         }
-        
+
         try {
           const parsed = JSON.parse(event.data);
-          if (parsed.text) {
+          if (parsed.error) {
+            finish(new Error(parsed.error));
+          } else if (parsed.text) {
             onChunk(parsed.text);
           }
         } catch (err) {
@@ -31,20 +50,12 @@ export const mobileStreamClient: StreamClient = {
       });
 
       eventSource.addEventListener('error', (error: any) => {
-        if (error.type === 'error') {
-          console.error('[SSE Error]', error.message);
-        } else if (error.type === 'exception') {
-          console.error('[SSE Exception]', error.message);
-          eventSource.removeAllEventListeners();
-          eventSource.close();
-          reject(new Error(error.message));
-        }
+        console.error('[SSE Error]', error.message);
+        finish(new Error(error.message || 'Stream connection failed.'));
       });
 
       eventSource.addEventListener('close', () => {
-        eventSource.removeAllEventListeners();
-        eventSource.close();
-        resolve();
+        finish();
       });
     });
   },

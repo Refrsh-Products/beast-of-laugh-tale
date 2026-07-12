@@ -225,7 +225,7 @@ export default function NotebookListScreen() {
       if (!isArchiving && getApiErrorCode(error) === NOTEBOOK_QUOTA_EXCEEDED) {
         Alert.alert(
           'Notebook limit reached',
-          "Restoring this notebook would exceed your active notebook limit on the free plan. Upgrade for more notebooks, or archive another one first.",
+          'Restoring this notebook would exceed your active notebook limit on the free plan. Upgrade for more notebooks, or archive another one first.',
           [
             { text: 'Not now', style: 'cancel' },
             { text: 'Upgrade', onPress: () => setShowUpgradeSheet(true) },
@@ -386,7 +386,7 @@ export default function NotebookListScreen() {
                       elevation: 2,
                     },
                   ]}>
-                  <Text style={{ fontWeight: value === 'active' ? '600' : '400' }}>Files</Text>
+                  <Text style={{ fontWeight: value === 'active' ? '600' : '400' }}>Active</Text>
                 </TabsTrigger>
                 <TabsTrigger
                   value="archived"
