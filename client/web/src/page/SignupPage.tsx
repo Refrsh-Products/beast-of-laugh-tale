@@ -48,7 +48,11 @@ export default function SignupPage() {
       navigate("/verify-email/sent", { state: { email } });
     } catch (err) {
       console.error("[SignupPage] Error During Registration:", err);
-      setError(`Failed to Register User: ${email}\nError: ${err}`);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to register. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }

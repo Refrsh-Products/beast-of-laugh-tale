@@ -158,7 +158,9 @@ export function createAuthService(deps: ServiceDeps): AuthService {
           const messages = Object.entries(data).flatMap(([key, val]) => {
             const items = Array.isArray(val) ? val : [val];
             return items.map((v) =>
-              key === "non_field_errors" ? String(v) : `${key}: ${String(v)}`,
+              key === "non_field_errors" || key === "error"
+                ? String(v)
+                : `${key}: ${String(v)}`,
             );
           });
           throw new Error(messages.join("\n"));
@@ -170,7 +172,9 @@ export function createAuthService(deps: ServiceDeps): AuthService {
     requestEmailVerification: async (email) => {
       // 429 is a rate-limit from the backend (ScopedRateThrottle). Let it
       // bubble up so the UI can surface a "try again later" message.
-      await http.request(AuthServiceApiEndpoints.verifyEmail, "POST", { email });
+      await http.request(AuthServiceApiEndpoints.verifyEmail, "POST", {
+        email,
+      });
     },
 
     confirmEmailVerification: async (uid, token) => {
