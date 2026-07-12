@@ -2,6 +2,7 @@ from django.http import StreamingHttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import JSONRenderer
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.serializers import BaseSerializer
@@ -10,6 +11,7 @@ from rest_framework.views import APIView
 from notebooks.models import Notebook
 from notebooks.services.activity import touch_notebook_activity
 from notebooks.services.archive import assert_notebook_writable
+from .renderers import ServerSentEventRenderer
 from .serializers import ChatMessageCreateSerializer, ChatMessageSerializer, ChatSerializer, ChatCreateSerializer, ChatUpdateSerializer
 from .models import Chats, ChatMessages, ChatRole
 from .services.llm_service import _stream_llm_response
@@ -38,6 +40,17 @@ class ChatListCreateView(generics.ListCreateAPIView):
         assert_notebook_writable(notebook)
         serializer.save(notebook=notebook)
         touch_notebook_activity(notebook_id=notebook.id)
+
+    def create(self, request, *args, **kwargs):
+        """Respond with the full read shape (notebook_id, created_at, updated_at)
+        rather than the write serializer's echo, so clients can render a newly
+        created session (timestamps, `ChatSession` in @freshr/shared) without a
+        follow-up list refetch."""
+        write_serializer = self.get_serializer(data=request.data)
+        write_serializer.is_valid(raise_exception=True)
+        self.perform_create(write_serializer)
+        read_serializer = ChatSerializer(write_serializer.instance)
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED)
 
 class ChatDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = (IsAuthenticated,)
@@ -76,11 +89,24 @@ class ChatMessageListCreateView(generics.ListCreateAPIView):
         assert_notebook_writable(chat.notebook)
         next_index = ChatMessages.objects.filter(chat=chat).count()
         serializer.save(chat=chat, role=ChatRole.USER, order_index=next_index)
+
+    def create(self, request, *args, **kwargs):
+        """Respond with the full message (id, role, order_index, …), not just the
+        write serializer's echo — clients append the response to their message
+        list and need the real shape (`ChatMessage` in @freshr/shared)."""
+        write_serializer = self.get_serializer(data=request.data)
+        write_serializer.is_valid(raise_exception=True)
+        self.perform_create(write_serializer)
+        read_serializer = ChatMessageSerializer(write_serializer.instance)
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED)
         touch_notebook_activity(notebook_id=chat.notebook_id) # type: ignore
 
 
 class ChatMessageStreamView(APIView):
     permission_classes = (IsAuthenticated,)
+    # JSONRenderer first so `Accept: */*` (web's fetch) still negotiates to JSON;
+    # the SSE renderer matches EventSource clients' `Accept: text/event-stream`.
+    renderer_classes = (JSONRenderer, ServerSentEventRenderer)
 
     def get(self, request: Request, chat_id: str) -> Response | StreamingHttpResponse:
         # FETCH DATA
