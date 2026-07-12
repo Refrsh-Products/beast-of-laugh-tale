@@ -15,6 +15,7 @@ from drf_spectacular.utils import extend_schema
 import requests as http_requests
 
 from users.services import email_service
+from users.services.email_normalization import normalize_email
 from users.services.verification import send_verification_email
 from users.tokens import email_verification_token
 from .models import User
@@ -75,7 +76,14 @@ class GoogleAuth(APIView):
             last_name = client.get('family_name', '')
             profile_picture_url = client.get('picture', '')
 
-            user, created = User.objects.get_or_create(email=email)
+            # Look up by normalized_email (not the raw email) so a Google account whose
+            # address is a dotted/+tag alias of an existing email/password account's
+            # inbox (e.g. Gmail's "john.doe@" == "johndoe@") is recognized as
+            # the same user rather than silently creating a second free-tier account.
+            user = User.objects.filter(normalized_email=normalize_email(email)).first()
+            created = user is None
+            if created:
+                user = User.objects.create(email=email)
             logger.debug(f"[GoogleAuth] User {'CREATED' if created else 'FOUND'}: {user.email}")
 
             if created:
@@ -88,7 +96,10 @@ class GoogleAuth(APIView):
                 logger.debug(f"[GoogleAuth] Existing user registration_method: {user.registration_method}")
                 if user.registration_method != 'google':
                     return Response({
-                        'error': "User needs to sign in through email",
+                        'error': (
+                            "This email already has a password-based account. "
+                            "Please log in with your email and password instead of Google."
+                        ),
                         'status': False
                     }, status=status.HTTP_403_FORBIDDEN)
 
@@ -222,7 +233,10 @@ class RegistrationView(APIView):
         email: str = data['email']
         password: str = data['password']
 
-        existing = User.objects.filter(email__iexact=email).first()
+        # Matched on normalized_email (not raw email) so alias variants of an
+        # already-registered inbox (Gmail dots, +tags) can't be used to spin up
+        # extra free-tier accounts. See users/services/email_normalization.py.
+        existing = User.objects.filter(normalized_email=normalize_email(email)).first()
         if existing and existing.is_active:
             return Response(
                 {'error': 'An account with this email already exists. Please log in or reset your password.'},

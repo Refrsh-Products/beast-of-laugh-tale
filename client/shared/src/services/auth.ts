@@ -238,7 +238,9 @@ export function createAuthService(deps: ServiceDeps): AuthService {
           const messages = Object.entries(data).flatMap(([key, val]) => {
             const items = Array.isArray(val) ? val : [val];
             return items.map((v) =>
-              key === "non_field_errors" ? String(v) : `${key}: ${String(v)}`,
+              key === "non_field_errors" || key === "error"
+                ? String(v)
+                : `${key}: ${String(v)}`,
             );
           });
           throw new Error(messages.join("\n"));
