@@ -1,4 +1,5 @@
 import { useGoogleLogin } from "@react-oauth/google";
+import { isAxiosError } from "axios";
 import { saveGoogleProfile } from "../../storage";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
@@ -34,7 +35,10 @@ export default function GoogleAuthBtn() {
         }
       } catch (err) {
         console.error("[GoogleAuth] Sign-in failed:", err);
-        setError("Google sign-in failed. Please try again.");
+        const backendMessage = isAxiosError<{ error?: string }>(err)
+          ? err.response?.data?.error
+          : undefined;
+        setError(backendMessage || "Google sign-in failed. Please try again.");
       } finally {
         setIsLoading(false);
       }

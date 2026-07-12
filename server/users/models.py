@@ -2,6 +2,8 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
+from users.services.email_normalization import normalize_email
+
 
 REGISTRATION_CHOICES = [
     ('email', 'Email'),
@@ -35,6 +37,13 @@ class CustomUserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True, help_text="The user's unique email address.")
+    normalized_email = models.EmailField(
+        db_index=True,
+        editable=False,
+        default="",
+        help_text="Canonical form of `email` (lowercased, +tag and Gmail dots stripped), "
+                   "used to detect alias-based duplicate signups against the same inbox.",
+    )
 
     registration_method = models.CharField(max_length=20, choices=REGISTRATION_CHOICES, default='email')
 
@@ -52,6 +61,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     class Meta:
         verbose_name = 'user'
         verbose_name_plural = 'users'
+
+    def save(self, *args, **kwargs):
+        self.normalized_email = normalize_email(self.email)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.email
