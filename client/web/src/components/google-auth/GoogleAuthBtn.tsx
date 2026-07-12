@@ -1,4 +1,5 @@
 import { useGoogleLogin } from "@react-oauth/google";
+import { isAxiosError } from "axios";
 import createFreshrApiInstance, {
   AuthServiceApiEndpoints,
   UserServiceApiEndpoints,
@@ -92,7 +93,10 @@ export default function GoogleAuthBtn() {
         }
       } catch (err) {
         console.error("[GoogleAuth] Backend call failed:", err);
-        setError("Google sign-in failed. Please try again.");
+        const backendMessage = isAxiosError<{ error?: string }>(err)
+          ? err.response?.data?.error
+          : undefined;
+        setError(backendMessage || "Google sign-in failed. Please try again.");
       } finally {
         setIsLoading(false);
       }
