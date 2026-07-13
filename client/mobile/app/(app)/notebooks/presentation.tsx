@@ -226,9 +226,9 @@ export default function PresentationScreen() {
         </View>
       </ScrollView>
 
-      <View className="w-full items-center gap-2 pb-8 pt-4">
+      <View className="w-full items-center gap-4 pb-8 pt-4">
         {!isArchived && (
-          <Button onPress={() => setIsGenerateModalVisible(true)} size="lg">
+          <Button onPress={() => setIsGenerateModalVisible(true)} variant="default">
             <Text>+ New Presentation</Text>
           </Button>
         )}

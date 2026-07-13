@@ -353,7 +353,10 @@ export default function QuizScreen() {
                   onLongPress={!isArchived && q.id ? () => enterSelection(q.id!) : undefined}
                   onPress={selectionMode && q.id ? () => toggleSelect(q.id!) : undefined}
                   delayLongPress={300}
-                  className={cn('flex-row items-center gap-3', selectionMode && 'active:opacity-70')}>
+                  className={cn(
+                    'flex-row items-center gap-3',
+                    selectionMode && 'active:opacity-70'
+                  )}>
                   {selectionMode && (
                     <View pointerEvents="none">
                       <Checkbox
@@ -395,9 +398,9 @@ export default function QuizScreen() {
         </View>
       </ScrollView>
 
-      <View className="w-full items-center gap-2 pb-8 pt-4">
+      <View className="w-full items-center gap-4 pb-8 pt-4">
         {!isArchived && (
-          <Button onPress={() => setIsGenerateModalVisible(true)} size="lg">
+          <Button onPress={() => setIsGenerateModalVisible(true)} variant="default">
             <Text>+ New Quiz</Text>
           </Button>
         )}
