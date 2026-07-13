@@ -15,7 +15,7 @@ import { useNotebookService } from '@/hooks/useNotebookService';
 import { useAccountService } from '@/hooks/useAccountService';
 import type { AudioTranscriptSummary, AudioTranscriptDetail } from '@freshr/shared';
 import { Icon } from '@/components/ui/icon';
-import { X } from 'lucide-react-native';
+import { AudioLines, MessageCircle, Mic, Plus, Sparkles, X, type LucideIcon } from 'lucide-react-native';
 import { UpgradeSheet } from '@/components/account/upgradeSheet';
 import { getApiErrorCode, PAID_ONLY_FEATURE } from '@/lib/apiError';
 
@@ -314,22 +314,76 @@ export default function TranscriptionScreen() {
     <Screen className="flex-1 bg-background">
       <Header title={notebookTitle} actualId={notebookId} onNotebookUpdate={loadTranscripts} />
 
-      <ScrollView contentContainerClassName="p-4 gap-6">
-        {viewState === 'list' && (
-          <View className="gap-4">
-            <View className="flex-row items-center justify-between px-2">
-              <Text variant="h3">AUDIO NOTES</Text>
-              <Button onPress={handleUploadPress} size="icon" variant="outline">
-                <Text>+</Text>
-              </Button>
-            </View>
-
-            {transcripts.length === 0 ? (
-              <Text className="py-10 text-center text-muted-foreground">
-                {audioUnlocked ? 'No transcriptions yet.' : 'Upgrade to use this feature.'}
-              </Text>
+      <ScrollView
+        contentContainerClassName={
+          viewState === 'list' && transcripts.length === 0 ? 'flex-grow px-8 py-6' : 'p-4 gap-6'
+        }
+        showsVerticalScrollIndicator={false}>
+        {viewState === 'list' &&
+          (transcripts.length === 0 ? (
+            audioUnlocked ? (
+              /* Paid plan, nothing uploaded yet — mirror the chat empty state. */
+              <View className="flex-1 items-center justify-center gap-5 pb-12">
+                <View className="size-14 items-center justify-center rounded-full bg-muted">
+                  <Icon as={AudioLines} size={26} className="text-muted-foreground" />
+                </View>
+                <View className="items-center gap-1.5 px-4">
+                  <Text className="text-center text-xl font-semibold">No recordings yet</Text>
+                  <Text className="text-center text-sm leading-5 text-muted-foreground">
+                    Upload a lecture recording and Freshr will transcribe it and turn it into
+                    clean study notes.
+                  </Text>
+                </View>
+              </View>
             ) : (
-              transcripts.map((t) => (
+              /* Free plan — explain the feature, list its perks, point at upgrade. */
+              <View className="flex-1 justify-center gap-6 pb-12">
+                <View className="items-center gap-5">
+                  <View className="size-14 items-center justify-center rounded-full bg-muted">
+                    <Icon as={AudioLines} size={26} className="text-muted-foreground" />
+                  </View>
+                  <View className="items-center gap-1.5 px-4">
+                    <Text className="text-center text-xl font-semibold">
+                      Unlock audio transcription
+                    </Text>
+                    <Text className="text-center text-sm leading-5 text-muted-foreground">
+                      Available on paid plans. Turn lecture recordings into notes you can study,
+                      quiz, and chat over.
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="gap-2">
+                  <PerkRow icon={Mic} text="Transcribe full lectures from any audio recording" />
+                  <PerkRow
+                    icon={Sparkles}
+                    text="AI rewrites the transcript into clean lecture notes"
+                  />
+                  <PerkRow
+                    icon={MessageCircle}
+                    text="Notes join your notebook — quiz and chat over them"
+                  />
+                </View>
+
+                <Button size="lg" onPress={() => setShowUpgradeSheet(true)}>
+                  <Text>See upgrade options</Text>
+                </Button>
+              </View>
+            )
+          ) : (
+            <View className="gap-4">
+              <View className="flex-row items-center justify-between px-1">
+                <Text className="text-base font-semibold">Audio Notes</Text>
+                <Button
+                  onPress={handleUploadPress}
+                  size="icon"
+                  variant="ghost"
+                  accessibilityLabel="New transcription">
+                  <Icon as={Plus} size={20} className="text-muted-foreground" />
+                </Button>
+              </View>
+
+              {transcripts.map((t) => (
                 <TranscriptionListItem
                   key={t.id}
                   transcript={t}
@@ -337,10 +391,9 @@ export default function TranscriptionScreen() {
                   onDelete={() => handleDeleteTranscript(t.id)}
                   isDeleting={deletingId === t.id}
                 />
-              ))
-            )}
-          </View>
-        )}
+              ))}
+            </View>
+          ))}
 
         {viewState === 'upload' && (
           <View className="gap-6 px-3">
@@ -413,10 +466,17 @@ export default function TranscriptionScreen() {
       </ScrollView>
 
       {viewState === 'list' && (
-        <View className="w-full items-center gap-2 pb-8 pt-4">
-          <Button onPress={handleUploadPress} size="lg">
-            <Text>+ Upload Audio</Text>
-          </Button>
+        <View className="w-full items-center gap-4 pb-8 pt-4">
+          {audioUnlocked ? (
+            <Button onPress={handleUploadPress} size="lg">
+              <Text>+ Upload Audio</Text>
+            </Button>
+          ) : transcripts.length > 0 ? (
+            /* Free plan with old recordings: they can read them but not add more. */
+            <Button onPress={() => setShowUpgradeSheet(true)} size="lg">
+              <Text>Upgrade to unlock</Text>
+            </Button>
+          ) : null /* free + empty: the upsell above carries the CTA */}
           <BottomNav />
         </View>
       )}
@@ -432,6 +492,16 @@ export default function TranscriptionScreen() {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────
+
+/** One row in the free-plan upsell perk list. */
+function PerkRow({ icon, text }: { icon: LucideIcon; text: string }) {
+  return (
+    <View className="flex-row items-center gap-3 rounded-2xl border border-border bg-card p-4">
+      <Icon as={icon} size={18} className="text-foreground" />
+      <Text className="flex-1 text-sm leading-5">{text}</Text>
+    </View>
+  );
+}
 
 function formatSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;

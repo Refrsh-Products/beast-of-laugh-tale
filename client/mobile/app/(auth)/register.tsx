@@ -6,6 +6,7 @@ import { Text } from '@/components/ui/text';
 import { useAuthService } from '@/hooks/useAuthService';
 import { validateEmail, validatePassword, validatePasswordConfirm } from '@/lib/validation';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
 import {
@@ -18,6 +19,17 @@ import {
 } from 'react-native';
 
 type FieldErrors = { email?: string; password?: string; confirm?: string };
+
+// Canonical public policy pages (same routes web serves) — always the
+// production site, independent of which API host a dev build points at.
+const TERMS_URL = 'https://freshr.cc/terms-of-service';
+const PRIVACY_URL = 'https://freshr.cc/privacy-policy';
+
+function openPolicy(url: string) {
+  WebBrowser.openBrowserAsync(url).catch((err) =>
+    console.warn('Failed to open policy page', err)
+  );
+}
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -133,10 +145,22 @@ export default function RegisterScreen() {
         <GoogleSignInButton />
 
         <View className="mt-auto pt-12">
-          <Text className="text-center text-sm text-muted-foreground">
-            By creating an account, you agree to our{' '}
-            <Text className="text-sm text-blue-600">Terms</Text> and have read and acknowledged the{' '}
-            <Text className="text-sm text-blue-600">Privacy Policy</Text>.
+          <Text className="text-center text-sm leading-5 text-muted-foreground">
+            By signing up, you agree to Freshr&apos;s{' '}
+            <Text
+              className="text-sm text-blue-600 underline"
+              onPress={() => openPolicy(TERMS_URL)}
+              accessibilityRole="link">
+              Terms of Service
+            </Text>{' '}
+            and{' '}
+            <Text
+              className="text-sm text-blue-600 underline"
+              onPress={() => openPolicy(PRIVACY_URL)}
+              accessibilityRole="link">
+              Privacy Policy
+            </Text>
+            .
           </Text>
         </View>
       </ScrollView>

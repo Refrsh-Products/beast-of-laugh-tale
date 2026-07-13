@@ -131,7 +131,7 @@ function Header({ title, actualId, onNotebookUpdate }: HeaderProps) {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
+            <Button variant="ghost" size="icon">
               <EllipsisVerticalIcon size={20} className="text-foreground" />
             </Button>
           </DropdownMenuTrigger>

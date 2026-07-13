@@ -319,7 +319,7 @@ export default function ChatScreen() {
       <Header title={notebookTitle} actualId={notebookId} onNotebookUpdate={refreshNotebook} />
       <ArchiveBanner isArchived={isArchived} />
       {/* Slim session bar: current chat name + quiet icon actions. */}
-      <View className="w-full flex-row items-center justify-between px-5 pb-1 pt-2">
+      <View className="w-full flex-row items-center justify-between p-4 pb-1 pt-2">
         <View className="mr-3 flex-1">
           <Text numberOfLines={1} className="text-base font-semibold">
             {activeSessionTitle}
@@ -409,14 +409,14 @@ export default function ChatScreen() {
         </View>
 
         {/* Floating pill composer — no divider, blends into the background. */}
-        <View className="flex-row items-end gap-2 px-4 pb-1 pt-1">
+        <View className="flex-row items-center gap-2 px-4 py-1">
           <Input
             placeholder={isArchived ? 'Chat is disabled for archived notebooks.' : 'Ask anything…'}
             value={inputText}
             onChangeText={setInputText}
             multiline
             editable={!isArchived}
-            className="max-h-32 min-h-[48px] flex-1 rounded-[24px] border-0 bg-muted px-5 py-3 text-base leading-6 shadow-none dark:bg-muted"
+            className="max-h-32 min-h-12 flex-1 rounded-lg border bg-muted px-5 py-1 text-base leading-6 shadow-none dark:bg-muted"
           />
           <Button
             size="icon"
@@ -430,12 +430,12 @@ export default function ChatScreen() {
                 color={THEME[isDarkColorScheme ? 'dark' : 'light'].primaryForeground}
               />
             ) : (
-              <Icon as={ArrowUp} size={22} className="text-primary-foreground" />
+              <Icon as={ArrowUp} size={29} className="text-primary-foreground" />
             )}
           </Button>
         </View>
       </KeyboardAvoidingView>
-      <View className="w-full items-center pb-6 pt-2">
+      <View className="w-full items-center pb-8 pt-4">
         <BottomNav />
       </View>
 
@@ -489,9 +489,27 @@ function buildMarkdownStyles(t: (typeof THEME)['light']) {
   return {
     body: { color: t.foreground, fontSize: 16, lineHeight: 25 },
     paragraph: { marginTop: 0, marginBottom: 12 },
-    heading1: { fontSize: 22, fontWeight: '700' as const, marginTop: 8, marginBottom: 8, lineHeight: 30 },
-    heading2: { fontSize: 19, fontWeight: '700' as const, marginTop: 8, marginBottom: 6, lineHeight: 26 },
-    heading3: { fontSize: 17, fontWeight: '600' as const, marginTop: 6, marginBottom: 4, lineHeight: 24 },
+    heading1: {
+      fontSize: 22,
+      fontWeight: '700' as const,
+      marginTop: 8,
+      marginBottom: 8,
+      lineHeight: 30,
+    },
+    heading2: {
+      fontSize: 19,
+      fontWeight: '700' as const,
+      marginTop: 8,
+      marginBottom: 6,
+      lineHeight: 26,
+    },
+    heading3: {
+      fontSize: 17,
+      fontWeight: '600' as const,
+      marginTop: 6,
+      marginBottom: 4,
+      lineHeight: 24,
+    },
     strong: { fontWeight: '700' as const },
     link: { color: t.foreground, textDecorationLine: 'underline' as const },
     code_inline: {

@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UpgradeSheet } from '@/components/account/upgradeSheet';
 import type { StoredAccount, AccountUsage } from '@freshr/shared';
 import { Icon } from '@/components/ui/icon';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, LifeBuoy } from 'lucide-react-native';
 import { formatBytes } from '@/components/notebook/usageCard';
 
 export default function AccountScreen() {
@@ -184,6 +184,15 @@ export default function AccountScreen() {
             </CardContent>
           </Card>
         )}
+
+        {/* Support */}
+        <Button
+          variant="outline"
+          className="h-14 flex-row items-center justify-center gap-2 rounded-xl"
+          onPress={() => router.push('/support')}>
+          <Icon as={LifeBuoy} size={18} className="text-foreground" />
+          <Text className="text-base font-semibold">Contact Support</Text>
+        </Button>
 
         <Button
           variant="destructive"

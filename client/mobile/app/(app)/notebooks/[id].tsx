@@ -191,8 +191,8 @@ export default function NotebookDetailScreen() {
           <ArchiveBanner isArchived={isArchived} />
 
           <View className="flex w-full flex-row items-center justify-between px-5 pt-4">
-            <Text variant={selectionMode ? 'h4' : 'h3'}>
-              {selectionMode ? `${selectedIds.size} selected` : 'LECTURE FILES'}
+            <Text className="text-base font-semibold">
+              {selectionMode ? `${selectedIds.size} selected` : 'Lecture Files'}
             </Text>
             {!isArchived &&
               (selectionMode ? (
@@ -211,7 +211,7 @@ export default function NotebookDetailScreen() {
                 </View>
               ) : (
                 notebookFiles.length > 0 && (
-                  <Button variant="outline" size="icon" onPress={() => setSelectionMode(true)}>
+                  <Button variant="ghost" size="icon" onPress={() => setSelectionMode(true)}>
                     <Icon as={Trash2} />
                   </Button>
                 )
@@ -296,7 +296,7 @@ export default function NotebookDetailScreen() {
           </ScrollView>
         </View>
 
-        <View className="w-full items-center pb-8 pt-4">
+        <View className="w-full items-center gap-4 pb-8 pt-4">
           {!isArchived && (
             <View className="flex-row gap-4 py-2">
               <Button variant="outline" size="icon" onPress={scan.openScanner}>

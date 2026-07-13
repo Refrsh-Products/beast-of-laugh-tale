@@ -17,6 +17,7 @@ import { Icon } from '@/components/ui/icon';
 import { ArchiveBanner } from '@/components/notebook/archiveBanner';
 import { UpgradeSheet } from '@/components/account/upgradeSheet';
 import { getApiErrorCode, PRESENTATION_QUOTA_EXCEEDED } from '@/lib/apiError';
+import { Plus, Presentation } from 'lucide-react-native';
 
 type ViewState = 'list' | 'view';
 
@@ -201,34 +202,53 @@ export default function PresentationScreen() {
     <Screen className="flex-1 bg-background">
       <Header title={notebookTitle} actualId={notebookId} onNotebookUpdate={loadPresentations} />
       <ArchiveBanner isArchived={isArchived} />
-      <ScrollView contentContainerClassName="p-4 gap-6">
-        <View className="gap-4">
-          <View className="flex-row items-center justify-between px-2">
-            <Text variant="h3">PRESENTATIONS</Text>
-            {!isArchived && (
-              <Button onPress={() => setIsGenerateModalVisible(true)} size="icon" variant="outline">
-                <Text>+</Text>
-              </Button>
-            )}
+      <ScrollView
+        contentContainerClassName={presentations.length === 0 ? 'flex-grow px-8 py-6' : 'p-4 gap-6'}
+        showsVerticalScrollIndicator={false}>
+        {presentations.length === 0 ? (
+          /* Empty state — mirrors the chat/quiz/transcription treatment. */
+          <View className="flex-1 items-center justify-center gap-5 pb-12">
+            <View className="size-14 items-center justify-center rounded-full bg-muted">
+              <Icon as={Presentation} size={26} className="text-muted-foreground" />
+            </View>
+            <View className="items-center gap-1.5 px-4">
+              <Text className="text-center text-xl font-semibold">No presentations yet</Text>
+              <Text className="text-center text-sm leading-5 text-muted-foreground">
+                {isArchived
+                  ? 'This notebook is archived. Restore it to generate presentations from your notes.'
+                  : 'Generate slides from your notes — pick a topic and get a ready-to-present deck.'}
+              </Text>
+            </View>
           </View>
+        ) : (
+          <View className="gap-4">
+            <View className="flex-row items-center justify-between px-2">
+              <Text className="text-base font-semibold">Presentations</Text>
+              {!isArchived && (
+                <Button
+                  onPress={() => setIsGenerateModalVisible(true)}
+                  size="icon"
+                  variant="ghost"
+                  accessibilityLabel="New presentation">
+                  <Icon as={Plus} size={20} className="text-muted-foreground" />
+                </Button>
+              )}
+            </View>
 
-          {presentations.length === 0 ? (
-            <Text className="py-10 text-center text-muted-foreground">No presentations yet.</Text>
-          ) : (
-            presentations.map((p) => (
+            {presentations.map((p) => (
               <PresentationListItem
                 key={p.id}
                 presentation={p}
                 onPress={() => handleSelectPresentation(p)}
               />
-            ))
-          )}
-        </View>
+            ))}
+          </View>
+        )}
       </ScrollView>
 
-      <View className="w-full items-center gap-2 pb-8 pt-4">
+      <View className="w-full items-center gap-4 pb-8 pt-4">
         {!isArchived && (
-          <Button onPress={() => setIsGenerateModalVisible(true)} size="lg">
+          <Button onPress={() => setIsGenerateModalVisible(true)} variant="default">
             <Text>+ New Presentation</Text>
           </Button>
         )}
