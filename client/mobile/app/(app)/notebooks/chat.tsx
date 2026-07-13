@@ -319,7 +319,7 @@ export default function ChatScreen() {
       <Header title={notebookTitle} actualId={notebookId} onNotebookUpdate={refreshNotebook} />
       <ArchiveBanner isArchived={isArchived} />
       {/* Slim session bar: current chat name + quiet icon actions. */}
-      <View className="w-full flex-row items-center justify-between px-5 pb-1 pt-2">
+      <View className="w-full flex-row items-center justify-between p-4 pb-1 pt-2">
         <View className="mr-3 flex-1">
           <Text numberOfLines={1} className="text-base font-semibold">
             {activeSessionTitle}
@@ -409,7 +409,7 @@ export default function ChatScreen() {
         </View>
 
         {/* Floating pill composer — no divider, blends into the background. */}
-        <View className="flex-row items-center gap-2 px-4 pb-1 pt-1">
+        <View className="flex-row items-center gap-2 px-4 py-1">
           <Input
             placeholder={isArchived ? 'Chat is disabled for archived notebooks.' : 'Ask anything…'}
             value={inputText}

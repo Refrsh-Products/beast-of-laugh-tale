@@ -1,7 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View, ScrollView, ActivityIndicator, Alert, Pressable } from 'react-native';
-import { Plus, Trash2, X } from 'lucide-react-native';
+import { Plus, SquareCheckBig, Trash2, X } from 'lucide-react-native';
 import { Screen } from '@/components/ui/screen';
 import { ArchiveBanner } from '@/components/notebook/archiveBanner';
 import { UpgradeSheet } from '@/components/account/upgradeSheet';
@@ -304,48 +304,62 @@ export default function QuizScreen() {
     <Screen className="flex-1 bg-background">
       <Header title={notebookTitle} actualId={notebookId} onNotebookUpdate={loadQuizzes} />
       <ArchiveBanner isArchived={isArchived} />
-      <ScrollView contentContainerClassName="p-4 gap-6">
-        <View className="gap-4">
-          <View className="flex-row items-center justify-between px-2">
-            <Text variant={selectionMode ? 'h4' : 'h3'}>
-              {selectionMode ? `${selectedIds.size} selected` : 'QUIZ'}
-            </Text>
-            {!isArchived &&
-              (selectionMode ? (
-                <View className="flex-row items-center gap-2">
-                  <Button variant="ghost" size="sm" onPress={exitSelection}>
-                    <Icon as={X} size={18} />
-                    <Text>Cancel</Text>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    disabled={selectedIds.size === 0}
-                    onPress={() => setIsDeleteDialogVisible(true)}>
-                    <Icon as={Trash2} className="text-destructive" />
-                  </Button>
-                </View>
-              ) : (
-                <View className="flex-row items-center gap-2">
-                  {quizzes.length > 0 && (
+      <ScrollView
+        contentContainerClassName={quizzes.length === 0 ? 'flex-grow px-8 py-6' : 'p-4 gap-6'}
+        showsVerticalScrollIndicator={false}>
+        {quizzes.length === 0 ? (
+          /* Empty state — mirrors the chat/transcription treatment. */
+          <View className="flex-1 items-center justify-center gap-5 pb-12">
+            <View className="size-14 items-center justify-center rounded-full bg-muted">
+              <Icon as={SquareCheckBig} size={26} className="text-muted-foreground" />
+            </View>
+            <View className="items-center gap-1.5 px-4">
+              <Text className="text-center text-xl font-semibold">No quizzes yet</Text>
+              <Text className="text-center text-sm leading-5 text-muted-foreground">
+                {isArchived
+                  ? 'This notebook is archived. Restore it to generate quizzes from your notes.'
+                  : 'Generate a quiz from your notes to find out what you actually remember.'}
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View className="gap-4">
+            <View className="flex-row items-center justify-between px-2">
+              <Text className="text-base font-semibold">
+                {selectionMode ? `${selectedIds.size} selected` : 'Quiz'}
+              </Text>
+              {!isArchived &&
+                (selectionMode ? (
+                  <View className="flex-row items-center gap-2">
+                    <Button variant="ghost" size="sm" onPress={exitSelection}>
+                      <Icon as={X} size={18} />
+                      <Text>Cancel</Text>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled={selectedIds.size === 0}
+                      onPress={() => setIsDeleteDialogVisible(true)}>
+                      <Icon as={Trash2} className="text-destructive" />
+                    </Button>
+                  </View>
+                ) : (
+                  <View className="flex-row items-center gap-2">
                     <Button variant="outline" size="icon" onPress={() => setSelectionMode(true)}>
                       <Icon as={Trash2} />
                     </Button>
-                  )}
-                  <Button
-                    onPress={() => setIsGenerateModalVisible(true)}
-                    size="icon"
-                    variant="outline">
-                    <Icon as={Plus} />
-                  </Button>
-                </View>
-              ))}
-          </View>
+                    <Button
+                      onPress={() => setIsGenerateModalVisible(true)}
+                      size="icon"
+                      variant="ghost"
+                      accessibilityLabel="New quiz">
+                      <Icon as={Plus} size={20} className="text-muted-foreground" />
+                    </Button>
+                  </View>
+                ))}
+            </View>
 
-          {quizzes.length === 0 ? (
-            <Text className="py-10 text-center text-muted-foreground">No quizzes yet.</Text>
-          ) : (
-            quizzes.map((q) => {
+            {quizzes.map((q) => {
               const selected = !!q.id && selectedIds.has(q.id);
               return (
                 <Pressable
@@ -393,9 +407,9 @@ export default function QuizScreen() {
                   </Card>
                 </Pressable>
               );
-            })
-          )}
-        </View>
+            })}
+          </View>
+        )}
       </ScrollView>
 
       <View className="w-full items-center gap-4 pb-8 pt-4">
