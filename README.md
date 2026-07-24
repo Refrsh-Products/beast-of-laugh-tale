@@ -1,6 +1,6 @@
-# Freshr
+# FRESHR
 
-**Freshr** is an AI-powered learning platform that helps students learn smarter. Upload your documents, and Freshr will index them into a vector database, enabling intelligent, context-aware interactions with your study materials including AI-generated quizzes, flashcards, and RAG-based tutoring.
+**FRESHR** is an AI-powered learning platform that helps students learn smarter. Upload your documents, and FRESHR will index them into a vector database, enabling intelligent, context-aware interactions with your study materials including AI-generated quizzes, flashcards, and RAG-based tutoring.
 
 ---
 
@@ -21,9 +21,9 @@
 
 ## Product Overview
 
-Freshr is designed for students who want to get more out of their study materials. The platform allows users to organize their documents into **notebooks**, upload files (PDFs, DOCX, images, and more), and leverage AI to interact with that content in meaningful ways.
+FRESHR is designed for students who want to get more out of their study materials. The platform allows users to organize their documents into **notebooks**, upload files (PDFs, DOCX, images, and more), and leverage AI to interact with that content in meaningful ways.
 
-At the core of Freshr is a **Retrieval-Augmented Generation (RAG)** pipeline that processes uploaded documents, generates vector embeddings, and stores them in a PostgreSQL vector database (PGVector). This enables similarity-based search across a user's study materials — scoped and isolated per user and notebook — forming the foundation for AI tutoring, quiz generation, and more.
+At the core of FRESHR is a **Retrieval-Augmented Generation (RAG)** pipeline that processes uploaded documents, generates vector embeddings, and stores them in a PostgreSQL vector database (PGVector). This enables similarity-based search across a user's study materials — scoped and isolated per user and notebook — forming the foundation for AI tutoring, quiz generation, and more.
 
 The backend is built with **Django REST Framework**, uses **Celery + Redis** for asynchronous document indexing, and integrates **Anthropic Claude** and **Google Gemini** APIs for AI-powered features.
 
