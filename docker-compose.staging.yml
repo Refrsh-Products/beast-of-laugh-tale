@@ -47,6 +47,8 @@ services:
     mem_limit: 512m
     volumes:
       - media:/app/media
+      # Temporary: pre-load-test perf baseline (see freshr/perf_logging.py).
+      - perf_logs_staging:/app/logs
     ports:
       - "127.0.0.1:8001:8000"
     env_file:
@@ -59,6 +61,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       REDIS_URL: redis://redis:6379/0
       CONNECTION_STRING: postgresql+psycopg://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      PERF_LOG_DIR: /app/logs
     depends_on:
       postgres:
         condition: service_healthy
@@ -99,6 +102,9 @@ services:
     image: ghcr.io/${GHCR_ORG}/freshr-web:staging
     restart: unless-stopped
     mem_limit: 64m
+    volumes:
+      # Temporary: pre-load-test perf baseline (see client/web/nginx.conf).
+      - nginx_perf_logs_staging:/var/log/perf
     networks:
       default:
       edge:
@@ -132,3 +138,7 @@ volumes:
   dozzle_data:
   postgres_data:
   media:
+  # Temporary: pre-load-test perf baseline. Remove along with the mounts
+  # above once the baseline is captured.
+  perf_logs_staging:
+  nginx_perf_logs_staging:

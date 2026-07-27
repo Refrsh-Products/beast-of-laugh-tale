@@ -96,6 +96,8 @@ AUTH_USER_MODEL = 'users.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # Temporary: pre-load-test perf baseline. See freshr/perf_logging.py.
+    'freshr.perf_logging.RequestPerfLoggingMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -314,6 +316,16 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'json',
         },
+        # Temporary: pre-load-test perf baseline. Deliberately a separate file
+        # (not the 'console' handler) so it's a clean, greppable stream rather
+        # than mixed in with the rest of the app's logs.
+        'perf_file': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': os.path.join(os.getenv('PERF_LOG_DIR', BASE_DIR), 'perf.log'),
+            'maxBytes': 50 * 1024 * 1024,
+            'backupCount': 10,
+            'formatter': 'json',
+        },
     },
     'root': {
         'handlers': ['console'],
@@ -323,5 +335,6 @@ LOGGING = {
         'django': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
         'django.request': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
         'celery': {'handlers': ['console'], 'level': 'INFO', 'propagate': False},
+        'perf': {'handlers': ['perf_file'], 'level': 'INFO', 'propagate': False},
     },
 }
