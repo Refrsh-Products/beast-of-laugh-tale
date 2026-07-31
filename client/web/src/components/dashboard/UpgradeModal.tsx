@@ -1,137 +1,47 @@
-import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import Button from "../ui/LegacyButton";
-
-const B = "#000000";
-const W = "#FFFFFF";
-const G = "#84e487";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { RiSparkling2Line } from "@remixicon/react";
 
 export default function UpgradeModal({
   onClose,
-  title,
-  description,
+  title = "You've hit your plan limit",
+  description = "Upgrade to Pro for unlimited notebooks, more storage and higher daily quiz and presentation limits.",
 }: {
   onClose: () => void;
   title?: string;
   description?: string;
 }) {
   const navigate = useNavigate();
-  return createPortal(
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 2000,
-      }}
-      onMouseDown={onClose}
-    >
-      <div
-        style={{
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${B}`,
-          padding: "32px",
-          maxWidth: 420,
-          width: "90%",
-          display: "flex",
-          flexDirection: "column",
-          gap: 20,
-        }}
-        onMouseDown={(e) => e.stopPropagation()}
-      >
-        <div>
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "1.2rem",
-              margin: "0 0 8px",
-            }}
-          >
-            {title}
-          </h2>
-          <p
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              color: "#000000",
-              margin: 0,
-              lineHeight: 1.6,
-            }}
-          >
-            {description}
-          </p>
-        </div>
 
-        <div
-          style={{
-            border: `2px solid ${B}`,
-            padding: "16px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 8,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
-              textTransform: "uppercase",
-              color: "#000000",
-            }}
-          >
-            Pro plan includes
+  return (
+    <Dialog open onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <span className="bg-secondary text-secondary-foreground mb-1 flex size-11 items-center justify-center rounded-full">
+            <RiSparkling2Line className="size-5" aria-hidden="true" />
           </span>
-          {[
-            "Unlimited notebooks",
-            "50 GB storage",
-            "Unlimited daily quizzes",
-            "Unlimited presentations",
-            "Priority support",
-          ].map((feature) => (
-            <div
-              key={feature}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-              }}
-            >
-              <span
-                style={{
-                  width: 14,
-                  height: 14,
-                  background: G,
-                  border: `1.5px solid ${B}`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                }}
-              >
-                ✓
-              </span>
-              {feature}
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
-          <Button variant="default" onClick={onClose}>Not now</Button>
-          <Button variant="green" onClick={() => navigate("/profile", { state: { tab: "payment" } })}>Upgrade to Pro →</Button>
-        </div>
-      </div>
-    </div>,
-    document.body,
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>
+            Not now
+          </Button>
+          <Button
+            onClick={() => navigate("/profile", { state: { tab: "payment" } })}
+          >
+            See plans
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

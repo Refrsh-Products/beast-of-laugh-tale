@@ -1,195 +1,195 @@
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import type { Notebook } from "@freshr/shared";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  RiMore2Fill,
+  RiPushpin2Fill,
+  RiPushpin2Line,
+  RiPencilLine,
+  RiArchive2Line,
+  RiDeleteBin6Line,
+  RiFileTextLine,
+  RiQuillPenLine,
+} from "@remixicon/react";
+import { formatRelativeTime } from "@/lib/formatRelativeTime";
 
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+export interface NotebookCardActions {
+  onPin: () => void;
+  onRename: () => void;
+  onArchive: () => void;
+  onDelete: () => void;
 }
 
 export default function NotebookCard({
   notebook,
   fileCount,
-  openMenuId,
-  onMenuOpen,
-  editingId,
+  isEditing,
   editValue,
   onEditChange,
   onEditConfirm,
   onEditCancel,
   onClick,
+  actions,
 }: {
   notebook: Notebook;
   fileCount: number;
-  openMenuId: string | null;
-  onMenuOpen: (
-    id: string | null,
-    anchor?: { top: number; right: number },
-  ) => void;
-  editingId: string | null;
+  isEditing: boolean;
   editValue: string;
   onEditChange: (val: string) => void;
   onEditConfirm: () => void;
   onEditCancel: () => void;
-  onClick?: (notebook: Notebook) => void;
+  onClick: () => void;
+  actions: NotebookCardActions;
 }) {
-  const [hovered, setHovered] = useState(false);
-  const menuOpen = openMenuId === notebook.id;
-  const isEditing = editingId === notebook.id;
-  const escapeRef = useRef(false);
+  // Escape must cancel without the blur handler also committing the rename.
+  const cancelledRef = useRef(false);
+  // Set when Rename is chosen, so the menu can skip returning focus to its
+  // trigger. Without this Radix blurs the freshly autofocused input on close.
+  const renamingRef = useRef(false);
+  // Blur only commits once the user has actually touched the field. Opening
+  // rename from the menu can blur the input before anyone types — committing
+  // there would close the editor instantly and save the unchanged title.
+  const interactedRef = useRef(false);
 
   return (
-    <div
-      style={{
-        height: 140,
-        position: "relative",
-        padding: 16,
-        background: W,
-        border:
-          hovered || menuOpen || isEditing
-            ? `2px solid ${G}`
-            : `2px solid ${B}`,
-        boxShadow:
-          hovered || menuOpen || isEditing
-            ? `6px 6px 0 ${B}`
-            : `3px 3px 0 ${B}`,
-        transform:
-          hovered || menuOpen || isEditing ? "translate(-2px, -2px)" : "none",
-        transition: "transform 0.1s, box-shadow 0.1s, border-color 0.1s",
-        cursor: isEditing ? "default" : "pointer",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "space-between",
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => !isEditing && onClick?.(notebook)}
+    <Card
+      className="group hover:border-primary/40 relative gap-0 overflow-hidden p-0 transition-colors focus-within:ring-[3px] focus-within:ring-ring/50"
+      data-testid="notebook-card"
     >
-      {/* Top row */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-        }}
-      >
-        <div style={{ width: 16 }}>
-          {notebook.pinned && (
-            <svg width="12" height="12" viewBox="0 0 12 12" fill={G}>
-              <path d="M9 1H3a1 1 0 0 0-1 1v1.5l2 2V10l2 1 2-1V5.5l2-2V2a1 1 0 0 0-1-1Z" />
-            </svg>
-          )}
-        </div>
-        {!isEditing && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              if (menuOpen) {
-                onMenuOpen(null);
-                return;
-              }
-              const rect = e.currentTarget.getBoundingClientRect();
-              onMenuOpen(notebook.id, {
-                top: rect.bottom + 4,
-                right: window.innerWidth - rect.right,
-              });
-            }}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              padding: "0 2px",
-              fontSize: "1rem",
-              lineHeight: 1,
-              color: "#000000",
-              opacity: hovered || menuOpen ? 1 : 0,
-              transition: "opacity 0.1s",
-            }}
-          >
-            ⋮
-          </button>
+      {/* Cover band — carries the pinned marker and gives the grid rhythm. */}
+      <div className="from-accent to-muted relative h-16 bg-gradient-to-br">
+        {notebook.pinned && (
+          <Badge className="absolute top-2 right-2 gap-1">
+            <RiPushpin2Fill className="size-3" aria-hidden="true" />
+            Pinned
+          </Badge>
         )}
       </div>
 
-      {/* Title or rename input */}
-      {isEditing ? (
-        <input
-          autoFocus
-          value={editValue}
-          onChange={(e) => onEditChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              onEditConfirm();
-            } else if (e.key === "Escape") {
-              escapeRef.current = true;
-              e.currentTarget.blur();
-            }
-          }}
-          onBlur={() => {
-            if (escapeRef.current) {
-              escapeRef.current = false;
-              onEditCancel();
-            } else {
-              onEditConfirm();
-            }
-          }}
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 700,
-            fontSize: "0.95rem",
-            lineHeight: 1.3,
-            flex: 1,
-            width: "100%",
-            border: "none",
-            borderBottom: `2px solid ${G}`,
-            outline: "none",
-            background: "transparent",
-            padding: "2px 0",
-            marginTop: 4,
-          }}
-        />
-      ) : (
-        <div
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 700,
-            fontSize: "0.95rem",
-            lineHeight: 1.3,
-            flex: 1,
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-            marginTop: 4,
-          }}
-        >
-          {notebook.title}
-        </div>
-      )}
+      <div className="flex flex-1 flex-col gap-2 p-4">
+        <div className="flex items-start justify-between gap-2">
+          {isEditing ? (
+            <Input
+              autoFocus
+              value={editValue}
+              aria-label="Notebook title"
+              onChange={(e) => {
+                interactedRef.current = true;
+                onEditChange(e.target.value);
+              }}
+              onClick={(e) => e.stopPropagation()}
+              onKeyDown={(e) => {
+                interactedRef.current = true;
+                if (e.key === "Enter") {
+                  onEditConfirm();
+                } else if (e.key === "Escape") {
+                  cancelledRef.current = true;
+                  onEditCancel();
+                }
+              }}
+              onBlur={() => {
+                if (cancelledRef.current) {
+                  cancelledRef.current = false;
+                  return;
+                }
+                if (!interactedRef.current) return;
+                interactedRef.current = false;
+                onEditConfirm();
+              }}
+              className="h-8"
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={onClick}
+              className="cursor-pointer text-left"
+            >
+              {/* Stretched hit area: the whole card opens the notebook, while
+                  the menu button above it stays independently clickable. */}
+              <span className="absolute inset-0" aria-hidden="true" />
+              <h3 className="line-clamp-2 leading-snug font-semibold tracking-[-0.01em]">
+                {notebook.title}
+              </h3>
+            </button>
+          )}
 
-      {/* Bottom row */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#000000",
-          marginTop: 8,
-        }}
-      >
-        <span>Created {formatDate(notebook.created_at)}</span>
-        <span>{fileCount} files</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Actions for ${notebook.title}`}
+                // z-10 keeps the trigger above the title's stretched overlay.
+                // Without an explicit layer this relies on DOM order alone, and
+                // a click near the trigger's edge opens the notebook instead.
+                className="relative z-10 shrink-0"
+              >
+                <RiMore2Fill aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="w-44"
+              onCloseAutoFocus={(event) => {
+                // Every other action leaves focus to Radix; only rename needs
+                // it left alone so the inline input keeps it.
+                if (renamingRef.current) {
+                  renamingRef.current = false;
+                  event.preventDefault();
+                }
+              }}
+            >
+              <DropdownMenuItem onSelect={actions.onPin}>
+                {notebook.pinned ? (
+                  <RiPushpin2Line aria-hidden="true" />
+                ) : (
+                  <RiPushpin2Fill aria-hidden="true" />
+                )}
+                {notebook.pinned ? "Unpin" : "Pin"}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => {
+                  renamingRef.current = true;
+                  actions.onRename();
+                }}
+              >
+                <RiPencilLine aria-hidden="true" />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={actions.onArchive}>
+                <RiArchive2Line aria-hidden="true" />
+                Archive
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onSelect={actions.onDelete}>
+                <RiDeleteBin6Line aria-hidden="true" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        <div className="text-muted-foreground mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+          <span className="flex items-center gap-1">
+            <RiFileTextLine className="size-3.5" aria-hidden="true" />
+            {fileCount} {fileCount === 1 ? "file" : "files"}
+          </span>
+          <span className="flex items-center gap-1">
+            <RiQuillPenLine className="size-3.5" aria-hidden="true" />
+            Edited {formatRelativeTime(notebook.updated_at)}
+          </span>
+        </div>
       </div>
-    </div>
+    </Card>
   );
 }

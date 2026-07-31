@@ -1,7 +1,7 @@
-import * as React from "react"
-import { Progress as ProgressPrimitive } from "radix-ui"
+import * as React from "react";
+import { Progress as ProgressPrimitive } from "radix-ui";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 function Progress({
   className,
@@ -11,9 +11,10 @@ function Progress({
   return (
     <ProgressPrimitive.Root
       data-slot="progress"
+      value={value}
       className={cn(
         "relative flex h-3 w-full items-center overflow-x-hidden rounded-4xl bg-muted",
-        className
+        className,
       )}
       {...props}
     >
@@ -23,7 +24,7 @@ function Progress({
         style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
       />
     </ProgressPrimitive.Root>
-  )
+  );
 }
 
-export { Progress }
+export { Progress };

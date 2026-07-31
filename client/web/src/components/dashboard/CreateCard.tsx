@@ -1,39 +1,20 @@
-import { useState } from 'react'
+import { RiAddLine } from "@remixicon/react";
 
-const G = '#84e487'
-const B = '#000000'
-const W = '#FFFFFF'
-
-export default function CreateCard({ onCreate }: { onCreate: () => void }) {
-  const [hovered, setHovered] = useState(false)
+/**
+ * The dashed "new notebook" tile that leads the grid. It is a button rather
+ * than a Card so the whole tile is one focusable, labelled control.
+ */
+export default function CreateCard({ onClick }: { onClick: () => void }) {
   return (
-    <div
-      onClick={onCreate}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        height: 140,
-        border: hovered ? `2px dashed ${G}` : `2px dashed ${B}`,
-        background: W,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 8,
-        cursor: 'pointer',
-        transition: 'border-color 0.1s',
-      }}
+    <button
+      type="button"
+      onClick={onClick}
+      className="border-input text-muted-foreground hover:border-primary hover:text-primary hover:bg-accent/40 focus-visible:ring-ring/50 flex min-h-44 cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed transition-colors focus-visible:ring-[3px] focus-visible:outline-none"
     >
-      <span style={{ fontSize: '1.8rem', color: '#aaa', lineHeight: 1 }}>+</span>
-      <span
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: '0.72rem',
-          color: '#888',
-        }}
-      >
-        New notebook
+      <span className="bg-secondary text-secondary-foreground flex size-11 items-center justify-center rounded-full">
+        <RiAddLine className="size-5" aria-hidden="true" />
       </span>
-    </div>
-  )
+      <span className="text-foreground font-semibold">Create new notebook</span>
+    </button>
+  );
 }

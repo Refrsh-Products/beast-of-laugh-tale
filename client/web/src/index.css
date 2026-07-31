@@ -103,7 +103,11 @@
 
   --muted: var(--brand-tertiary-200);
   --muted-foreground: #4a5a50;
-  --accent: var(--brand-secondary-100);
+  /* --accent backs hover and selected states across menus, ghost buttons and
+     card surfaces, so it has to be quiet. Sulu is far too loud repeated at
+     that density — it stays reserved for --secondary, where it marks a
+     deliberate call to action. This is the pale end of the Timber Green ramp. */
+  --accent: var(--brand-primary-100);
   --accent-foreground: var(--brand-primary-900);
 
   --destructive: #b3261e;
@@ -128,7 +132,7 @@
   --sidebar-foreground: var(--brand-ink);
   --sidebar-primary: var(--brand-primary-900);
   --sidebar-primary-foreground: var(--brand-paper);
-  --sidebar-accent: var(--brand-secondary-100);
+  --sidebar-accent: var(--brand-primary-100);
   --sidebar-accent-foreground: var(--brand-primary-900);
   --sidebar-border: var(--brand-tertiary-300);
   --sidebar-ring: var(--brand-primary-600);

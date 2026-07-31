@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom";
 import { Navigate, useNavigate } from "react-router-dom";
 import useNotebookService from "../services/notebooks";
 import useAuthService from "../services/auth";
@@ -10,83 +9,37 @@ import { getAccount as getCachedAccount } from "../storage";
 import LoadErrorScreen from "../components/ui/LoadErrorScreen";
 
 import TopNavbar from "../components/dashboard/TopNavbar";
+import UsageOverview from "../components/dashboard/UsageOverview";
 import NotebookCard from "../components/dashboard/NotebookCard";
 import NotebookRow from "../components/dashboard/NotebookRow";
+import CreateCard from "../components/dashboard/CreateCard";
 import CreateNotebookModal from "../components/dashboard/CreateNotebookModal";
 import DeleteNotebookModal from "../components/dashboard/DeleteNotebookModal";
 import ArchivedSection from "../components/dashboard/ArchivedSection";
-import NotebookMenu from "../components/dashboard/NotebookMenu";
-import { useToast } from "../hooks/useToast";
+import EmptyState from "../components/dashboard/EmptyState";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
+import { useToast } from "../hooks/useToast";
 import { track } from "../lib/analytics";
-import { useMediaQuery } from "../hooks/useMediaQuery";
-import { BP_PHONE } from "../constants/breakpoints";
 
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Toggle } from "@/components/ui/toggle";
+import {
+  RiSearchLine,
+  RiAddLine,
+  RiLayoutGridLine,
+  RiListUnordered,
+  RiBook2Line,
+  RiSearchEyeLine,
+} from "@remixicon/react";
 
-function MiniBar({ used, limit }: { used: number; limit: number }) {
-  const pct = limit > 0 ? Math.min(100, (used / limit) * 100) : 0;
-  const fill = pct >= 80 ? "#e53e3e" : pct >= 55 ? "#d97706" : B;
-  return (
-    <div style={{ width: 52, height: 4, background: "#e0e0e0", flexShrink: 0 }}>
-      <div
-        style={{
-          width: `${pct}%`,
-          height: "100%",
-          background: fill,
-          transition: "width 0.3s",
-        }}
-      />
-    </div>
-  );
-}
-
-function NewNotebookButton({ onClick }: { onClick: () => void }) {
-  const [hovered, setHovered] = useState(false);
-  const [pressed, setPressed] = useState(false);
-  return (
-    <button
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => {
-        setHovered(false);
-        setPressed(false);
-      }}
-      onMouseDown={() => setPressed(true)}
-      onMouseUp={() => setPressed(false)}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 7,
-        background: G,
-        color: B,
-        border: `2px solid ${B}`,
-        padding: "10px 18px",
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontWeight: 700,
-        fontSize: "0.75rem",
-        letterSpacing: "0.04em",
-        cursor: "pointer",
-        boxShadow: pressed
-          ? `1px 1px 0 ${B}`
-          : hovered
-            ? `5px 5px 0 ${B}`
-            : `3px 3px 0 ${B}`,
-        transform: pressed
-          ? "translate(2px, 2px)"
-          : hovered
-            ? "translate(-2px, -2px)"
-            : "none",
-        transition: "transform 0.1s, box-shadow 0.1s",
-        flexShrink: 0,
-      }}
-    >
-      <span style={{ fontSize: "1rem", lineHeight: 1 }}>+</span>
-      New Notebook
-    </button>
-  );
+/** Greeting keyed off the local hour, matching the inspiration's header. */
+function greeting(now: Date = new Date()): string {
+  const hour = now.getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 }
 
 export default function DashboardPage() {
@@ -95,24 +48,23 @@ export default function DashboardPage() {
   const notebookService = useNotebookService();
   const navigate = useNavigate();
   const user = authService.getUser();
-  const isPhone = useMediaQuery(BP_PHONE);
-  const [account, setAccount] = useState<StoredAccount | null>(getCachedAccount());
+  const [account, setAccount] = useState<StoredAccount | null>(
+    getCachedAccount(),
+  );
 
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [archivedNotebooks, setArchivedNotebooks] = useState<Notebook[]>([]);
   const [fileCounts, setFileCounts] = useState<Record<string, number>>({});
   const [view, setView] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
-  const [menuAnchor, setMenuAnchor] = useState<{
-    top: number;
-    right: number;
-  } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [upgradeModal, setUpgradeModal] = useState<{ title: string; description: string } | null>(null);
+  const [upgradeModal, setUpgradeModal] = useState<{
+    title: string;
+    description: string;
+  } | null>(null);
   const [createTitle, setCreateTitle] = useState("");
   const [createError, setCreateError] = useState("");
   const { showToast } = useToast();
@@ -181,26 +133,19 @@ export default function DashboardPage() {
     init();
   }, []);
 
-  useEffect(() => {
-    function handleMouseDown() {
-      if (openMenuId !== null) {
-        setOpenMenuId(null);
-        setMenuAnchor(null);
-      }
-    }
-    document.addEventListener("mousedown", handleMouseDown);
-    return () => document.removeEventListener("mousedown", handleMouseDown);
-  }, [openMenuId]);
-
   // Fires `dashboard-engaged-5min` once per mount after 5 minutes of cumulative
   // activity. Idle gaps >30s do not accumulate, so background tabs don't qualify.
   useEffect(() => {
     let engagedMs = 0;
     let lastActivityAt = Date.now();
     let fired = false;
-    const onActivity = () => { lastActivityAt = Date.now(); };
+    const onActivity = () => {
+      lastActivityAt = Date.now();
+    };
     const events = ["mousemove", "keydown", "scroll", "click", "touchstart"];
-    events.forEach((e) => window.addEventListener(e, onActivity, { passive: true }));
+    events.forEach((e) =>
+      window.addEventListener(e, onActivity, { passive: true }),
+    );
     const id = window.setInterval(() => {
       if (Date.now() - lastActivityAt < 30_000) {
         engagedMs += 1000;
@@ -220,23 +165,15 @@ export default function DashboardPage() {
     if (usage && usage.notebooks.used >= usage.notebooks.limit) {
       setUpgradeModal({
         title: "Notebook limit reached",
-        description: "You've used all your notebook slots on the free plan. Upgrade to Pro to create unlimited notebooks and unlock more storage and daily quizzes.",
+        description:
+          "You've used all your notebook slots on the free plan. Upgrade to Pro to create unlimited notebooks and unlock more storage and daily quizzes.",
       });
     } else {
       setShowCreateModal(true);
     }
   }
 
-  function handleMenuOpen(
-    id: string | null,
-    anchor?: { top: number; right: number },
-  ) {
-    setOpenMenuId(id);
-    setMenuAnchor(anchor ?? null);
-  }
-
   function handleRenameStart(id: string, title: string) {
-    handleMenuOpen(null);
     setEditingId(id);
     setEditValue(title);
   }
@@ -259,7 +196,6 @@ export default function DashboardPage() {
   }
 
   async function handleArchive(id: string) {
-    handleMenuOpen(null);
     await notebookService.archive(id);
     await refreshNotebooks();
     await refreshArchived();
@@ -279,7 +215,8 @@ export default function DashboardPage() {
       if (code === "notebook_quota_exceeded") {
         setUpgradeModal({
           title: "Notebook limit reached",
-          description: "You've reached your active notebook limit. Archive another notebook or upgrade to Pro for unlimited notebooks.",
+          description:
+            "You've reached your active notebook limit. Archive another notebook or upgrade to Pro for unlimited notebooks.",
         });
       } else {
         showToast("Failed to restore notebook", "danger");
@@ -310,17 +247,13 @@ export default function DashboardPage() {
         setCreateError("");
         setUpgradeModal({
           title: "Notebook limit reached",
-          description: "You've used all your notebook slots on the free plan. Upgrade to Pro to create unlimited notebooks and unlock more storage and daily quizzes.",
+          description:
+            "You've used all your notebook slots on the free plan. Upgrade to Pro to create unlimited notebooks and unlock more storage and daily quizzes.",
         });
       } else {
         setCreateError("Failed to create notebook. Please try again.");
       }
     }
-  }
-
-  function handleDeleteRequest(id: string) {
-    handleMenuOpen(null);
-    setConfirmDeleteId(id);
   }
 
   async function handleDeleteConfirm() {
@@ -330,6 +263,11 @@ export default function DashboardPage() {
     refreshNotebooks();
     fetchUsage();
     showToast("Notebook deleted", "danger");
+  }
+
+  async function handlePin(notebook: Notebook) {
+    await notebookService.update(notebook.id, { pinned: !notebook.pinned });
+    refreshNotebooks();
   }
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
@@ -352,419 +290,185 @@ export default function DashboardPage() {
 
   const confirmDeleteNotebook =
     notebooks.find((n) => n.id === confirmDeleteId) ?? null;
-  const openMenuNotebook = notebooks.find((n) => n.id === openMenuId) ?? null;
 
-  const userName =
-    ((account.first_name ?? "") + " " + (account.last_name ?? "")).trim() ||
-    user.email;
+  const fullName = (
+    (account.first_name ?? "") +
+    " " +
+    (account.last_name ?? "")
+  ).trim();
+  const userName = fullName || user.email;
+  // The greeting wants a first name; fall back to the whole label rather than
+  // rendering a bare "Good morning," when the account has no name set.
+  const greetingName = account.first_name?.trim() || fullName || "there";
 
-  const isFreePlan = !usage || usage.plan?.toLowerCase() === "free";
+  function actionsFor(notebook: Notebook) {
+    return {
+      onPin: () => handlePin(notebook),
+      onRename: () => handleRenameStart(notebook.id, notebook.title),
+      onArchive: () => handleArchive(notebook.id),
+      onDelete: () => setConfirmDeleteId(notebook.id),
+    };
+  }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100dvh",
-        overflow: "hidden",
-      }}
-    >
+    <div className="bg-background flex h-dvh flex-col overflow-hidden">
       <TopNavbar
         userEmail={user.email ?? ""}
         userName={userName}
         profilePictureUrl={account.profile_picture_url ?? ""}
+        onLogout={() => {
+          authService.logout();
+          navigate("/login", { replace: true });
+        }}
       />
 
-      {/* Usage strip — all users */}
-      {usage && (
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            alignItems: "center",
-            gap: isPhone ? 8 : 20,
-            padding: isPhone ? "8px 12px" : "7px 64px",
-            background: W,
-            borderBottom: `2px solid ${B}`,
-            flexShrink: 0,
-            position: "relative",
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: B,
-            }}
-          >
-            {usage.plan}
-          </span>
-          <span style={{ color: "#000000" }}>·</span>
-          {[
-            {
-              label: "Notebooks",
-              used: usage.notebooks.used,
-              limit: usage.notebooks.limit,
-              fmt: (n: number) => String(n),
-            },
-            {
-              label: "Storage",
-              used: Number(usage.storage.used_bytes),
-              limit: Number(usage.storage.limit_bytes),
-              fmt: (n: number) =>
-                n >= 1_048_576
-                  ? `${(n / 1_048_576).toFixed(0)}MB`
-                  : `${(n / 1_024).toFixed(0)}KB`,
-            },
-            {
-              label: "Quizzes",
-              used: usage.daily_quizzes.used,
-              limit: usage.daily_quizzes.limit,
-              fmt: (n: number) => String(n),
-            },
-            {
-              label: "Presentations",
-              used: usage.presentations.used,
-              limit: usage.presentations.limit,
-              fmt: (n: number) => String(n),
-            },
-          ].map((item, i, arr) => (
-            <span
-              key={item.label}
-              style={{ display: "flex", alignItems: "center", gap: isPhone ? 8 : 20 }}
-            >
-              <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                <span
-                  style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    color: "#000000",
-                  }}
-                >
-                  {item.label}
-                </span>
-                <MiniBar used={item.used} limit={item.limit} />
-                <span
-                  style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    color: B,
-                    fontWeight: 700,
-                  }}
-                >
-                  {item.fmt(item.used)}
-                  <span style={{ color: "#000000", fontWeight: 400 }}>
-                    /{item.fmt(item.limit)}
-                  </span>
-                </span>
-              </span>
-              {!isPhone && i < arr.length - 1 && <span style={{ color: "#000000" }}>·</span>}
-            </span>
-          ))}
-          {isFreePlan && (
-            <button
-              onClick={() =>
+      <main className="freshr-scroll flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
+        <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-3xl font-bold tracking-[-0.02em] md:text-4xl">
+              {greeting()}, {greetingName}
+            </h1>
+            <p className="text-muted-foreground">
+              Ready to dive into deep work?
+            </p>
+          </div>
+
+          {usage && (
+            <UsageOverview
+              usage={usage}
+              onUpgrade={() =>
                 navigate("/profile", { state: { tab: "payment" } })
               }
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = G;
-                e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`;
-                e.currentTarget.style.transform = "translate(-1px, -1px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = W;
-                e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`;
-                e.currentTarget.style.transform = "none";
-              }}
-              style={{
-                position: isPhone ? "static" : "absolute",
-                right: isPhone ? "auto" : 64,
-                background: W,
-                color: B,
-                border: `2px solid ${B}`,
-                padding: "4px 12px",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontWeight: 700,
-                fontSize: "0.75rem",
-                letterSpacing: "0.05em",
-                cursor: "pointer",
-                boxShadow: `2px 2px 0 ${B}`,
-                transition: "transform 0.1s, box-shadow 0.1s, background 0.1s",
-                marginTop: isPhone ? 4 : 0,
-              }}
-            >
-              UPGRADE TO PRO →
-            </button>
-          )}
-        </div>
-      )}
-
-      <div
-        style={{
-          flex: 1,
-          overflowY: "auto",
-          background: "#f5f5f0",
-          padding: isPhone ? "20px 16px" : "40px 64px",
-        }}
-        className="freshr-scroll"
-      >
-        {/* Title + primary action */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: isPhone ? "column" : "row",
-            alignItems: isPhone ? "stretch" : "flex-start",
-            justifyContent: "space-between",
-            marginBottom: 24,
-            gap: isPhone ? 16 : 24,
-          }}
-        >
-          <div>
-            <h1
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "2rem",
-                letterSpacing: "-0.02em",
-                margin: 0,
-                lineHeight: 1,
-              }}
-            >
-              My Notebooks
-            </h1>
-            <p
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                color: "#000000",
-                margin: "6px 0 0",
-              }}
-            >
-              {notebooks.length}{" "}
-              {notebooks.length === 1 ? "notebook" : "notebooks"}
-            </p>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 16,
-              flexShrink: 0,
-            }}
-          >
-            <NewNotebookButton onClick={handleCreateRequest} />
-          </div>
-        </div>
-
-        {/* Controls: search left, view toggle right */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            marginBottom: 28,
-          }}
-        >
-          <div style={{ position: "relative", width: isPhone ? "100%" : 320, minWidth: 0, flex: isPhone ? 1 : "none" }}>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search notebooks..."
-              onMouseEnter={(e) => {
-                if (document.activeElement !== e.currentTarget)
-                  e.currentTarget.style.borderColor = G;
-              }}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
-              onFocus={(e) => (e.currentTarget.style.borderColor = B)}
-              style={{
-                width: "100%",
-                border: `2px solid ${B}`,
-                background: W,
-                color: B,
-                borderRadius: 0,
-                padding: "8px 12px 8px 32px",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                outline: "none",
-                boxSizing: "border-box",
-                transition: "border-color 0.15s",
-              }}
             />
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 14 14"
-              fill="none"
-              style={{
-                position: "absolute",
-                left: 10,
-                top: "50%",
-                transform: "translateY(-50%)",
-                pointerEvents: "none",
-              }}
-            >
-              <circle cx="6" cy="6" r="4.5" stroke="#aaa" strokeWidth="1.5" />
-              <path
-                d="M10 10l2.5 2.5"
-                stroke="#aaa"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
+          )}
 
-          <div style={{ display: "flex", border: `2px solid ${B}` }}>
-            <button
-              onClick={() => setView("grid")}
-              onMouseEnter={(e) => {
-                if (view !== "grid") e.currentTarget.style.background = "#eee";
-              }}
-              onMouseLeave={(e) => {
-                if (view !== "grid") e.currentTarget.style.background = W;
-              }}
-              style={{
-                background: view === "grid" ? B : W,
-                color: view === "grid" ? W : B,
-                border: "none",
-                padding: "8px 10px",
-                cursor: "pointer",
-                lineHeight: 1,
-                transition: "background 0.12s",
-              }}
-              title="Grid view"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 14 14"
-                fill="currentColor"
-              >
-                <rect x="0" y="0" width="6" height="6" />
-                <rect x="8" y="0" width="6" height="6" />
-                <rect x="0" y="8" width="6" height="6" />
-                <rect x="8" y="8" width="6" height="6" />
-              </svg>
-            </button>
-            <button
-              onClick={() => setView("list")}
-              onMouseEnter={(e) => {
-                if (view !== "list") e.currentTarget.style.background = "#eee";
-              }}
-              onMouseLeave={(e) => {
-                if (view !== "list") e.currentTarget.style.background = W;
-              }}
-              style={{
-                background: view === "list" ? B : W,
-                color: view === "list" ? W : B,
-                border: "none",
-                borderLeft: `1px solid ${B}`,
-                padding: "8px 10px",
-                cursor: "pointer",
-                lineHeight: 1,
-                transition: "background 0.12s",
-              }}
-              title="List view"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 14 14"
-                fill="currentColor"
-              >
-                <rect x="0" y="0" width="14" height="2.5" />
-                <rect x="0" y="5.75" width="14" height="2.5" />
-                <rect x="0" y="11.5" width="14" height="2.5" />
-              </svg>
-            </button>
-          </div>
+          <Tabs defaultValue="active" className="gap-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <TabsList>
+                <TabsTrigger value="active">
+                  Active
+                  <span className="text-muted-foreground ml-1 tabular-nums">
+                    {notebooks.length}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger value="archived">
+                  Archived
+                  <span className="text-muted-foreground ml-1 tabular-nums">
+                    {archivedNotebooks.length}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1 lg:w-72 lg:flex-none">
+                  <RiSearchLine
+                    className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+                    aria-hidden="true"
+                  />
+                  <Input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search notebooks..."
+                    aria-label="Search notebooks"
+                    className="pl-9"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <Toggle
+                    pressed={view === "grid"}
+                    onPressedChange={() => setView("grid")}
+                    aria-label="Grid view"
+                    size="sm"
+                  >
+                    <RiLayoutGridLine aria-hidden="true" />
+                  </Toggle>
+                  <Toggle
+                    pressed={view === "list"}
+                    onPressedChange={() => setView("list")}
+                    aria-label="List view"
+                    size="sm"
+                  >
+                    <RiListUnordered aria-hidden="true" />
+                  </Toggle>
+                </div>
+
+                <Button onClick={handleCreateRequest} className="shrink-0">
+                  <RiAddLine aria-hidden="true" />
+                  <span className="hidden sm:inline">New notebook</span>
+                </Button>
+              </div>
+            </div>
+
+            <TabsContent value="active" className="flex flex-col gap-4">
+              {notebooks.length === 0 ? (
+                <EmptyState
+                  icon={<RiBook2Line className="size-6" aria-hidden="true" />}
+                  title="No notebooks yet"
+                  description="Create your first notebook, upload your course materials, and Freshr will turn them into notes, quizzes and summaries."
+                  action={
+                    <Button onClick={handleCreateRequest}>
+                      <RiAddLine aria-hidden="true" />
+                      Create your first notebook
+                    </Button>
+                  }
+                />
+              ) : filtered.length === 0 ? (
+                <EmptyState
+                  icon={
+                    <RiSearchEyeLine className="size-6" aria-hidden="true" />
+                  }
+                  title="No matches"
+                  description={`Nothing here matches “${searchQuery}”. Try a different search.`}
+                />
+              ) : view === "grid" ? (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <CreateCard onClick={handleCreateRequest} />
+                  {filtered.map((nb) => (
+                    <NotebookCard
+                      key={nb.id}
+                      notebook={nb}
+                      fileCount={fileCounts[nb.id] ?? 0}
+                      isEditing={editingId === nb.id}
+                      editValue={editValue}
+                      onEditChange={setEditValue}
+                      onEditConfirm={handleRenameConfirm}
+                      onEditCancel={handleRenameCancel}
+                      onClick={() => navigate(`/notebook/${nb.id}`)}
+                      actions={actionsFor(nb)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {filtered.map((nb) => (
+                    <NotebookRow
+                      key={nb.id}
+                      notebook={nb}
+                      fileCount={fileCounts[nb.id] ?? 0}
+                      isEditing={editingId === nb.id}
+                      editValue={editValue}
+                      onEditChange={setEditValue}
+                      onEditConfirm={handleRenameConfirm}
+                      onEditCancel={handleRenameCancel}
+                      onClick={() => navigate(`/notebook/${nb.id}`)}
+                      actions={actionsFor(nb)}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="archived">
+              <ArchivedSection
+                notebooks={archivedNotebooks}
+                onUnarchive={handleUnarchive}
+              />
+            </TabsContent>
+          </Tabs>
         </div>
-
-        {/* Empty state */}
-        {notebooks.length === 0 && (
-          <div
-            style={{
-              border: `2px dashed ${B}`,
-              padding: isPhone ? "48px 16px" : "64px 32px",
-              textAlign: "center",
-              marginBottom: 24,
-            }}
-          >
-            <p
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "1.2rem",
-                marginBottom: 8,
-              }}
-            >
-              No notebooks yet.
-            </p>
-            <p
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.78rem",
-                color: "#000000",
-                margin: 0,
-              }}
-            >
-              Hit <strong>+ New Notebook</strong> to get started.
-            </p>
-          </div>
-        )}
-
-        {/* Notebook grid / list */}
-        {view === "grid" ? (
-          <div
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3"
-            style={{ gap: 20 }}
-          >
-            {filtered.map((nb) => (
-              <NotebookCard
-                key={nb.id}
-                notebook={nb}
-                fileCount={fileCounts[nb.id] ?? 0}
-                openMenuId={openMenuId}
-                onMenuOpen={handleMenuOpen}
-                editingId={editingId}
-                editValue={editValue}
-                onEditChange={setEditValue}
-                onEditConfirm={handleRenameConfirm}
-                onEditCancel={handleRenameCancel}
-                onClick={() => navigate(`/notebook/${nb.id}`)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {filtered.map((nb) => (
-              <NotebookRow
-                key={nb.id}
-                notebook={nb}
-                fileCount={fileCounts[nb.id] ?? 0}
-                openMenuId={openMenuId}
-                onMenuOpen={handleMenuOpen}
-                editingId={editingId}
-                editValue={editValue}
-                onEditChange={setEditValue}
-                onEditConfirm={handleRenameConfirm}
-                onEditCancel={handleRenameCancel}
-                onClick={() => navigate(`/notebook/${nb.id}`)}
-              />
-            ))}
-          </div>
-        )}
-
-        <ArchivedSection
-          notebooks={archivedNotebooks}
-          onUnarchive={handleUnarchive}
-        />
-      </div>
+      </main>
 
       {upgradeModal && (
         <UpgradeModal
@@ -798,30 +502,6 @@ export default function DashboardPage() {
           onClose={() => setConfirmDeleteId(null)}
         />
       )}
-
-      {openMenuNotebook &&
-        menuAnchor &&
-        createPortal(
-          <NotebookMenu
-            notebook={openMenuNotebook}
-            top={menuAnchor.top}
-            right={menuAnchor.right}
-            onPin={async () => {
-              await notebookService.update(openMenuNotebook.id, {
-                pinned: !openMenuNotebook.pinned,
-              });
-              refreshNotebooks();
-              handleMenuOpen(null);
-            }}
-            onRename={() =>
-              handleRenameStart(openMenuNotebook.id, openMenuNotebook.title)
-            }
-            onArchive={() => handleArchive(openMenuNotebook.id)}
-            onDelete={() => handleDeleteRequest(openMenuNotebook.id)}
-          />,
-          document.body,
-        )}
-
     </div>
   );
 }
