@@ -34,8 +34,9 @@ export default function MobileDrawer({
     <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
       <SheetContent
         side={side}
-        // Callers pass a width (including responsive min() expressions), so it
-        // stays an inline style rather than becoming a utility class.
+        // Callers pass an arbitrary width, including responsive min()
+        // expressions, so there is no utility class that can express it.
+        // eslint-disable-next-line no-restricted-syntax -- runtime-computed width, not styling
         style={{ width, maxWidth: "100%" }}
         className="overflow-y-auto p-0"
       >

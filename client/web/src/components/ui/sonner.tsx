@@ -27,6 +27,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
         error: <RiCloseCircleLine className="size-4" />,
         loading: <RiLoader4Line className="size-4 animate-spin" />,
       }}
+      // This is the opposite of bypassing the tokens: it is how sonner's own
+      // CSS variables get pointed AT them. There is no class-based equivalent.
+      // eslint-disable-next-line no-restricted-syntax -- maps sonner's CSS vars onto design tokens
       style={
         {
           "--normal-bg": "var(--popover)",
