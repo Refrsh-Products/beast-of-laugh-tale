@@ -24,7 +24,6 @@ export default function LoginPage() {
   >("idle");
   const [isLoading, setIsLoading] = useState(false);
 
-
   const handleLogin = async () => {
     if (!email || !password) {
       setError("Please fill in all fields.");
@@ -80,7 +79,6 @@ export default function LoginPage() {
           background: W,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
           alignItems: "center",
           padding: "48px 24px",
           position: "relative",
@@ -89,207 +87,259 @@ export default function LoginPage() {
         className="login-left"
       >
         {/* Logo */}
-        <FreshrLogo />
-
-        {/* Form container */}
         <div style={{ width: "100%", maxWidth: 420 }}>
-          <h1
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "2rem",
-              letterSpacing: "-0.02em",
-              marginBottom: 32,
-              lineHeight: 1.1,
-            }}
-          >
-            Welcome
-            <br />
-            back
-          </h1>
+          <FreshrLogo />
+        </div>
 
-          {/* Google button */}
-          <GoogleAuthBtn />
-
-          {/* Divider */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              marginBottom: 24,
-            }}
-          >
-            <div style={{ flex: 1, height: 2, background: B }} />
-            <span
+        {/* Vertically centers the form in whatever space is left below the logo */}
+        <div
+          style={{
+            flex: 1,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          {/* Form container */}
+          <div style={{ width: "100%", maxWidth: 420 }}>
+            <h1
               style={{
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                color: "#000000",
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: 800,
+                fontSize: "2rem",
+                letterSpacing: "-0.02em",
+                marginBottom: 32,
+                lineHeight: 1.1,
               }}
             >
-              or
-            </span>
-            <div style={{ flex: 1, height: 2, background: B }} />
-          </div>
+              Welcome
+              <br />
+              back
+            </h1>
 
-          {/* Error message */}
-          {error && (
-            <p
-              style={{
-                color: "#cc0000",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                margin: "0 0 16px",
-              }}
-            >
-              {error}
-            </p>
-          )}
+            {/* Google button */}
+            <GoogleAuthBtn />
 
-          {/* Needs-verification banner */}
-          {needsVerificationFor && (
+            {/* Divider */}
             <div
               style={{
-                border: `2px solid ${B}`,
-                background: "#fff8d6",
-                padding: "12px 14px",
-                margin: "0 0 16px",
-                fontSize: "0.72rem",
-                lineHeight: 1.5,
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                marginBottom: 24,
               }}
             >
-              <p style={{ margin: "0 0 8px", fontWeight: 700 }}>
-                Please verify your email before logging in.
-              </p>
-              <p style={{ margin: "0 0 10px", color: "#555" }}>
-                We sent a verification link to {needsVerificationFor}.
-              </p>
+              <div style={{ flex: 1, height: 2, background: B }} />
               <span
-                onClick={
-                  resendState === "sending"
-                    ? undefined
-                    : handleResendVerification
-                }
-                style={{
-                  fontSize: "0.72rem",
-                  fontWeight: 700,
-                  color: resendState === "sending" ? "#888" : B,
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
-                  cursor: resendState === "sending" ? "default" : "pointer",
-                }}
-              >
-                {resendState === "sending"
-                  ? "Sending..."
-                  : resendState === "sent"
-                    ? "Sent! Check your inbox."
-                    : "Resend verification link"}
-              </span>
-              {resendState === "rate-limited" && (
-                <p style={{ margin: "8px 0 0", color: "#cc0000" }}>
-                  Too many resend attempts. Try again in a few minutes.
-                </p>
-              )}
-              {resendState === "error" && (
-                <p style={{ margin: "8px 0 0", color: "#cc0000" }}>
-                  Could not resend right now. Please try again.
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Fields */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleLogin();
-            }}
-            style={{ display: "flex", flexDirection: "column", gap: 16 }}
-          >
-            <div>
-              <label style={labelStyle}>EMAIL</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                style={inputStyle}
-                {...inputHandlers}
-              />
-            </div>
-
-            <div>
-              <label style={labelStyle}>PASSWORD</label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  style={{ ...inputStyle, paddingRight: 48 }}
-                  {...inputHandlers}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
-                  style={{
-                    position: "absolute",
-                    right: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    color: "#000000",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.05em",
-                    transition: "color 0.12s",
-                  }}
-                >
-                  {showPassword ? "HIDE" : "SHOW"}
-                </button>
-              </div>
-            </div>
-
-            <div style={{ textAlign: "right" }}>
-              <Link
-                to="/forgot-password"
                 style={{
                   fontSize: "0.75rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
                   color: "#000000",
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
                 }}
               >
-                Forgot password?
-              </Link>
+                or
+              </span>
+              <div style={{ flex: 1, height: 2, background: B }} />
             </div>
 
-            <div style={{ marginTop: 8 }}>
-              <Button variant="green" fullWidth type="submit">
-                Log in →
-              </Button>
-            </div>
+            {/* Error message */}
+            {error && (
+              <p
+                style={{
+                  color: "#cc0000",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.75rem",
+                  margin: "0 0 16px",
+                }}
+              >
+                {error}
+              </p>
+            )}
 
+            {/* Needs-verification banner */}
+            {needsVerificationFor && (
+              <div
+                style={{
+                  border: `2px solid ${B}`,
+                  background: "#fff8d6",
+                  padding: "12px 14px",
+                  margin: "0 0 16px",
+                  fontSize: "0.72rem",
+                  lineHeight: 1.5,
+                }}
+              >
+                <p style={{ margin: "0 0 8px", fontWeight: 700 }}>
+                  Please verify your email before logging in.
+                </p>
+                <p style={{ margin: "0 0 10px", color: "#555" }}>
+                  We sent a verification link to {needsVerificationFor}.
+                </p>
+                <span
+                  onClick={
+                    resendState === "sending"
+                      ? undefined
+                      : handleResendVerification
+                  }
+                  style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    color: resendState === "sending" ? "#888" : B,
+                    textDecoration: "underline",
+                    textUnderlineOffset: 3,
+                    cursor: resendState === "sending" ? "default" : "pointer",
+                  }}
+                >
+                  {resendState === "sending"
+                    ? "Sending..."
+                    : resendState === "sent"
+                      ? "Sent! Check your inbox."
+                      : "Resend verification link"}
+                </span>
+                {resendState === "rate-limited" && (
+                  <p style={{ margin: "8px 0 0", color: "#cc0000" }}>
+                    Too many resend attempts. Try again in a few minutes.
+                  </p>
+                )}
+                {resendState === "error" && (
+                  <p style={{ margin: "8px 0 0", color: "#cc0000" }}>
+                    Could not resend right now. Please try again.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Fields */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleLogin();
+              }}
+              style={{ display: "flex", flexDirection: "column", gap: 16 }}
+            >
+              <div>
+                <label style={labelStyle}>EMAIL</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  style={inputStyle}
+                  {...inputHandlers}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>PASSWORD</label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    style={{ ...inputStyle, paddingRight: 48 }}
+                    {...inputHandlers}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = B)}
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = "#000000")
+                    }
+                    style={{
+                      position: "absolute",
+                      right: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      color: "#000000",
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.05em",
+                      transition: "color 0.12s",
+                    }}
+                  >
+                    {showPassword ? "HIDE" : "SHOW"}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ textAlign: "right" }}>
+                <Link
+                  to="/forgot-password"
+                  style={{
+                    fontSize: "0.75rem",
+                    color: "#000000",
+                    textDecoration: "underline",
+                    textUnderlineOffset: 3,
+                  }}
+                >
+                  Forgot password?
+                </Link>
+              </div>
+
+              <div style={{ marginTop: 8 }}>
+                <Button variant="green" fullWidth type="submit">
+                  Log in →
+                </Button>
+              </div>
+
+              <p
+                style={{
+                  marginTop: 4,
+                  fontSize: "0.7rem",
+                  color: "#555",
+                  lineHeight: 1.6,
+                  textAlign: "center",
+                }}
+              >
+                By continuing, you agree to FRESHR's{" "}
+                <Link
+                  to="/terms-of-service"
+                  style={{
+                    color: B,
+                    fontWeight: 700,
+                    textDecoration: "underline",
+                    textUnderlineOffset: 3,
+                  }}
+                >
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link
+                  to="/privacy-policy"
+                  style={{
+                    color: B,
+                    fontWeight: 700,
+                    textDecoration: "underline",
+                    textUnderlineOffset: 3,
+                  }}
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </p>
+            </form>
+
+            {/* Footer */}
             <p
               style={{
-                marginTop: 4,
-                fontSize: "0.7rem",
-                color: "#555",
-                lineHeight: 1.6,
+                marginTop: 28,
+                fontSize: "0.75rem",
+                color: "#000000",
                 textAlign: "center",
               }}
             >
-              By continuing, you agree to FRESHR's{" "}
+              Don't have an account?{" "}
               <Link
-                to="/terms-of-service"
+                to="/signup"
                 style={{
                   color: B,
                   fontWeight: 700,
@@ -297,72 +347,36 @@ export default function LoginPage() {
                   textUnderlineOffset: 3,
                 }}
               >
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link
-                to="/privacy-policy"
-                style={{
-                  color: B,
-                  fontWeight: 700,
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
-                }}
-              >
-                Privacy Policy
+                Sign up
               </Link>
-              .
             </p>
-          </form>
 
-          {/* Footer */}
-          <p
-            style={{
-              marginTop: 28,
-              fontSize: "0.75rem",
-              color: "#000000",
-              textAlign: "center",
-            }}
-          >
-            Don't have an account?{" "}
-            <Link
-              to="/signup"
+            <p
               style={{
-                color: B,
-                fontWeight: 700,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
+                marginTop: 10,
+                fontSize: "0.72rem",
+                color: "#555",
+                textAlign: "center",
               }}
             >
-              Sign up
-            </Link>
-          </p>
-
-          <p
-            style={{
-              marginTop: 10,
-              fontSize: "0.72rem",
-              color: "#555",
-              textAlign: "center",
-            }}
-          >
-            Need help?{" "}
-            <Link
-              to="/support"
-              style={{
-                color: B,
-                fontWeight: 700,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
-            >
-              Contact support
-            </Link>
-          </p>
+              Need help?{" "}
+              <Link
+                to="/support"
+                style={{
+                  color: B,
+                  fontWeight: 700,
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
+              >
+                Contact support
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* ── RIGHT HALF (black) ── */}
+      {/* ── RIGHT HALF (cover image) ── */}
       <div
         style={{
           flex: "0 0 50%",

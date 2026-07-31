@@ -58,7 +58,6 @@ export default function SignupPage() {
     }
   };
 
-
   if (isLoading) return <Loading />;
 
   return (
@@ -78,6 +77,7 @@ export default function SignupPage() {
           display: "none",
           position: "relative",
           borderRight: `3px solid ${B}`,
+          padding: "48px 32px",
         }}
         className="signup-left"
       >
@@ -92,7 +92,6 @@ export default function SignupPage() {
           background: W,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "center",
           alignItems: "center",
           padding: "48px 24px",
           position: "relative",
@@ -102,194 +101,229 @@ export default function SignupPage() {
       >
         {/* Mobile logo */}
         <div
-          style={{
-            position: "absolute",
-            top: 28,
-            left: 28,
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.35rem",
-            letterSpacing: "-0.02em",
-            color: B,
-            cursor: "pointer",
-          }}
+          style={{ width: "100%", maxWidth: 420 }}
           className="signup-mobile-logo"
-          onClick={() => navigate("/")}
         >
-          FRESHR
+          <FreshrLogo />
         </div>
 
-        {/* Form container */}
-        <div style={{ width: "100%", maxWidth: 420 }}>
-          <h1
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "2rem",
-              letterSpacing: "-0.02em",
-              marginBottom: 32,
-              lineHeight: 1.1,
-            }}
-          >
-            Create your account
-          </h1>
-
-          {/* Google button */}
-          <GoogleAuthBtn />
-
-          {/* Divider */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              marginBottom: 24,
-            }}
-          >
-            <div style={{ flex: 1, height: 2, background: B }} />
-            <span
+        {/* Vertically centers the form in whatever space is left below the logo */}
+        <div
+          style={{
+            flex: 1,
+            width: "100%",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          {/* Form container */}
+          <div style={{ width: "100%", maxWidth: 420 }}>
+            <h1
               style={{
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                color: "#000000",
+                fontFamily: "'Syne', sans-serif",
+                fontWeight: 800,
+                fontSize: "2rem",
+                letterSpacing: "-0.02em",
+                marginBottom: 32,
+                lineHeight: 1.1,
               }}
             >
-              or
-            </span>
-            <div style={{ flex: 1, height: 2, background: B }} />
-          </div>
+              Create your account
+            </h1>
 
-          {/* Error message */}
-          {error && (
-            <p
+            {/* Google button */}
+            <GoogleAuthBtn />
+
+            {/* Divider */}
+            <div
               style={{
-                color: "#cc0000",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                margin: "0 0 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: 12,
+                marginBottom: 24,
               }}
             >
-              {error}
-            </p>
-          )}
-
-          {/* Fields */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSubmit();
-            }}
-            style={{ display: "flex", flexDirection: "column", gap: 16 }}
-          >
-            <div>
-              <label style={labelStyle}>EMAIL</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                style={inputStyle}
-                {...inputHandlers}
-              />
-            </div>
-
-            <div>
-              <label style={labelStyle}>PASSWORD</label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  style={{ ...inputStyle, paddingRight: 48 }}
-                  {...inputHandlers}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#000000")}
-                  style={{
-                    position: "absolute",
-                    right: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    color: "#000000",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.05em",
-                    transition: "color 0.12s",
-                  }}
-                >
-                  {showPassword ? "HIDE" : "SHOW"}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label style={labelStyle}>CONFIRM PASSWORD</label>
-              <div style={{ position: "relative" }}>
-                <input
-                  type={showConfirm ? "text" : "password"}
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="••••••••"
-                  style={{ ...inputStyle, paddingRight: 48 }}
-                  {...inputHandlers}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm((v) => !v)}
-                  style={{
-                    position: "absolute",
-                    right: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    color: "#000000",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    letterSpacing: "0.05em",
-                    transition: "color 0.12s",
-                  }}
-                >
-                  {showConfirm ? "HIDE" : "SHOW"}
-                </button>
-              </div>
-            </div>
-
-            <div style={{ marginTop: 8 }}>
-              <Button
-                variant="green"
-                fullWidth
-                type="submit"
+              <div style={{ flex: 1, height: 2, background: B }} />
+              <span
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  color: "#000000",
+                }}
               >
-                Sign up →
-              </Button>
+                or
+              </span>
+              <div style={{ flex: 1, height: 2, background: B }} />
             </div>
 
+            {/* Error message */}
+            {error && (
+              <p
+                style={{
+                  color: "#cc0000",
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: "0.75rem",
+                  margin: "0 0 16px",
+                }}
+              >
+                {error}
+              </p>
+            )}
+
+            {/* Fields */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit();
+              }}
+              style={{ display: "flex", flexDirection: "column", gap: 16 }}
+            >
+              <div>
+                <label style={labelStyle}>EMAIL</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  style={inputStyle}
+                  {...inputHandlers}
+                />
+              </div>
+
+              <div>
+                <label style={labelStyle}>PASSWORD</label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    style={{ ...inputStyle, paddingRight: 48 }}
+                    {...inputHandlers}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = B)}
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.color = "#000000")
+                    }
+                    style={{
+                      position: "absolute",
+                      right: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      color: "#000000",
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.05em",
+                      transition: "color 0.12s",
+                    }}
+                  >
+                    {showPassword ? "HIDE" : "SHOW"}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label style={labelStyle}>CONFIRM PASSWORD</label>
+                <div style={{ position: "relative" }}>
+                  <input
+                    type={showConfirm ? "text" : "password"}
+                    value={confirm}
+                    onChange={(e) => setConfirm(e.target.value)}
+                    placeholder="••••••••"
+                    style={{ ...inputStyle, paddingRight: 48 }}
+                    {...inputHandlers}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((v) => !v)}
+                    style={{
+                      position: "absolute",
+                      right: 12,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: 0,
+                      color: "#000000",
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.05em",
+                      transition: "color 0.12s",
+                    }}
+                  >
+                    {showConfirm ? "HIDE" : "SHOW"}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 8 }}>
+                <Button variant="green" fullWidth type="submit">
+                  Sign up →
+                </Button>
+              </div>
+
+              <p
+                style={{
+                  marginTop: 4,
+                  fontSize: "0.7rem",
+                  color: "#555",
+                  lineHeight: 1.6,
+                  textAlign: "center",
+                }}
+              >
+                By signing up, you agree to FRESHR's{" "}
+                <Link
+                  to="/terms-of-service"
+                  style={{
+                    color: B,
+                    fontWeight: 700,
+                    textDecoration: "underline",
+                    textUnderlineOffset: 3,
+                  }}
+                >
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link
+                  to="/privacy-policy"
+                  style={{
+                    color: B,
+                    fontWeight: 700,
+                    textDecoration: "underline",
+                    textUnderlineOffset: 3,
+                  }}
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </p>
+            </form>
+
+            {/* Footer */}
             <p
               style={{
-                marginTop: 4,
-                fontSize: "0.7rem",
-                color: "#555",
-                lineHeight: 1.6,
+                marginTop: 28,
+                fontSize: "0.75rem",
+                color: "#000000",
                 textAlign: "center",
               }}
             >
-              By signing up, you agree to FRESHR's{" "}
+              Already have an account?{" "}
               <Link
-                to="/terms-of-service"
+                to="/login"
                 style={{
                   color: B,
                   fontWeight: 700,
@@ -297,68 +331,32 @@ export default function SignupPage() {
                   textUnderlineOffset: 3,
                 }}
               >
-                Terms of Service
-              </Link>{" "}
-              and{" "}
-              <Link
-                to="/privacy-policy"
-                style={{
-                  color: B,
-                  fontWeight: 700,
-                  textDecoration: "underline",
-                  textUnderlineOffset: 3,
-                }}
-              >
-                Privacy Policy
+                Log in
               </Link>
-              .
             </p>
-          </form>
 
-          {/* Footer */}
-          <p
-            style={{
-              marginTop: 28,
-              fontSize: "0.75rem",
-              color: "#000000",
-              textAlign: "center",
-            }}
-          >
-            Already have an account?{" "}
-            <Link
-              to="/login"
+            <p
               style={{
-                color: B,
-                fontWeight: 700,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
+                marginTop: 10,
+                fontSize: "0.72rem",
+                color: "#555",
+                textAlign: "center",
               }}
             >
-              Log in
-            </Link>
-          </p>
-
-          <p
-            style={{
-              marginTop: 10,
-              fontSize: "0.72rem",
-              color: "#555",
-              textAlign: "center",
-            }}
-          >
-            Need help?{" "}
-            <Link
-              to="/support"
-              style={{
-                color: B,
-                fontWeight: 700,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-              }}
-            >
-              Contact support
-            </Link>
-          </p>
+              Need help?{" "}
+              <Link
+                to="/support"
+                style={{
+                  color: B,
+                  fontWeight: 700,
+                  textDecoration: "underline",
+                  textUnderlineOffset: 3,
+                }}
+              >
+                Contact support
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
 
