@@ -4,7 +4,6 @@ import type { ProfileTab } from "../profile-account/ProfileSidebar";
 import usePaymentService from "../../services/payment";
 import useAccountService from "../../services/account";
 import { useToast } from "../../hooks/useToast";
-import ToastContainer from "../ui/ToastContainer";
 import { BLACK as B, WHITE as W, GREEN as G } from "../../constants/theme";
 
 interface PaymentContentAreaProps {
@@ -103,7 +102,7 @@ export default function PaymentContentArea({
   const paymentService = usePaymentService();
   const accountService = useAccountService();
   const navigate = useNavigate();
-  const { toasts, showToast } = useToast();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState<"MONTHLY" | "YEARLY" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentPlan, setCurrentPlan] = useState<PlanId>("free");
@@ -607,7 +606,6 @@ export default function PaymentContentArea({
         </span>
       </p>
 
-      <ToastContainer toasts={toasts} />
     </div>
   );
 }

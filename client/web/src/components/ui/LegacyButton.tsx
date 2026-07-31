@@ -1,21 +1,39 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-const B = "#000000";
-const W = "#FFFFFF";
-const G = "#84e487";
-const R = "#FF4D4D";
+/**
+ * Compatibility adapter over the shadcn Button.
+ *
+ * The hand-rolled button this replaces had its own inline-styled neo-brutalist
+ * look and a `variant` vocabulary that predates the design tokens. Rather than
+ * touch its ~20 call sites in one commit, this keeps the old prop shape and
+ * forwards to the real Button, so every screen picks up the brand styling
+ * immediately and can be moved to `<Button>` directly as it is redesigned.
+ *
+ * Delete this file once no imports of it remain.
+ */
 
-type Variant = "default" | "primary" | "danger" | "green";
+type LegacyVariant = "default" | "primary" | "danger" | "green";
 
-const CONFIG: Record<Variant, { bg: string; color: string; shadowColor: string; fontWeight: number }> = {
-  default: { bg: W,  color: B, shadowColor: B, fontWeight: 700 },
-  primary: { bg: B,  color: W, shadowColor: G, fontWeight: 600 },
-  danger:  { bg: R,  color: B, shadowColor: B, fontWeight: 700 },
-  green:   { bg: G,  color: B, shadowColor: B, fontWeight: 700 },
+/**
+ * `primary` was black-on-white with a green shadow and `green` was the mint
+ * fill — under the brand palette both are just the primary action, so they
+ * collapse onto one variant. `default` was the low-emphasis white button,
+ * which is `outline`.
+ */
+const VARIANT_MAP: Record<
+  LegacyVariant,
+  "default" | "outline" | "destructive"
+> = {
+  default: "outline",
+  primary: "default",
+  green: "default",
+  danger: "destructive",
 };
 
-interface ButtonProps {
-  variant?: Variant;
+interface LegacyButtonProps {
+  variant?: LegacyVariant;
   large?: boolean;
   fullWidth?: boolean;
   type?: "button" | "submit";
@@ -24,7 +42,7 @@ interface ButtonProps {
   disabled?: boolean;
 }
 
-export default function Button({
+export default function LegacyButton({
   variant = "default",
   large = false,
   fullWidth = false,
@@ -32,51 +50,17 @@ export default function Button({
   onClick,
   children,
   disabled = false,
-}: ButtonProps) {
-  const [hovered, setHovered] = useState(false);
-  const [down, setDown] = useState(false);
-
-  const { bg, color, shadowColor, fontWeight } = CONFIG[variant];
-
-  const transform = down
-    ? "translate(2px, 2px)"
-    : hovered
-      ? "translate(-3px, -3px)"
-      : "none";
-
-  const shadow = down
-    ? `2px 2px 0 ${shadowColor}`
-    : hovered
-      ? `6px 6px 0 ${shadowColor}`
-      : `4px 4px 0 ${shadowColor}`;
-
+}: LegacyButtonProps) {
   return (
-    <button
+    <Button
       type={type}
+      variant={VARIANT_MAP[variant]}
+      size={large ? "lg" : "default"}
       onClick={onClick}
       disabled={disabled}
-      onMouseEnter={() => !disabled && setHovered(true)}
-      onMouseLeave={() => { setHovered(false); setDown(false); }}
-      onMouseDown={() => !disabled && setDown(true)}
-      onMouseUp={() => setDown(false)}
-      style={{
-        background: disabled ? "#ccc" : bg,
-        color: color,
-        border: `2px solid ${disabled ? "#ccc" : B}`,
-        boxShadow: disabled ? "none" : shadow,
-        transform: disabled ? "none" : transform,
-        padding: large ? "16px 36px" : "11px 22px",
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: large ? "0.85rem" : "0.75rem",
-        fontWeight,
-        letterSpacing: "0.08em",
-        cursor: disabled ? "not-allowed" : "pointer",
-        transition: "transform 0.12s, box-shadow 0.12s",
-        width: fullWidth ? "100%" : undefined,
-        lineHeight: 1,
-      }}
+      className={cn(fullWidth && "w-full")}
     >
       {children}
-    </button>
+    </Button>
   );
 }

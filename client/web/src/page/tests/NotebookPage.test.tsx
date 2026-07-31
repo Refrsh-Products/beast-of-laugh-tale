@@ -50,9 +50,6 @@ vi.mock("../../components/presentation/PresentationViewer", () => ({
 vi.mock("../../components/dashboard/UpgradeModal", () => ({
   default: () => null,
 }));
-vi.mock("../../components/ui/ToastContainer", () => ({
-  default: () => null,
-}));
 
 function renderNotebook() {
   return render(

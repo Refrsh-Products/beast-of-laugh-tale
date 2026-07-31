@@ -17,7 +17,6 @@ import DeleteNotebookModal from "../components/dashboard/DeleteNotebookModal";
 import ArchivedSection from "../components/dashboard/ArchivedSection";
 import NotebookMenu from "../components/dashboard/NotebookMenu";
 import { useToast } from "../hooks/useToast";
-import ToastContainer from "../components/ui/ToastContainer";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
 import { track } from "../lib/analytics";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -116,7 +115,7 @@ export default function DashboardPage() {
   const [upgradeModal, setUpgradeModal] = useState<{ title: string; description: string } | null>(null);
   const [createTitle, setCreateTitle] = useState("");
   const [createError, setCreateError] = useState("");
-  const { toasts, showToast } = useToast();
+  const { showToast } = useToast();
   const [status, setStatus] = useState<OnboardingStatus | "loading">("loading");
   const [retrying, setRetrying] = useState(false);
   const [usage, setUsage] = useState<AccountUseage | null>(null);
@@ -823,7 +822,6 @@ export default function DashboardPage() {
           document.body,
         )}
 
-      <ToastContainer toasts={toasts} />
     </div>
   );
 }

@@ -27,7 +27,6 @@ import PastPresentationsColumn from "../components/notebook/PastPresentationsCol
 import AudioColumn from "../components/notebook/AudioColumn";
 import PresentationViewer from "../components/presentation/PresentationViewer";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
-import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
 import useChatService from "../services/chat";
 import { track } from "../lib/analytics";
@@ -51,7 +50,7 @@ export default function NotebookPage() {
   const accountService = useAccountService();
   const chatService = useChatService();
   const navigate = useNavigate();
-  const { toasts, showToast } = useToast();
+  const { showToast } = useToast();
   const [audioFeatureEnabled, setAudioFeatureEnabled] = useState<
     boolean | null
   >(null);
@@ -734,7 +733,6 @@ export default function NotebookPage() {
         </>
       )}
 
-      <ToastContainer toasts={toasts} />
 
       {upgradeModal && (
         <UpgradeModal
