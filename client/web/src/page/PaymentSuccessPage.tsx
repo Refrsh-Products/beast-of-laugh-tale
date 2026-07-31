@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "../components/ui/Button";
+import Button from "../components/ui/LegacyButton";
 import { track } from "../lib/analytics";
 
 const G = "#84e487";

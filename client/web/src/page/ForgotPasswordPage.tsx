@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthService from "../services/auth";
-import Button from "../components/ui/Button";
+import Button from "../components/ui/LegacyButton";
 
 const G = "#84e487";
 const B = "#000000";

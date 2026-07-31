@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom'
-import Button from '../ui/Button'
+import Button from '../ui/LegacyButton'
 
 const B = '#000000'
 const W = '#FFFFFF'

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import Button from "../components/ui/Button";
+import Button from "../components/ui/LegacyButton";
 
 const G = "#84e487";
 const B = "#000000";

@@ -1,6 +1,6 @@
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import Button from "../ui/Button";
+import Button from "../ui/LegacyButton";
 
 const B = "#000000";
 const W = "#FFFFFF";

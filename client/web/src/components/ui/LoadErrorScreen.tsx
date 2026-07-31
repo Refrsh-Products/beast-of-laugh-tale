@@ -1,4 +1,4 @@
-import Button from "./Button";
+import Button from "./LegacyButton";
 import FreshrLogo from "../logo/FreshrLogo";
 
 const B = "#000000";

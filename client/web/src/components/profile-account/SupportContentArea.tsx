@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { ProfileTab } from "./ProfileSidebar";
-import Button from "../ui/Button";
+import Button from "../ui/LegacyButton";
 import { sendSupportEmail } from "../../lib/supportEmail";
 import { POLICY_LINKS } from "../../constants/policies";
 

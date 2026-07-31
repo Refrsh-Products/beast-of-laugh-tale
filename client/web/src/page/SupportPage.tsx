@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "../components/ui/Button";
+import Button from "../components/ui/LegacyButton";
 import { sendSupportEmail } from "../lib/supportEmail";
 
 const G = "#84e487";

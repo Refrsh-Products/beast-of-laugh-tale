@@ -5,7 +5,7 @@ import useAuthService from "../../services/auth";
 import type { ProfileTab } from "./ProfileSidebar";
 import type { StoredAccount } from "@freshr/shared";
 import { getAccount as getCachedAccount } from "../../storage";
-import Button from "../ui/Button";
+import Button from "../ui/LegacyButton";
 
 const B = "#000000";
 

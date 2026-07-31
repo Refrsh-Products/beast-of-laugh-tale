@@ -1,5 +1,5 @@
 import QuizTakingScreenModal from "./QuizTakingScreenModal";
-import Button from "../../ui/Button";
+import Button from "../../ui/LegacyButton";
 
 const B = "#000000"
 

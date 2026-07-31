@@ -5,6 +5,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 const sharedSrc = fileURLToPath(new URL("../shared/src", import.meta.url));
+const appSrc = fileURLToPath(new URL("./src", import.meta.url));
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -16,6 +17,9 @@ export default defineConfig({
       // transpiles it as part of the app's module graph.
       { find: /^@freshr\/shared$/, replacement: `${sharedSrc}/index.ts` },
       { find: /^@freshr\/shared\/(.*)$/, replacement: `${sharedSrc}/$1` },
+      // Anchored on "@/" so scoped packages (@react-oauth/…, @testing-library/…)
+      // are left alone; a bare "@" prefix match would swallow them.
+      { find: /^@\/(.*)$/, replacement: `${appSrc}/$1` },
     ],
   },
   test: {

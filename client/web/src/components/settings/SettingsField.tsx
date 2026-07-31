@@ -1,4 +1,4 @@
-import Button from "../ui/Button";
+import Button from "../ui/LegacyButton";
 
 const G = "#84e487";
 const B = "#000000";

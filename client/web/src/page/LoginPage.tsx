@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import Button from "../components/ui/Button";
+import Button from "../components/ui/LegacyButton";
 import Loading from "../components/loading/Loading";
 import useAuthService from "../services/auth";
 import { NeedsVerificationError } from "@freshr/shared";
@@ -89,7 +89,7 @@ export default function LoginPage() {
         className="login-left"
       >
         {/* Logo */}
-        <FreshrLogo color="#000000" />
+        <FreshrLogo />
 
         {/* Form container */}
         <div style={{ width: "100%", maxWidth: 420 }}>

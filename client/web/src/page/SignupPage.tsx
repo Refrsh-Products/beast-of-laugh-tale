@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import GoogleAuthBtn from "../components/google-auth/GoogleAuthBtn";
 import FreshrLogo from "../components/logo/FreshrLogo";
-import Button from "../components/ui/Button";
+import Button from "../components/ui/LegacyButton";
 import useAuthService from "../services/auth";
 import Loading from "../components/loading/Loading";
 import { BLACK as B, WHITE as W } from "../constants/theme";
@@ -82,7 +82,7 @@ export default function SignupPage() {
         className="signup-left"
       >
         {/* Logo */}
-        <FreshrLogo />
+        <FreshrLogo className="text-secondary" />
       </div>
 
       {/* ── RIGHT HALF ── */}

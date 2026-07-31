@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import Button from "../components/ui/Button";
+import Button from "../components/ui/LegacyButton";
 import FeatureCard from "../components/landing/FeatureCard";
 import TestimonialSection from "../components/landing/TestimonialSection";
 import RotatingText from "../components/landing/RotatingText";

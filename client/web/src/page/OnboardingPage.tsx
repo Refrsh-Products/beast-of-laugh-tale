@@ -6,7 +6,7 @@ import type { OnboardingStatus } from "@freshr/shared";
 import FreshrLogo from "../components/logo/FreshrLogo";
 import LoadErrorScreen from "../components/ui/LoadErrorScreen";
 import { getGoogleProfile, clearGoogleProfile } from "../storage";
-import Button from "../components/ui/Button";
+import Button from "../components/ui/LegacyButton";
 
 const B = "#000000";
 const W = "#FFFFFF";

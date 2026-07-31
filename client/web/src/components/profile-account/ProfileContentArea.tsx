@@ -3,7 +3,7 @@ import type { ProfileTab } from "./ProfileSidebar";
 import type { StoredAccount } from "@freshr/shared";
 import { getAccount as getCachedAccount } from "../../storage";
 import SettingsField from "../settings/SettingsField";
-import Button from "../ui/Button";
+import Button from "../ui/LegacyButton";
 import useAccountService from "../../services/account";
 
 const G = "#84e487";
