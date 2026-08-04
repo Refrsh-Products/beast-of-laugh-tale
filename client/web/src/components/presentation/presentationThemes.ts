@@ -16,36 +16,84 @@
  * generator, the preview and the export path.
  */
 
-export type PresentationTheme =
-  | "freshr"
-  | "minimal"
-  | "dark"
-  | "academic"
-  | "serif";
+import type { PresentationThemeKey } from "@freshr/shared";
+
+/** The key a deck is stored under. Defined in @freshr/shared so the API
+ *  payload and this palette table cannot drift apart. */
+export type PresentationTheme = PresentationThemeKey;
 
 export interface SlideTheme {
   label: string;
   bg: string;
   text: string;
   accent: string;
+  /** Display face — the title-only slide and the quote mark. */
+  titleFont: string;
+  /** Everything else on the slide. */
+  bodyFont: string;
+  /** Single family name for PPTX: Office cannot take a CSS font stack. */
+  pptxFont: string;
+  /** Whether the slide carries the accent strip down its left edge. */
+  accentStrip: boolean;
 }
 
+const MONO = "'IBM Plex Mono', monospace";
+const DISPLAY = "'Syne', sans-serif";
+const SANS = "'Helvetica Neue', Arial, sans-serif";
+const SERIF = "'Georgia', 'Times New Roman', serif";
+
 export const PRESENTATION_THEMES: Record<PresentationTheme, SlideTheme> = {
-  freshr: { label: "Freshr", bg: "#ffffff", text: "#19392e", accent: "#b4ff6e" },
+  freshr: {
+    label: "Freshr",
+    bg: "#ffffff",
+    text: "#19392e",
+    accent: "#b4ff6e",
+    titleFont: DISPLAY,
+    bodyFont: MONO,
+    pptxFont: "Courier New",
+    accentStrip: true,
+  },
   minimal: {
     label: "Minimal",
     bg: "#ffffff",
     text: "#333333",
     accent: "#cccccc",
+    titleFont: SANS,
+    bodyFont: SANS,
+    pptxFont: "Arial",
+    // The whole point of Minimal is the absence of ornament.
+    accentStrip: false,
   },
-  dark: { label: "Dark", bg: "#1a1a1a", text: "#ffffff", accent: "#b4ff6e" },
+  dark: {
+    label: "Dark",
+    bg: "#1a1a1a",
+    text: "#ffffff",
+    accent: "#b4ff6e",
+    titleFont: DISPLAY,
+    bodyFont: MONO,
+    pptxFont: "Courier New",
+    accentStrip: true,
+  },
   academic: {
     label: "Academic",
     bg: "#eef3f8",
     text: "#1e3a5f",
     accent: "#2a72b5",
+    titleFont: SANS,
+    bodyFont: SANS,
+    pptxFont: "Arial",
+    accentStrip: true,
   },
-  serif: { label: "Serif", bg: "#faf7f2", text: "#3b2f1e", accent: "#8b6a1f" },
+  serif: {
+    label: "Serif",
+    bg: "#faf7f2",
+    text: "#3b2f1e",
+    accent: "#8b6a1f",
+    titleFont: SERIF,
+    bodyFont: SERIF,
+    pptxFont: "Georgia",
+    accentStrip: true,
+  },
 };
 
 export const PRESENTATION_THEME_KEYS = Object.keys(
@@ -53,15 +101,21 @@ export const PRESENTATION_THEME_KEYS = Object.keys(
 ) as PresentationTheme[];
 
 /**
- * What a deck is rendered with when no theme is known.
- *
- * Today that is *every* deck: the generator collects a theme choice, but
- * PresentationCreatePayload has no theme field and PresentationSession never
- * returns one, so nothing downstream can tell which was picked. The renderer
- * and both exporters still take a theme parameter, so wiring the field through
- * is all that stands between the picker and working themes.
+ * What a deck is rendered with when no theme is known — decks generated before
+ * `theme` existed on the session carry no key.
  */
 export const DEFAULT_SLIDE_THEME: SlideTheme = PRESENTATION_THEMES.freshr;
+
+/** Map a session's stored theme key onto a palette, tolerating a missing or
+ *  unrecognised key rather than rendering nothing. */
+export function resolveSlideTheme(
+  key: PresentationThemeKey | string | null | undefined,
+): SlideTheme {
+  if (typeof key === "string" && key in PRESENTATION_THEMES) {
+    return PRESENTATION_THEMES[key as PresentationThemeKey];
+  }
+  return DEFAULT_SLIDE_THEME;
+}
 
 /**
  * Slide text that is deliberately secondary — captions, attributions, the

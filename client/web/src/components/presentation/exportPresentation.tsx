@@ -65,7 +65,7 @@ async function captureSlide(
         >
           <span
             style={{
-              fontFamily: "monospace",
+              fontFamily: theme.bodyFont,
               fontSize: 9,
               color: footerColour,
               letterSpacing: "0.1em",
@@ -75,7 +75,7 @@ async function captureSlide(
           </span>
           <span
             style={{
-              fontFamily: "monospace",
+              fontFamily: theme.bodyFont,
               fontSize: 9,
               color: footerColour,
             }}
@@ -166,14 +166,16 @@ async function buildPptxSlide(
   s.background = { color: bare(theme.bg) };
 
   // Accent left strip
-  s.addShape("rect" as any, {
-    x: 0,
-    y: 0,
-    w: 0.08,
-    h: SLIDE_H_IN,
-    fill: { color: ACCENT },
-    line: { width: 0, color: ACCENT },
-  });
+  if (theme.accentStrip) {
+    s.addShape("rect" as any, {
+      x: 0,
+      y: 0,
+      w: 0.08,
+      h: SLIDE_H_IN,
+      fill: { color: ACCENT },
+      line: { width: 0, color: ACCENT },
+    });
+  }
 
   // Footer
   const fy = SLIDE_H_IN - 0.28;
@@ -184,7 +186,7 @@ async function buildPptxSlide(
     h: 0.22,
     fontSize: 7,
     color: SECONDARY,
-    fontFace: "Courier New",
+    fontFace: theme.pptxFont,
   });
   s.addText(`${slide.order_index + 1} / ${total}`, {
     x: 7.5,
@@ -193,11 +195,11 @@ async function buildPptxSlide(
     h: 0.22,
     fontSize: 7,
     color: SECONDARY,
-    fontFace: "Courier New",
+    fontFace: theme.pptxFont,
     align: "right",
   });
 
-  const FONT = "Courier New";
+  const FONT = theme.pptxFont;
 
   function titleBlock(x: number, y: number, w: number) {
     s.addText(slide.title || "", {

@@ -54,6 +54,7 @@ class PresentationListSerializer(serializers.ModelSerializer):
             "topic",
             "slide_count",
             "text_length",
+            "theme",
             "status",
             "is_favourite",
             "generated_at",
@@ -76,6 +77,7 @@ class PresentationDetailSerializer(serializers.ModelSerializer):
             "custom_prompt",
             "slide_count",
             "text_length",
+            "theme",
             "status",
             "error_message",
             "is_favourite",
@@ -100,6 +102,7 @@ class PresentationCreateSerializer(serializers.ModelSerializer):
             "custom_prompt",
             "slide_count",
             "text_length",
+            "theme",
         ]
 
     def validate_slide_count(self, value):
