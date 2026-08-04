@@ -5,16 +5,29 @@ import UnansweredModal from "../quiz/quiz-taking-screen/QuizTakingScreenUnanswer
 import ExitConfirmModal from "../quiz/quiz-taking-screen/QuizTakingScreenExitConfirmModal";
 import NavButton from "../quiz/quiz-taking-screen/QuizTakingScreenNavButton";
 import MathMarkdown from "../common/MathMarkdown";
+import type { Components } from "react-markdown";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
+import {
+  RiArrowLeftLine,
+  RiArrowRightLine,
+  RiCloseLine,
+  RiFlag2Fill,
+  RiFlag2Line,
+  RiQuestionAnswerLine,
+  RiTimeLine,
+} from "@remixicon/react";
 
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
-const R = "#FF4D4D";
-const GREY = "#b0b0b0";
-
-// ── Footer nav button (Prev / Next / Submit) ──────────────────────
-// Uses React state for hover/press — avoids imperative DOM style mutation
-// which causes the "stuck shadow" bug on re-render when navigating questions.
+/**
+ * Renders markdown without its wrapping paragraph.
+ *
+ * The answer options are <button>s, which may only contain phrasing content —
+ * react-markdown's default <p> is invalid there and would break under SSR.
+ */
+const INLINE_MARKDOWN: Components = {
+  p: ({ children }) => <>{children}</>,
+};
 
 interface QuizTakingScreenProps {
   quiz: QuizSession;
@@ -102,7 +115,8 @@ export default function QuizTakingScreen({
   const allAnswered = answeredCount === numQuestions;
   const showSubmit = isLastQuestion || allAnswered;
   const timerCritical = timed && secondsRemaining < 60 && secondsRemaining > 0;
-  const progressPercent = numQuestions > 0 ? (answeredCount / numQuestions) * 100 : 0;
+  const progressPercent =
+    numQuestions > 0 ? (answeredCount / numQuestions) * 100 : 0;
 
   const topics = quiz.topics ?? (quiz.topic ? [quiz.topic] : []);
   const topicLabel =
@@ -163,291 +177,135 @@ export default function QuizTakingScreen({
 
   return (
     <>
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 3000,
-          background: "#f5f5f0",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-      >
+      {/* z-40 puts this above page content (which tops out at z-10) but below
+          the z-50 portal layer Radix renders dialogs, drawers and menus into —
+          the confirm modals below are portalled to <body> and would otherwise
+          paint behind this overlay. */}
+      <div className="bg-background fixed inset-0 z-40 flex flex-col overflow-hidden">
         {/* Header — 3-column grid: topic left | Q counter center | timer right */}
-        <div
-          style={{
-            background: W,
-            borderBottom: `2px solid ${B}`,
-            flexShrink: 0,
-          }}
-        >
-          <div
-            style={{
-              padding: "0 32px",
-              height: 52,
-              display: "grid",
-              gridTemplateColumns: "1fr auto 1fr",
-              alignItems: "center",
-            }}
-          >
-            {/* Topic — left */}
-            <span
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: "1rem",
-                fontWeight: 700,
-                color: B,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
+        <div className="bg-card border-border shrink-0 border-b">
+          <div className="grid h-13 grid-cols-[1fr_auto_1fr] items-center gap-3 px-4 sm:px-8">
+            <span className="font-heading text-foreground truncate text-base font-semibold">
               {topicLabel}
             </span>
 
             {/* Q counter — true center */}
-            <span
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                color: "#000000",
-              }}
-            >
+            <span className="text-muted-foreground text-xs font-medium tabular-nums">
               Q {currentQ + 1} of {numQuestions}
             </span>
 
             {/* Timer — right */}
             <span
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.88rem",
-                fontWeight: 700,
-                color: timerCritical ? R : B,
-                letterSpacing: "0.04em",
-                transition: "color 0.3s",
-                textAlign: "right",
-              }}
+              className={cn(
+                "flex items-center justify-end gap-1.5 text-sm font-semibold tabular-nums transition-colors",
+                timerCritical ? "text-destructive" : "text-foreground",
+              )}
             >
-              ⏱{" "}
+              <RiTimeLine className="size-4" aria-hidden="true" />
               {timed
                 ? formatTimer(secondsRemaining)
                 : formatTimer(secondsElapsed)}
             </span>
           </div>
 
-          {/* Progress bar — folded into the bottom of the header */}
-          <div style={{ height: 4, background: "#e8e8e8" }}>
-            <div
-              style={{
-                height: "100%",
-                width: `${progressPercent}%`,
-                background: G,
-                transition: "width 0.25s",
-              }}
-            />
-          </div>
+          {/* Progress — folded into the bottom of the header */}
+          <Progress
+            value={progressPercent}
+            aria-label="Questions answered"
+            className="h-1 rounded-none"
+          />
         </div>
 
         {/* Scrollable question area */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "48px 32px 24px" }}>
-          <div style={{ maxWidth: 600, margin: "0 auto" }}>
-            {/* Flag button — top right of question zone */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "flex-end",
-                marginBottom: 12,
-              }}
-            >
-              <button
+        <div className="flex-1 overflow-y-auto px-4 pt-10 pb-6 sm:px-8">
+          <div className="mx-auto max-w-2xl">
+            {/* Flag — top right of question zone */}
+            <div className="mb-3 flex justify-end">
+              <Button
+                variant={isFlagged ? "secondary" : "outline"}
+                size="sm"
+                aria-pressed={isFlagged}
                 onClick={toggleFlag}
-                style={{
-                  background: isFlagged ? GREY : "transparent",
-                  border: `1.5px solid ${isFlagged ? B : "#bbb"}`,
-                  color: B,
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  fontWeight: 600,
-                  letterSpacing: "0.04em",
-                  padding: "5px 12px",
-                  cursor: "pointer",
-                  transition:
-                    "background 0.15s, color 0.15s, border-color 0.15s",
-                }}
               >
-                ⚑ {isFlagged ? "Flagged" : "Flag"}
-              </button>
+                {isFlagged ? (
+                  <RiFlag2Fill aria-hidden="true" />
+                ) : (
+                  <RiFlag2Line aria-hidden="true" />
+                )}
+                {isFlagged ? "Flagged" : "Flag"}
+              </Button>
             </div>
 
             {/* Question text */}
-            <p
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontSize: "1.1rem",
-                fontWeight: 700,
-                color: B,
-                margin: "0 0 28px",
-                lineHeight: 1.6,
-              }}
-            >
+            <div className="font-heading text-foreground mb-7 text-lg leading-relaxed font-semibold">
               <MathMarkdown>{question.question_text}</MathMarkdown>
-            </p>
+            </div>
 
             {/* Answer options */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div className="flex flex-col gap-2.5">
               {displayChoices.map((opt: string, oi: number) => {
                 const selected = userAnswers[currentQ] === oi;
                 return (
-                  <div
+                  <button
                     key={oi}
+                    type="button"
+                    aria-pressed={selected}
+                    disabled={frozen}
                     onClick={() => selectAnswer(oi)}
-                    onMouseEnter={(e) => {
-                      if (!selected && !frozen)
-                        e.currentTarget.style.background = "#f7f7f2";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!selected) e.currentTarget.style.background = W;
-                    }}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 14,
-                      padding: "14px 18px",
-                      border: `2px solid ${B}`,
-                      background: selected ? G : W,
-                      cursor: frozen ? "default" : "pointer",
-                      transition: "background 0.1s",
-                      userSelect: "none",
-                    }}
+                    className={cn(
+                      "focus-visible:ring-ring/50 flex items-center gap-3.5 rounded-2xl border-2 px-4 py-3.5 text-left transition-colors focus-visible:ring-[3px] focus-visible:outline-none",
+                      selected
+                        ? "border-primary bg-accent text-accent-foreground"
+                        : "border-border bg-card text-foreground",
+                      frozen ? "cursor-default" : "hover:border-input",
+                    )}
                   >
-                    <span
-                      style={{
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        color: B,
-                        flexShrink: 0,
-                        width: 16,
-                      }}
-                    >
+                    <span className="w-4 shrink-0 text-sm font-bold">
                       {String.fromCharCode(65 + oi)}
                     </span>
-                    <span
-                      style={{
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.78rem",
-                        color: B,
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      <MathMarkdown>{opt}</MathMarkdown>
+                    <span className="text-sm leading-relaxed">
+                      <MathMarkdown components={INLINE_MARKDOWN}>{opt}</MathMarkdown>
                     </span>
-                  </div>
+                  </button>
                 );
               })}
             </div>
 
             {/* Practice mode extras — explanation + take to chat */}
             {isPractice && (
-              <div style={{ marginTop: 24 }}>
-                {/* Row: explanation toggle (left) + Take to Chat (right) */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: explanationOpen ? 12 : 0,
-                  }}
-                >
-                  {/* Explanation toggle */}
+              <div className="mt-6">
+                <div className="flex items-center justify-between gap-3">
                   {question.explanation ? (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-expanded={explanationOpen}
                       onClick={() => setExplanationOpen((o) => !o)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        cursor: "pointer",
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        color: "#000000",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 6,
-                      }}
                     >
-                      <span
-                        style={{
-                          display: "inline-block",
-                          transition: "transform 0.2s",
-                          transform: explanationOpen
-                            ? "rotate(90deg)"
-                            : "rotate(0deg)",
-                          fontSize: "0.75rem",
-                        }}
-                      >
-                        ▶
-                      </span>
-                      {explanationOpen
-                        ? "Hide Explanation"
-                        : "Show Explanation"}
-                    </button>
+                      <RiArrowRightLine
+                        aria-hidden="true"
+                        className={cn(
+                          "transition-transform",
+                          explanationOpen && "rotate-90",
+                        )}
+                      />
+                      {explanationOpen ? "Hide explanation" : "Show explanation"}
+                    </Button>
                   ) : (
                     <span />
                   )}
 
-                  {/* Take to Chat button */}
                   {onTakeToChat && (
-                    <button
-                      onClick={handleTakeToChat}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.color = B;
-                        e.currentTarget.style.borderColor = B;
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.color = "#000000";
-                        e.currentTarget.style.borderColor = "#bbb";
-                      }}
-                      style={{
-                        background: "transparent",
-                        border: "1.5px solid #bbb",
-                        color: "#000000",
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        letterSpacing: "0.04em",
-                        padding: "6px 14px",
-                        cursor: "pointer",
-                        transition: "color 0.15s, border-color 0.15s",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      💬 Take to Chat →
-                    </button>
+                    <Button variant="outline" size="sm" onClick={handleTakeToChat}>
+                      <RiQuestionAnswerLine aria-hidden="true" />
+                      Take to chat
+                    </Button>
                   )}
                 </div>
 
-                {/* Explanation panel */}
                 {explanationOpen && question.explanation && (
-                  <div
-                    style={{
-                      background: "#f0fdf4",
-                      border: `2px solid ${G}`,
-                      padding: "14px 18px",
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.78rem",
-                        color: "#000000",
-                        margin: 0,
-                        lineHeight: 1.7,
-                      }}
-                    >
+                  <div className="border-primary bg-accent text-accent-foreground mt-3 rounded-2xl border-2 px-4 py-3.5">
+                    <p className="text-sm leading-relaxed">
                       {question.explanation}
                     </p>
                   </div>
@@ -459,108 +317,67 @@ export default function QuizTakingScreen({
 
         {/* Question navigator */}
         {numQuestions > 1 && (
-          <div
-            style={{
-              padding: "12px 32px",
-              background: "#f5f5f0",
-              display: "flex",
-              gap: 6,
-              justifyContent: "center",
-              flexWrap: "wrap",
-              flexShrink: 0,
-            }}
-          >
+          <div className="flex shrink-0 flex-wrap justify-center gap-1.5 px-4 py-3 sm:px-8">
             {questions.map((_: unknown, qi: number) => {
               const isCurrent = qi === currentQ;
               const isAnswered = userAnswers[qi] !== null;
               const isQFlagged = flaggedQuestions.includes(qi);
 
-              const bg = isCurrent ? G : isQFlagged ? GREY : isAnswered ? B : W;
-              const numberColor = isAnswered && !isCurrent ? W : B;
-
               return (
-                <div
+                <button
                   key={qi}
+                  type="button"
                   onClick={() => setCurrentQ(qi)}
-                  title={`Q${qi + 1}${isQFlagged ? " (flagged)" : ""}`}
-                  style={{
-                    width: 32,
-                    height: 32,
-                    border: `2px solid ${B}`,
-                    background: bg,
-                    cursor: "pointer",
-                    flexShrink: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: numberColor,
-                    transition: "background 0.1s",
-                    userSelect: "none",
-                  }}
+                  aria-current={isCurrent}
+                  aria-label={`Question ${qi + 1}${
+                    isQFlagged ? " (flagged)" : ""
+                  }${isAnswered ? " (answered)" : ""}`}
+                  className={cn(
+                    "focus-visible:ring-ring/50 size-8 shrink-0 rounded-lg border-2 text-xs font-bold tabular-nums transition-colors focus-visible:ring-[3px] focus-visible:outline-none",
+                    isCurrent
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : isQFlagged
+                        ? "border-input bg-muted text-muted-foreground"
+                        : isAnswered
+                          ? "border-primary bg-accent text-accent-foreground"
+                          : "border-border bg-card text-muted-foreground",
+                  )}
                 >
                   {qi + 1}
-                </div>
+                </button>
               );
             })}
           </div>
         )}
 
-        {/* Footer — single row: [← Prev]  [× Exit Quiz]  [Next →] */}
-        <div
-          style={{
-            borderTop: `2px solid ${B}`,
-            padding: "16px 32px",
-            background: W,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexShrink: 0,
-          }}
-        >
+        {/* Footer — [← Prev]  [× Exit Quiz]  [Next →] */}
+        <div className="border-border bg-card flex shrink-0 items-center justify-between gap-3 border-t px-4 py-4 sm:px-8">
           <NavButton
             onClick={() => setCurrentQ((q) => q - 1)}
             disabled={currentQ === 0}
           >
-            ← Prev
+            <RiArrowLeftLine aria-hidden="true" />
+            Prev
           </NavButton>
 
-          {/* Exit — utility style, centered */}
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setShowExitConfirm(true)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = B;
-              e.currentTarget.style.borderColor = B;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = "#000000";
-              e.currentTarget.style.borderColor = "#ccc";
-            }}
-            style={{
-              background: "transparent",
-              border: "1.5px solid #ccc",
-              color: "#000000",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              letterSpacing: "0.04em",
-              padding: "8px 20px",
-              cursor: "pointer",
-              transition: "color 0.15s, border-color 0.15s",
-            }}
           >
-            × Exit Quiz
-          </button>
+            <RiCloseLine aria-hidden="true" />
+            <span className="hidden sm:inline">Exit quiz</span>
+          </Button>
 
           {showSubmit ? (
             <NavButton onClick={handleSubmitClick} green>
-              Submit Quiz →
+              Submit quiz
+              <RiArrowRightLine aria-hidden="true" />
             </NavButton>
           ) : (
             <NavButton onClick={() => setCurrentQ((q) => q + 1)}>
-              Next Question →
+              <span className="truncate">Next question</span>
+              <RiArrowRightLine aria-hidden="true" />
             </NavButton>
           )}
         </div>

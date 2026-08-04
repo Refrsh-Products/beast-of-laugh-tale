@@ -1,40 +1,56 @@
-const B = "#000000";
-const W = "#FFFFFF";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
+/**
+ * The shell the three quiz-taking modals share.
+ *
+ * Each caller mounts this conditionally rather than driving an `open` prop, so
+ * the dialog is open for as long as it exists and `onClose` stands in for
+ * Radix's dismiss events. Omitting `onClose` makes the modal non-dismissable —
+ * "time's up" has no way back, the only exit is the action button.
+ *
+ * Title and description are props rather than free children because Radix
+ * requires a labelled dialog; passing them through guarantees every modal is
+ * announced instead of relying on each one to remember.
+ */
 export default function QuizTakingScreenModal({
-  children,
+  title,
+  description,
   onClose,
+  children,
 }: {
-  children: React.ReactNode;
+  title: React.ReactNode;
+  description: React.ReactNode;
   onClose?: () => void;
+  children: React.ReactNode;
 }) {
   return (
-    <div
-      onMouseDown={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.5)",
-        zIndex: 4000,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
+    <Dialog
+      open
+      onOpenChange={(next) => {
+        if (!next) onClose?.();
       }}
     >
-      <div
-        onMouseDown={(e) => e.stopPropagation()}
-        style={{
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `4px 4px 0 ${B}`,
-          padding: 32,
-          maxWidth: 380,
-          width: "100%",
-        }}
+      <DialogContent
+        showCloseButton={Boolean(onClose)}
+        className="sm:max-w-sm"
+        // Without a dismiss handler there is no way to decline, so swallow the
+        // gestures Radix would otherwise close on.
+        onEscapeKeyDown={onClose ? undefined : (e) => e.preventDefault()}
+        onInteractOutside={onClose ? undefined : (e) => e.preventDefault()}
       >
-        {children}
-      </div>
-    </div>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>{children}</DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

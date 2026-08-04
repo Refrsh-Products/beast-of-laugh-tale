@@ -371,7 +371,7 @@ export default function DashboardPage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search notebooks..."
                     aria-label="Search notebooks"
-                    className="pl-9"
+                    className="pl-9 bg-background"
                   />
                 </div>
 

@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import useAuthService from "../services/auth";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import CenteredCard from "../components/layout/CenteredCard";
+import { AuthFootLink } from "../components/auth/AuthShell";
 
 type Status = "verifying" | "success" | "missing-params" | "invalid" | "error";
 
@@ -36,7 +34,10 @@ export default function VerifyEmailPage() {
         navigate("/onboarding", { replace: true });
       } catch (err: any) {
         const detail = err?.response?.data?.error ?? "";
-        if (typeof detail === "string" && detail.toLowerCase().includes("already")) {
+        if (
+          typeof detail === "string" &&
+          detail.toLowerCase().includes("already")
+        ) {
           // Already-verified case — send them to log in.
           setStatus("invalid");
           setErrorMessage(
@@ -57,168 +58,51 @@ export default function VerifyEmailPage() {
     })();
   }, [uid, token, authService, navigate]);
 
-  return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: B,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
-        fontFamily: "'IBM Plex Mono', monospace",
-      }}
-    >
-      <div
-        style={{
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${G}`,
-          padding: "48px 40px",
-          width: "100%",
-          maxWidth: 420,
-          boxSizing: "border-box",
-        }}
+  if (status === "verifying") {
+    return (
+      <CenteredCard
+        title={
+          <>
+            Verifying your
+            <br />
+            email…
+          </>
+        }
+        description="Hang tight — this only takes a second."
       >
-        {/* Logo */}
-        <div
-          onClick={() => navigate("/")}
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.4rem",
-            letterSpacing: "-0.02em",
-            color: G,
-            cursor: "pointer",
-            userSelect: "none",
-            marginBottom: 32,
-          }}
-        >
-          FRESHR
-        </div>
+        {null}
+      </CenteredCard>
+    );
+  }
 
-        {status === "verifying" && (
-          <>
-            <h1
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "1.75rem",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-                marginBottom: 10,
-              }}
-            >
-              Verifying your
-              <br />
-              email...
-            </h1>
-            <p style={{ fontSize: "0.75rem", color: "#555", lineHeight: 1.6 }}>
-              Hang tight — this only takes a second.
-            </p>
-          </>
-        )}
+  if (status === "success") {
+    return (
+      <CenteredCard
+        title="Email verified!"
+        description="Redirecting you to onboarding…"
+      >
+        {null}
+      </CenteredCard>
+    );
+  }
 
-        {status === "success" && (
-          <>
-            <h1
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "1.75rem",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-                marginBottom: 10,
-              }}
-            >
-              Email verified!
-            </h1>
-            <p style={{ fontSize: "0.75rem", color: "#555", lineHeight: 1.6 }}>
-              Redirecting you to onboarding...
-            </p>
-          </>
-        )}
+  if (status === "missing-params") {
+    return (
+      <CenteredCard
+        title="Invalid link"
+        description="This verification link is missing required information."
+      >
+        <AuthFootLink to="/login">← Back to login</AuthFootLink>
+      </CenteredCard>
+    );
+  }
 
-        {status === "missing-params" && (
-          <>
-            <h1
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "1.75rem",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-                marginBottom: 16,
-              }}
-            >
-              Invalid link
-            </h1>
-            <p
-              style={{
-                fontSize: "0.75rem",
-                color: "#555",
-                lineHeight: 1.6,
-                marginBottom: 24,
-              }}
-            >
-              This verification link is missing required information.
-            </p>
-            <span
-              onClick={() => navigate("/login")}
-              style={{
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                color: B,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-                cursor: "pointer",
-              }}
-            >
-              ← Back to login
-            </span>
-          </>
-        )}
-
-        {(status === "invalid" || status === "error") && (
-          <>
-            <h1
-              style={{
-                fontFamily: "'Syne', sans-serif",
-                fontWeight: 800,
-                fontSize: "1.75rem",
-                letterSpacing: "-0.02em",
-                lineHeight: 1.1,
-                marginBottom: 16,
-              }}
-            >
-              {status === "invalid" ? "Link expired" : "Something went wrong"}
-            </h1>
-            <p
-              style={{
-                fontSize: "0.75rem",
-                color: "#555",
-                lineHeight: 1.6,
-                marginBottom: 24,
-              }}
-            >
-              {errorMessage}
-            </p>
-            <span
-              onClick={() => navigate("/login")}
-              style={{
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                color: B,
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-                cursor: "pointer",
-              }}
-            >
-              ← Back to login
-            </span>
-          </>
-        )}
-      </div>
-    </div>
+  return (
+    <CenteredCard
+      title={status === "invalid" ? "Link expired" : "Something went wrong"}
+      description={errorMessage}
+    >
+      <AuthFootLink to="/login">← Back to login</AuthFootLink>
+    </CenteredCard>
   );
 }

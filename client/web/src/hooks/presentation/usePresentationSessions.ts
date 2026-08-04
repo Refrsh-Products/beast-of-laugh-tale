@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { UsePresentationSessions } from "./usePresentationSessions.types";
 import usePresentationService from "../../services/presentation";
 import type { ToastVariant } from "../useToast";
-import type { ActiveView } from "../../components/notebook/OptionsColumn";
+import type { ActiveView } from "../../components/notebook/types";
 import type { PresentationSession } from "@freshr/shared";
 import type { NotebookTopic } from "@freshr/shared";
 import useNotebookService from "../../services/notebooks";

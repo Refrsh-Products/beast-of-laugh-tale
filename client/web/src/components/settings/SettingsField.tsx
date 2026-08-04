@@ -1,8 +1,7 @@
-import Button from "../ui/LegacyButton";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { useId } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface SettingsFieldProps {
   label: string;
@@ -25,26 +24,21 @@ export default function SettingsField({
   onSave,
   onCancel,
 }: SettingsFieldProps) {
+  const id = useId();
+
   return (
-    <div style={{ borderBottom: `2px solid ${B}`, paddingBottom: 20 }}>
-      <label
-        style={{
-          display: "block",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          letterSpacing: "0.14em",
-          color: B,
-          marginBottom: 8,
-        }}
+    <div className="border-border border-b pb-5">
+      <Label
+        htmlFor={isEditing ? id : undefined}
+        className="text-muted-foreground mb-2 text-xs font-semibold tracking-[0.14em] uppercase"
       >
         {label}
-      </label>
+      </Label>
 
       {isEditing ? (
-        /* Edit mode */
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <input
+        <div className="flex items-center gap-2.5">
+          <Input
+            id={id}
             autoFocus
             type="text"
             value={value}
@@ -53,85 +47,32 @@ export default function SettingsField({
               if (e.key === "Enter") onSave?.();
               if (e.key === "Escape") onCancel?.();
             }}
-            onMouseEnter={(e) => {
-              if (document.activeElement !== e.currentTarget)
-                e.currentTarget.style.borderColor = G;
-            }}
-            onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
-            onFocus={(e) => (e.currentTarget.style.borderColor = B)}
-            style={{
-              flex: 1,
-              border: `3px solid ${B}`,
-              borderRadius: 0,
-              padding: "10px 12px",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.88rem",
-              background: W,
-              outline: "none",
-              boxSizing: "border-box",
-              transition: "border-color 0.15s",
-            }}
           />
-          <Button variant="green" onClick={onSave}>Save</Button>
-          <Button variant="default" onClick={onCancel}>Cancel</Button>
+          <Button onClick={onSave}>Save</Button>
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
         </div>
       ) : (
-        /* View mode */
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.88rem",
-              color: B,
-              wordBreak: "break-all",
-            }}
-          >
-            {value || <span style={{ color: "#000000" }}>—</span>}
+        <div className="flex items-center justify-between gap-4">
+          <span className="text-foreground text-sm break-all">
+            {value || <span className="text-muted-foreground">—</span>}
           </span>
           {!disabled && (
-            <button
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto shrink-0 p-0"
               onClick={onEditStart}
-              onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-              onMouseLeave={(e) => (e.currentTarget.style.color = B)}
-              style={{
-                background: "none",
-                border: "none",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.08em",
-                color: "#000000",
-                cursor: "pointer",
-                padding: "4px 0",
-                whiteSpace: "nowrap",
-                textDecoration: "underline",
-                textUnderlineOffset: 3,
-                flexShrink: 0,
-                transition: "color 0.12s",
-              }}
             >
               Edit
-            </button>
+            </Button>
           )}
         </div>
       )}
 
       {disabled && (
-        <p
-          style={{
-            fontSize: "0.75rem",
-            color: "#000000",
-            marginTop: 6,
-            fontFamily: "'IBM Plex Mono', monospace",
-          }}
-        >
+        <p className="text-muted-foreground mt-1.5 text-xs">
           Email cannot be changed
         </p>
       )}

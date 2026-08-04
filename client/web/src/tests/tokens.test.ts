@@ -153,6 +153,7 @@ describe("token contrast (WCAG 2.1 AA)", () => {
       ["--secondary-foreground", "--secondary"],
       ["--accent-foreground", "--accent"],
       ["--destructive-foreground", "--destructive"],
+      ["--success-foreground", "--success"],
       ["--sidebar-foreground", "--sidebar"],
     ];
     for (const [fg, bg] of pairs) {
@@ -176,6 +177,23 @@ describe("token contrast (WCAG 2.1 AA)", () => {
           contrast("--ring", surface, scope),
           `--ring on ${surface}`,
         ).toBeGreaterThanOrEqual(3);
+      }
+    },
+  );
+
+  it.each(themes)(
+    "keeps the status colours readable as text in %s",
+    (_name, scope) => {
+      // The quiz review marks each answer by colouring the tick, the label and
+      // the option text, so --success and --destructive are read as text on a
+      // surface, not only as fills behind their own foreground token.
+      for (const status of ["--success", "--destructive"] as const) {
+        for (const surface of ["--background", "--card"] as const) {
+          expect(
+            contrast(status, surface, scope),
+            `${status} as text on ${surface}`,
+          ).toBeGreaterThanOrEqual(4.5);
+        }
       }
     },
   );

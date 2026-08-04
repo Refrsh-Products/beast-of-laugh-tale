@@ -413,6 +413,7 @@ describe("DashboardPage quota enforcement", () => {
 });
 
 describe("DashboardPage authentication", () => {
+  // (kept last: this test swaps the auth mock wholesale)
   it("redirects to /login when not authenticated", () => {
     vi.mocked(useAuthService).mockReturnValue({
       isLoggedIn: () => false,

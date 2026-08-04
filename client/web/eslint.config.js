@@ -15,62 +15,30 @@ import { defineConfig, globalIgnores } from 'eslint/config'
  * use of `style` even in migrated code; those carry an eslint-disable comment
  * with a reason at the call site instead of being listed here.
  */
-const LEGACY_INLINE_STYLE_FILES = [
-  'src/components/google-auth/GoogleAuthBtn.tsx',
-  'src/components/landing/FeatureCard.tsx',
-  'src/components/landing/PricingSection.tsx',
-  'src/components/landing/RotatingText.tsx',
-  'src/components/landing/TestimonialSection.tsx',
-  'src/components/notebook/AudioColumn.tsx',
-  'src/components/notebook/ChatColumn.tsx',
-  'src/components/notebook/ChatMessage.tsx',
-  'src/components/notebook/FileItem.tsx',
-  'src/components/notebook/FilesColumn.tsx',
-  'src/components/notebook/NotebookTitle.tsx',
-  'src/components/notebook/OptionsColumn.tsx',
-  'src/components/notebook/PastPresentationsColumn.tsx',
-  'src/components/notebook/PastQuizColumn.tsx',
-  'src/components/notebook/PresentationColumn.tsx',
-  'src/components/notebook/QuizColumn.tsx',
-  'src/components/notebook/QuizReviewColumn.tsx',
-  'src/components/notebook/QuizTakingScreen.tsx',
-  'src/components/notebook/UploadConfirmModal.tsx',
-  'src/components/payment/PaymentContentArea.tsx',
-  'src/components/presentation/PresentationPreview.tsx',
+/**
+ * Files that render *deck content* rather than app chrome, and are exempt
+ * permanently rather than pending migration.
+ *
+ * A generated slide is styled from the deck's own theme (see
+ * presentationThemes.ts), which must not follow the app's light/dark mode, and
+ * the same trees are mounted detached and rasterised by html2canvas for the
+ * PDF export — where Tailwind's stylesheet and CSS custom properties are out
+ * of scope and only concrete values survive. Their colours still come from a
+ * single module; they just cannot be expressed as utility classes.
+ */
+const SLIDE_RENDERING_FILES = [
   'src/components/presentation/PresentationViewer.tsx',
   'src/components/presentation/SlideEditor.tsx',
   'src/components/presentation/SlideLayouts.tsx',
   'src/components/presentation/exportPresentation.tsx',
-  'src/components/profile-account/AccountContentArea.tsx',
-  'src/components/profile-account/ProfileAvatar.tsx',
-  'src/components/profile-account/ProfileContentArea.tsx',
-  'src/components/profile-account/ProfileSidebar.tsx',
-  'src/components/profile-account/SupportContentArea.tsx',
-  'src/components/quiz/Divider.tsx',
-  'src/components/quiz/QuizCard.tsx',
-  'src/components/quiz/QuizTopicChip.tsx',
-  'src/components/quiz/quiz-taking-screen/QuizTakingScreenExitConfirmModal.tsx',
-  'src/components/quiz/quiz-taking-screen/QuizTakingScreenModal.tsx',
-  'src/components/quiz/quiz-taking-screen/QuizTakingScreenNavButton.tsx',
-  'src/components/quiz/quiz-taking-screen/QuizTakingScreenTimesUpModal.tsx',
-  'src/components/quiz/quiz-taking-screen/QuizTakingScreenUnansweredModal.tsx',
-  'src/components/settings/SettingsField.tsx',
-  'src/page/ForgotPasswordPage.tsx',
-  'src/page/ForgotPasswordSentPage.tsx',
+]
+
+const LEGACY_INLINE_STYLE_FILES = [
+  'src/components/landing/FeatureCard.tsx',
+  'src/components/landing/PricingSection.tsx',
+  'src/components/landing/RotatingText.tsx',
+  'src/components/landing/TestimonialSection.tsx',
   'src/page/LandingPage.tsx',
-  'src/page/LoginPage.tsx',
-  'src/page/NotFoundPage.tsx',
-  'src/page/NotebookPage.tsx',
-  'src/page/OnboardingPage.tsx',
-  'src/page/PaymentCancelPage.tsx',
-  'src/page/PaymentSuccessPage.tsx',
-  'src/page/PolicyPage.tsx',
-  'src/page/ProfilePage.tsx',
-  'src/page/ResetPasswordPage.tsx',
-  'src/page/SignupPage.tsx',
-  'src/page/SupportPage.tsx',
-  'src/page/VerifyEmailPage.tsx',
-  'src/page/VerifyEmailSentPage.tsx',
 ]
 
 const NO_INLINE_STYLE_MESSAGE =
@@ -102,7 +70,7 @@ export default defineConfig([
   },
   {
     // The shrinking legacy list — see the comment above it.
-    files: LEGACY_INLINE_STYLE_FILES,
+    files: [...LEGACY_INLINE_STYLE_FILES, ...SLIDE_RENDERING_FILES],
     rules: {
       'no-restricted-syntax': 'off',
     },

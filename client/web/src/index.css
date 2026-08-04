@@ -113,11 +113,25 @@
   --destructive: #b3261e;
   --destructive-foreground: #ffffff;
 
-  /* --border is a decorative divider; --input outlines a control and so has
-     to clear the 3:1 non-text minimum of WCAG 1.4.11. The brand's tan border
-     steps only reach 1.3:1, which is why the two are not the same value. */
+  /* The affirmative counterpart to --destructive, for graded results: a marked
+     answer is right or wrong, and colour is how that reads at a glance. Like
+     --destructive it has to work both as text on a surface and as a fill
+     carrying --success-foreground, so it sits deep on the Sulu ramp rather
+     than on Sulu itself, which fails contrast on every light surface. */
+  --success: var(--brand-secondary-800);
+  --success-foreground: #ffffff;
+
+  /* Three separate jobs, deliberately three tokens:
+       --border  decorative dividers, may be soft
+       --input   the OUTLINE of a control, so it must clear the 3:1 non-text
+                 minimum of WCAG 1.4.11 (the brand's tan border steps only
+                 reach 1.3:1, hence not reusing --border)
+       --field   the FILL inside a control. The shadcn components render this
+                 as bg-field; it has to stay near the surface colour or every
+                 input reads as a muddy block. */
   --border: var(--brand-tertiary-300);
   --input: var(--brand-tertiary-700);
+  --field: var(--brand-tertiary-100);
   --ring: var(--brand-primary-600);
 
   --chart-1: var(--brand-primary-900);
@@ -164,8 +178,14 @@
   --destructive: #ff8a7a;
   --destructive-foreground: var(--brand-ink);
 
+  /* Bright enough to read on the dark surfaces, and deliberately a step off
+     --primary (Sulu) so "correct" and "call to action" stay distinguishable. */
+  --success: var(--brand-secondary-400);
+  --success-foreground: var(--brand-ink);
+
   --border: var(--brand-primary-700);
   --input: var(--brand-primary-400);
+  --field: var(--brand-primary-800);
   --ring: var(--brand-secondary-300);
 
   --chart-1: var(--brand-secondary-300);
@@ -211,8 +231,11 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
+  --color-field: var(--field);
   --color-ring: var(--ring);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);

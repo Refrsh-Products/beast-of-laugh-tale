@@ -1,3 +1,9 @@
+import { Separator } from "@/components/ui/separator";
+
+/**
+ * Kept as a named component because the quiz screens use it as a rhythm
+ * element with its own vertical spacing, not as a bare rule.
+ */
 export default function Divider() {
-  return <div style={{ borderBottom: "1px solid #ddd", margin: "24px 0" }} />;
+  return <Separator className="my-6" />;
 }

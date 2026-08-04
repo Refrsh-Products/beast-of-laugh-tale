@@ -18,6 +18,24 @@ if (!Element.prototype.hasPointerCapture) {
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = vi.fn();
 }
+/**
+ * jsdom has no matchMedia. The theme store reads it to resolve "system", so
+ * without this every screen rendering a ThemeToggle throws. Defaults to light;
+ * theme.test.ts stubs its own controllable version where it matters.
+ */
+if (!window.matchMedia) {
+  window.matchMedia = ((query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    addListener: () => {},
+    removeListener: () => {},
+    dispatchEvent: () => false,
+  })) as typeof window.matchMedia;
+}
+
 if (!globalThis.ResizeObserver) {
   globalThis.ResizeObserver = class {
     observe() {}

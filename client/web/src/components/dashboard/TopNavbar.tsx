@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import FullLogoMark from "../logo/FullLogoMark";
+import ThemeToggle from "@/components/ui/ThemeToggle";
 import { RiUser3Line, RiLifebuoyLine, RiLogoutBoxRLine } from "@remixicon/react";
 
 interface TopNavbarProps {
@@ -47,7 +48,10 @@ export default function TopNavbar({
         </Badge>
       </button>
 
-      <DropdownMenu>
+      <div className="flex items-center gap-1">
+        <ThemeToggle />
+
+        <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="h-auto gap-2 px-2 py-1.5">
             <Avatar className="size-7">
@@ -91,7 +95,8 @@ export default function TopNavbar({
             </>
           )}
         </DropdownMenuContent>
-      </DropdownMenu>
+        </DropdownMenu>
+      </div>
     </header>
   );
 }

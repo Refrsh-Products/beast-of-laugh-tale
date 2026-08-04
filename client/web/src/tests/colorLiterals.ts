@@ -20,6 +20,11 @@ export const EXEMPT: Array<{ prefix: string; reason: string }> = [
     reason:
       "Marketing page with bespoke WebGL/ogl visuals; colours are shader inputs, not UI surfaces.",
   },
+  {
+    prefix: "src/components/google-auth/GoogleGlyph.tsx",
+    reason:
+      "Google's registered brand mark. Their sign-in branding guidelines forbid recolouring it, so the four hexes cannot be tokens.",
+  },
 ];
 
 /** Colour literals: #rgb/#rrggbb/#rrggbbaa plus rgb()/rgba()/hsl()/hsla(). */

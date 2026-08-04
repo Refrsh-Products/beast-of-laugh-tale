@@ -7,12 +7,19 @@ import type {
   PresentationSession,
   PresentationSlide,
 } from "@freshr/shared";
-import { renderSlideContent, B, G } from "./SlideLayouts";
+import { renderSlideContent } from "./SlideLayouts";
+import {
+  DEFAULT_SLIDE_THEME,
+  blendedSlideText,
+  type SlideTheme,
+} from "./presentationThemes";
 
 const SLIDE_W_PX = 960;
 const SLIDE_H_PX = 540;
 const SLIDE_H_IN = 5.625;
-const GREY = "888888";
+
+/** pptxgenjs wants bare hex digits, not CSS colours. */
+const bare = (hex: string) => hex.replace("#", "");
 
 // ─── PDF ─────────────────────────────────────────────────────────────────────
 
@@ -20,9 +27,13 @@ async function captureSlide(
   slide: PresentationSlide,
   topic: string,
   total: number,
+  theme: SlideTheme,
 ): Promise<HTMLCanvasElement> {
+  const footerColour = blendedSlideText(theme);
+  const hairline = blendedSlideText(theme, 0.15);
+
   const container = document.createElement("div");
-  container.style.cssText = `position:fixed;left:-9999px;top:-9999px;width:${SLIDE_W_PX}px;height:${SLIDE_H_PX}px;overflow:hidden;background:white;font-size:16px;`;
+  container.style.cssText = `position:fixed;left:-9999px;top:-9999px;width:${SLIDE_W_PX}px;height:${SLIDE_H_PX}px;overflow:hidden;background:${theme.bg};font-size:16px;`;
   document.body.appendChild(container);
 
   const root = createRoot(container);
@@ -32,7 +43,7 @@ async function captureSlide(
         style={{
           width: SLIDE_W_PX,
           height: SLIDE_H_PX,
-          background: "white",
+          background: theme.bg,
           display: "flex",
           flexDirection: "column",
           padding: "12px 12px 8px",
@@ -40,11 +51,11 @@ async function captureSlide(
         }}
       >
         <div style={{ display: "flex", flex: 1, overflow: "hidden" }}>
-          {renderSlideContent(slide)}
+          {renderSlideContent(slide, theme)}
         </div>
         <div
           style={{
-            borderTop: "1px solid #ddd",
+            borderTop: `1px solid ${hairline}`,
             marginTop: 8,
             paddingTop: 4,
             display: "flex",
@@ -56,13 +67,19 @@ async function captureSlide(
             style={{
               fontFamily: "monospace",
               fontSize: 9,
-              color: "#000000",
+              color: footerColour,
               letterSpacing: "0.1em",
             }}
           >
             {topic?.toUpperCase()}
           </span>
-          <span style={{ fontFamily: "monospace", fontSize: 9, color: "#000000" }}>
+          <span
+            style={{
+              fontFamily: "monospace",
+              fontSize: 9,
+              color: footerColour,
+            }}
+          >
             {slide.order_index + 1} / {total}
           </span>
         </div>
@@ -89,6 +106,7 @@ async function captureSlide(
 
 export async function exportAsPdf(
   presentation: PresentationSession,
+  theme: SlideTheme = DEFAULT_SLIDE_THEME,
 ): Promise<void> {
   const slides = presentation.slides ?? [];
   if (slides.length === 0) return;
@@ -107,6 +125,7 @@ export async function exportAsPdf(
       slides[i],
       presentation.topic,
       slides.length,
+      theme,
     );
     const imgData = canvas.toDataURL("image/jpeg", 0.92);
     pdf.addImage(imgData, "JPEG", 0, 0, pageW, pageH);
@@ -136,17 +155,24 @@ async function buildPptxSlide(
   slide: PresentationSlide,
   topic: string,
   total: number,
+  theme: SlideTheme,
 ): Promise<void> {
   const s = pres.addSlide();
 
-  // Green left strip
+  const ACCENT = bare(theme.accent);
+  const TEXT = bare(theme.text);
+  const SECONDARY = bare(blendedSlideText(theme));
+
+  s.background = { color: bare(theme.bg) };
+
+  // Accent left strip
   s.addShape("rect" as any, {
     x: 0,
     y: 0,
     w: 0.08,
     h: SLIDE_H_IN,
-    fill: { color: G.replace("#", "") },
-    line: { width: 0, color: G.replace("#", "") },
+    fill: { color: ACCENT },
+    line: { width: 0, color: ACCENT },
   });
 
   // Footer
@@ -157,7 +183,7 @@ async function buildPptxSlide(
     w: 5,
     h: 0.22,
     fontSize: 7,
-    color: GREY,
+    color: SECONDARY,
     fontFace: "Courier New",
   });
   s.addText(`${slide.order_index + 1} / ${total}`, {
@@ -166,13 +192,12 @@ async function buildPptxSlide(
     w: 2.3,
     h: 0.22,
     fontSize: 7,
-    color: GREY,
+    color: SECONDARY,
     fontFace: "Courier New",
     align: "right",
   });
 
   const FONT = "Courier New";
-  const BLACK = B.replace("#", "");
 
   function titleBlock(x: number, y: number, w: number) {
     s.addText(slide.title || "", {
@@ -182,7 +207,7 @@ async function buildPptxSlide(
       h: 0.75,
       fontSize: 22,
       bold: true,
-      color: BLACK,
+      color: TEXT,
       fontFace: FONT,
       charSpacing: -0.5,
     });
@@ -191,8 +216,8 @@ async function buildPptxSlide(
       y: y + 0.75,
       w,
       h: 0.015,
-      fill: { color: BLACK },
-      line: { width: 0, color: BLACK },
+      fill: { color: TEXT },
+      line: { width: 0, color: TEXT },
     });
   }
 
@@ -209,7 +234,7 @@ async function buildPptxSlide(
       items.map((b) => ({
         text: b,
         options: {
-          bullet: { color: G.replace("#", "") } as any,
+          bullet: { color: ACCENT } as any,
           breakLine: true,
         },
       })),
@@ -219,7 +244,7 @@ async function buildPptxSlide(
         w,
         h,
         fontSize: size,
-        color: BLACK,
+        color: TEXT,
         fontFace: FONT,
         valign: "top",
       },
@@ -251,7 +276,7 @@ async function buildPptxSlide(
         h: 2.8,
         fontSize: 34,
         bold: true,
-        color: BLACK,
+        color: TEXT,
         fontFace: FONT,
         valign: "middle",
       });
@@ -265,7 +290,7 @@ async function buildPptxSlide(
         w: 9.5,
         h: 4.0,
         fontSize: 13,
-        color: "333333",
+        color: SECONDARY,
         fontFace: FONT,
         valign: "top",
       });
@@ -303,7 +328,7 @@ async function buildPptxSlide(
           w: 9.6,
           h: 0.3,
           fontSize: 10,
-          color: "555555",
+          color: SECONDARY,
           italic: true,
           fontFace: FONT,
         });
@@ -319,7 +344,7 @@ async function buildPptxSlide(
         h: 0.65,
         fontSize: 18,
         bold: true,
-        color: BLACK,
+        color: TEXT,
         fontFace: FONT,
       });
       bulletsBlock(0.2, 3.8, 9.6, 1.5, slide.bullets.slice(0, 2), 12);
@@ -333,7 +358,7 @@ async function buildPptxSlide(
         h: 0.8,
         fontSize: 38,
         bold: true,
-        color: G.replace("#", ""),
+        color: ACCENT,
         fontFace: FONT,
       });
       s.addText(slide.quote || "", {
@@ -343,7 +368,7 @@ async function buildPptxSlide(
         h: 2.6,
         fontSize: 18,
         bold: true,
-        color: BLACK,
+        color: TEXT,
         fontFace: FONT,
         align: "center",
         valign: "middle",
@@ -355,7 +380,7 @@ async function buildPptxSlide(
           w: 9,
           h: 0.4,
           fontSize: 11,
-          color: GREY,
+          color: SECONDARY,
           fontFace: FONT,
           align: "center",
         });
@@ -374,7 +399,7 @@ async function buildPptxSlide(
           w: 4.6,
           h: 0.3,
           fontSize: 9,
-          color: "555555",
+          color: SECONDARY,
           italic: true,
           fontFace: FONT,
           align: "center",
@@ -386,7 +411,7 @@ async function buildPptxSlide(
           w: 4.6,
           h: 0.3,
           fontSize: 9,
-          color: "555555",
+          color: SECONDARY,
           italic: true,
           fontFace: FONT,
           align: "center",
@@ -401,6 +426,7 @@ async function buildPptxSlide(
 
 export async function exportAsPptx(
   presentation: PresentationSession,
+  theme: SlideTheme = DEFAULT_SLIDE_THEME,
 ): Promise<void> {
   const slides = presentation.slides ?? [];
   if (slides.length === 0) return;
@@ -410,7 +436,7 @@ export async function exportAsPptx(
   pres.title = presentation.topic || "Presentation";
 
   for (const slide of slides) {
-    await buildPptxSlide(pres, slide, presentation.topic, slides.length);
+    await buildPptxSlide(pres, slide, presentation.topic, slides.length, theme);
   }
 
   await pres.writeFile({

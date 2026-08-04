@@ -7,7 +7,7 @@ import RotatingText from "../components/landing/RotatingText";
 import PricingSection from "../components/landing/PricingSection";
 import { FEATURES, STEPS, TICKER_TEXT } from "./dto/LandingPage.dto";
 
-import { GREEN as G, BLACK as B, WHITE as W } from "../constants/theme";
+import { GREEN as G, BLACK as B, WHITE as W } from "../components/landing/landingTheme";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { BP_PHONE } from "../constants/breakpoints";
 

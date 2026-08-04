@@ -6,7 +6,7 @@ import type { UseQuizSessions } from "./useQuizSessions.type";
 import type { QuizSession } from "@freshr/shared";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import type { ActiveView } from "../../components/notebook/OptionsColumn";
+import type { ActiveView } from "../../components/notebook/types";
 import type { NotebookTopic } from "@freshr/shared";
 import { track } from "../../lib/analytics";
 

@@ -37,7 +37,10 @@ const AccountServiceMock: AccountService = {
         limit_bytes: BigInt(500 * 1024 * 1024),
       },
       daily_quizzes: { used: 0, limit: 5 },
-presentations: { used: 0, limit: 2 },
+      presentations: { used: 0, limit: 2 },
+      // The real API returns this; without it the audio tool is permanently
+      // locked behind its upsell in mock mode and can't be worked on.
+      features: { audio_notes: true },
     });
   },
 };

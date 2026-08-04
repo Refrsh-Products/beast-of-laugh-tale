@@ -8,12 +8,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { RiSparkling2Line } from "@remixicon/react";
+import { RiDiamondLine } from "@remixicon/react";
 
 export default function UpgradeModal({
   onClose,
   title = "You've hit your plan limit",
-  description = "Upgrade to Pro for unlimited notebooks, more storage and higher daily quiz and presentation limits.",
+  description = "Unlock unlimited notebooks, extra storage, and daily quizzes to keep your learning streak going. Upgrade to Pro today.",
 }: {
   onClose: () => void;
   title?: string;
@@ -26,7 +26,7 @@ export default function UpgradeModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <span className="bg-secondary text-secondary-foreground mb-1 flex size-11 items-center justify-center rounded-full">
-            <RiSparkling2Line className="size-5" aria-hidden="true" />
+            <RiDiamondLine className="size-5" aria-hidden="true" />
           </span>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
