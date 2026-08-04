@@ -21,7 +21,7 @@ export function renderSlideContent(
   const secondary = blendedSlideText(theme);
   const hairline = blendedSlideText(theme, 0.15);
 
-  const strip = (
+  const strip = theme.accentStrip ? (
     <div
       style={{
         width: 10,
@@ -31,12 +31,12 @@ export function renderSlideContent(
         borderRadius: 2,
       }}
     />
-  );
+  ) : null;
 
   const title = (
     <div
       style={{
-        fontFamily: "'IBM Plex Mono', monospace",
+        fontFamily: theme.bodyFont,
         fontSize: "2em",
         fontWeight: 800,
         color: theme.text,
@@ -58,7 +58,7 @@ export function renderSlideContent(
         display: "flex",
         gap: "0.55em",
         alignItems: "flex-start",
-        fontFamily: "'IBM Plex Mono', monospace",
+        fontFamily: theme.bodyFont,
         fontSize,
         color: theme.text,
         lineHeight: 1.55,
@@ -120,7 +120,7 @@ export function renderSlideContent(
           >
             <div
               style={{
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: theme.titleFont,
                 fontSize: "3em",
                 fontWeight: 800,
                 color: theme.text,
@@ -151,7 +151,7 @@ export function renderSlideContent(
             {title}
             <div
               style={{
-                fontFamily: "'IBM Plex Mono', monospace",
+                fontFamily: theme.bodyFont,
                 fontSize: "0.9em",
                 color: secondary,
                 lineHeight: 1.8,
@@ -320,7 +320,7 @@ export function renderSlideContent(
           {(slide.caption || slide.title) && (
             <div
               style={{
-                fontFamily: "'IBM Plex Mono', monospace",
+                fontFamily: theme.bodyFont,
                 fontSize: "0.75em",
                 color: secondary,
                 fontStyle: "italic",
@@ -366,7 +366,7 @@ export function renderSlideContent(
             >
               <div
                 style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontFamily: theme.bodyFont,
                   fontSize: "1.4em",
                   fontWeight: 800,
                   color: theme.text,
@@ -395,7 +395,7 @@ export function renderSlideContent(
           <div style={{ textAlign: "center", padding: "0 2em" }}>
             <div
               style={{
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: theme.titleFont,
                 fontSize: "2.5em",
                 fontWeight: 800,
                 color: theme.accent,
@@ -407,7 +407,7 @@ export function renderSlideContent(
             </div>
             <div
               style={{
-                fontFamily: "'Syne', sans-serif",
+                fontFamily: theme.titleFont,
                 fontSize: "1.4em",
                 fontWeight: 700,
                 color: theme.text,
@@ -421,7 +421,7 @@ export function renderSlideContent(
             {(slide.quote_source || slide.bullets[0]) && (
               <div
                 style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontFamily: theme.bodyFont,
                   fontSize: "0.7em",
                   color: secondary,
                   letterSpacing: "0.06em",
@@ -475,7 +475,7 @@ export function renderSlideContent(
                 {slide.bullets[idx] && (
                   <div
                     style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontFamily: theme.bodyFont,
                       fontSize: "0.65em",
                       color: secondary,
                       textAlign: "center",

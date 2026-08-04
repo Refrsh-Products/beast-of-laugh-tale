@@ -86,9 +86,11 @@ function SlideThumbnail({
         )}
         style={{ background: theme.bg }}
       >
-        <div
-          style={{ width: 4, background: theme.accent, flexShrink: 0 }}
-        />
+        {theme.accentStrip && (
+          <div
+            style={{ width: 4, background: theme.accent, flexShrink: 0 }}
+          />
+        )}
         <div className="flex flex-1 flex-col gap-[3px] overflow-hidden px-[7px] py-[5px]">
           <div
             className="truncate text-[0.42rem] leading-tight font-bold"

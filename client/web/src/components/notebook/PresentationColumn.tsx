@@ -33,7 +33,6 @@ function ThemeCard({
   onClick: () => void;
 }) {
   const theme = PRESENTATION_THEMES[themeKey];
-  const isFreshr = themeKey === "freshr";
   const isDark = themeKey === "dark";
 
   return (
@@ -51,7 +50,7 @@ function ThemeCard({
         // eslint-disable-next-line no-restricted-syntax -- slide theme preview, not app chrome
         style={{ background: theme.bg }}
       >
-        {isFreshr && (
+        {theme.accentStrip && (
           <div
             className="w-1.5 shrink-0"
             // eslint-disable-next-line no-restricted-syntax -- slide theme preview

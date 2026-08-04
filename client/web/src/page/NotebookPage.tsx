@@ -32,6 +32,7 @@ import useAudioTranscripts from "../hooks/audio/useAudioTranscripts";
 import DeleteNotebookModal from "../components/dashboard/DeleteNotebookModal";
 import { getAccount as getCachedAccount } from "../storage";
 import PresentationViewer from "../components/presentation/PresentationViewer";
+import { resolveSlideTheme } from "../components/presentation/presentationThemes";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
 import { useToast } from "../hooks/useToast";
 import useChatService from "../services/chat";
@@ -725,6 +726,9 @@ export default function NotebookPage() {
           onClose={presentationSession.handleClosePresentation}
           onUpdate={presentationSession.handleUpdatePresentation}
           onRefineSlide={presentationSession.handleRefineSlide}
+          theme={resolveSlideTheme(
+            presentationSession.activePresentation.theme,
+          )}
         />
       )}
     </div>

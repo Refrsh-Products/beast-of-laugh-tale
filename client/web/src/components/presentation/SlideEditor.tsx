@@ -114,7 +114,7 @@ export default function SlideEditor({
     border: "none",
     outline: "none",
     background: "transparent",
-    fontFamily: "'IBM Plex Mono', monospace",
+    fontFamily: theme.bodyFont,
     color: theme.text,
     caretColor: theme.accent,
     width: "100%",
@@ -142,7 +142,7 @@ export default function SlideEditor({
   );
 
   const hintStyle: React.CSSProperties = {
-    fontFamily: "'IBM Plex Mono', monospace",
+    fontFamily: theme.bodyFont,
     fontSize: "0.6rem",
     color: secondary,
     letterSpacing: "0.08em",
@@ -224,7 +224,7 @@ export default function SlideEditor({
           borderRadius: 8,
           outline: "none",
           padding: "6px 10px",
-          fontFamily: "'IBM Plex Mono', monospace",
+          fontFamily: theme.bodyFont,
           fontSize: "0.7rem",
           color: theme.text,
           caretColor: theme.accent,
@@ -342,7 +342,7 @@ export default function SlideEditor({
             <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
               <span
                 style={{
-                  fontFamily: "'Syne', sans-serif",
+                  fontFamily: theme.titleFont,
                   fontSize: "2.5rem",
                   fontWeight: 800,
                   color: theme.accent,
@@ -437,7 +437,9 @@ export default function SlideEditor({
         className="flex flex-1 overflow-hidden"
         style={{ background: theme.bg }}
       >
-        <div style={{ width: 10, background: theme.accent, flexShrink: 0 }} />
+        {theme.accentStrip && (
+          <div style={{ width: 10, background: theme.accent, flexShrink: 0 }} />
+        )}
         <div className="flex flex-1 flex-col gap-6 overflow-y-auto px-8 py-9 sm:px-13">
           {renderFields()}
         </div>

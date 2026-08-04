@@ -3,7 +3,10 @@ import type { UsePresentationSessions } from "./usePresentationSessions.types";
 import usePresentationService from "../../services/presentation";
 import type { ToastVariant } from "../useToast";
 import type { ActiveView } from "../../components/notebook/types";
-import type { PresentationSession } from "@freshr/shared";
+import type {
+  PresentationCreatePayload,
+  PresentationSession,
+} from "@freshr/shared";
 import type { NotebookTopic } from "@freshr/shared";
 import useNotebookService from "../../services/notebooks";
 import { track } from "../../lib/analytics";
@@ -85,7 +88,7 @@ const usePresentationSessions = (
       track("generate-presentation");
       setIsGeneratingPresentation(true);
       const isAllTopics = options.topics.length === 0 && !options.customTopic;
-      const payload = {
+      const payload: PresentationCreatePayload = {
         notebook: notebookId,
         topic: isAllTopics
           ? "All Topics"
@@ -97,6 +100,7 @@ const usePresentationSessions = (
           | "BRIEF"
           | "BALANCED"
           | "DETAILED",
+        theme: options.theme,
       };
 
       try {
