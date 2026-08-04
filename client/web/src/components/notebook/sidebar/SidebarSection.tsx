@@ -23,10 +23,9 @@ export function SidebarSection({
   return (
     <section className={cn("flex min-h-0 flex-col", className)}>
       <header className="flex items-center justify-between gap-2 px-4 pt-4 pb-2">
-        <h2 className="text-muted-foreground text-xs font-semibold tracking-[0.1em] uppercase">
+        <h2 className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
           {title}
         </h2>
-        {action}
       </header>
       <div
         className={cn(
@@ -34,6 +33,7 @@ export function SidebarSection({
           bodyClassName,
         )}
       >
+        {action}
         {children}
       </div>
     </section>

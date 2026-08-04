@@ -75,13 +75,13 @@ export default function MaterialsPanel({
       className="border-border border-t"
       action={
         <Button
-          variant="ghost"
-          size="icon-xs"
+          size="sm"
+          className="w-full"
           aria-label="Upload files"
           disabled={disabled}
           onClick={() => inputRef.current?.click()}
         >
-          <RiUploadCloud2Line aria-hidden="true" />
+          <RiUploadCloud2Line aria-hidden="true" /> Upload Notes
         </Button>
       }
     >

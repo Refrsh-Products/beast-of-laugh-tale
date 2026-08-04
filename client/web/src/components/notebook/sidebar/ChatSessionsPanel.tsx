@@ -15,7 +15,7 @@ import {
   RiPencilLine,
   RiDeleteBin6Line,
 } from "@remixicon/react";
-import { SidebarEmpty, SidebarItem, SidebarSection } from "./SidebarSection";
+import { SidebarItem, SidebarSection, SidebarEmpty } from "./SidebarSection";
 
 /**
  * The chat session list, lifted out of ChatColumn's inline dropdown so it can
@@ -40,9 +40,6 @@ export default function ChatSessionsPanel({
 }) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
-  // Mirrors the notebook cards: Escape must cancel without the blur handler
-  // also committing, and a menu-triggered rename must not commit on the
-  // focus restore that happens before the user types.
   const cancelledRef = useRef(false);
   const interactedRef = useRef(false);
   const renamingRef = useRef(false);
@@ -65,18 +62,21 @@ export default function ChatSessionsPanel({
       title="Chats"
       action={
         <Button
-          variant="ghost"
-          size="icon-xs"
-          aria-label="New chat"
-          disabled={disabled}
+          size="sm"
+          className="w-full"
           onClick={onNewSession}
+          disabled={disabled}
         >
           <RiAddLine aria-hidden="true" />
+          New chat
         </Button>
       }
     >
       {sessions.length === 0 ? (
-        <SidebarEmpty>No chats yet.</SidebarEmpty>
+        <SidebarEmpty>
+          No new chat session click the button to create a new session and start
+          chatting.
+        </SidebarEmpty>
       ) : (
         <ul className="flex flex-col gap-0.5">
           {sessions.map((session) => (

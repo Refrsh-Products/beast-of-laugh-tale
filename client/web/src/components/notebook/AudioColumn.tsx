@@ -23,7 +23,6 @@ import {
   RiSparkling2Line,
 } from "@remixicon/react";
 
-
 // ─── Types ───────────────────────────────────────────────────────────────────
 // Transcription DTOs live in @freshr/shared; imported here for local use.
 import type { AudioTranscriptDetail } from "@freshr/shared";
@@ -411,7 +410,7 @@ function NewTranscriptionPanel({
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="lecture-title"
-                className="text-xs font-semibold tracking-[0.1em] uppercase"
+                className="text-xs font-semibold tracking-widest uppercase"
               >
                 Lecture title
               </label>
@@ -435,7 +434,7 @@ function NewTranscriptionPanel({
           )}
 
           <div className="bg-muted border-border rounded-lg border px-3.5 py-3">
-            <div className="mb-2 text-xs font-semibold tracking-[0.1em] uppercase">
+            <div className="mb-2 text-xs font-semibold tracking-widest uppercase">
               Tips for better transcription
             </div>
             <ul className="text-muted-foreground list-disc pl-4 text-sm">
@@ -748,7 +747,7 @@ function ReviewPanel({
       <div className="mb-3 flex flex-col gap-2">
         <label
           htmlFor="review-title"
-          className="text-xs font-semibold tracking-[0.1em] uppercase"
+          className="text-xs font-semibold tracking-widest uppercase"
         >
           Lecture title
         </label>

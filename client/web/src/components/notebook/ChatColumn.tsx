@@ -121,10 +121,6 @@ export default function ChatColumn({
 
   return (
     <div className="bg-background flex h-full flex-col overflow-hidden">
-      {/* The session name and switcher used to live here. Sessions now have
-          a permanent home in the notebook sidebar, so keeping a second
-          control for them here would be two sources of truth. */}
-
       {chatDisabled && (
         <div className="bg-muted text-muted-foreground border-border flex shrink-0 items-center gap-2 border-b px-4 py-2 text-sm">
           <RiLoader4Line className="size-4 animate-spin" aria-hidden="true" />
