@@ -5,9 +5,8 @@ import useAuthService from "../../services/auth";
 import type { ProfileTab } from "./ProfileSidebar";
 import type { StoredAccount } from "@freshr/shared";
 import { getAccount as getCachedAccount } from "../../storage";
-import Button from "../ui/Button";
-
-const B = "#000000";
+import { Button } from "@/components/ui/button";
+import { RiLogoutBoxLine } from "@remixicon/react";
 
 interface AccountContentAreaProps {
   activeTab: ProfileTab;
@@ -26,28 +25,11 @@ function formatMemberSince(dateStr: string): string {
 
 function ReadOnlyRow({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ borderBottom: `2px solid ${B}`, paddingBottom: 20 }}>
-      <div
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          letterSpacing: "0.14em",
-          color: "#000000",
-          marginBottom: 8,
-        }}
-      >
+    <div className="border-border border-b pb-5">
+      <div className="text-muted-foreground mb-2 text-xs font-semibold tracking-[0.14em] uppercase">
         {label}
       </div>
-      <div
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.88rem",
-          color: "#000000",
-        }}
-      >
-        {value || "—"}
-      </div>
+      <div className="text-foreground text-sm">{value || "—"}</div>
     </div>
   );
 }
@@ -59,11 +41,20 @@ export default function AccountContentArea({
   const accountService = useAccountService();
   const navigate = useNavigate();
   const user = authService.getUser();
-  const [account, setAccount] = useState<StoredAccount | null>(getCachedAccount());
+  const [account, setAccount] = useState<StoredAccount | null>(
+    getCachedAccount(),
+  );
 
   useEffect(() => {
-    accountService.getAccount().then((res) => { if (res) setAccount(res.account); }).catch(() => {});
+    accountService
+      .getAccount()
+      .then((res) => {
+        if (res) setAccount(res.account);
+      })
+      .catch(() => {});
   }, []);
+
+  if (activeTab !== "account") return null;
 
   const planLabel = account?.tier_plan ?? "FREE";
 
@@ -74,42 +65,23 @@ export default function AccountContentArea({
 
   return (
     <>
-      {activeTab === "account" && (
-        <>
-          <h2
-            style={{
-              fontFamily: "'Syne', sans-serif",
-              fontWeight: 800,
-              fontSize: "1.5rem",
-              letterSpacing: "-0.02em",
-              marginBottom: 32,
-              lineHeight: 1.1,
-            }}
-          >
-            Account
-          </h2>
+      <h2 className="font-heading text-foreground mb-8 text-2xl leading-tight font-bold tracking-tight">
+        Account
+      </h2>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 0,
-              marginBottom: 40,
-            }}
-          >
-            <ReadOnlyRow label="EMAIL" value={user?.email ?? ""} />
-            <ReadOnlyRow label="PLAN" value={planLabel} />
-            <ReadOnlyRow
-              label="MEMBER SINCE"
-              value={
-                user?.created_at ? formatMemberSince(user.created_at) : "—"
-              }
-            />
-          </div>
+      <div className="mb-10 flex flex-col">
+        <ReadOnlyRow label="Email" value={user?.email ?? ""} />
+        <ReadOnlyRow label="Plan" value={planLabel} />
+        <ReadOnlyRow
+          label="Member since"
+          value={user?.created_at ? formatMemberSince(user.created_at) : "—"}
+        />
+      </div>
 
-          <Button variant="danger" fullWidth onClick={handleLogout}>LOGOUT</Button>
-        </>
-      )}
+      <Button variant="destructive" className="w-full" onClick={handleLogout}>
+        <RiLogoutBoxLine aria-hidden="true" />
+        Log out
+      </Button>
     </>
   );
 }

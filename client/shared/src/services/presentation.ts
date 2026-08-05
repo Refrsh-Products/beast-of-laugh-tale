@@ -21,6 +21,25 @@ export type PresentationStatus =
 
 export type TextLength = "BRIEF" | "BALANCED" | "DETAILED";
 
+/** Slide colour scheme picked at generation time. Persisted on the session so
+ *  the viewer and the PDF/PPTX exports all render the deck the same way. */
+export type PresentationThemeKey =
+  | "freshr"
+  | "minimal"
+  | "dark"
+  | "academic"
+  | "serif";
+
+export const PRESENTATION_THEME_KEYS: PresentationThemeKey[] = [
+  "freshr",
+  "minimal",
+  "dark",
+  "academic",
+  "serif",
+];
+
+export const DEFAULT_PRESENTATION_THEME_KEY: PresentationThemeKey = "freshr";
+
 export interface PresentationCreatePayload {
   notebook: string;
   topic: string;
@@ -28,6 +47,7 @@ export interface PresentationCreatePayload {
   custom_prompt?: string;
   slide_count: number;
   text_length: TextLength;
+  theme?: PresentationThemeKey;
 }
 
 export interface SlideImage {
@@ -59,6 +79,7 @@ export interface PresentationSession {
   custom_prompt?: string;
   slide_count: number;
   text_length: TextLength;
+  theme: PresentationThemeKey;
   status: PresentationStatus;
   error_message?: string;
   is_favourite: boolean;

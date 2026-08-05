@@ -1,194 +1,163 @@
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import type { Notebook } from "@freshr/shared";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
-
-function formatDate(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  RiMore2Fill,
+  RiPushpin2Fill,
+  RiPushpin2Line,
+  RiPencilLine,
+  RiArchive2Line,
+  RiDeleteBin6Line,
+  RiBook2Line,
+} from "@remixicon/react";
+import { formatRelativeTime } from "@/lib/formatRelativeTime";
+import type { NotebookCardActions } from "./NotebookCard";
 
 export default function NotebookRow({
   notebook,
   fileCount,
-  openMenuId,
-  onMenuOpen,
-  editingId,
+  isEditing,
   editValue,
   onEditChange,
   onEditConfirm,
   onEditCancel,
   onClick,
+  actions,
 }: {
   notebook: Notebook;
   fileCount: number;
-  openMenuId: string | null;
-  onMenuOpen: (
-    id: string | null,
-    anchor?: { top: number; right: number },
-  ) => void;
-  editingId: string | null;
+  isEditing: boolean;
   editValue: string;
   onEditChange: (val: string) => void;
   onEditConfirm: () => void;
   onEditCancel: () => void;
-  onClick?: (notebook: Notebook) => void;
+  onClick: () => void;
+  actions: NotebookCardActions;
 }) {
-  const [hovered, setHovered] = useState(false);
-  const menuOpen = openMenuId === notebook.id;
-  const isEditing = editingId === notebook.id;
-  const escapeRef = useRef(false);
+  const cancelledRef = useRef(false);
+  // See NotebookCard: stops Radix blurring the inline rename input on close,
+  // and stops that blur committing before the user has typed anything.
+  const renamingRef = useRef(false);
+  const interactedRef = useRef(false);
 
   return (
     <div
-      style={{
-        position: "relative",
-        padding: "14px 20px",
-        background: W,
-        border:
-          hovered || menuOpen || isEditing
-            ? `2px solid ${G}`
-            : `2px solid ${B}`,
-        boxShadow:
-          hovered || menuOpen || isEditing
-            ? `6px 6px 0 ${B}`
-            : `3px 3px 0 ${B}`,
-        transform:
-          hovered || menuOpen || isEditing ? "translate(-2px, -2px)" : "none",
-        transition: "transform 0.1s, box-shadow 0.1s, border-color 0.1s",
-        cursor: isEditing ? "default" : "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-      }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onClick={() => !isEditing && onClick?.(notebook)}
+      className="bg-card border-border hover:border-primary/40 focus-within:ring-ring/50 relative flex items-center gap-3 rounded-lg border px-4 py-3 transition-colors focus-within:ring-[3px]"
+      data-testid="notebook-row"
     >
-      {/* Pin icon */}
-      <div style={{ width: 14, flexShrink: 0 }}>
-        {notebook.pinned && (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill={G}>
-            <path d="M9 1H3a1 1 0 0 0-1 1v1.5l2 2V10l2 1 2-1V5.5l2-2V2a1 1 0 0 0-1-1Z" />
-          </svg>
+      <span className="bg-accent text-accent-foreground flex size-9 shrink-0 items-center justify-center rounded-md">
+        <RiBook2Line className="size-4" aria-hidden="true" />
+      </span>
+
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        {isEditing ? (
+          <Input
+            autoFocus
+            value={editValue}
+            aria-label="Notebook title"
+            onChange={(e) => {
+              interactedRef.current = true;
+              onEditChange(e.target.value);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => {
+              interactedRef.current = true;
+              if (e.key === "Enter") {
+                onEditConfirm();
+              } else if (e.key === "Escape") {
+                cancelledRef.current = true;
+                onEditCancel();
+              }
+            }}
+            onBlur={() => {
+              if (cancelledRef.current) {
+                cancelledRef.current = false;
+                return;
+              }
+              if (!interactedRef.current) return;
+              interactedRef.current = false;
+              onEditConfirm();
+            }}
+            className="h-8"
+          />
+        ) : (
+          <button type="button" onClick={onClick} className="cursor-pointer text-left">
+            <span className="absolute inset-0" aria-hidden="true" />
+            <span className="truncate font-semibold">{notebook.title}</span>
+          </button>
         )}
+        <span className="text-muted-foreground truncate text-xs">
+          {fileCount} {fileCount === 1 ? "file" : "files"} · Edited{" "}
+          {formatRelativeTime(notebook.updated_at)}
+        </span>
       </div>
 
-      {/* Title or rename input */}
-      {isEditing ? (
-        <input
-          autoFocus
-          value={editValue}
-          onChange={(e) => onEditChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              onEditConfirm();
-            } else if (e.key === "Escape") {
-              escapeRef.current = true;
-              e.currentTarget.blur();
-            }
-          }}
-          onBlur={() => {
-            if (escapeRef.current) {
-              escapeRef.current = false;
-              onEditCancel();
-            } else {
-              onEditConfirm();
-            }
-          }}
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            flex: 1,
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 700,
-            fontSize: "0.9rem",
-            border: "none",
-            borderBottom: `2px solid ${G}`,
-            outline: "none",
-            background: "transparent",
-            padding: "2px 0",
-            minWidth: 0,
-          }}
-        />
-      ) : (
-        <div
-          style={{
-            flex: 1,
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 700,
-            fontSize: "0.9rem",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            minWidth: 0,
-          }}
-        >
-          {notebook.title}
-        </div>
+      {notebook.pinned && (
+        <Badge className="relative hidden gap-1 sm:inline-flex">
+          <RiPushpin2Fill className="size-3" aria-hidden="true" />
+          Pinned
+        </Badge>
       )}
 
-      {/* File count */}
-      <span
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#000000",
-          flexShrink: 0,
-        }}
-      >
-        {fileCount} files
-      </span>
-
-      {/* Date */}
-      <span
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#000000",
-          flexShrink: 0,
-        }}
-      >
-        {formatDate(notebook.created_at)}
-      </span>
-
-      {/* Three-dot */}
-      {!isEditing && (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            if (menuOpen) {
-              onMenuOpen(null);
-              return;
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Actions for ${notebook.title}`}
+            // z-10 keeps the trigger above the title's stretched overlay.
+            className="relative z-10 shrink-0"
+          >
+            <RiMore2Fill aria-hidden="true" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="w-44"
+          onCloseAutoFocus={(event) => {
+            if (renamingRef.current) {
+              renamingRef.current = false;
+              event.preventDefault();
             }
-            const rect = e.currentTarget.getBoundingClientRect();
-            onMenuOpen(notebook.id, {
-              top: rect.bottom + 4,
-              right: window.innerWidth - rect.right,
-            });
-          }}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            padding: "0 2px",
-            fontSize: "1rem",
-            lineHeight: 1,
-            color: "#000000",
-            opacity: hovered || menuOpen ? 1 : 0,
-            transition: "opacity 0.1s",
-            flexShrink: 0,
           }}
         >
-          ⋮
-        </button>
-      )}
+          <DropdownMenuItem onSelect={actions.onPin}>
+            {notebook.pinned ? (
+              <RiPushpin2Line aria-hidden="true" />
+            ) : (
+              <RiPushpin2Fill aria-hidden="true" />
+            )}
+            {notebook.pinned ? "Unpin" : "Pin"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onSelect={() => {
+              renamingRef.current = true;
+              actions.onRename();
+            }}
+          >
+            <RiPencilLine aria-hidden="true" />
+            Rename
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={actions.onArchive}>
+            <RiArchive2Line aria-hidden="true" />
+            Archive
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem variant="destructive" onSelect={actions.onDelete}>
+            <RiDeleteBin6Line aria-hidden="true" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

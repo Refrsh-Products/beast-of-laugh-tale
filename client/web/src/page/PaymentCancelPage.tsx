@@ -1,115 +1,32 @@
 import { useNavigate } from "react-router-dom";
-import Button from "../components/ui/Button";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import CenteredCard from "../components/layout/CenteredCard";
+import { AuthFootLink } from "../components/auth/AuthShell";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 export default function PaymentCancelPage() {
   const navigate = useNavigate();
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: B,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
-        fontFamily: "'IBM Plex Mono', monospace",
-      }}
-    >
-      <div
-        style={{
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${G}`,
-          padding: "48px 40px",
-          width: "100%",
-          maxWidth: 420,
-          boxSizing: "border-box",
-        }}
-      >
-        <div
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.4rem",
-            letterSpacing: "-0.02em",
-            color: G,
-            cursor: "pointer",
-            userSelect: "none",
-            marginBottom: 32,
-          }}
-          onClick={() => navigate("/")}
-        >
-          FRESHR
-        </div>
-
-        <div
-          style={{
-            width: 48,
-            height: 48,
-            background: "#f5f5f0",
-            border: `3px solid ${B}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "1.5rem",
-            marginBottom: 24,
-          }}
-        >
-          ✕
-        </div>
-
-        <h1
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.75rem",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-            marginBottom: 16,
-          }}
-        >
+    <CenteredCard
+      title={
+        <>
           Payment
           <br />
           cancelled
-        </h1>
+        </>
+      }
+      description="No charge was made. You can try again whenever you're ready."
+    >
+      <Separator className="mb-6" />
 
-        <p
-          style={{
-            fontSize: "0.75rem",
-            color: "#000000",
-            lineHeight: 1.7,
-            marginBottom: 32,
-          }}
-        >
-          No charge was made. You can try again whenever you're ready.
-        </p>
+      <Button size="lg" className="mb-4 w-full" onClick={() => navigate("/profile")}>
+        Try again
+      </Button>
 
-        <div style={{ height: 3, background: B, marginBottom: 24 }} />
-
-        <div style={{ marginBottom: 16 }}>
-          <Button variant="primary" fullWidth onClick={() => navigate("/profile")}>
-            TRY AGAIN
-          </Button>
-        </div>
-
-        <p style={{ fontSize: "0.75rem", color: "#000000" }}>
-          <span
-            onClick={() => navigate("/dashboard")}
-            style={{
-              cursor: "pointer",
-              textDecoration: "underline",
-              textUnderlineOffset: 3,
-            }}
-          >
-            ← Back to dashboard
-          </span>
-        </p>
-      </div>
-    </div>
+      <p className="text-muted-foreground text-sm">
+        <AuthFootLink to="/dashboard">← Back to dashboard</AuthFootLink>
+      </p>
+    </CenteredCard>
   );
 }

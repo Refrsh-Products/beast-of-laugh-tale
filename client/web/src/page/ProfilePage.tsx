@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation, Navigate } from "react-router-dom";
+import { useLocation, Navigate, Link } from "react-router-dom";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
 import type { StoredAccount } from "@freshr/shared";
@@ -14,14 +14,20 @@ import MobileDrawer from "../components/ui/MobileDrawer";
 import { track } from "../lib/analytics";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { BP_TABLET } from "../constants/breakpoints";
+import { Button } from "@/components/ui/button";
+import { RiArrowLeftLine, RiMenuLine } from "@remixicon/react";
 
-const B = "#000000";
-const W = "#FFFFFF";
+/** Each tab wants a different measure; billing is the widest. */
+const TAB_WIDTH: Record<ProfileTab, string> = {
+  profile: "max-w-105",
+  account: "max-w-105",
+  payment: "max-w-200",
+  support: "max-w-160",
+};
 
 export default function ProfilePage() {
   const authService = useAuthService();
   const accountService = useAccountService();
-  const navigate = useNavigate();
   const user = authService.getUser();
   const [account, setAccount] = useState<StoredAccount | null>(null);
 
@@ -32,21 +38,17 @@ export default function ProfilePage() {
   const initialTab =
     (location.state as { tab?: ProfileTab } | null)?.tab ?? "profile";
   const [activeTab, setActiveTab] = useState<ProfileTab>(initialTab);
-  const [success, setSuccess] = useState<string | null>(null);
   const isCompact = useMediaQuery(BP_TABLET);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
-    accountService.getAccount()
-      .then((res) => { if (res) setAccount(res.account); })
+    accountService
+      .getAccount()
+      .then((res) => {
+        if (res) setAccount(res.account);
+      })
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (!success) return;
-    const timer = setTimeout(() => setSuccess(null), 3000);
-    return () => clearTimeout(timer);
-  }, [success]);
 
   useEffect(() => {
     if (activeTab === "payment") track("upgrade-plan-viewed");
@@ -67,68 +69,41 @@ export default function ProfilePage() {
     if (isCompact) setDrawerOpen(false);
   };
 
+  const sidebar = (
+    <ProfileSidebar
+      avatar={avatar}
+      name={name}
+      email={user?.email ?? ""}
+      plan={planLabel}
+      activeTab={activeTab}
+      onTabChange={handleTabChange}
+    />
+  );
+
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        background: "#f5f5f0",
-        fontFamily: "'IBM Plex Mono', monospace",
-      }}
-    >
+    <div className="bg-background flex min-h-dvh flex-col">
       {/* Top bar */}
-      <div
-        style={{
-          background: W,
-          borderBottom: `3px solid ${B}`,
-          padding: isCompact ? "12px 16px" : "16px 32px",
-          flexShrink: 0,
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
+      <div className="border-border bg-card flex shrink-0 items-center gap-3 border-b px-4 py-3 sm:px-8 sm:py-4">
         {isCompact && (
-          <button
-            onClick={() => setDrawerOpen(true)}
+          <Button
+            variant="outline"
+            size="icon-sm"
             aria-label="Open menu"
-            style={{
-              background: W,
-              border: `2px solid ${B}`,
-              padding: "4px 10px",
-              cursor: "pointer",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "1rem",
-              lineHeight: 1,
-              color: B,
-            }}
+            onClick={() => setDrawerOpen(true)}
           >
-            ☰
-          </button>
+            <RiMenuLine aria-hidden="true" />
+          </Button>
         )}
-        <span
-          onClick={() => navigate("/dashboard")}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.textDecoration = "underline")
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
-          style={{
-            fontSize: "0.78rem",
-            fontWeight: 700,
-            color: B,
-            cursor: "pointer",
-            letterSpacing: "0.04em",
-            textDecoration: "none",
-            textUnderlineOffset: "3px",
-          }}
-        >
-          ← Back to dashboard
-        </span>
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/dashboard">
+            <RiArrowLeftLine aria-hidden="true" />
+            Back to dashboard
+          </Link>
+        </Button>
       </div>
 
       {/* Two-panel layout */}
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+      <div className="flex min-h-0 flex-1">
         {isCompact ? (
           <MobileDrawer
             open={drawerOpen}
@@ -136,58 +111,18 @@ export default function ProfilePage() {
             width="min(240px, 85vw)"
             ariaLabel="Profile navigation"
           >
-            <ProfileSidebar
-              avatar={avatar}
-              name={name}
-              email={user?.email ?? ""}
-              plan={planLabel}
-              activeTab={activeTab}
-              onTabChange={handleTabChange}
-            />
+            {sidebar}
           </MobileDrawer>
         ) : (
-          <ProfileSidebar
-            avatar={avatar}
-            name={name}
-            email={user?.email ?? ""}
-            plan={planLabel}
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-          />
+          sidebar
         )}
 
         {/* Content area */}
-        <div
-          style={{
-            flex: 1,
-            padding: isCompact ? "24px 16px" : "48px",
-            overflowY: "auto",
-            display: "flex",
-            justifyContent: "center",
-            minWidth: 0,
-          }}
-        >
-          <div
-            style={{
-              width: "100%",
-              maxWidth:
-                activeTab === "payment"
-                  ? 800
-                  : activeTab === "support"
-                    ? 640
-                    : 420,
-            }}
-          >
-            {/* ── Profile tab content area ── */}
+        <div className="flex min-w-0 flex-1 justify-center overflow-y-auto px-4 py-6 sm:px-12 sm:py-12">
+          <div className={`w-full ${TAB_WIDTH[activeTab]}`}>
             <ProfileContentArea activeTab={activeTab} />
-
-            {/* ── Account tab content area ── */}
             <AccountContentArea activeTab={activeTab} />
-
-            {/* ── Payment tab content area ── */}
             <PaymentContentArea activeTab={activeTab} />
-
-            {/* ── Support tab content area ── */}
             <SupportContentArea
               activeTab={activeTab}
               defaultName={name}

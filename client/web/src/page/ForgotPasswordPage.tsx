@@ -1,15 +1,20 @@
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuthService from "../services/auth";
-import Button from "../components/ui/Button";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import CenteredCard from "../components/layout/CenteredCard";
+import {
+  AUTH_LABEL,
+    AuthError,
+  AuthFootLink,
+} from "../components/auth/AuthShell";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
   const authService = useAuthService();
+  const emailId = useId();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -31,155 +36,46 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: B,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
-        fontFamily: "'IBM Plex Mono', monospace",
-      }}
-    >
-      <div
-        style={{
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${G}`,
-          padding: "48px 40px",
-          width: "100%",
-          maxWidth: 420,
-          boxSizing: "border-box",
-        }}
-      >
-        {/* Logo */}
-        <div
-          onClick={() => navigate("/")}
-          onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
-          onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.4rem",
-            letterSpacing: "-0.02em",
-            color: G,
-            cursor: "pointer",
-            userSelect: "none",
-            marginBottom: 32,
-            transition: "opacity 0.12s",
-          }}
-        >
-          FRESHR
-        </div>
-
-        {/* Title */}
-        <h1
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.75rem",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-            marginBottom: 10,
-          }}
-        >
+    <CenteredCard
+      title={
+        <>
           Forgot your
           <br />
           password?
-        </h1>
-        <p
-          style={{
-            fontSize: "0.75rem",
-            color: "#000000",
-            marginBottom: 32,
-            lineHeight: 1.6,
-          }}
+        </>
+      }
+      description="Enter your email and we'll send you a reset link."
+    >
+      <AuthError>{error}</AuthError>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <div>
+          <Label htmlFor={emailId} className={`${AUTH_LABEL} mb-1.5`}>
+            Email
+          </Label>
+          <Input
+            id={emailId}
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            autoComplete="email"
+          />
+        </div>
+
+        <Button
+          type="submit"
+          size="lg"
+          className="mt-2 w-full"
+          disabled={isLoading}
         >
-          Enter your email and we'll send you a reset link.
-        </p>
+          {isLoading ? "Sending…" : "Send reset link"}
+        </Button>
+      </form>
 
-        {/* Error */}
-        {error && (
-          <p
-            style={{ color: "#cc0000", fontSize: "0.75rem", marginBottom: 16 }}
-          >
-            {error}
-          </p>
-        )}
-
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: "flex", flexDirection: "column", gap: 16 }}
-        >
-          <div>
-            <label
-              style={{
-                display: "block",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.12em",
-                marginBottom: 6,
-              }}
-            >
-              EMAIL
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              onMouseEnter={(e) => {
-                if (document.activeElement !== e.currentTarget)
-                  e.currentTarget.style.borderColor = G;
-              }}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = B)}
-              onFocus={(e) => (e.currentTarget.style.borderColor = B)}
-              style={{
-                width: "100%",
-                border: `3px solid ${B}`,
-                borderRadius: 0,
-                padding: "12px 14px",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.82rem",
-                background: W,
-                outline: "none",
-                boxSizing: "border-box",
-                transition: "border-color 0.15s",
-              }}
-            />
-          </div>
-
-          <div style={{ marginTop: 8 }}>
-            <Button
-              variant="green"
-              fullWidth
-              type="submit"
-              disabled={isLoading}
-            >
-              {isLoading ? "Sending..." : "Send reset link →"}
-            </Button>
-          </div>
-        </form>
-
-        {/* Back to login */}
-        <p style={{ marginTop: 24, fontSize: "0.75rem", color: "#000000" }}>
-          <span
-            onClick={() => navigate("/login")}
-            onMouseEnter={(e) => (e.currentTarget.style.color = B)}
-            onMouseLeave={(e) => (e.currentTarget.style.color = "inherit")}
-            style={{
-              cursor: "pointer",
-              textDecoration: "underline",
-              textUnderlineOffset: 3,
-              transition: "color 0.12s",
-            }}
-          >
-            ← Back to login
-          </span>
-        </p>
-      </div>
-    </div>
+      <p className="text-muted-foreground mt-6 text-sm">
+        <AuthFootLink to="/login">← Back to login</AuthFootLink>
+      </p>
+    </CenteredCard>
   );
 }

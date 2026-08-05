@@ -3,6 +3,11 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import 'katex/dist/katex.min.css'
 import App from './App.tsx'
+import { initTheme } from './lib/theme'
+
+// Before render: index.html already set the class to avoid a flash, but this
+// installs the OS-preference listener that keeps "system" live.
+initTheme()
 
 if (import.meta.env.PROD) {
   const s = document.createElement('script')

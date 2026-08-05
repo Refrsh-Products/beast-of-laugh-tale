@@ -6,6 +6,7 @@ import type {
   SlideImage,
   SlideUpdatePayload,
 } from "@freshr/shared";
+import { DEFAULT_PRESENTATION_THEME_KEY } from "@freshr/shared";
 
 const mockStore = new Map<string, PresentationSession>();
 
@@ -147,6 +148,7 @@ export const PresentationServiceMock: PresentationService = {
       custom_prompt: payload.custom_prompt ?? "",
       slide_count: payload.slide_count,
       text_length: payload.text_length,
+      theme: payload.theme ?? DEFAULT_PRESENTATION_THEME_KEY,
       status: "QUEUED",
       error_message: "",
       is_favourite: false,
