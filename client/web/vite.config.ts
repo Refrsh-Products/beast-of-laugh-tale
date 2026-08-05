@@ -6,6 +6,9 @@ import tailwindcss from "@tailwindcss/vite";
 
 const sharedSrc = fileURLToPath(new URL("../shared/src", import.meta.url));
 const appSrc = fileURLToPath(new URL("./src", import.meta.url));
+// The npm-workspace root. Holds the sibling `shared` package AND the hoisted
+// node_modules that packages like @fontsource-variable resolve into.
+const workspaceRoot = fileURLToPath(new URL("..", import.meta.url));
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -33,7 +36,14 @@ export default defineConfig({
   },
   server: {
     allowedHosts: [".ngrok-free.app"],
-    // Allow importing source from the sibling shared workspace package.
-    fs: { allow: [sharedSrc, "."] },
+    // Serve from the whole workspace, not just this package.
+    //
+    // Naming `allow` at all replaces Vite's default, which would otherwise
+    // have included the workspace root on its own. Listing only [sharedSrc,
+    // "."] meant anything hoisted to client/node_modules was 403'd — which
+    // silently included the Instrument Sans woff2 files, so the dev server
+    // rendered every screen in the system fallback face while the production
+    // build (where rollup bundles the fonts) looked correct.
+    fs: { allow: [workspaceRoot] },
   },
 });

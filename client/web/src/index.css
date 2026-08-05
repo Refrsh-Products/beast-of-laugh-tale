@@ -253,6 +253,14 @@
 
   /* Ramp steps as utilities, for the rare case a component needs a specific
      shade (chart series, illustration fills) rather than a semantic role. */
+
+  /* The two brandbook neutrals. The landing page pins itself to the brand ramp
+     rather than the semantic tokens — a marketing surface has one deliberate
+     look and must not invert with the app's theme — so it needs these two
+     reachable from a className like every other step. */
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-paper: var(--brand-paper);
+
   --color-brand-primary-50: var(--brand-primary-50);
   --color-brand-primary-100: var(--brand-primary-100);
   --color-brand-primary-200: var(--brand-primary-200);
@@ -403,4 +411,104 @@ video {
 * {
   scrollbar-width: thin;
   scrollbar-color: var(--primary) var(--muted);
+}
+
+/* --- Landing page --------------------------------------------------------
+   Two effects the landing design uses repeatedly that have no utility-class
+   equivalent. Both resolve from the brand ramp, so the marketing page still
+   has no colour of its own.
+
+   The landing page deliberately pins itself to the ramp rather than the
+   semantic tokens: it must look identical whether the app is in light or dark
+   mode, the way a printed brochure does. */
+
+/* Highlighter stroke behind a word — sits low so it reads as marker ink
+   rather than a filled block. */
+.landing-mark {
+  background-image: linear-gradient(
+    transparent 55%,
+    color-mix(in srgb, var(--brand-secondary-300) 60%, transparent) 55%
+  );
+  padding-inline: 2px;
+}
+
+/* The lifted-card shadow shared by the hero stack and the deck sections.
+   Two layers: a wide soft cast in Timber Green, and a tight contact shadow
+   in ink. */
+.landing-lift {
+  box-shadow:
+    0 30px 60px -30px color-mix(in srgb, var(--brand-primary-900) 45%, transparent),
+    0 8px 24px -12px color-mix(in srgb, var(--brand-ink) 18%, transparent);
+}
+
+/* Reveal-on-scroll, driven by useRevealOnScroll(). The hook sets
+   data-revealed once an element enters the viewport.
+
+   The hidden state is scoped inside the media query on purpose: with reduced
+   motion the rule never applies at all, so content is visible even if the
+   hook never runs. Never hide something by default that JavaScript has to
+   come back and un-hide. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.6s ease,
+      transform 0.6s ease;
+  }
+  [data-reveal][data-revealed="true"] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The document scrollbar while the landing page is mounted.
+   
+   The global rule further up paints the thumb with var(--primary) and the
+   track with var(--muted), both of which invert with the app theme. On a page
+   that is deliberately theme-independent that leaves the light-mode visitor
+   with a pale Ecru gutter down the side of a Timber Green page. Scoping off
+   the landing root pins it to the ramp like everything else on the page.
+
+   :has() is used rather than a class toggled from JS so there is no global
+   side effect on <html> that a route change has to remember to clean up. */
+html:has(#landing)::-webkit-scrollbar-track {
+  background: var(--brand-primary-900);
+}
+html:has(#landing)::-webkit-scrollbar-thumb {
+  background: var(--brand-primary-700);
+}
+html:has(#landing) {
+  scrollbar-color: var(--brand-primary-700) var(--brand-primary-900);
+}
+
+/* The hero card's slow tilt.
+   
+   Both the keyframes and the class live inside the media query, so under
+   reduced motion the rule simply does not exist and the card sits square —
+   no animation to override, nothing to reset. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes landing-tilt {
+    0%,
+    100% {
+      transform: rotate(-0.6deg);
+    }
+    50% {
+      transform: rotate(0.6deg);
+    }
+  }
+  .landing-tilt {
+    animation: landing-tilt 6s ease-in-out infinite;
+  }
+}
+
+/* The soft cast under the hero card stack, so it reads as sitting on a
+   surface rather than floating in the green. */
+.landing-peek-shadow {
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--brand-ink) 40%, transparent),
+    transparent 70%
+  );
+  filter: blur(8px);
 }

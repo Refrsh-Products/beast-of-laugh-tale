@@ -9,93 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { RiCheckLine } from "@remixicon/react";
+import {
+  PLANS,
+  formatPrice,
+  type Plan,
+  type PlanId,
+} from "../../constants/plans";
 
 interface PaymentContentAreaProps {
   activeTab: ProfileTab;
-}
-
-type PlanId = "free" | "monthly" | "semester";
-
-interface Plan {
-  id: PlanId;
-  label: string;
-  tagline: string;
-  price: number;
-  unit: string;
-  badge: string | null;
-  saving: string | null;
-  featured: boolean;
-  features: string[];
-  cta: string;
-  billingInterval: "MONTHLY" | "YEARLY" | null;
-}
-
-const PLANS: Plan[] = [
-  {
-    id: "free",
-    label: "BASIC",
-    tagline: "For students just getting started.",
-    price: 0,
-    unit: "forever",
-    badge: null,
-    saving: null,
-    featured: false,
-    features: [
-      "3 notebooks",
-      "500 MB storage",
-      "5 AI queries / day",
-      "5 quizzes / day",
-      "3 presentations / day",
-      "Community support",
-    ],
-    cta: "Subscribe — Free",
-    billingInterval: null,
-  },
-  {
-    id: "monthly",
-    label: "PRO",
-    tagline: "For students who are serious.",
-    price: 350,
-    unit: "/ month",
-    badge: "POPULAR",
-    saving: null,
-    featured: true,
-    features: [
-      "Unlimited notebooks",
-      "5 GB storage",
-      "Unlimited AI queries",
-      "Unlimited quizzes",
-      "Unlimited presentations",
-      "Priority support",
-    ],
-    cta: "Subscribe Monthly",
-    billingInterval: "MONTHLY",
-  },
-  {
-    id: "semester",
-    label: "SCHOLAR",
-    tagline: "For students going all in.",
-    price: 1200,
-    unit: "/ 4 months",
-    badge: "BEST VALUE",
-    saving: "Save 200 BDT vs monthly",
-    featured: false,
-    features: [
-      "Everything in Monthly",
-      "10 GB storage",
-      "Unlimited notebooks",
-      "Unlimited AI queries",
-      "Unlimited quizzes",
-      "Unlimited presentations",
-      "Priority support",
-    ],
-    cta: "Subscribe — One Semester",
-    billingInterval: "YEARLY",
-  },
-];
-
-function formatPrice(n: number): string {
-  return n.toLocaleString("en-BD");
 }
 
 type ReferralStatus = "idle" | "loading" | "valid" | "invalid" | "already_used";
