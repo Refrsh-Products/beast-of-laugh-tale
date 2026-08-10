@@ -1,3 +1,4 @@
+import { Star } from "lucide-react";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { BP_PHONE } from "../../constants/breakpoints";
 
@@ -39,11 +40,13 @@ const GRID_COLUMNS = ["1 / span 2", "3 / span 2", "5 / span 2", "2 / span 2", "4
 function Stars({ count }: { count: number }) {
   return (
     <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} className={i <= count ? "text-primary" : "text-border"}>
-          ★
-        </span>
-      ))}
+      {[1, 2, 3, 4, 5].map((i) =>
+        i <= count ? (
+          <Star key={i} className="h-3.5 w-3.5 text-primary" fill="currentColor" />
+        ) : (
+          <Star key={i} className="h-3.5 w-3.5 text-card-foreground/30" />
+        ),
+      )}
     </div>
   );
 }
@@ -57,40 +60,40 @@ function TestimonialCard({
 }) {
   return (
     <div
-      className="rounded-lg border border-border bg-card p-6 flex flex-col gap-3"
+      className="rounded-sm bg-card border border-border p-6 flex flex-col gap-3 shadow-[0_4px_12px_-4px_rgba(14,15,12,0.12)]"
       style={style}
     >
       <div className="flex-1">
-        <p className="text-sm text-foreground leading-relaxed">"{t.quote}"</p>
+        <p className="text-sm text-card-foreground leading-relaxed">"{t.quote}"</p>
       </div>
       <div>
         <Stars count={t.stars} />
-        <p className="text-sm font-medium text-foreground mt-2">{t.name}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">{t.university}</p>
+        <p className="text-sm font-medium text-card-foreground mt-2">{t.name}</p>
+        <p className="text-xs text-card-foreground/60 mt-0.5">{t.university}</p>
       </div>
     </div>
   );
 }
 
-export default function TestimonialSection() {
+export function TestimonialSection() {
   const isPhone = useMediaQuery(BP_PHONE);
 
   return (
-    <section className="py-24 px-6 md:px-16 border-b border-border">
+    <section className="py-24 px-6 md:px-16 border-b border-border reveal">
       <div className="max-w-7xl mx-auto">
         <div className="mb-12">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider border border-border rounded-full px-3 py-1 mb-4">
-            ◆ Testimonials
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-card-foreground/50 uppercase tracking-wider border border-card-foreground/15 rounded-full px-3 py-1 mb-4">
+            Testimonials
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-tight">
-            What students<br />are saying.
+            What students are saying.
           </h2>
         </div>
 
         {isPhone ? (
           <div
             className="flex gap-4 overflow-x-auto pb-3 -mx-6 px-6"
-            style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" as React.CSSStyleDeclaration["webkitOverflowScrolling"] }}
+            style={{ scrollSnapType: "x mandatory", WebkitOverflowScrolling: "touch" }}
           >
             {TESTIMONIALS.map((t) => (
               <div key={t.name} style={{ flex: "0 0 auto", width: "min(85vw, 320px)", scrollSnapAlign: "start" }}>
@@ -99,7 +102,7 @@ export default function TestimonialSection() {
             ))}
           </div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 16 }}>
+          <div className="grid grid-cols-6 gap-4">
             {TESTIMONIALS.map((t, i) => (
               <TestimonialCard key={t.name} t={t} style={{ gridColumn: GRID_COLUMNS[i] }} />
             ))}

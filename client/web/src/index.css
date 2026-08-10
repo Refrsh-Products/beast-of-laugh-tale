@@ -79,6 +79,39 @@ body {
   background: #3A3A45;
 }
 
+/* Landing page brand theme — scoped to landing page wrapper */
+.lp-theme {
+  --background: #19392E;
+  --foreground: #E0E4DE;
+  --card: #F1F1E7;
+  --card-foreground: #0E0F0C;
+  --primary: #B4FF6E;
+  --primary-foreground: #1B3A2A;
+  --muted: rgba(241,241,231,0.08);
+  --muted-foreground: #9A9F97;
+  --border: rgba(224,228,222,0.18);
+  --secondary: rgba(241,241,231,0.08);
+  --secondary-foreground: #E0E4DE;
+  --radius: 4px;
+  --font-sans: 'Instrument Sans', system-ui, sans-serif;
+  font-family: var(--font-sans);
+  --paper-back1: #E9E4D6;
+  --paper-back2: #DDD6C2;
+  --card-shadow: 0 30px 60px -30px rgba(25,57,46,0.45), 0 8px 24px -12px rgba(14,15,12,0.18);
+  --card-shadow-sm: 0 4px 12px -4px rgba(14,15,12,0.12);
+  --rule: rgba(14,15,12,0.12);
+}
+
+.lp-theme *:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+@keyframes tilt {
+  0%, 100% { transform: rotate(-0.6deg); }
+  50% { transform: rotate(0.6deg); }
+}
+
 @keyframes ticker {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
@@ -112,4 +145,26 @@ body {
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Reveal-on-scroll — elements with .reveal fade/slide in when they enter the viewport.
+   The hidden state is gated behind .reveal-active, which useRevealOnScroll adds via JS,
+   so content stays visible if scripting fails or the observer never arms. */
+@media (prefers-reduced-motion: no-preference) {
+  .reveal-active .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .reveal-active .reveal.in {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
 }

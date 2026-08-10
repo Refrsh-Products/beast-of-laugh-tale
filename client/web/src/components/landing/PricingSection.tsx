@@ -47,15 +47,15 @@ const PLANS = [
   },
 ];
 
-export default function PricingSection() {
+export function PricingSection() {
   const navigate = useNavigate();
 
   return (
-    <section className="py-24 px-6 md:px-16 border-b border-border bg-background">
+    <section className="py-24 px-6 md:px-16 border-b border-border reveal">
       <div className="max-w-5xl mx-auto">
         <div className="mb-12">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider border border-border rounded-full px-3 py-1 mb-4">
-            ◆ Pricing
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-card-foreground/50 uppercase tracking-wider border border-card-foreground/15 rounded-full px-3 py-1 mb-4">
+            Pricing
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-tight mb-3">
             One semester.<br />
@@ -72,45 +72,41 @@ export default function PricingSection() {
             <div
               key={plan.id}
               className={cn(
-                "relative rounded-lg border flex flex-col p-6",
-                plan.highlighted
-                  ? "border-primary/50 bg-primary/5"
-                  : "border-border bg-card",
+                "relative rounded-sm border flex flex-col p-6",
+                plan.highlighted ? "border-primary/50 bg-primary/5" : "border-border bg-card",
               )}
             >
               {plan.badge && (
-                <div className="absolute -top-3 left-4">
-                  <span className={cn(
-                    "rounded-full px-2.5 py-0.5 text-xs font-medium border",
-                    plan.highlighted
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-secondary text-foreground border-border",
-                  )}>
-                    {plan.badge}
-                  </span>
-                </div>
+                <span className={cn(
+                  "absolute -top-3 left-4 rounded-full px-2.5 py-0.5 text-xs font-medium border",
+                  plan.highlighted
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-card-foreground/10 text-card-foreground border-card-foreground/20",
+                )}>
+                  {plan.badge}
+                </span>
               )}
 
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-4">{plan.label}</p>
+              <p className="text-xs font-medium text-card-foreground/60 uppercase tracking-wider mb-4">{plan.label}</p>
 
               <div className="mb-1">
                 {plan.originalPrice && (
-                  <p className="text-sm text-muted-foreground line-through mb-0.5">৳{plan.originalPrice}</p>
+                  <p className="text-sm text-card-foreground/50 line-through mb-1">৳{plan.originalPrice}</p>
                 )}
-                <span className="text-4xl font-bold text-foreground">৳{plan.price}</span>
+                <span className="text-4xl font-bold text-card-foreground">৳{plan.price}</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-2">{plan.unit}</p>
+              <p className="text-xs text-card-foreground/60 mb-2">{plan.unit}</p>
 
               {plan.saving && (
                 <p className="text-xs font-medium text-primary mb-4">↓ {plan.saving}</p>
               )}
 
-              <p className="text-sm font-semibold text-foreground mb-1">{plan.outcome}</p>
-              <p className="text-xs text-muted-foreground mb-5 leading-relaxed">{plan.detail}</p>
+              <p className="text-sm font-semibold text-card-foreground mb-1">{plan.outcome}</p>
+              <p className="text-xs text-card-foreground/60 mb-5 leading-relaxed">{plan.detail}</p>
 
               <div className="border-t border-border pt-4 mb-5 flex flex-col gap-2 flex-1">
                 {plan.features.map((f) => (
-                  <div key={f} className="flex items-center gap-2 text-xs text-foreground">
+                  <div key={f} className="flex items-center gap-2 text-xs text-card-foreground">
                     <Check className="h-3.5 w-3.5 text-primary shrink-0" />
                     {f}
                   </div>
@@ -120,10 +116,10 @@ export default function PricingSection() {
               <button
                 onClick={() => navigate("/signup")}
                 className={cn(
-                  "w-full rounded-md px-4 py-2.5 text-sm font-medium transition-colors",
+                  "w-full rounded-sm px-4 py-2.5 text-sm font-medium transition-colors",
                   plan.highlighted
                     ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                    : "bg-secondary text-foreground border border-border hover:bg-secondary/80",
+                    : "bg-card-foreground/10 text-card-foreground hover:bg-card-foreground/20",
                 )}
               >
                 {plan.cta}

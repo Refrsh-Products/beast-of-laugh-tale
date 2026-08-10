@@ -8,7 +8,7 @@ interface RotatingTextProps {
 
 type Phase = "visible" | "exiting" | "entering";
 
-export default function RotatingText({
+export function RotatingText({
   words,
   interval = 2200,
   duration = 380,
@@ -65,7 +65,7 @@ export default function RotatingText({
       {/* Ghost of the longest word — always holds the full width */}
       <span style={{ visibility: "hidden" }}>{longestWord}</span>
       {/* Animated word sits on top */}
-      <span style={{ position: "absolute", left: 0, top: 0, ...style() }}>
+      <span aria-live="polite" style={{ position: "absolute", left: 0, top: 0, ...style() }}>
         {words[index]}
       </span>
     </span>
