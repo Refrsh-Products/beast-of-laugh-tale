@@ -1,6 +1,7 @@
 import { useRevealOnScroll } from "../hooks/useRevealOnScroll";
 import { LandingNav } from "../components/landing/LandingNav";
 import { HeroSection } from "../components/landing/HeroSection";
+import { TickerBand } from "../components/landing/TickerBand";
 import { StatsSection } from "../components/landing/StatsSection";
 import { FeaturesSection } from "../components/landing/FeaturesSection";
 import { HowItWorksSection } from "../components/landing/HowItWorksSection";
@@ -16,6 +17,7 @@ export default function LandingPage() {
     <div className="lp-theme bg-background text-foreground" ref={revealRef}>
       <LandingNav />
       <HeroSection />
+      <TickerBand />
       <StatsSection />
       <FeaturesSection />
       <HowItWorksSection />

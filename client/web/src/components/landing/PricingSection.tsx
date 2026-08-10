@@ -51,10 +51,10 @@ export function PricingSection() {
   const navigate = useNavigate();
 
   return (
-    <section className="py-24 px-6 md:px-16 border-b border-border reveal">
+    <section className="py-24 px-6 md:px-16 reveal">
       <div className="max-w-5xl mx-auto">
         <div className="mb-12">
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-card-foreground/50 uppercase tracking-wider border border-card-foreground/15 rounded-full px-3 py-1 mb-4">
+          <span className="inline-flex items-center gap-1.5 text-[0.65rem] font-semibold text-foreground/45 uppercase tracking-[0.14em] border border-foreground/20 rounded-full px-3 py-1 mb-4">
             Pricing
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-tight mb-3">

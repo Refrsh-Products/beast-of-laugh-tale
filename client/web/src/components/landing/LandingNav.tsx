@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { useMobileMenu } from "../../hooks/useMobileMenu";
+import freshrLogoForNav from "../../assets/freshrLogoForNav.svg";
 
 export function LandingNav() {
   const navigate = useNavigate();
@@ -14,14 +15,12 @@ export function LandingNav() {
     "w-full md:w-auto text-center rounded-sm bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-transform hover:-translate-y-px";
 
   return (
-    <nav className="sticky top-0 z-50 relative flex items-center justify-between px-6 md:px-16 h-14 bg-background/55 backdrop-blur-sm border-b border-primary/18">
+    <nav className="lp-theme-nav-dark sticky top-0 z-50 relative flex items-center justify-between px-6 md:px-16 h-14 bg-[#19392E] border-b border-primary/18">
       <button
         onClick={goHome}
-        className="flex items-baseline gap-2 text-xl font-bold text-foreground tracking-tight hover:text-primary transition-colors"
+        className="flex items-center transition-opacity hover:opacity-80"
       >
-        <span className="inline-block w-2.5 h-2.5 bg-primary rounded-sm" />
-        FRESHR
-        <span className="text-primary">.</span>
+        <img src={freshrLogoForNav} alt="Freshr" className="h-7 w-auto" />
       </button>
 
       <div className="hidden md:flex items-center gap-2">
@@ -54,7 +53,7 @@ export function LandingNav() {
           ref={panelRef}
           role="dialog"
           aria-label="Mobile navigation"
-          className="absolute top-full left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-primary/18 px-6 py-5 flex flex-col gap-3"
+          className="absolute top-full left-0 right-0 z-50 bg-[#19392E] border-b border-primary/18 px-6 py-5 flex flex-col gap-3"
         >
           <button
             onClick={() => {

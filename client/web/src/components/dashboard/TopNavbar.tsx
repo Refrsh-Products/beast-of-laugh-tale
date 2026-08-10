@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
+import freshrLogoForNav from "../../assets/freshrLogoForNav.svg";
 
 interface TopNavbarProps {
   userEmail: string;
@@ -26,7 +27,7 @@ export default function TopNavbar({ userEmail, userName, profilePictureUrl }: To
         onClick={() => navigate("/dashboard")}
         className="flex items-center gap-1.5 select-none"
       >
-        <span className="text-base font-bold text-foreground tracking-tight">FRESHR</span>
+        <img src={freshrLogoForNav} alt="Freshr" className="h-7 w-auto" />
         <span className="self-start mt-0.5 rounded-sm bg-secondary px-1 py-px text-[10px] font-semibold text-muted-foreground">
           BETA
         </span>

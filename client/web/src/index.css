@@ -102,9 +102,57 @@ body {
   --rule: rgba(14,15,12,0.12);
 }
 
+/* Landing light sections (cream) */
+.lp-theme-section-light {
+  --background: #F1F1E7;
+  --foreground: #0E0F0C;
+  --card: #FAFAF5;
+  --card-foreground: #0E0F0C;
+  --primary: #B4FF6E;
+  --primary-foreground: #1B3A2A;
+  --muted: rgba(14,15,12,0.06);
+  --muted-foreground: #5A5F57;
+  --border: rgba(14,15,12,0.10);
+  --secondary: rgba(14,15,12,0.06);
+  --secondary-foreground: #0E0F0C;
+  --radius: 4px;
+  --card-shadow: 0 30px 60px -30px rgba(14,15,12,0.10), 0 8px 24px -12px rgba(14,15,12,0.06);
+  --card-shadow-sm: 0 4px 12px -4px rgba(14,15,12,0.08);
+  --rule: rgba(14,15,12,0.08);
+}
+
+/* Landing bright-green CTA band */
+.lp-theme-cta-band {
+  --background: #B4FF6E;
+  --foreground: #1B3A2A;
+  --card: #FFFFFF;
+  --card-foreground: #0E0F0C;
+  --primary: #B4FF6E;
+  --primary-foreground: #1B3A2A;
+  --muted: rgba(27,58,42,0.08);
+  --muted-foreground: #1B3A2A;
+  --border: rgba(27,58,42,0.15);
+  --secondary: rgba(27,58,42,0.08);
+  --secondary-foreground: #1B3A2A;
+  --radius: 4px;
+}
+
+/* Landing nav keeps dark tokens regardless of section behind it */
+.lp-theme-nav-dark {
+  --background: #19392E;
+  --foreground: #E0E4DE;
+  --primary: #B4FF6E;
+  --primary-foreground: #1B3A2A;
+  --border: rgba(224,228,222,0.18);
+}
+
 .lp-theme *:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 3px;
+}
+
+.lp-theme-cta-band *:focus-visible {
+  outline-color: #1B3A2A;
 }
 
 @keyframes tilt {
