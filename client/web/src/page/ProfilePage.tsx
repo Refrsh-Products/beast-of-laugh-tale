@@ -31,7 +31,7 @@ export default function ProfilePage() {
   useEffect(() => {
     accountService.getAccount()
       .then((res) => { if (res) setAccount(res.account); })
-      .catch(() => {});
+      .catch((err) => { console.error("[ProfilePage] Failed to load account:", err); });
   }, []);
 
   useEffect(() => {

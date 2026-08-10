@@ -209,7 +209,7 @@ function NewTranscriptionPanel({
                   {formatSize(file.size)}{fileTooLarge ? " · exceeds 500 MB" : ""}
                 </div>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); setFile(null); setTitle(""); }} className="text-muted-foreground hover:text-foreground p-0.5">
+              <button onClick={(e) => { e.stopPropagation(); setFile(null); setTitle(""); }} aria-label="Remove file" className="text-muted-foreground hover:text-foreground p-0.5">
                 <X className="h-3.5 w-3.5" />
               </button>
             </div>

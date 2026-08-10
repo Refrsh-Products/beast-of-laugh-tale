@@ -30,18 +30,14 @@ export default function GoogleAuthBtn() {
 
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
-      console.log("[GoogleAuth] onSuccess fired", tokenResponse);
-      console.log("[GoogleAuth] access_token:", tokenResponse.access_token);
       setError("");
       setIsLoading(true);
       try {
-        console.log("[GoogleAuth] Sending token to backend...");
         const response = await fetchData(
           AuthServiceApiEndpoints.googleLogin,
           "POST",
           { token: tokenResponse.access_token },
         );
-        console.log("[GoogleAuth] Backend response:", response);
         const data = response as GoogleLoginResponse;
         sessionStorage.setItem("accessToken", data.tokens.access ?? "");
         sessionStorage.setItem("refreshToken", data.tokens.refresh ?? "");
@@ -84,7 +80,6 @@ export default function GoogleAuthBtn() {
             console.error("[GoogleAuth] Failed to fetch account:", err);
           }
           startSession();
-          console.log("[GoogleAuth] NAVIGATING TO DASHBOARD");
           navigate("/dashboard");
         }
       } catch (err) {

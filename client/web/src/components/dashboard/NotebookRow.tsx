@@ -108,6 +108,7 @@ export default function NotebookRow({
               right: window.innerWidth - rect.right,
             });
           }}
+          aria-label="Open notebook menu"
           className={cn(
             "shrink-0 flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-secondary hover:text-foreground",
             menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100",

@@ -29,14 +29,14 @@ export default function VerifyEmailPage() {
         await authService.confirmEmailVerification(uid, token);
         setStatus("success");
         navigate("/onboarding", { replace: true });
-      } catch (err: any) {
-        const detail = err?.response?.data?.error ?? "";
+      } catch (err: unknown) {
+        const detail = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? "";
         if (typeof detail === "string" && detail.toLowerCase().includes("already")) {
           setStatus("invalid");
           setErrorMessage("This account is already verified. Please log in to continue.");
           return;
         }
-        if (err?.response?.status === 400) {
+        if ((err as { response?: { status?: number } })?.response?.status === 400) {
           setStatus("invalid");
           setErrorMessage(detail || "This verification link is invalid or has expired.");
           return;

@@ -113,6 +113,7 @@ export default function FileItem({
         {!bulkMode && !isRenaming && (
           <button
             onClick={handleDotsClick}
+            aria-label="File options"
             className={cn(
               "flex items-center justify-center h-5 w-5 rounded text-muted-foreground hover:text-foreground hover:bg-secondary transition-all shrink-0",
               menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100",

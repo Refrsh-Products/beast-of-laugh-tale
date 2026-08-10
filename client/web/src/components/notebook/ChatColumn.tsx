@@ -145,8 +145,8 @@ export default function ChatColumn({
               placeholder="Session title (optional)"
               className="flex-1 bg-input border border-border rounded-sm px-2 py-1 text-xs text-foreground outline-none focus:ring-1 focus:ring-ring"
             />
-            <button onClick={handleConfirmNew} className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-sm">✓</button>
-            <button onClick={() => { setIsNaming(false); setNewTitle(""); }} className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground">✕</button>
+            <button onClick={handleConfirmNew} aria-label="Confirm" className="px-2 py-1 text-xs bg-primary text-primary-foreground rounded-sm">✓</button>
+            <button onClick={() => { setIsNaming(false); setNewTitle(""); }} aria-label="Cancel" className="px-2 py-1 text-xs text-muted-foreground hover:text-foreground">✕</button>
           </div>
         ) : (
           <span className="text-xs font-medium text-foreground truncate flex-1">
@@ -158,6 +158,7 @@ export default function ChatColumn({
           <div ref={dropdownRef} className="relative shrink-0">
             <button
               onClick={() => setDropdownOpen((o) => !o)}
+              aria-label="Chat sessions"
               className={cn(
                 "flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
                 dropdownOpen && "bg-secondary text-foreground",
@@ -218,12 +219,14 @@ export default function ChatColumn({
                                 <>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); setEditingId(s.id); setEditTitle(s.title || ""); }}
+                                    aria-label="Rename session"
                                     className="text-muted-foreground hover:text-foreground p-1.5"
                                   >
                                     <Pencil className="h-3 w-3" />
                                   </button>
                                   <button
                                     onClick={(e) => { e.stopPropagation(); onDeleteSession(s.id); }}
+                                    aria-label="Delete session"
                                     className="text-muted-foreground hover:text-destructive p-1.5 pr-2"
                                   >
                                     <X className="h-3 w-3" />

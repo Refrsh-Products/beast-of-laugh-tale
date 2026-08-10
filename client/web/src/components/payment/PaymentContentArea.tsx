@@ -114,7 +114,7 @@ export default function PaymentContentArea({ activeTab }: PaymentContentAreaProp
       } else {
         setCurrentPlan("free");
       }
-    }).catch(() => {});
+    }).catch((err) => { console.error("[PaymentContentArea] Failed to load account:", err); });
   }, [activeTab]);
 
   const handlePayment = async (billing_interval: "MONTHLY" | "YEARLY") => {

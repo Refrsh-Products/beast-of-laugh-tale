@@ -39,7 +39,6 @@ export default function ResetPasswordPage() {
     }
     setIsLoading(true);
     try {
-      console.log(`uid: ${uid}, token: ${token}, pass: ${password}, confirm: ${confirm}`);
       authService.resetPassword(uid, token, password, confirm);
       navigate("/login", { state: { resetSuccess: true } });
     } finally {

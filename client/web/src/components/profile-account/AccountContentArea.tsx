@@ -37,7 +37,9 @@ export default function AccountContentArea({ activeTab }: AccountContentAreaProp
   const [account, setAccount] = useState<StoredAccount | null>(getCachedAccount());
 
   useEffect(() => {
-    accountService.getAccount().then((res) => { if (res) setAccount(res.account); }).catch(() => {});
+    accountService.getAccount()
+      .then((res) => { if (res) setAccount(res.account); })
+      .catch((err) => { console.error("[AccountContentArea] Failed to load account:", err); });
   }, []);
 
   const planLabel = account?.tier_plan ?? "FREE";

@@ -70,6 +70,7 @@ export default function NotebookCard({
                 right: window.innerWidth - rect.right,
               });
             }}
+            aria-label="Open notebook menu"
             className={cn(
               "flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-secondary hover:text-foreground",
               menuOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100",

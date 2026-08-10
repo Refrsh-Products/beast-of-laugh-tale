@@ -5,11 +5,9 @@ export default function GoogleAuth() {
   return (
     <GoogleOAuthProvider clientId={clientId}>
       <GoogleLogin
-        onSuccess={(credentialResponse) => {
-          console.log(credentialResponse);
-        }}
+        onSuccess={() => {}}
         onError={() => {
-          console.log("Login Failed");
+          console.error("[GoogleAuth] Login failed");
         }}
       />
     </GoogleOAuthProvider>

@@ -112,7 +112,7 @@ export default function FilesColumn({
             )}
             <button
               onClick={toggleBulkMode}
-              title="Bulk delete"
+              aria-label="Toggle bulk delete"
               className={cn(
                 "w-4 h-4 rounded-sm border border-destructive/50 flex items-center justify-center transition-colors",
                 bulkMode ? "bg-destructive/20" : "hover:bg-destructive/10",

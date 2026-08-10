@@ -30,8 +30,7 @@ export default function LoginPage() {
     setResendState("idle");
     setIsLoading(true);
     try {
-      const user = await authService.login(email, password);
-      console.log("[LoginPage] Logged in user:", user);
+      await authService.login(email, password);
       navigate("/dashboard");
     } catch (err) {
       if (err instanceof NeedsVerificationError) {

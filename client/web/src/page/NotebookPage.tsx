@@ -362,7 +362,7 @@ export default function NotebookPage() {
           onListTranscripts={() => transcriptionService.listAudioTranscripts(notebookId)}
           onGetTranscript={(transcriptId) => transcriptionService.getAudioTranscript(notebookId, transcriptId)}
           onDeleteTranscript={(transcriptId) => transcriptionService.deleteAudioTranscript(notebookId, transcriptId)}
-          onNotesGenerated={() => { notebookService.listFiles(notebookId).then(setFiles).catch(() => {}); }}
+          onNotesGenerated={() => { notebookService.listFiles(notebookId).then(setFiles).catch((err) => { console.error("[NotebookPage] Failed to refresh files after notes generation:", err); }); }}
           // null = plan check still loading; treat as paid-optimistic (the backend
           // is the source of truth and will 403 if the user actually isn't paid).
           canMutate={audioFeatureEnabled !== false}
