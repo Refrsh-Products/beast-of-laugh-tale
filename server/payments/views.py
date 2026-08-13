@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
     )
 class InitiatePaymentView(APIView):
     """
-    POST: Initiates a ZiniPay payment session.
+    POST: Initiates a payment session.
     Returns a payment URL for the frontend to redirect the user to.
     """
     permission_classes = [IsAuthenticated]
@@ -129,6 +129,10 @@ class InitiatePaymentView(APIView):
         payment_url = data.get('payment_url')
         invoice_id = data.get('invoice_id', '')
 
+        if invoice_id:
+            payment.invoice_id = invoice_id
+            payment.save(update_fields=['invoice_id', 'updated_at'])
+
         if settings.USE_MOCK_PAYMENT_GATEWAY and invoice_id:
             from .mock_utils import simulate_webhook_callback
             simulate_webhook_callback(invoice_id=invoice_id, val_id=str(payment.id))
@@ -208,6 +212,15 @@ class ZiniPayWebhookView(APIView):
             logger.warning("ZiniPay webhook: Payment %s not found.", val_id)
             return Response({'detail': 'Payment not found.'}, status=status.HTTP_404_NOT_FOUND)
 
+        # Bind the webhook to the invoice we recorded at creation. An attacker
+        # cannot pair a foreign (cheap) completed invoice with a different val_id.
+        if invoice_id != payment.invoice_id:
+            logger.warning(
+                "ZiniPay webhook invoice mismatch: payment_id=%s stored=%s got=%s",
+                payment.id, payment.invoice_id, invoice_id,
+            )
+            return Response({'detail': 'Invoice mismatch.'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             verified = gateway.verify_invoice(invoice_id)
             logger.debug("ZiniPay verify response: payment_id=%s data=%s", payment.id, verified)
@@ -230,6 +243,21 @@ class ZiniPayWebhookView(APIView):
         payment.metadata = verified
 
         if verified_status == 'COMPLETED':
+            # Defense-in-depth: even a COMPLETED invoice must have paid AT LEAST the
+            # amount owed. Underpayment is the attack; overpayment is fine (never deny
+            # service to someone who paid more than the plan costs).
+            verified_amount = Decimal(str(verified.get('amount', '0')))
+            if verified_amount < payment.amount:
+                payment.status = PaymentStatus.FAILED
+                logger.error(
+                    "ZiniPay webhook underpayment: payment_id=%s owed=%s verified=%s — not upgrading.",
+                    payment.id, payment.amount, verified_amount,
+                )
+                payment.save(update_fields=[
+                    'transaction_id', 'invoice_id', 'payment_method', 'metadata', 'status', 'updated_at',
+                ])
+                return Response({'detail': 'Amount mismatch.'}, status=status.HTTP_400_BAD_REQUEST)
+
             payment.status = PaymentStatus.COMPLETED
             upgrade_account_to_pro(payment.account, payment.billing_interval)
 

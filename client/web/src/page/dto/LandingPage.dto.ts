@@ -281,7 +281,7 @@ export const FOOTER = {
 } as const;
 
 export const PAGE_META = {
-  title: "FRESHR — Your notes, answered in your words",
+  title: "FRESHR",
   description:
     "Freshr turns your lecture slides, PDFs and handwritten notes into a study notebook you can ask questions, take quizzes from, and build slide decks with — every answer cited back to your own material.",
 } as const;

@@ -33,6 +33,19 @@ class ZiniPayGateway:
         return response.json()
     
     def verify_invoice(self, invoice_id: str) -> dict:
+        """
+        Success response:
+            {
+             "cus_name": "John Doe",
+             "cus_email": "john@example.com",
+             "amount": 1200,
+             "invoice_id": "INVOICE_ID",
+             "payment_method": "bkash",
+             "transaction_id": "TXN123456789",
+             "status": "COMPLETED"
+            }
+        """
+
         response = requests.post(
             ZINIPAY_VERIFY_URL,
             json={'invoice_id': invoice_id},
