@@ -15,4 +15,5 @@ nav:
   - Testing Conventions: testing-conventions.md
   - Prompt Evaluation: prompt-evaluation.md
   - Deployment Workflow: deployment-workflow.md
+  - Scheduled Jobs: scheduled-jobs.md
 theme: readthedocs

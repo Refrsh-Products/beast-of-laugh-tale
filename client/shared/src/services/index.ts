@@ -21,7 +21,13 @@ export type {
 } from "./notebooks";
 
 export { createPaymentService } from "./payment";
-export type { PaymentService, Payment, ValidateReferralResponse } from "./payment";
+export type {
+  PaymentService,
+  Payment,
+  ValidateReferralResponse,
+  PaymentFallbackStatus,
+  PaymentAssistanceRequest,
+} from "./payment";
 
 export {
   createPresentationService,

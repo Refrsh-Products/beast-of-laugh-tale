@@ -105,6 +105,8 @@ export const PaymentServiceApiBase = `${ApiPrefix}/payments`;
 export const PaymentServiceApiEndpoints = {
   getPayments: `${PaymentServiceApiBase}/`,
   initiatePayment: `${PaymentServiceApiBase}/initiate/`,
+  fallbackStatus: `${PaymentServiceApiBase}/fallback/`,
+  requestAssistance: `${PaymentServiceApiBase}/assistance/`,
 };
 
 // Referral

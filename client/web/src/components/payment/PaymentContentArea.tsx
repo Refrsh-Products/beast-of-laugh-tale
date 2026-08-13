@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import type { PaymentFallbackStatus } from "@freshr/shared";
 import type { ProfileTab } from "../profile-account/ProfileSidebar";
+import PaymentFallbackPanel from "./PaymentFallbackPanel";
 import usePaymentService from "../../services/payment";
 import useAccountService from "../../services/account";
 import { useToast } from "../../hooks/useToast";
@@ -12,6 +14,9 @@ import { RiCheckLine } from "@remixicon/react";
 import {
   PLANS,
   formatPrice,
+  cycleTotalNote,
+  planLabelForInterval,
+  type BillingInterval,
   type Plan,
   type PlanId,
 } from "../../constants/plans";
@@ -29,7 +34,7 @@ export default function PaymentContentArea({
   const accountService = useAccountService();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [loading, setLoading] = useState<"MONTHLY" | "YEARLY" | null>(null);
+  const [loading, setLoading] = useState<BillingInterval | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentPlan, setCurrentPlan] = useState<PlanId>("free");
 
@@ -40,23 +45,56 @@ export default function PaymentContentArea({
   const [discountPct, setDiscountPct] = useState(0);
   const [championName, setChampionName] = useState("");
 
+  // Gateway-outage fallback state. `forcedByError` covers the gap between the
+  // gateway going down and someone flipping the admin toggle: a 502 from
+  // `initiate` puts us into the same contact-sales flow.
+  const [fallback, setFallback] = useState<PaymentFallbackStatus | null>(null);
+  const [forcedByError, setForcedByError] = useState(false);
+  const [assistanceInterval, setAssistanceInterval] =
+    useState<BillingInterval | null>(null);
+  const [accountPhone, setAccountPhone] = useState("");
+  const fallbackPanelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (activeTab !== "payment") return;
     accountService
       .getAccount()
       .then((res) => {
         if (!res) return;
-        const { tier_plan, billing_interval, subscription_status } =
+        const { tier_plan, billing_interval, subscription_status, phone } =
           res.account;
+        setAccountPhone(phone ?? "");
         if (tier_plan === "PAID" && subscription_status === "ACTIVE") {
           if (billing_interval === "MONTHLY") setCurrentPlan("monthly");
-          else if (billing_interval === "YEARLY") setCurrentPlan("semester");
+          // "YEARLY" is the legacy value for the same 4-month Scholar plan.
+          else if (billing_interval === "SEMESTER" || billing_interval === "YEARLY")
+            setCurrentPlan("semester");
         } else {
           setCurrentPlan("free");
         }
       })
       .catch(() => {});
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "payment") return;
+    paymentService
+      .getFallbackStatus()
+      .then(setFallback)
+      // A failed status check must not block checkout — assume the gateway is
+      // fine and let the 502 path catch it if it isn't.
+      .catch(() => setFallback(null));
+  }, [activeTab]);
+
+  // Bring the form into view when a plan is picked; the panel sits above the
+  // cards, so otherwise the click would appear to do nothing.
+  useEffect(() => {
+    if (assistanceInterval === null) return;
+    fallbackPanelRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [assistanceInterval]);
 
   const handleApplyReferral = async () => {
     const code = referralInput.trim();
@@ -96,7 +134,7 @@ export default function PaymentContentArea({
     return Math.round(plan.price * (1 - discountPct / 100));
   };
 
-  const handlePayment = async (billing_interval: "MONTHLY" | "YEARLY") => {
+  const handlePayment = async (billing_interval: BillingInterval) => {
     setLoading(billing_interval);
     setError(null);
     try {
@@ -105,15 +143,35 @@ export default function PaymentContentArea({
         appliedCode || undefined,
       );
       window.location.href = payment_url;
-    } catch {
-      setError("Failed to initiate payment. Please try again.");
+    } catch (err) {
+      const statusCode = (err as { response?: { status?: number } })?.response
+        ?.status;
+      if (statusCode === 502) {
+        // The gateway is down and nobody has flipped the toggle yet — switch to
+        // the contact-sales flow rather than dead-ending on an error message.
+        setForcedByError(true);
+        setAssistanceInterval(billing_interval);
+      } else {
+        setError("Failed to initiate payment. Please try again.");
+      }
       setLoading(null);
     }
+  };
+
+  const handleAssistanceSubmit = (phone: string) => {
+    if (!assistanceInterval) {
+      return Promise.reject(new Error("No plan selected."));
+    }
+    return paymentService.requestAssistance(assistanceInterval, {
+      referral_code: appliedCode || undefined,
+      phone: phone || undefined,
+    });
   };
 
   if (activeTab !== "payment") return null;
 
   const isDiscountApplied = referralStatus === "valid" && discountPct > 0;
+  const fallbackActive = fallback?.enabled === true || forcedByError;
 
   return (
     <div>
@@ -199,6 +257,31 @@ export default function PaymentContentArea({
         </div>
       )}
 
+      {fallbackActive && (
+        <div ref={fallbackPanelRef}>
+          <PaymentFallbackPanel
+            // Re-key on the plan so switching plans returns to the form.
+            key={assistanceInterval ?? "none"}
+            headline={
+              fallback?.headline ?? "Online payment is temporarily unavailable"
+            }
+            message={
+              fallback?.message ??
+              "We're sorry for the inconvenience — our payment gateway is down right now. Leave your details and our team will contact you to get your paid access sorted."
+            }
+            whatsappUrl={fallback?.whatsapp_url ?? ""}
+            planLabel={
+              assistanceInterval
+                ? planLabelForInterval(assistanceInterval)
+                : null
+            }
+            defaultPhone={accountPhone}
+            referralCode={isDiscountApplied ? appliedCode : ""}
+            onSubmit={handleAssistanceSubmit}
+          />
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-[repeat(auto-fit,minmax(13rem,1fr))]">
         {PLANS.map((plan) => {
           const discountedPrice = getDiscountedPrice(plan);
@@ -211,10 +294,18 @@ export default function PaymentContentArea({
           const isLoading =
             plan.billingInterval !== null && loading === plan.billingInterval;
 
+          const isSelectedForAssistance =
+            fallbackActive &&
+            plan.billingInterval !== null &&
+            plan.billingInterval === assistanceInterval;
+
           let label: string;
           if (isLoading) label = "Redirecting…";
           else if (isCurrent) label = "Current plan";
           else if (isPaidUserOnFreeCard) label = "Included";
+          else if (isSelectedForAssistance) label = "Selected";
+          else if (fallbackActive && plan.billingInterval !== null)
+            label = "Request paid access";
           else label = plan.cta;
 
           return (
@@ -256,6 +347,12 @@ export default function PaymentContentArea({
                 {plan.unit}
               </div>
 
+              {cycleTotalNote(plan, hasDiscount ? discountPct : 0) && (
+                <div className="text-muted-foreground mb-1.5 text-xs">
+                  {cycleTotalNote(plan, hasDiscount ? discountPct : 0)}
+                </div>
+              )}
+
               {plan.saving && (
                 <div className="text-success mb-2 text-xs font-semibold">
                   ↓ {plan.saving}
@@ -287,8 +384,15 @@ export default function PaymentContentArea({
                 disabled={isInactive || loading !== null}
                 onClick={() => {
                   if (isInactive) return;
-                  if (plan.billingInterval) handlePayment(plan.billingInterval);
-                  else navigate("/dashboard");
+                  if (!plan.billingInterval) {
+                    navigate("/dashboard");
+                  } else if (fallbackActive) {
+                    // Checkout is off entirely while the gateway is down; the
+                    // plan choice just feeds the contact-sales request.
+                    setAssistanceInterval(plan.billingInterval);
+                  } else {
+                    handlePayment(plan.billingInterval);
+                  }
                 }}
               >
                 {label}

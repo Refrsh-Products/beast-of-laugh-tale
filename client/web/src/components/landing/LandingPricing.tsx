@@ -1,5 +1,5 @@
 import { RiCheckLine } from "@remixicon/react";
-import { PLANS, formatPrice } from "../../constants/plans";
+import { PLANS, formatPrice, cycleTotalNote } from "../../constants/plans";
 import { PRICING } from "../../page/dto/LandingPage.dto";
 import LandingButton from "./LandingButton";
 import { cn } from "@/lib/utils";
@@ -89,6 +89,19 @@ export default function LandingPricing() {
                   {plan.unit}
                 </span>
               </div>
+
+              {cycleTotalNote(plan) && (
+                <span
+                  className={cn(
+                    "mt-1 text-xs",
+                    plan.featured
+                      ? "text-brand-paper/70"
+                      : "text-brand-tertiary-950",
+                  )}
+                >
+                  {cycleTotalNote(plan)}
+                </span>
+              )}
 
               {plan.saving && (
                 <span className="text-brand-secondary-600 mt-2 text-xs font-semibold">
