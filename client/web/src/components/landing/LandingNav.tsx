@@ -26,7 +26,7 @@ export default function LandingNav() {
     <div className="sticky top-4 z-50 px-4 sm:px-6">
       <nav
         id="nav"
-        className="border-brand-secondary-300/20 bg-brand-primary-900/70 landing-lift mx-auto flex max-w-320 items-center justify-between gap-4 rounded-full border px-5 py-3 backdrop-blur-md sm:px-6"
+        className="border-brand-secondary-300/20 bg-brand-primary-900/70 landing-lift mx-auto flex max-w-7xl items-center justify-between gap-4 rounded-full border px-5 py-3 backdrop-blur-md sm:px-6"
       >
         <Link to="/" aria-label="FRESHR home" className="shrink-0">
           <FullLogoMark className="text-brand-secondary-300 h-6 w-auto" />
