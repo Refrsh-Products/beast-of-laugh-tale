@@ -10,7 +10,11 @@ class TierPlan(models.TextChoices):
 
 class BillingInterval(models.TextChoices):
     MONTHLY = 'MONTHLY', 'Monthly'
-    YEARLY = 'YEARLY', 'Yearly'             # YEARLY HERE MEANS ACHADEMIC SESSION - 4 months
+    SEMESTER = 'SEMESTER', 'Semester'       # 4-month academic session
+    # Legacy: the old name for the semester plan. It wrongly granted a full year
+    # of access, so new checkouts use SEMESTER. Kept so existing subscriptions
+    # still validate and read back correctly.
+    YEARLY = 'YEARLY', 'Yearly'
 
 
 class SubscriptionStatus(models.TextChoices):

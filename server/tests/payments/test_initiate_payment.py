@@ -83,6 +83,31 @@ def test_payment_successful(mock_gateway, authenticated_client, user):
     assert account.tier_plan == TierPlan.FREE
 
 @override_settings(USE_MOCK_PAYMENT_GATEWAY=False)
+def test_semester_payment_uses_semester_price(mock_gateway, authenticated_client, user):
+    """
+    Given: An authenticated client with default account
+    When: Client checks out the 4-month semester plan
+    Then: A Payment is created at the semester price with the SEMESTER interval
+    """
+    AccountFactory(user=user)
+
+    response = authenticated_client.post(
+        INITIATE_PAYMENT_URL,
+        {
+            "billing_interval": BillingInterval.SEMESTER,
+            "referral_code": "",
+        },
+        format="json",
+    )
+
+    assert response.status_code == status.HTTP_201_CREATED
+    assert Payment.objects.count() == 1
+
+    payment = Payment.objects.get()
+    assert payment.billing_interval == BillingInterval.SEMESTER
+    assert payment.amount == Decimal(settings.ZINIPAY_SEMESTER_PRICE)
+
+@override_settings(USE_MOCK_PAYMENT_GATEWAY=False)
 def test_referral_discount(mock_gateway, authenticated_client, user):
     """
     Given: An authenticated client with default account and an active Campus Champion

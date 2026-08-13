@@ -257,6 +257,20 @@ docker build -f client/web/Dockerfile -t freshr-web ./client
 ssh -L 8888:localhost:8888 deploy@163.61.236.102
 ```
 
+**Scheduled jobs (subscription expiry)** — an hourly host `crontab` entry downgrades paid accounts once their subscription lapses, by running `accounts.tasks.expire_subscriptions` inside the prod web container and appending to `/var/log/freshr-expire-subscriptions.log`. Each run now logs a heartbeat line you can confirm with:
+
+```sh
+grep expire_subscriptions /var/log/freshr-expire-subscriptions.log | tail
+```
+
+A health-check command reports (and exits non-zero on) any paid account stuck past its end date — wire it into a monitor or an alert-only cron:
+
+```sh
+docker exec freshr-prod-web-1 python manage.py check_expired_subscriptions
+```
+
+Full details — the crontab line, Celery Beat alternative, observability and troubleshooting — are in [`server/docs/scheduled-jobs.md`](server/docs/scheduled-jobs.md).
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- ROADMAP -->

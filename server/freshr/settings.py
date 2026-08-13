@@ -289,6 +289,9 @@ GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
 # ZiniPay
 ZINIPAY_API_KEY = os.getenv('ZINIPAY_API_KEY', '')
 ZINIPAY_MONTHLY_PRICE = os.getenv('ZINIPAY_MONTHLY_PRICE', '350')
+ZINIPAY_SEMESTER_PRICE = os.getenv('ZINIPAY_SEMESTER_PRICE', '1200')  # 4-month academic session
+# Legacy price for the old "yearly" (really semester) plan; kept only for the
+# handful of accounts still on that interval. New checkouts use the semester price.
 ZINIPAY_YEARLY_PRICE = os.getenv('ZINIPAY_YEARLY_PRICE', '1200')
 
 USE_MOCK_PAYMENT_GATEWAY = os.getenv('USE_MOCK_PAYMENT_GATEWAY', '').lower() in ('true', '1', 'yes')
