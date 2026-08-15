@@ -85,11 +85,30 @@ const useQuizSessions = (
         setSelectedQuiz(null);
         setActiveQuiz(quiz);
       } catch (err) {
-        if (axios.isAxiosError(err) && err.response?.status === 403) {
-          if (err.response.data?.code === "notebook_archived") {
-            onNotebookArchived();
+        if (axios.isAxiosError(err)) {
+          const data = err.response?.data as
+            | { code?: string; message?: string }
+            | undefined;
+          const code = data?.code;
+          if (err.response?.status === 403) {
+            if (code === "notebook_archived") {
+              onNotebookArchived();
+            } else {
+              onUpgradeRequired();
+            }
+          } else if (code === "quiz_no_content") {
+            showToast(
+              data?.message ??
+                "There's no indexed content to build a quiz from yet. Upload documents or wait for indexing to finish, then try again.",
+              "danger",
+            );
+          } else if (code === "quiz_generation_failed") {
+            showToast(
+              "Quiz generation is temporarily unavailable. Please try again in a moment.",
+              "danger",
+            );
           } else {
-            onUpgradeRequired();
+            showToast("Failed to generate quiz", "danger");
           }
         } else {
           showToast("Failed to generate quiz", "danger");

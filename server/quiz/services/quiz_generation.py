@@ -3,18 +3,26 @@ Quiz generation service.
 
 generate_quiz_from_rag() retrieves relevant chunks from the vector store for
 the selected topic, then asks Claude Haiku to produce quiz questions grounded
-in that content.
+in that content. generate_quiz_from_entire_notebook() does the same across all
+of a notebook's topics with a proportional question distribution.
 
-generate_quiz_mock() is kept as a fallback for local development / tests.
+These fail loudly rather than falling back to placeholder content: no indexed
+content raises QuizContentUnavailableError (422); an LLM failure raises
+QuizGenerationError (503). See quiz/errors.py.
 """
 
 import os
 import json
 import asyncio
+import logging
 from typing import TypedDict
 
 from anthropic import Anthropic
 from anthropic.types import TextBlock
+
+from ..errors import QuizContentUnavailableError, QuizGenerationError
+
+logger = logging.getLogger(__name__)
 
 
 class QuestionData(TypedDict):
@@ -58,8 +66,7 @@ def generate_quiz_from_rag(
         )
 
     if not chunks:
-        print("No chunks found, falling back to mock quiz")
-        return generate_quiz_mock(topic, num_questions, difficulty)
+        raise QuizContentUnavailableError(topic=topic or None)
 
     context = "\n\n---\n\n".join(doc.page_content for doc in chunks)
     return _call_llm_for_quiz(topic, num_questions, difficulty, context)
@@ -152,8 +159,8 @@ Rules:
         return {"title": raw.get("title", f"Quiz: {topic}"), "questions": questions}
 
     except Exception as e:
-        print(f"LLM quiz generation failed: {e}, falling back to mock")
-        return generate_quiz_mock(topic, num_questions, difficulty)
+        logger.exception("LLM quiz generation failed (topic=%s)", topic)
+        raise QuizGenerationError() from e
 
 
 # ── Full-notebook generation ──────────────────────────────────────────────────
@@ -175,8 +182,7 @@ def generate_quiz_from_entire_notebook(
     topics = list(NotebookTopic.objects.filter(notebook_id=notebook_id).order_by("created_at"))
 
     if not topics:
-        print("No topics found, falling back to mock quiz")
-        return generate_quiz_mock("Entire Notebook", num_questions, difficulty)
+        raise QuizContentUnavailableError()
 
     # Proportional distribution — pure math, no LLM needed
     num_topics = len(topics)
@@ -201,7 +207,7 @@ def generate_quiz_from_entire_notebook(
             topics_distribution.append({"name": topic.name, "count": q_count})
 
     if not topic_contexts:
-        return generate_quiz_mock("Entire Notebook", num_questions, difficulty)
+        raise QuizContentUnavailableError()
 
     effective_num_questions = sum(d["count"] for d in topics_distribution)
     full_context = "\n\n".join(topic_contexts)
@@ -304,66 +310,5 @@ Rules:
         return {"title": raw.get("title", f"Complete Notebook Quiz ({difficulty.capitalize()})"), "questions": questions}
 
     except Exception as e:
-        print(f"Full-notebook LLM quiz generation failed: {e}, falling back to mock")
-        return generate_quiz_mock("Entire Notebook", num_questions, difficulty)
-
-
-# ── Mock fallback ─────────────────────────────────────────────────────────────
-
-def generate_quiz_mock(topic: str, num_questions: int, difficulty: str) -> GeneratedQuiz:
-    """
-    Return a mock quiz session title and question list.
-    Used as a fallback when RAG retrieval returns no chunks.
-    """
-    title = f"Mock Quiz: {topic} ({difficulty.capitalize()})"
-
-    mock_pool: list[QuestionData] = [
-        {
-            "question_text": "What is the powerhouse of the cell?",
-            "question_type": "MCQ",
-            "choices": ["Nucleus", "Mitochondria", "Ribosome", "Golgi apparatus"],
-            "correct_answer": "Mitochondria",
-            "explanation": "Mitochondria produce ATP through cellular respiration.",
-            "order_index": 0,
-        },
-        {
-            "question_text": "The Earth revolves around the Sun.",
-            "question_type": "TRUE_FALSE",
-            "choices": [],
-            "correct_answer": "True",
-            "explanation": "Earth orbits the Sun roughly every 365.25 days.",
-            "order_index": 1,
-        },
-        {
-            "question_text": "Which data structure uses LIFO ordering?",
-            "question_type": "MCQ",
-            "choices": ["Queue", "Stack", "Linked List", "Heap"],
-            "correct_answer": "Stack",
-            "explanation": "A stack follows Last In, First Out (LIFO) ordering.",
-            "order_index": 2,
-        },
-        {
-            "question_text": "HTTP is a stateless protocol.",
-            "question_type": "TRUE_FALSE",
-            "choices": [],
-            "correct_answer": "True",
-            "explanation": "Each HTTP request is independent; the server retains no session state by default.",
-            "order_index": 3,
-        },
-        {
-            "question_text": "Which sorting algorithm has O(n log n) average-case complexity?",
-            "question_type": "MCQ",
-            "choices": ["Bubble Sort", "Insertion Sort", "Merge Sort", "Selection Sort"],
-            "correct_answer": "Merge Sort",
-            "explanation": "Merge Sort divides the array recursively and merges in O(n log n).",
-            "order_index": 4,
-        },
-    ]
-
-    questions: list[QuestionData] = []
-    for i in range(num_questions):
-        base = mock_pool[i % len(mock_pool)].copy()
-        base["order_index"] = i
-        questions.append(base)
-
-    return {"title": title, "questions": questions}
+        logger.exception("Full-notebook LLM quiz generation failed")
+        raise QuizGenerationError() from e
