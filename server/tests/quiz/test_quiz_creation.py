@@ -1,0 +1,314 @@
+"""Create-endpoint coverage for POST /api/v1/quizzes/?notebook=<id>.
+
+Pins the *current synchronous* behaviour (create returns 201 with the fully
+generated quiz inline) so the FRE-124 Celery refactor can be verified as
+behaviour-preserving. When that lands, the success-status assertions here flip
+201 → 202 and the questions move behind a poll — everything else should hold.
+
+RAG retrieval and the Anthropic client are mocked via the ``mock_rag_retrieval``
+and ``mock_anthropic`` fixtures in conftest.py; ``account``/``notebook``/
+``notebook_topics`` come from there too.
+"""
+
+from datetime import date
+
+import pytest
+from django.urls import reverse
+from rest_framework import status
+
+from accounts.models import DailyUsage
+from notebooks.models import Notebook
+from quiz.models import QuizSession, QuizQuestion, DifficultyChoices
+
+URL = reverse("quiz:quiz-list-create")
+
+
+def post_create(client, notebook, **payload):
+    payload.setdefault("num_questions", 5)
+    payload.setdefault("difficulty", "EASY")
+    return client.post(f"{URL}?notebook={notebook.id}", payload, format="json")
+
+
+# ── Happy path: single topic ─────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_single_topic_create_persists_quiz_and_questions(
+    authenticated_client, account, notebook, mock_rag_retrieval, mock_anthropic
+):
+    """
+    Given: a notebook with indexed content and a chosen topic
+    When:  POST with a non-empty topic
+    Then:  201, a QuizSession + its questions are persisted, and the topic-scoped
+           RAG path (not the whole-notebook one) is used.
+    """
+    response = post_create(
+        authenticated_client, notebook, topic="Photosynthesis", num_questions=5, difficulty="MEDIUM"
+    )
+
+    assert response.status_code == status.HTTP_201_CREATED, response.content
+    body = response.json()
+
+    quiz = QuizSession.objects.get(id=body["id"])
+    assert quiz.notebook_id == notebook.id # type: ignore
+    assert quiz.topic == "Photosynthesis"
+    assert quiz.difficulty == DifficultyChoices.MEDIUM
+    assert quiz.num_questions == 5
+    assert quiz.title == "Test Quiz"  # from the mocked LLM payload
+
+    # Two questions come from the default mocked payload; response nests them.
+    assert QuizQuestion.objects.filter(quiz=quiz).count() == 2
+    assert len(body["questions"]) == 2
+
+    # Topic-scoped retrieval used; whole-notebook retrieval untouched.
+    assert mock_rag_retrieval.all.await_count == 1
+    assert mock_rag_retrieval.by_topic.await_count == 0
+
+
+@pytest.mark.django_db
+def test_topic_id_routes_to_topic_scoped_retrieval(
+    authenticated_client, account, notebook, notebook_topics, mock_rag_retrieval, mock_anthropic
+):
+    """
+    Given: a topic_id is supplied (topic pinned to a specific NotebookTopic)
+    When:  POST with topic + topic_id
+    Then:  the by_topic retrieval path runs (not the whole-notebook one).
+    """
+    topic = notebook_topics[0]
+    response = post_create(
+        authenticated_client, notebook, topic=topic.name, topic_id=str(topic.pk)
+    )
+
+    assert response.status_code == status.HTTP_201_CREATED, response.content
+    assert mock_rag_retrieval.by_topic.await_count == 1
+    assert mock_rag_retrieval.all.await_count == 0
+
+
+# ── Happy path: all topics ───────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_all_topics_create_uses_whole_notebook_branch(
+    authenticated_client, account, notebook, notebook_topics, mock_rag_retrieval, mock_anthropic
+):
+    """
+    Given: a notebook with two indexed topics and an empty topic (the "All
+           Topics" selection)
+    When:  POST with topic=""
+    Then:  201, quiz.topic is stored as "All Topics", and retrieval runs once
+           per topic.
+    """
+    response = post_create(authenticated_client, notebook, topic="", num_questions=6)
+
+    assert response.status_code == status.HTTP_201_CREATED, response.content
+    quiz = QuizSession.objects.get(id=response.json()["id"])
+    assert quiz.topic == "All Topics"
+    assert mock_rag_retrieval.by_topic.await_count == len(notebook_topics)
+
+
+@pytest.mark.django_db
+def test_omitted_topic_defaults_to_all_topics(
+    authenticated_client, account, notebook, notebook_topics, mock_rag_retrieval, mock_anthropic
+):
+    """A client that omits `topic` entirely gets the whole-notebook branch."""
+    response = authenticated_client.post(
+        f"{URL}?notebook={notebook.id}",
+        {"num_questions": 4, "difficulty": "EASY"},
+        format="json",
+    )
+    assert response.status_code == status.HTTP_201_CREATED, response.content
+    assert QuizSession.objects.get().topic == "All Topics"
+
+
+# ── Usage accounting ─────────────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_create_increments_daily_usage(
+    authenticated_client, account, notebook, mock_rag_retrieval, mock_anthropic
+):
+    """A successful create bumps today's quizzes_generated by exactly one."""
+    post_create(authenticated_client, notebook, topic="Photosynthesis")
+
+    usage = DailyUsage.objects.get(account=account, date=date.today())
+    assert usage.quizzes_generated == 1
+
+
+# ── Validation ───────────────────────────────────────────────────────────────
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("num_questions", [0, -1, 51])
+def test_num_questions_out_of_bounds_rejected(
+    authenticated_client, account, notebook, mock_rag_retrieval, mock_anthropic, num_questions
+):
+    """
+    num_questions must be 1..50. Out-of-range values are rejected at serializer
+    validation — before any generation or persistence.
+    """
+    response = post_create(
+        authenticated_client, notebook, topic="Photosynthesis", num_questions=num_questions
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "num_questions" in response.json()
+    assert not QuizSession.objects.exists()
+    mock_anthropic.create.assert_not_called()
+
+
+# ── Authorization / ownership ────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_create_requires_authentication(api_client, notebook):
+    """Unauthenticated create is rejected before anything else."""
+    response = post_create(api_client, notebook, topic="Photosynthesis")
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+def test_cannot_create_quiz_for_another_users_notebook(
+    authenticated_client, account, mock_rag_retrieval, mock_anthropic, django_user_model
+):
+    """
+    Given: a notebook owned by a different user
+    When:  the authenticated user POSTs against it
+    Then:  404 (ownership scoping), and no quiz is created.
+    """
+    other = django_user_model.objects.create_user(email="other@example.com", password="x")
+    other_notebook = Notebook.objects.create(user=other, title="Not yours")
+
+    response = post_create(authenticated_client, other_notebook, topic="Photosynthesis")
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert not QuizSession.objects.exists()
+
+
+# ── Archived notebook ────────────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_archived_notebook_rejected(
+    authenticated_client, account, user, mock_rag_retrieval, mock_anthropic
+):
+    """
+    Given: an archived notebook
+    When:  POST a quiz for it
+    Then:  403 notebook_archived, generation never runs, nothing persisted.
+    """
+    archived = Notebook.objects.create(user=user, title="Archived", is_archived=True)
+
+    response = post_create(authenticated_client, archived, topic="Photosynthesis")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json()["code"] == "notebook_archived"
+    assert not QuizSession.objects.exists()
+    mock_anthropic.create.assert_not_called()
+
+
+# ── Daily quota ──────────────────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_daily_quiz_quota_exceeded(
+    authenticated_client, account, notebook, mock_rag_retrieval, mock_anthropic
+):
+    """
+    Given: the FREE account has already generated its daily allowance (5)
+    When:  it POSTs another quiz
+    Then:  403 daily_quiz_quota_exceeded, and no new quiz is persisted.
+    """
+    DailyUsage.objects.create(account=account, date=date.today(), quizzes_generated=5)
+
+    response = post_create(authenticated_client, notebook, topic="Photosynthesis")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json()["code"] == "daily_quiz_quota_exceeded"
+    assert not QuizSession.objects.exists()
+
+
+# ── Content-unavailable paths ────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_single_topic_no_chunks_returns_422(
+    authenticated_client, account, notebook, mock_rag_retrieval, mock_anthropic
+):
+    """
+    Given: retrieval finds no chunks for the topic (nothing indexed yet)
+    When:  POST a single-topic quiz
+    Then:  422 quiz_no_content, LLM never called, nothing persisted.
+    """
+    mock_rag_retrieval.all.return_value = []
+
+    response = post_create(authenticated_client, notebook, topic="Photosynthesis")
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.json()["code"] == "quiz_no_content"
+    assert not QuizSession.objects.exists()
+    mock_anthropic.create.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_all_topics_no_topics_returns_422(
+    authenticated_client, account, notebook, mock_rag_retrieval, mock_anthropic
+):
+    """
+    Given: the notebook has no indexed topics at all
+    When:  POST an "All Topics" quiz
+    Then:  422 quiz_no_content (raised before retrieval), nothing persisted.
+    """
+    response = post_create(authenticated_client, notebook, topic="")
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.json()["code"] == "quiz_no_content"
+    assert not QuizSession.objects.exists()
+
+
+@pytest.mark.django_db
+def test_all_topics_topics_exist_but_no_chunks_returns_422(
+    authenticated_client, account, notebook, notebook_topics, mock_rag_retrieval, mock_anthropic
+):
+    """
+    Given: topics exist but retrieval returns no chunks for any of them
+    When:  POST an "All Topics" quiz
+    Then:  422 quiz_no_content (empty context), nothing persisted, and — the
+           point of this assertion — the LLM is NEVER called. An empty context
+           is knowable-bad upfront, so we must not spend tokens on it. If a
+           refactor reorders the LLM call before the empty-context guard, this
+           fails.
+    """
+    mock_rag_retrieval.by_topic.return_value = []
+
+    response = post_create(authenticated_client, notebook, topic="")
+
+    assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+    assert response.json()["code"] == "quiz_no_content"
+    assert not QuizSession.objects.exists()
+    mock_anthropic.create.assert_not_called()
+
+
+# ── LLM failure ──────────────────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_llm_failure_returns_503(
+    authenticated_client, account, notebook, mock_rag_retrieval, mock_anthropic
+):
+    """
+    Given: chunks retrieve fine but the LLM call blows up
+    When:  POST a quiz
+    Then:  503 quiz_generation_failed, nothing persisted (fail closed, no
+           placeholder quiz).
+    """
+    mock_anthropic.raise_error()
+
+    response = post_create(authenticated_client, notebook, topic="Photosynthesis")
+
+    assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert response.json()["code"] == "quiz_generation_failed"
+    assert not QuizSession.objects.exists()
+
+
+@pytest.mark.django_db
+def test_malformed_llm_json_returns_503(
+    authenticated_client, account, notebook, mock_rag_retrieval, mock_anthropic
+):
+    """Unparseable LLM output is treated as a generation failure, not a 500."""
+    mock_anthropic.set_raw_text("this is not json {")
+
+    response = post_create(authenticated_client, notebook, topic="Photosynthesis")
+
+    assert response.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert response.json()["code"] == "quiz_generation_failed"
+    assert not QuizSession.objects.exists()

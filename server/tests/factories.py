@@ -5,6 +5,8 @@ from decimal import Decimal
 from accounts.models import Account, BillingInterval
 from payments.models import Payment
 from campus_champions.models import CampusChampion
+from quiz.models import QuizSession, QuizQuestion, QuestionType
+from notebooks.models import Notebook, NotebookFile
 
 
 class UserFactory(DjangoModelFactory):
@@ -88,3 +90,55 @@ class CampusChampionFactory(DjangoModelFactory):
     university = 'Testing University'
     phone_number = '01700000000'
     notes = 'Test notes'
+
+
+class NotebookFactory(DjangoModelFactory):
+    """
+    Blueprint for creating Notebook objects in tests.
+    """
+
+    class Meta: # type: ignore
+        model = Notebook
+
+    user = factory.SubFactory(UserFactory) # type: ignore
+    title = "Test Notebook"
+
+
+class QuizSessionFactory(DjangoModelFactory):
+    """
+    Blueprint for creating Quiz Session objects in tests.
+    """
+
+    class Meta: # type: ignore
+        model = QuizSession
+
+    notebook = factory.SubFactory(NotebookFactory) # type: ignore
+    # Nullable self-referential FK — set only for retakes, e.g.
+    # QuizSessionFactory(source_session=original). Defaults to None (a fresh quiz).
+    source_session = None
+    title = "Test Quiz Title"
+    topic = "" # empty topic triggers the "All Topics" generation branch
+    num_questions = 10
+
+
+class QuizQuestionFactory(DjangoModelFactory):
+    """
+    Blueprint for creating Quiz Question objects in tests.
+
+    Defaults to a 4-choice MCQ whose correct_answer ("A") is one of the choices.
+    For a True/False question override choices + type, e.g.
+        QuizQuestionFactory(question_type=QuestionType.TRUE_FALSE,
+                            choices=[], correct_answer="True")
+    """
+
+    class Meta: # type: ignore
+        model = QuizQuestion
+
+    quiz = factory.SubFactory(QuizSessionFactory) # type: ignore
+    question_text = factory.Sequence(lambda n: f"Question {n}?") # type: ignore
+    question_type = QuestionType.MCQ
+    choices = ["A", "B", "C", "D"]
+    correct_answer = "A"
+    explanation = "Because A is correct."
+    # order_index has no model default — Sequence keeps it unique per question.
+    order_index = factory.Sequence(lambda n: n) # type: ignore

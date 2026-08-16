@@ -38,9 +38,6 @@ class GeneratedQuiz(TypedDict):
     title: str
     questions: list[QuestionData]
 
-
-# ── Real generation ──────────────────────────────────────────────────────────
-
 def generate_quiz_from_rag(
     topic: str,
     topic_id: str | None,
