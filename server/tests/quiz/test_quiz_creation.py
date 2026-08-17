@@ -1,0 +1,227 @@
+"""Create-endpoint coverage for POST /api/v1/quizzes/?notebook=<id>.
+
+Async (FRE-124) behaviour: create no longer generates inline. It enforces the
+quota, creates a QUEUED QuizSession, and enqueues ``generate_quiz_task`` — then
+returns 202 with an empty-questions row. The actual generation (and its
+content-unavailable / LLM-failure outcomes) is covered in ``test_tasks.py``.
+
+The Celery task is mocked here (``mock_quiz_task``) so nothing is enqueued for
+real; these tests assert the row/enqueue contract only. RAG/Anthropic are never
+reached at create time, so those fixtures aren't used.
+"""
+
+from datetime import date
+from unittest.mock import patch
+
+import pytest
+from django.urls import reverse
+from rest_framework import status
+
+from accounts.models import DailyUsage
+from notebooks.models import Notebook
+from quiz.models import QuizSession, QuizQuestion, DifficultyChoices, QuizGenerationStatus
+
+URL = reverse("quiz:quiz-list-create")
+
+
+@pytest.fixture(autouse=True)
+def mock_quiz_task():
+    """Create enqueues generation — keep the real task (and Redis) out of these
+    tests. Yielded so tests can assert how it was (or wasn't) enqueued."""
+    with patch("quiz.views.generate_quiz_task") as task:
+        yield task
+
+
+def post_create(client, notebook, **payload):
+    payload.setdefault("num_questions", 5)
+    payload.setdefault("difficulty", "EASY")
+    return client.post(f"{URL}?notebook={notebook.id}", payload, format="json")
+
+
+# ── Happy path: single topic ─────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_single_topic_create_returns_202_queued_and_enqueues(
+    authenticated_client, account, notebook, mock_quiz_task
+):
+    """
+    Given: a chosen topic
+    When:  POST with a non-empty topic
+    Then:  202, a QUEUED QuizSession is persisted with no questions yet, and the
+           generation task is enqueued once with (quiz_id, topic_id=None).
+    """
+    response = post_create(
+        authenticated_client, notebook, topic="Photosynthesis", num_questions=5, difficulty="MEDIUM"
+    )
+
+    assert response.status_code == status.HTTP_202_ACCEPTED, response.content
+    body = response.json()
+    assert body["generation_status"] == QuizGenerationStatus.QUEUED
+    assert body["questions"] == []  # not generated yet
+
+    quiz = QuizSession.objects.get(id=body["id"])
+    assert quiz.notebook_id == notebook.id  # type: ignore[attr-defined]
+    assert quiz.topic == "Photosynthesis"
+    assert quiz.difficulty == DifficultyChoices.MEDIUM
+    assert quiz.num_questions == 5
+    assert quiz.generation_status == QuizGenerationStatus.QUEUED
+    assert not QuizQuestion.objects.filter(quiz=quiz).exists()
+
+    mock_quiz_task.delay.assert_called_once_with(str(quiz.id), None)
+
+
+@pytest.mark.django_db
+def test_topic_id_is_forwarded_to_the_task(
+    authenticated_client, account, notebook, notebook_topics, mock_quiz_task
+):
+    """A supplied topic_id is normalised to a string and passed to the task so it
+    can run topic-scoped retrieval."""
+    topic = notebook_topics[0]
+    response = post_create(
+        authenticated_client, notebook, topic=topic.name, topic_id=str(topic.pk)
+    )
+
+    assert response.status_code == status.HTTP_202_ACCEPTED, response.content
+    quiz_id = response.json()["id"]
+    mock_quiz_task.delay.assert_called_once_with(quiz_id, str(topic.pk))
+
+
+# ── Happy path: all topics ───────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_all_topics_create_stores_all_topics_and_enqueues(
+    authenticated_client, account, notebook, mock_quiz_task
+):
+    """
+    Given: an empty topic (the "All Topics" selection)
+    When:  POST with topic=""
+    Then:  202, quiz.topic stored as "All Topics", task enqueued with topic_id
+           None (the task will fan out across the notebook's topics).
+    """
+    response = post_create(authenticated_client, notebook, topic="", num_questions=6)
+
+    assert response.status_code == status.HTTP_202_ACCEPTED, response.content
+    quiz = QuizSession.objects.get(id=response.json()["id"])
+    assert quiz.topic == "All Topics"
+    mock_quiz_task.delay.assert_called_once_with(str(quiz.id), None)
+
+
+@pytest.mark.django_db
+def test_omitted_topic_defaults_to_all_topics(
+    authenticated_client, account, notebook, mock_quiz_task
+):
+    """A client that omits `topic` entirely gets the whole-notebook branch."""
+    response = authenticated_client.post(
+        f"{URL}?notebook={notebook.id}",
+        {"num_questions": 4, "difficulty": "EASY"},
+        format="json",
+    )
+    assert response.status_code == status.HTTP_202_ACCEPTED, response.content
+    assert QuizSession.objects.get().topic == "All Topics"
+
+
+# ── Usage accounting ─────────────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_create_increments_daily_usage(
+    authenticated_client, account, notebook, mock_quiz_task
+):
+    """A successful create bumps today's quizzes_generated by exactly one — the
+    quota is spent on enqueue, not on completion."""
+    post_create(authenticated_client, notebook, topic="Photosynthesis")
+
+    usage = DailyUsage.objects.get(account=account, date=date.today())
+    assert usage.quizzes_generated == 1
+
+
+# ── Validation ───────────────────────────────────────────────────────────────
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("num_questions", [0, -1, 51])
+def test_num_questions_out_of_bounds_rejected(
+    authenticated_client, account, notebook, mock_quiz_task, num_questions
+):
+    """
+    num_questions must be 1..50. Out-of-range values are rejected at serializer
+    validation — before any row is created or task enqueued.
+    """
+    response = post_create(
+        authenticated_client, notebook, topic="Photosynthesis", num_questions=num_questions
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "num_questions" in response.json()
+    assert not QuizSession.objects.exists()
+    mock_quiz_task.delay.assert_not_called()
+
+
+# ── Authorization / ownership ────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_create_requires_authentication(api_client, notebook, mock_quiz_task):
+    """Unauthenticated create is rejected before anything else."""
+    response = post_create(api_client, notebook, topic="Photosynthesis")
+    assert response.status_code == status.HTTP_401_UNAUTHORIZED
+    mock_quiz_task.delay.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_cannot_create_quiz_for_another_users_notebook(
+    authenticated_client, account, mock_quiz_task, django_user_model
+):
+    """
+    Given: a notebook owned by a different user
+    When:  the authenticated user POSTs against it
+    Then:  404 (ownership scoping), nothing created or enqueued.
+    """
+    other = django_user_model.objects.create_user(email="other@example.com", password="x")
+    other_notebook = Notebook.objects.create(user=other, title="Not yours")
+
+    response = post_create(authenticated_client, other_notebook, topic="Photosynthesis")
+
+    assert response.status_code == status.HTTP_404_NOT_FOUND
+    assert not QuizSession.objects.exists()
+    mock_quiz_task.delay.assert_not_called()
+
+
+# ── Archived notebook ────────────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_archived_notebook_rejected(
+    authenticated_client, account, user, mock_quiz_task
+):
+    """
+    Given: an archived notebook
+    When:  POST a quiz for it
+    Then:  403 notebook_archived, nothing persisted or enqueued.
+    """
+    archived = Notebook.objects.create(user=user, title="Archived", is_archived=True)
+
+    response = post_create(authenticated_client, archived, topic="Photosynthesis")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json()["code"] == "notebook_archived"
+    assert not QuizSession.objects.exists()
+    mock_quiz_task.delay.assert_not_called()
+
+
+# ── Daily quota ──────────────────────────────────────────────────────────────
+
+@pytest.mark.django_db
+def test_daily_quiz_quota_exceeded(
+    authenticated_client, account, notebook, mock_quiz_task
+):
+    """
+    Given: the FREE account has already generated its daily allowance (5)
+    When:  it POSTs another quiz
+    Then:  403 daily_quiz_quota_exceeded, no row created, and — the point of the
+           async split — the task is NOT enqueued, so an over-quota request never
+           reaches the LLM.
+    """
+    DailyUsage.objects.create(account=account, date=date.today(), quizzes_generated=5)
+
+    response = post_create(authenticated_client, notebook, topic="Photosynthesis")
+
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    assert response.json()["code"] == "daily_quiz_quota_exceeded"
+    assert not QuizSession.objects.exists()
+    mock_quiz_task.delay.assert_not_called()

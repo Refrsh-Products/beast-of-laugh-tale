@@ -20,6 +20,16 @@ class QuizStatus(models.TextChoices):
     ABANDONED = 'ABANDONED', 'Abandoned'
 
 
+class QuizGenerationStatus(models.TextChoices):
+    """Lifecycle of the AI *generation* job — distinct from ``QuizStatus``, which
+    tracks quiz-*taking*. A quiz is QUEUED on create, flips to GENERATING while the
+    Celery task runs, then COMPLETED (questions ready) or FAILED (see error_message)."""
+    QUEUED = 'QUEUED', 'Queued'
+    GENERATING = 'GENERATING', 'Generating'
+    COMPLETED = 'COMPLETED', 'Completed'
+    FAILED = 'FAILED', 'Failed'
+
+
 class QuestionType(models.TextChoices):
     MCQ = 'MCQ', 'Multiple Choice'
     TRUE_FALSE = 'TRUE_FALSE', 'True / False'
@@ -37,6 +47,10 @@ class QuizSession(models.Model):
     time_limit = models.IntegerField(null=True, blank=True)
     score = models.FloatField(null=True, blank=True)
     status = models.CharField(max_length=15, choices=QuizStatus, default=QuizStatus.IN_PROGRESS)
+    generation_status = models.CharField(
+        max_length=15, choices=QuizGenerationStatus, default=QuizGenerationStatus.COMPLETED
+    )
+    error_message = models.TextField(blank=True)
     is_favourite = models.BooleanField(default=False)
     started_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
