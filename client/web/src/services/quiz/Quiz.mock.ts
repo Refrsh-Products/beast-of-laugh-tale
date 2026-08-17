@@ -167,6 +167,8 @@ export const QuizServiceMock: QuizService = {
       time_limit: payload.time_limit,
       score: 0,
       status: "pending",
+      // Ready immediately in the mock — the async poll resolves on first tick.
+      generation_status: "COMPLETED",
       is_favourite: false,
       generated_at: new Date().toISOString(),
       questions,
