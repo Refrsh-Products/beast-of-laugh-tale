@@ -8,6 +8,7 @@ import {
   RiArrowRightLine,
   RiCheckLine,
   RiCloseLine,
+  RiFilterLine,
   RiQuestionAnswerLine,
   RiRefreshLine,
 } from "@remixicon/react";
@@ -40,6 +41,7 @@ export default function QuizReviewColumn({
   const [openExplanations, setOpenExplanations] = useState<Set<number>>(
     new Set(),
   );
+  const [showOnlyWrong, setShowOnlyWrong] = useState(false);
 
   function toggleExplanation(index: number) {
     setOpenExplanations((prev) => {
@@ -61,6 +63,19 @@ export default function QuizReviewColumn({
   const topics = quiz.topics ?? (quiz.topic ? [quiz.topic] : []);
   const topicLabel = topics.length > 0 ? topics.join(", ") : "General";
   const questions = quiz.questions ?? [];
+  // Decorate with correctness + original index so numbering ("Q3") stays stable
+  // when the list is filtered to only-incorrect.
+  const decoratedQuestions = questions.map((q, index) => ({
+    q,
+    index,
+    correct:
+      q.is_correct ??
+      (q.user_answer != null && q.user_answer === q.correct_answer),
+  }));
+  const wrongCount = decoratedQuestions.filter((d) => !d.correct).length;
+  const visibleQuestions = showOnlyWrong
+    ? decoratedQuestions.filter((d) => !d.correct)
+    : decoratedQuestions;
 
   const meta = [
     quiz.difficulty,
@@ -77,6 +92,18 @@ export default function QuizReviewColumn({
           <RiArrowLeftLine aria-hidden="true" />
           Back to generator
         </Button>
+        {wrongCount > 0 && (
+          <Button
+            variant={showOnlyWrong ? "secondary" : "ghost"}
+            size="sm"
+            className="ml-auto"
+            aria-pressed={showOnlyWrong}
+            onClick={() => setShowOnlyWrong((prev) => !prev)}
+          >
+            <RiFilterLine aria-hidden="true" />
+            {showOnlyWrong ? "Show all" : `Only incorrect (${wrongCount})`}
+          </Button>
+        )}
       </div>
 
       {/* Scrollable content */}
@@ -109,10 +136,7 @@ export default function QuizReviewColumn({
 
           {/* Questions */}
           <div className="flex flex-col gap-6">
-            {questions.map((q, qi) => {
-              const correct =
-                q.is_correct ??
-                (q.user_answer != null && q.user_answer === q.correct_answer);
+            {visibleQuestions.map(({ q, index: qi, correct }) => {
               const explanationOpen = openExplanations.has(qi);
 
               return (

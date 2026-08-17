@@ -32,6 +32,14 @@ export interface QuizSession {
   time_limit?: number;
   score?: number;
   status?: string;
+  /**
+   * Lifecycle of the async AI generation job: QUEUED | GENERATING | COMPLETED |
+   * FAILED. Distinct from `status` (the quiz-taking lifecycle). Clients poll the
+   * detail endpoint for this to transition after a create returns 202.
+   */
+  generation_status?: string;
+  /** Human-readable reason when generation_status is FAILED. */
+  error_message?: string;
   is_favourite?: boolean;
   started_at?: string;
   completed_at?: string;
