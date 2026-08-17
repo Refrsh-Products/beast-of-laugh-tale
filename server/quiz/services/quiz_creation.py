@@ -5,12 +5,16 @@ This is the persistence/business-logic half of quiz creation, deliberately kept
 separate from the LLM generation in ``quiz_generation.py`` (which only produces
 plain question dicts) and from the DRF view (which only handles HTTP).
 
-``create_quiz_session`` takes plain primitives — no request, no serializer — and:
-  1. Picks the generation strategy: whole-notebook when no topic is given
-     ("All Topics"), otherwise topic-scoped RAG retrieval.
-  2. Inside a single transaction, enforces the daily quiz quota, persists the
-     ``QuizSession`` + its ``QuizQuestion`` rows, increments daily usage, and
-     touches notebook activity.
+``create_quiz_session`` takes plain primitives — no request, no serializer — and,
+inside a single transaction, enforces the daily quiz quota, creates a QUEUED
+``QuizSession`` row, increments daily usage, and touches notebook activity. It
+does **not** generate the questions — that's the async ``generate_quiz_task``,
+which the view enqueues after this commits. It returns ``(quiz, topic_id)`` so
+the view has what the task needs.
+
+Enforcing the quota here (before enqueue) means an over-quota request never
+reaches the LLM — the old synchronous path generated first and checked quota
+after, burning tokens for requests it then rejected.
 
 Keeping this free of DRF means it can be unit-tested directly with a notebook and
 user, and mirrors the thin-view / logic-in-``services`` convention used by
@@ -27,8 +31,7 @@ from notebooks.errors import DailyQuizQuotaExceededError
 from notebooks.models import Notebook
 from notebooks.services.activity import touch_notebook_activity
 
-from ..models import QuizSession, QuizQuestion
-from .quiz_generation import generate_quiz_from_rag, generate_quiz_from_entire_notebook
+from ..models import QuizSession, QuizGenerationStatus
 
 ALL_TOPICS = "All Topics"
 
@@ -47,30 +50,16 @@ def create_quiz_session(
     difficulty: str,
     quiz_type=None,
     time_limit=None,
-) -> QuizSession:
-    """Generate a quiz and persist it (with quota enforcement) for ``notebook``.
+) -> tuple[QuizSession, str | None]:
+    """Create a QUEUED quiz session (with quota enforcement) for ``notebook``.
 
-    Raises ``DailyQuizQuotaExceededError`` if the account is over its daily quiz
-    quota. ``quiz_type`` falls back to the model default when None.
+    Returns ``(quiz, topic_id)``. The caller enqueues ``generate_quiz_task`` with
+    these after the transaction commits so the worker can read the row. Raises
+    ``DailyQuizQuotaExceededError`` if the account is over its daily quiz quota.
+    ``quiz_type`` falls back to the model default when None.
     """
-    if _is_all_topics(topic, topic_id):
-        final_topic = ALL_TOPICS
-        generated = generate_quiz_from_entire_notebook(
-            notebook_id=str(notebook.pk),
-            user_id=str(user.pk),
-            num_questions=num_questions,
-            difficulty=difficulty,
-        )
-    else:
-        final_topic = topic
-        generated = generate_quiz_from_rag(
-            topic=topic,
-            topic_id=str(topic_id) if topic_id else None,
-            notebook_id=str(notebook.pk),
-            user_id=str(user.pk),
-            num_questions=num_questions,
-            difficulty=difficulty,
-        )
+    final_topic = ALL_TOPICS if _is_all_topics(topic, topic_id) else topic
+    normalized_topic_id = str(topic_id) if topic_id else None
 
     with transaction.atomic():
         account = Account.objects.select_for_update().get(user=user)
@@ -84,23 +73,21 @@ def create_quiz_session(
 
         create_kwargs = {
             "notebook": notebook,
-            "title": generated["title"],
+            "title": f"Generating: {final_topic}"[:255],
             "topic": final_topic,
             "num_questions": num_questions,
             "difficulty": difficulty,
             "time_limit": time_limit,
+            "generation_status": QuizGenerationStatus.QUEUED,
         }
         if quiz_type is not None:
             create_kwargs["quiz_type"] = quiz_type
 
         quiz = QuizSession.objects.create(**create_kwargs)
-        QuizQuestion.objects.bulk_create([
-            QuizQuestion(quiz=quiz, **q) for q in generated["questions"]
-        ])
 
         usage.quizzes_generated += 1
         usage.save()
 
         touch_notebook_activity(notebook_id=notebook.pk)
 
-    return quiz
+    return quiz, normalized_topic_id

@@ -11,6 +11,7 @@ from notebooks.services.activity import touch_notebook_activity
 from notebooks.services.archive import assert_notebook_writable
 from .models import QuizSession, QuizQuestion, QuizStatus
 from .services.quiz_creation import create_quiz_session
+from .tasks import generate_quiz_task
 from .serializers import (
     QuizSessionListSerializer,
     QuizSessionDetailSerializer,
@@ -51,9 +52,11 @@ class QuizSessionListCreateView(generics.ListCreateAPIView):
     def create(self, request, *_args, **_kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        quiz = self.perform_create(serializer)
+        quiz, topic_id = self.perform_create(serializer)
+        # Enqueue generation AFTER the atomic block commits so the worker can read the row.
+        generate_quiz_task.delay(str(quiz.id), topic_id)
         detail_serializer = QuizSessionDetailSerializer(quiz)
-        return Response(detail_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(detail_serializer.data, status=status.HTTP_202_ACCEPTED)
 
     def perform_create(self, serializer): # type: ignore[override]
         notebook_id = self.request.query_params.get("notebook") # type: ignore
