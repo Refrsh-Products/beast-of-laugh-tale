@@ -187,15 +187,25 @@ def generate_quiz_from_entire_notebook(
     remainder = num_questions % num_topics
     questions_per_topic = [base + (1 if i < remainder else 0) for i in range(num_topics)]
 
+    # Retrieve every topic concurrently on one event loop. Each retrieval is an
+    # embedding round-trip plus a vector query, so doing them one asyncio.run() at
+    # a time made "All Topics" (the default branch) cost the sum of up to 5 of
+    # them instead of the slowest one. gather preserves input order.
+    async def _retrieve_all_topics():
+        return await asyncio.gather(*(
+            query_notebook_rag_by_topic(
+                notebook_id, user_id, topic.name, str(topic.pk),
+                k=max(3, questions_per_topic[i] * 3),
+            )
+            for i, topic in enumerate(topics)
+        ))
+
+    chunks_per_topic = asyncio.run(_retrieve_all_topics())
+
     topic_contexts: list[str] = []
     topics_distribution: list[dict] = []
 
-    for i, topic in enumerate(topics):
-        q_count = questions_per_topic[i]
-        retrieval_k = max(3, q_count * 3)
-        chunks = asyncio.run(
-            query_notebook_rag_by_topic(notebook_id, user_id, topic.name, str(topic.pk), k=retrieval_k)
-        )
+    for topic, q_count, chunks in zip(topics, questions_per_topic, chunks_per_topic):
         if chunks:
             context_block = f"=== {topic.name} ===\n" + "\n\n---\n\n".join(
                 doc.page_content for doc in chunks

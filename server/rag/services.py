@@ -2,6 +2,7 @@ import os
 import json
 import asyncio
 import logging
+import threading
 from typing import List, Tuple
 import numpy as np
 from langchain_core.documents import Document
@@ -18,20 +19,46 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 logger = logging.LoggerAdapter(logging.getLogger(__name__), {"tag": "rag"})
 
 
-_vectorstore_table_initialized = False
+_vector_store = None
+# A threading lock, not asyncio: callers reach this from several threads (Celery's
+# --pool=threads worker, gunicorn's threads), each on its own short-lived
+# asyncio.run() loop, and an asyncio.Lock binds permanently to the first loop that
+# takes it. Held across the awaits below, which is safe because that awaited work
+# runs on PGEngine's background loop, not on the caller's — it can't deadlock here.
+_vector_store_lock = threading.Lock()
 
 
 async def get_vector_store():
-    global _vectorstore_table_initialized
+    """Return the process-wide PGVectorStore, building it on first use.
+
+    Every call used to construct a fresh embeddings client, a fresh PGEngine (an
+    entire new asyncpg pool) and a fresh PGVectorStore, so each retrieval paid
+    full pool setup before doing any work — and dropped the pool afterwards.
+
+    Caching is safe across callers because langchain-postgres dispatches every
+    engine/vector-store coroutine onto its own long-lived background loop
+    (``PGEngine._default_loop``) via ``run_coroutine_threadsafe``; the pool is
+    never bound to the throwaway ``asyncio.run`` loop of whichever caller built
+    it. Construction stays lazy — nothing is built at import time — so gunicorn's
+    forked workers each open their own pool post-fork instead of sharing the
+    parent's.
+    """
+    global _vector_store
+
+    if _vector_store is not None:
+        return _vector_store
 
     connection_string = os.getenv("CONNECTION_STRING")
     if connection_string is None:
         raise ValueError("CONNECTION_STRING environment variable is not set")
 
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
-    pg_engine = PGEngine.from_connection_string(url=connection_string)
+    with _vector_store_lock:
+        if _vector_store is not None:
+            return _vector_store
 
-    if not _vectorstore_table_initialized:
+        embeddings = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-001")
+        pg_engine = PGEngine.from_connection_string(url=connection_string)
+
         try:
             await pg_engine.ainit_vectorstore_table(
                 table_name="rag_embeddings",
@@ -41,13 +68,13 @@ async def get_vector_store():
         except ProgrammingError:
             pass  # Table already exists (created by another process)
 
-        _vectorstore_table_initialized = True
+        _vector_store = await PGVectorStore.create(
+            engine=pg_engine,
+            embedding_service=embeddings,
+            table_name="rag_embeddings",
+        )
 
-    return await PGVectorStore.create(
-        engine=pg_engine,
-        embedding_service=embeddings,
-        table_name="rag_embeddings",
-    )
+    return _vector_store
 
 
 async def ingest_note_to_rag(note_id):
