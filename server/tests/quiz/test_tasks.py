@@ -9,10 +9,12 @@ bound ``self``. RAG/Anthropic are mocked via conftest's ``mock_rag_retrieval`` /
 ``mock_anthropic``.
 """
 
+from datetime import date
 from unittest.mock import patch
 
 import pytest
 
+from accounts.models import Account, DailyUsage
 from tests.factories import QuizSessionFactory
 from quiz.tasks import generate_quiz_task
 from quiz.models import QuizSession, QuizQuestion, QuizGenerationStatus
@@ -165,6 +167,89 @@ def test_unexpected_error_marks_failed_and_reraises(notebook):
     quiz.refresh_from_db()
     assert quiz.generation_status == QuizGenerationStatus.FAILED
     assert quiz.error_message
+
+
+# ── Quota refund on failure (FRE-130) ────────────────────────────────────────
+#
+# The daily quiz slot is consumed at create time (``create_quiz_session``). When
+# generation ends in FAILED the user never received a quiz, so the task must hand
+# the slot back — and, because Celery is at-least-once, hand it back exactly once
+# no matter how many times a duplicate/retried task re-runs.
+
+def _account_with_usage(user, quizzes_generated):
+    account = Account.objects.create(user=user)
+    usage = DailyUsage.objects.create(
+        account=account, date=date.today(), quizzes_generated=quizzes_generated
+    )
+    return account, usage
+
+
+@pytest.mark.django_db
+def test_failed_generation_refunds_daily_quota(
+    notebook, mock_rag_retrieval, mock_anthropic
+):
+    """An expected failure (no retrievable content) gives back the daily slot."""
+    mock_rag_retrieval.all.return_value = []  # content-unavailable → FAILED
+    _, usage = _account_with_usage(notebook.user, quizzes_generated=1)
+    quiz = queued_quiz(notebook, topic="Photosynthesis")
+
+    run_task(quiz)
+
+    quiz.refresh_from_db()
+    usage.refresh_from_db()
+    assert quiz.generation_status == QuizGenerationStatus.FAILED
+    assert usage.quizzes_generated == 0
+
+
+@pytest.mark.django_db
+def test_unexpected_failure_refunds_daily_quota(notebook):
+    """The re-raising ``except Exception`` path still refunds before it re-raises."""
+    _, usage = _account_with_usage(notebook.user, quizzes_generated=1)
+    quiz = queued_quiz(notebook, topic="Photosynthesis")
+
+    with patch("quiz.tasks.generate_quiz_from_rag", side_effect=RuntimeError("boom")):
+        result = run_task(quiz)
+        with pytest.raises(RuntimeError):
+            result.get()
+
+    usage.refresh_from_db()
+    assert usage.quizzes_generated == 0
+
+
+@pytest.mark.django_db
+def test_duplicate_failed_run_refunds_only_once(
+    notebook, mock_rag_retrieval, mock_anthropic
+):
+    """A redelivered task whose row is already FAILED must not refund a second time.
+
+    Starts at 2 so a broken guard (double refund) would land on 0, while the
+    correct single refund lands on 1 — the two outcomes are distinguishable.
+    """
+    mock_rag_retrieval.all.return_value = []
+    _, usage = _account_with_usage(notebook.user, quizzes_generated=2)
+    quiz = queued_quiz(notebook, topic="Photosynthesis")
+
+    run_task(quiz)  # first run: FAILED, refunds 2 → 1
+    run_task(quiz)  # redelivery: row already terminal → claim no-ops, no refund
+
+    usage.refresh_from_db()
+    assert usage.quizzes_generated == 1
+
+
+@pytest.mark.django_db
+def test_successful_generation_does_not_refund(
+    notebook, mock_rag_retrieval, mock_anthropic
+):
+    """A completed quiz keeps the slot it consumed — refund is failure-only."""
+    _, usage = _account_with_usage(notebook.user, quizzes_generated=1)
+    quiz = queued_quiz(notebook, topic="Photosynthesis")
+
+    run_task(quiz)
+
+    quiz.refresh_from_db()
+    usage.refresh_from_db()
+    assert quiz.generation_status == QuizGenerationStatus.COMPLETED
+    assert usage.quizzes_generated == 1
 
 
 # ── Status transition ────────────────────────────────────────────────────────

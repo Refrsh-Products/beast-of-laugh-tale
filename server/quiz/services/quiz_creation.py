@@ -56,7 +56,9 @@ def create_quiz_session(
     Returns ``(quiz, topic_id)``. The caller enqueues ``generate_quiz_task`` with
     these after the transaction commits so the worker can read the row. Raises
     ``DailyQuizQuotaExceededError`` if the account is over its daily quiz quota.
-    ``quiz_type`` falls back to the model default when None.
+    ``quiz_type`` falls back to the model default when None. 
+    
+    Updates notebook activity.
     """
     final_topic = ALL_TOPICS if _is_all_topics(topic, topic_id) else topic
     normalized_topic_id = str(topic_id) if topic_id else None
