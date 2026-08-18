@@ -122,6 +122,17 @@ export default function LandingPage() {
                   <DeckChips chips={section.chips} variant={section.variant} />
                 </>
               )}
+
+              {section.cta && (
+                <>
+                  <DeckRule variant={section.variant} />
+                  <div>
+                    <LandingButton to={section.cta.href}>
+                      {section.cta.label}
+                    </LandingButton>
+                  </div>
+                </>
+              )}
             </DeckCard>
           ))}
         </div>

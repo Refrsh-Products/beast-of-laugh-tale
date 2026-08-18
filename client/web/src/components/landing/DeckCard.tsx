@@ -42,7 +42,7 @@ export default function DeckCard({
     >
       <div
         className={cn(
-          "self-start text-xs font-semibold tracking-[0.1em] sm:[writing-mode:vertical-rl] sm:rotate-180",
+          "self-start text-xs font-semibold tracking-widest sm:[writing-mode:vertical-rl] sm:rotate-180",
           isInk ? "text-brand-secondary-300" : "text-brand-primary-900",
         )}
       >

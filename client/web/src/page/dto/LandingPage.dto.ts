@@ -28,10 +28,10 @@ export const NAV_LINKS: NavLink[] = [
 
 export const HERO = {
   /* Split so the middle line can carry the Sulu + italic treatment. */
-  headingBefore: "Your notes,",
-  headingAccent: "answered",
-  headingAfter: "in your words.",
-  body: "Freshr reads your lecture slides, PDFs and handwritten notes, then answers questions about them with a citation back to the exact page. Quizzes and slide decks come from the same material — so everything you study is your own.",
+  headingBefore: "The AI for",
+  headingAccent: "university",
+  headingAfter: "students.",
+  body: "FRESHR turns your lecture PDFs, class recordings & written notes into practice quizzes, PPTX presentation drafts, and high-quality notes.",
   primaryCta: { label: "Start free", href: "/signup" },
   secondaryCta: { label: "See how it works", href: "#how" },
 } as const;
@@ -42,15 +42,28 @@ export const HERO = {
  * that actually exists in the product.
  */
 export const HERO_CARD = {
-  deckLabel: "Biology 201 · Cellular Structures",
+  deckLabel: "Antropology 101 · Cultural Relativism",
   tag: "QUIZ",
   /* A real question, not one with its own answer already filled in — the
      lettered options below are what carries the answer. */
-  question: "Which part of the cell hosts the citric acid cycle?",
+  question:
+    "In anthropological research, what does an 'emic' perspective refer to?",
   options: [
-    { letter: "A", text: "Cytoplasm", correct: false },
-    { letter: "B", text: "Mitochondrial matrix", correct: true },
-    { letter: "C", text: "Golgi apparatus", correct: false },
+    {
+      letter: "A",
+      text: "The objective, cross-cultural comparison of different societies.",
+      correct: false,
+    },
+    {
+      letter: "B",
+      text: "The native's point of view and understanding of their own culture.",
+      correct: true,
+    },
+    {
+      letter: "C",
+      text: "The biological classification of different human races.",
+      correct: false,
+    },
   ],
   footerHint: "Cited from Lecture 07, slide 12",
   progressLabel: "Q 3 of 5",
@@ -64,13 +77,13 @@ export interface Subject {
 
 /** Deliberately generic — these are course areas, not claimed integrations. */
 export const SUBJECTS: Subject[] = [
-  { icon: "RiMicroscopeLine", label: "Biology" },
-  { icon: "RiFlaskLine", label: "Chemistry" },
-  { icon: "RiBarChart2Line", label: "Economics" },
-  { icon: "RiCodeSSlashLine", label: "Computer Science" },
-  { icon: "RiGovernmentLine", label: "Political Science" },
-  { icon: "RiBookOpenLine", label: "Literature" },
+  { icon: "RiUserHeartLine", label: "Antropology" },
   { icon: "RiScales3Line", label: "Law" },
+  { icon: "RiBookReadLine", label: "English" },
+  { icon: "RiCodeSSlashLine", label: "Computer Science" },
+  { icon: "RiMegaphoneLine", label: "Marketing" },
+  { icon: "RiBookOpenLine", label: "Literature" },
+  { icon: "RiBriefcaseLine", label: "Business" },
 ];
 
 export const SUBJECTS_LABEL = "Built for the courses you're actually taking";
@@ -89,17 +102,19 @@ export interface DeckSection {
   body: string;
   variant: "ecru" | "ink";
   chips?: DeckChip[];
+  /** Renders a call-to-action button under the body, in place of chips. */
+  cta?: { label: string; href: string };
   /** Renders the three tool-preview cards under the body. */
   showMiniCards?: boolean;
 }
 
 export const DECK_SECTIONS: DeckSection[] = [
   {
-    num: "CARD 01",
+    num: "",
     eyebrow: "Step 01 · Drop it in",
-    titleBefore: "Drop the whole folder.",
-    titleItalic: "Don't sort it first.",
-    body: "A 60-slide PDF, the notes your TA emailed at 1 AM, a photo of the whiteboard before it got wiped. Drag them into a notebook and Freshr reads them as one pile — including scans and handwriting — so nothing gets left out because it was the wrong file type.",
+    titleBefore: "Upload your lecture materials.",
+    titleItalic: "No need to arrange it from your side.",
+    body: "FRESHR automatically sorts, analyzes and arranges piles upon piles of PDFs. It buckets them into different sections for you to review",
     variant: "ecru",
     chips: [
       { icon: "RiFilePdfLine", label: "Lecture 07.pdf", solid: true },
@@ -109,32 +124,22 @@ export const DECK_SECTIONS: DeckSection[] = [
     ],
   },
   {
-    num: "CARD 02",
+    num: "",
     eyebrow: "Step 02 · It reads, you review",
-    titleBefore: "One notebook,",
-    titleItalic: "three ways to study it.",
-    body: "The same material becomes whatever you need that night — a conversation when you're confused, a quiz when you want to check yourself, a slide deck when you have to present it on Thursday. Every one of them is built from your notebook, and nothing else.",
+    titleBefore: "Quizzes, presentation or chat; ",
+    titleItalic: "you name it!",
+    body: "Test yourself with practice or timed quizzes, and turn those materials into initial PPTX drafts. Or simply chat with your study resources and ask questions.",
     variant: "ecru",
     showMiniCards: true,
   },
   {
-    num: "CARD 03",
-    eyebrow: "Step 03 · Ask, in your own words",
-    titleBefore: "Stuck on slide 43 at 2 AM?",
-    titleItalic: "Ask it a question.",
-    body: "Freshr answers from your notebook rather than the open internet, so it won't confidently hand you something your professor never said. Every answer carries a citation back to the page it came from, which is also how you check it.",
+    num: "",
+    eyebrow: "Better than NotebookLM or ChatGPT?",
+    titleBefore: "See it for yourself!",
+    titleItalic: "Create your FREE account.",
+    body: "We have developed FRESHR to be exclusively for students. Our models, internal workflows are fine-tuned for solely university academics and meant to be a guided, entry-level experience for students wanting to use AI.",
     variant: "ink",
-    chips: [
-      {
-        icon: "RiDoubleQuotesL",
-        label: "Why is glycolysis anaerobic here but not there?",
-      },
-      {
-        icon: "RiCornerDownRightLine",
-        label: "Slide 43 · Lecture 07",
-        solid: true,
-      },
-    ],
+    cta: { label: "Use it now for FREE", href: "/signup" },
   },
 ];
 
@@ -235,9 +240,9 @@ export const TESTIMONIALS_INTRO = {
  */
 export const PRICING = {
   eyebrow: "Pricing",
-  titleBefore: "Start free.",
-  titleItalic: "Upgrade only if you outgrow it.",
-  body: "Basic is free forever — three notebooks, and enough questions and quizzes a day to get through a normal week. No card to start, and no per-deck paywall that stops working the night before your exam.",
+  titleBefore: "Affordable Pricing for",
+  titleItalic: "Students.",
+  body: "We support bKash payments with monthly auto-renewal to make it as easy as possible for you to use FRESHR. We know how heavy foreign AI products are on the pockets of students, so our prices reflect that.",
   cta: { label: "Start free", href: "/signup" },
   footnote: "Prices in Bangladeshi Taka. Cancel any time.",
 } as const;
@@ -276,7 +281,7 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
 
 export const FOOTER = {
   blurb:
-    "A study notebook made from your own material, that can answer questions about it and show you where the answer came from.",
+    "AI-powered platform that helps students study smarter - turning lecture notes and study materials into organized notes, interactive quizzes, and clear summaries, all in one workspace.",
   madeIn: "Made on a campus in Dhaka.",
 } as const;
 
