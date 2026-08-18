@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 export default function HeroCardStage() {
   return (
     <div
-      className="relative flex h-95 items-center justify-center [perspective:1600px] sm:h-115"
+      className="relative flex h-95 items-center justify-center perspective-[1600px] sm:h-115"
       aria-hidden="true"
     >
       {/* Two cards peeking out behind, to imply a deck rather than a page. */}

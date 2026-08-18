@@ -14,6 +14,10 @@ import {
   RiMicroscopeLine,
   RiScales3Line,
   RiSlideshow2Line,
+  RiUserHeartLine,
+  RiBookReadLine,
+  RiMegaphoneLine,
+  RiBriefcaseLine,
   type RemixiconComponentType,
 } from "@remixicon/react";
 
@@ -45,6 +49,10 @@ export const LANDING_ICONS = {
   RiMicroscopeLine,
   RiScales3Line,
   RiSlideshow2Line,
+  RiUserHeartLine,
+  RiBookReadLine,
+  RiMegaphoneLine,
+  RiBriefcaseLine,
 } satisfies Record<string, RemixiconComponentType>;
 
 export type LandingIconName = keyof typeof LANDING_ICONS;
