@@ -2,7 +2,7 @@
 <html>
   <head>
     {% include "emails/partials/_head.html" %}
-    <title>Verify your email address</title>
+    <title>{{ title }}</title>
   </head>
   <body style="margin: 0; padding: 0; background: #f1f1e7">
     <div
@@ -16,8 +16,7 @@
         line-height: 1px;
       "
     >
-      Confirm your email to finish setting up your FRESHR account. This link
-      expires in 3 days.
+      An update on your FRESHR account.
     </div>
     <table
       role="presentation"
@@ -78,7 +77,7 @@
                                 text-transform: uppercase;
                                 color: #19392e;
                               "
-                              >Verify your email</span
+                              >Notification</span
                             >
                           </td>
                         </tr>
@@ -102,7 +101,7 @@
                                 mso-line-height-rule: exactly;
                                 line-height: 34px;
                               "
-                              >Confirm your email address</span
+                              >{{ title }}</span
                             >
                           </td>
                         </tr>
@@ -124,10 +123,10 @@
                               color: #0e0f0c;
                             "
                           >
-                            To finish setting up your FRESHR account, confirm
-                            your email address below.
+                            {{ body|linebreaks }}
                           </td>
                         </tr>
+                        {% if cta_url %}
                         <tr>
                           <td style="padding: 8px 0 28px 0">
                             <table
@@ -139,7 +138,7 @@
                               <tr>
                                 <td bgcolor="#19392e" style="border-radius: 0">
                                   <a
-                                    href="{{ verify_url }}"
+                                    href="{{ cta_url }}"
                                     target="_blank"
                                     style="
                                       display: block;
@@ -158,13 +157,14 @@
                                       color: #b4ff6e;
                                       text-decoration: none;
                                     "
-                                    >Confirm your email</a
+                                    >{{ cta_text }}</a
                                   >
                                 </td>
                               </tr>
                             </table>
                           </td>
                         </tr>
+                        {% endif %}
                         <tr>
                           <td
                             style="
@@ -183,8 +183,8 @@
                               color: #454745;
                             "
                           >
-                            This link expires in 3 days. Didn't create a FRESHR
-                            account? You can safely ignore this email.
+                            This is an automated message related to your account
+                            activity.
                           </td>
                         </tr>
                       </table>

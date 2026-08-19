@@ -11,6 +11,7 @@ import ForgotPasswordSentPage from "./page/ForgotPasswordSentPage";
 import ResetPasswordPage from "./page/ResetPasswordPage";
 import VerifyEmailPage from "./page/VerifyEmailPage";
 import VerifyEmailSentPage from "./page/VerifyEmailSentPage";
+import UnsubscribePage from "./page/UnsubscribePage";
 import ProfilePage from "./page/ProfilePage";
 import NotebookPage from "./page/NotebookPage";
 import NotFoundPage from "./page/NotFoundPage";
@@ -39,6 +40,7 @@ export default function App() {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/verify-email/sent" element={<VerifyEmailSentPage />} />
+          <Route path="/unsubscribe" element={<UnsubscribePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/payment/success" element={<PaymentSuccessPage />} />
           <Route path="/payment/cancel" element={<PaymentCancelPage />} />

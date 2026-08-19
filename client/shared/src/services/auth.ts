@@ -37,6 +37,7 @@ export interface AuthService {
     new_password: string,
     new_password_confirm: string,
   ): void;
+  unsubscribe(token: string): Promise<void>;
 }
 
 export function createAuthService(deps: ServiceDeps): AuthService {
@@ -219,6 +220,12 @@ export function createAuthService(deps: ServiceDeps): AuthService {
         },
       );
       console.log("[AuthService] Confirm Reset Password Response: ", resp);
+    },
+
+    unsubscribe: async (token) => {
+      // Public endpoint — the signed token from the email footer is the only
+      // credential; no session is attached.
+      await http.request(AuthServiceApiEndpoints.unsubscribe, "POST", { token });
     },
   };
 }
