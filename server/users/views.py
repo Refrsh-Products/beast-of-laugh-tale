@@ -4,7 +4,7 @@ import logging
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
@@ -17,6 +17,9 @@ import requests as http_requests
 from users.services import email_service
 from users.services.email_normalization import normalize_email
 from users.services.verification import send_verification_email
+from users.services.welcome import send_welcome_email
+from users.services.promotional_email import send_promotional_email
+from users.services.unsubscribe import unsubscribe_by_token
 from users.tokens import email_verification_token
 from .models import User
 from accounts.models import Account
@@ -31,6 +34,9 @@ from .serializers import (
     EmailVerificationConfirmSerializer,
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
+    PromotionalEmailSendSerializer,
+    PromotionalEmailSendResponseSerializer,
+    UnsubscribeSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -92,6 +98,7 @@ class GoogleAuth(APIView):
                 # Google has already verified the email, so skip our verification step.
                 user.is_active = True
                 user.save()
+                send_welcome_email(user)
             else:
                 logger.debug(f"[GoogleAuth] Existing user registration_method: {user.registration_method}")
                 if user.registration_method != 'google':
@@ -249,6 +256,7 @@ class RegistrationView(APIView):
             user = existing
         else:
             user = cast(User, serializer.save())
+            send_welcome_email(user)
 
         send_verification_email(user)
 
@@ -365,7 +373,6 @@ class PasswordResetRequestView(APIView):
 
         try:
             user = User.objects.get(email__iexact=email)
-            account = Account.objects.get(user=user)
             # Generate token
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(str(user.pk)))
@@ -381,12 +388,12 @@ class PasswordResetRequestView(APIView):
                 to=email,
                 subject='Reset your password',
                 template_name='emails/password_reset.html',
-                context={'account': account, 'reset_url': reset_url},
+                context={'reset_url': reset_url},
                 from_email=settings.PASSWORD_RESET_FROM_EMAIL,
             )
 
-        except (User.DoesNotExist, Account.DoesNotExist):
-            # Don't reveal whether email/account exists
+        except User.DoesNotExist:
+            # Don't reveal whether the email exists
             pass
 
         # Always return success to prevent email enumeration
@@ -431,3 +438,90 @@ class PasswordResetConfirmView(APIView):
         return Response({
             'message': 'Password has been reset successfully.'
         }, status=status.HTTP_200_OK)
+
+
+class PromotionalEmailSendView(APIView):
+    """
+    POST: Send a promotional campaign email (emails/promotional.html) to an
+    explicit list of recipients. Staff-only — this is a manually-initiated
+    marketing send, never triggered automatically by any app event.
+    """
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(
+        request=PromotionalEmailSendSerializer,
+        responses={200: PromotionalEmailSendResponseSerializer},
+    )
+    def post(self, request):
+        serializer = PromotionalEmailSendSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data: dict = serializer.validated_data  # type: ignore[assignment]
+
+        sent, failed, skipped = send_promotional_email(
+            recipients=data['recipients'],
+            subject=data['subject'],
+            context={
+                'eyebrow': data.get('eyebrow', ''),
+                'heading': data['heading'],
+                'body': data['body'],
+                'cta_text': data.get('cta_text') or 'Learn more',
+                'cta_url': data.get('cta_url', ''),
+                'offer_eyebrow': data.get('offer_eyebrow', ''),
+                'offer_body': data.get('offer_body', ''),
+                'offer_cta_text': data.get('offer_cta_text') or 'Claim your discount',
+                'offer_cta_url': data.get('offer_cta_url', ''),
+            },
+        )
+
+        return Response(
+            {'sent': sent, 'failed': failed, 'skipped': skipped},
+            status=status.HTTP_200_OK,
+        )
+
+
+class UnsubscribeView(APIView):
+    """
+    POST: Opt an email address out of marketing/promotional email using the
+    signed token from an email footer link. AllowAny — the token is the
+    credential. Idempotent; only an invalid/tampered token returns 400.
+    """
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        request=UnsubscribeSerializer,
+        responses={200: MessageResponseSerializer},
+    )
+    def post(self, request):
+        serializer = UnsubscribeSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data: dict = serializer.validated_data  # type: ignore[assignment]
+
+        if not unsubscribe_by_token(data['token']):
+            return Response(
+                {'error': 'This unsubscribe link is invalid.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {'message': 'You have been unsubscribed from marketing emails.'},
+            status=status.HTTP_200_OK,
+        )
+
+
+class UnsubscribeOneClickView(APIView):
+    """
+    POST /unsubscribe/one-click/<token>/: RFC 8058 one-click endpoint referenced
+    by the List-Unsubscribe / List-Unsubscribe-Post headers on promotional email.
+    Mail providers POST here (no body, no cookies) when the recipient taps the
+    native "Unsubscribe" affordance. authentication_classes is emptied so DRF's
+    SessionAuthentication CSRF check never applies to this cross-origin POST.
+    """
+    permission_classes = [AllowAny]
+    authentication_classes: list = []
+
+    @extend_schema(request=None, responses={200: None})
+    def post(self, request, token):
+        # Always 200 — the provider only needs a success signal, and we never
+        # want to leak whether the token mapped to a real user.
+        unsubscribe_by_token(token)
+        return Response(status=status.HTTP_200_OK)

@@ -35,24 +35,25 @@ def test_password_reset_request_existing_email(api_client, user):
     """
     Given:  a registered user
     When:   POST /auth/password-reset/ with their email
-    Then:   200 is returned and send_mail was called once with the right recipient
+    Then:   200 is returned and send_template_email was called once with the right recipient
 
-    We mock send_mail so no real email is sent during the test.
-    'patch' temporarily replaces the real send_mail with a fake (MagicMock).
-    After the 'with' block, send_mail is restored to the real function.
+    We mock send_template_email so no real email is sent during the test.
+    'patch' temporarily replaces the real function with a fake (MagicMock).
+    After the 'with' block, it is restored to the real function.
     """
-    with patch("users.views.send_mail") as mock_send_mail:
+    with patch("users.views.email_service.send_template_email") as mock_send_email:
         response = api_client.post(PASSWORD_RESET_URL, {"email": user.email})
 
     assert response.status_code == status.HTTP_200_OK
     assert "message" in response.json()
 
-    # Verify send_mail was actually called (not skipped)
-    mock_send_mail.assert_called_once()
+    # Verify the email was actually sent (not skipped)
+    mock_send_email.assert_called_once()
 
-    # Verify it was sent to the right address
-    _, kwargs = mock_send_mail.call_args
-    assert user.email in kwargs.get("recipient_list", [])
+    # Verify it was sent to the right address using the new password_reset template
+    _, kwargs = mock_send_email.call_args
+    assert kwargs.get("to") == user.email
+    assert kwargs.get("template_name") == "emails/password_reset.html"
 
 
 @pytest.mark.django_db
@@ -63,13 +64,13 @@ def test_password_reset_request_nonexistent_email(api_client):
     Then:   still returns 200 — the view deliberately hides whether the email exists
             to prevent attackers from enumerating valid accounts
 
-    send_mail must NOT be called since there is no user to email.
+    send_template_email must NOT be called since there is no user to email.
     """
-    with patch("users.views.send_mail") as mock_send_mail:
+    with patch("users.views.email_service.send_template_email") as mock_send_email:
         response = api_client.post(PASSWORD_RESET_URL, {"email": "nobody@example.com"})
 
     assert response.status_code == status.HTTP_200_OK
-    mock_send_mail.assert_not_called()
+    mock_send_email.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

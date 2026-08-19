@@ -33,6 +33,7 @@ export const AuthServiceApiEndpoints = {
   register: `${AuthServiceApiBase}/register/`,
   verifyEmail: `${AuthServiceApiBase}/verify-email/`,
   verifyEmailConfirm: `${AuthServiceApiBase}/verify-email/confirm/`,
+  unsubscribe: `${AuthServiceApiBase}/unsubscribe/`,
 };
 
 // Notebooks

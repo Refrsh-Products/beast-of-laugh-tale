@@ -278,9 +278,12 @@ EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
 ANYMAIL = {
     "RESEND_API_KEY": os.environ.get("RESEND_API_KEY"),
 }
-DEFAULT_FROM_EMAIL = 'REFRSH <no-reply@no-reply.freshr.cc>'
-PASSWORD_RESET_FROM_EMAIL = 'REFRSH Support <support@no-reply.freshr.cc>'
-VERIFICATION_FROM_EMAIL = 'REFRSH <security@no-reply.freshr.cc>'
+DEFAULT_FROM_EMAIL = 'FRESHR <no-reply@no-reply.freshr.cc>'
+PASSWORD_RESET_FROM_EMAIL = 'FRESHR Support <support@no-reply.freshr.cc>'
+VERIFICATION_FROM_EMAIL = 'FRESHR <security@no-reply.freshr.cc>'
+WELCOME_FROM_EMAIL = 'FRESHR <hello@no-reply.freshr.cc>'
+NOTIFICATION_FROM_EMAIL = 'FRESHR <no-reply@no-reply.freshr.cc>'
+PROMOTIONAL_FROM_EMAIL = 'FRESHR <hello@no-reply.freshr.cc>'
 FRONTEND_URL = os.getenv("FRONTEND_URL", 'http://localhost:3000')
 
 # Google OAuth2.0

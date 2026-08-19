@@ -59,6 +59,10 @@ const AuthServiceMock: AuthService = {
   resetPassword: () => {
     return Promise.reject(new Error("Not implemented"));
   },
+
+  unsubscribe: () => {
+    return Promise.resolve();
+  },
 };
 
 export default AuthServiceMock;
