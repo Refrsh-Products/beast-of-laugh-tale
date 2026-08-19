@@ -53,7 +53,10 @@ const useChatSessions = (
 
       try {
         if (!sessionId || !sessionExists) {
-          const session = await chatService.createChatSession(notebookId);
+          const session = await chatService.createChatSession(
+            notebookId,
+            "Untitled Session",
+          );
           sessionId = session.id;
           setChatSessions((prev) => [...prev, session]);
           // URL update is intentionally left to ChatColumn via onSessionCreated
@@ -73,7 +76,11 @@ const useChatSessions = (
           sessionId,
         };
       } catch (err) {
-        if (axios.isAxiosError(err) && err.response?.status === 403 && err.response.data?.code === "notebook_archived") {
+        if (
+          axios.isAxiosError(err) &&
+          err.response?.status === 403 &&
+          err.response.data?.code === "notebook_archived"
+        ) {
           onNotebookArchived();
         }
         throw err;

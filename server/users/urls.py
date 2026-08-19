@@ -12,4 +12,7 @@ urlpatterns = [
     path('verify-email/confirm/', views.EmailVerificationConfirmView.as_view(), name='verify-email-confirm'),
     path('password-reset/', views.PasswordResetRequestView.as_view(), name='password-reset'),
     path('password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    path('promotional-email/send/', views.PromotionalEmailSendView.as_view(), name='promotional-email-send'),
+    path('unsubscribe/', views.UnsubscribeView.as_view(), name='unsubscribe'),
+    path('unsubscribe/one-click/<str:token>/', views.UnsubscribeOneClickView.as_view(), name='unsubscribe-one-click'),
 ]

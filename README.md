@@ -1,296 +1,409 @@
-# Freshr
+<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 
-**Freshr** is an AI-powered learning platform that helps students learn smarter. Upload your documents, and Freshr will index them into a vector database, enabling intelligent, context-aware interactions with your study materials including AI-generated quizzes, flashcards, and RAG-based tutoring.
+<a id="readme-top"></a>
 
----
+<!-- PROJECT SHIELDS -->
+<!--
+*** I'm using markdown "reference style" links for readability.
+*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
+*** See the bottom of this document for the declaration of the reference variables
+*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
+*** https://www.markdownguide.org/basic-syntax/#reference-style-links
+-->
 
-## Table of Contents
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![Proprietary License][license-shield]][license-url]
+[![Website][website-shield]][website-url]
 
-- [Product Overview](#product-overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Running with Docker (Recommended)](#running-with-docker-recommended)
-  - [Running Locally (Without Docker)](#running-locally-without-docker)
-- [Environment Variables](#environment-variables)
-- [API Documentation](#api-documentation)
-- [License](#license)
+<!-- PROJECT LOGO -->
+<br />
+<div align="center">
+  <a href="https://github.com/Refrsh-Products/beast-of-laugh-tale">
+    <img src="client/web/public/brand/logomark-on-dark.svg" alt="FRESHR logo" width="80" height="80">
+  </a>
 
----
+<h3 align="center">FRESHR</h3>
 
-## Product Overview
+  <p align="center">
+    FRESHR turns your lecture slides, PDFs and handwritten notes into a study notebook you can ask questions, take quizzes from, and build slide decks with — every answer cited back to your own material.
+    <br />
+    <a href="CLAUDE.md"><strong>Explore the docs »</strong></a>
+    <br />
+    <br />
+    <a href="https://freshr.cc">View Demo</a>
+    &middot;
+    <a href="https://github.com/Refrsh-Products/beast-of-laugh-tale/issues/new?labels=bug">Report Bug</a>
+    &middot;
+    <a href="https://github.com/Refrsh-Products/beast-of-laugh-tale/issues/new?labels=enhancement">Request Feature</a>
+  </p>
+</div>
 
-Freshr is designed for students who want to get more out of their study materials. The platform allows users to organize their documents into **notebooks**, upload files (PDFs, DOCX, images, and more), and leverage AI to interact with that content in meaningful ways.
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
+    <li><a href="#usage">Usage</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#license">License</a></li>
+    <li><a href="#contact">Contact</a></li>
+    <li><a href="#acknowledgments">Acknowledgments</a></li>
+  </ol>
+</details>
 
-At the core of Freshr is a **Retrieval-Augmented Generation (RAG)** pipeline that processes uploaded documents, generates vector embeddings, and stores them in a PostgreSQL vector database (PGVector). This enables similarity-based search across a user's study materials — scoped and isolated per user and notebook — forming the foundation for AI tutoring, quiz generation, and more.
+<!-- ABOUT THE PROJECT -->
 
-The backend is built with **Django REST Framework**, uses **Celery + Redis** for asynchronous document indexing, and integrates **Anthropic Claude** and **Google Gemini** APIs for AI-powered features.
+## About The Project
 
----
+[![FRESHR][product-screenshot]](https://freshr.cc)
 
-## Features
+FRESHR is an AI study platform. Students upload their own course material — lecture slides, PDFs, DOCX files, photos of handwritten notes — into **notebooks**. A Retrieval-Augmented Generation (RAG) pipeline extracts, chunks, summarizes and embeds that material into a PGVector store scoped per user _and_ per notebook, and every AI feature reads from that store. Nothing is answered from generic model knowledge alone; the source is always the student's own uploads.
 
-### Implemented (MVP Phase 1)
+Built on top of that retrieval layer:
 
-- **User Authentication & Authorization**
-  - Email-based registration and login
-  - JWT access and refresh token flow (access: 60 min, refresh: 1 day)
-  - Password reset via email with tokenized links
-  - Custom user model with UUID primary keys and subscription tier support (`FREE`, `MONTHLY`, `YEARLY`)
-  - Last login tracking
+- **Chat / tutoring** — multi-session per notebook, server-sent-event streaming replies grounded in the notebook's material.
+- **Quizzes** — generated from notebook content, with take / submit / review / retake and a favourites list.
+- **Presentations** — AI-generated slide decks, editable in-app, exportable to PDF and PPTX.
+- **Audio transcription** — upload a lecture recording, poll for the transcript, then generate structured notes from it.
+- **Accounts, tiers and billing** — JWT auth (email + Google), email verification and password reset, per-plan usage limits, and a ZiniPay checkout flow with webhook-driven upgrades.
 
-- **Notebook Management**
-  - Create and delete notebooks tied to authenticated users
-  - Each notebook acts as an isolated workspace for uploaded study materials
+The repository is a two-half monorepo: `server/` (Django REST API, Celery workers) and `client/` (npm workspaces — `shared` platform-agnostic business logic, `web` React SPA, and `mobile`, an Expo app whose source lives on the `feature/mobile-app` branch). `client/shared` has no build step: both platforms import its TypeScript source directly and inject their own HTTP/session/config/stream adapters, so a domain change lands on web and mobile at once.
 
-- **File Management**
-  - Upload files (PDFs, DOCX, images, etc.) to specific notebooks
-  - Automatic content extraction and caching
-  - File deletion with associated vector data cleanup
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-- **RAG (Retrieval-Augmented Generation)**
-  - Asynchronous document ingestion via Celery workers
-  - High-resolution PDF extraction using the Unstructured library (with OCR via Tesseract)
-  - Title-based smart chunking (max 3000 chars, soft limit 2400 chars)
-  - AI-enhanced chunk summarization using **Claude Haiku** (multimodal: text + images)
-  - Vector embedding via **Google Gemini** (`gemini-embedding-001`, 3072 dimensions)
-  - Embeddings stored in **PostgreSQL with PGVector**
-  - Metadata-filtered similarity search — results are scoped per user and notebook
-  - Top-5 relevant document retrieval per query
-  - `is_indexed` flag on `NotebookFile` to track ingestion status
+### Built With
 
-- **Account Management**
-  - User profile/account CRUD with one-to-one user relationship
+- [![Django][Django]][Django-url]
+- [![DRF][DRF]][DRF-url]
+- [![Python][Python]][Python-url]
+- [![Postgres][Postgres]][Postgres-url]
+- [![pgvector][Pgvector]][Pgvector-url]
+- [![Celery][Celery]][Celery-url]
+- [![Redis][Redis]][Redis-url]
+- [![React][React.js]][React-url]
+- [![TypeScript][TypeScript]][TypeScript-url]
+- [![Vite][Vite]][Vite-url]
+- [![TailwindCSS][Tailwind]][Tailwind-url]
+- [![Expo][Expo]][Expo-url]
+- [![Anthropic][Anthropic]][Anthropic-url]
+- [![Gemini][Gemini]][Gemini-url]
+- [![Docker][Docker]][Docker-url]
 
-- **Interactive API Documentation**
-  - Swagger UI at `/api/docs/`
-  - ReDoc at `/api/redocs/`
-  - OpenAPI schema at `/api/schema/`
+Key versions: Django 6.0.1 · DRF 3.16.1 · Python 3.13 · PostgreSQL 16 (pgvector image) · Celery 5.6.2 · Redis 7 · React 19.2 · Vite 7 · React Router 7 · Tailwind v4 · Expo SDK 56.
 
-### Planned (Phase 2 & 3)
+AI models in use: `claude-haiku-4-5` (chunk summaries, chat, quiz and presentation generation), `claude-sonnet-4-6` (notes from transcripts), `gemini-2.5-flash` (audio transcription), `gemini-embedding-001` (3072-dim embeddings).
 
-- AI-generated quizzes from notebook content
-- Flashcard generation (decided not to proceed with it)
-- AI presentation builder
-- Learning progress tracking & analytics
-- Citations and research tools
-- Advanced AI chat/tutoring interface
-- Paid subscription billing integration
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
----
-
-## Tech Stack
-
-| Layer                      | Technology                                  |
-| -------------------------- | ------------------------------------------- |
-| **Backend Framework**      | Django 6.0.1 + Django REST Framework 3.16.1 |
-| **Language**               | Python 3.13                                 |
-| **Authentication**         | JWT via `djangorestframework-simplejwt`     |
-| **Primary Database**       | PostgreSQL 16                               |
-| **Vector Database**        | PGVector (PostgreSQL extension)             |
-| **Task Queue**             | Celery 5.6.2                                |
-| **Message Broker / Cache** | Redis 7                                     |
-| **LLM — Summaries**        | Anthropic Claude Haiku 4.5                  |
-| **LLM — Embeddings**       | Google Gemini (`gemini-embedding-001`)      |
-| **RAG Framework**          | LangChain Core + LangChain PostgreSQL       |
-| **Document Parsing**       | Unstructured, PyMuPDF, PDFMiner.six         |
-| **OCR**                    | Tesseract OCR                               |
-| **Image Processing**       | OpenCV, Pillow                              |
-| **API Documentation**      | drf-spectacular (OpenAPI/Swagger)           |
-| **Containerization**       | Docker + Docker Compose                     |
-
----
+<!-- GETTING STARTED -->
 
 ## Getting Started
 
+The backend runs in Docker (the RAG pipeline needs Tesseract, Poppler, libmagic and OpenCV, which only exist inside the server image). The web client runs on the host with Vite.
+
 ### Prerequisites
 
-- [Docker](https://www.docker.com/get-started) and [Docker Compose](https://docs.docker.com/compose/) — **required for the RAG pipeline**
-- A **Google Gemini API key** (for embeddings)
-- An **Anthropic API key** (for AI-enhanced summaries)
+- [Docker](https://www.docker.com/get-started) and Docker Compose — required for the API, Celery, Postgres and Redis
+- Node.js 20+ and npm — for the web client
+  ```sh
+  npm install npm@latest -g
+  ```
+- Python 3.13 — only if you want to run the server test suite outside Docker
+- An **Anthropic API key** and a **Google Gemini API key**
 
-> **Note on Python version:** If running locally without Docker, Python 3.13 is required.
+### Installation
 
----
+1. Get an API key at [console.anthropic.com](https://console.anthropic.com) and [aistudio.google.com](https://aistudio.google.com/app/apikey)
 
-### Running with Docker (Recommended)
+2. Clone the repo
 
-> **The RAG pipeline depends on system-level dependencies** (Tesseract OCR, Poppler, libmagic, OpenCV) that are only available inside the Docker container. If you want to use document indexing and vector search, **Docker is required**.
+   ```sh
+   git clone https://github.com/Refrsh-Products/beast-of-laugh-tale.git
+   cd beast-of-laugh-tale
+   ```
 
-**1. Clone the repository**
+3. Create `server/.env` — Django loads it with `python-dotenv`, and the mounted `./server` volume makes it visible inside the containers
 
-```bash
-git clone https://github.com/your-org/freshr.git
-cd freshr
+   ```sh
+   ANTHROPIC_API_KEY=your_anthropic_api_key
+   GOOGLE_API_KEY=your_google_gemini_api_key
+   SECRET_KEY=any_long_random_string
+   DEBUG=True
+   FRONTEND_URL=http://localhost:5173
+   BACKEND_URL=http://localhost:8000
+   # Optional — features degrade gracefully without them
+   RESEND_API_KEY=            # transactional email (verification, password reset)
+   GOOGLE_OAUTH_CLIENT_SECRET=
+   ZINIPAY_API_KEY=
+   USE_MOCK_PAYMENT_GATEWAY=true
+   ```
+
+   > `DB_*`, `REDIS_URL` and `CONNECTION_STRING` are injected by `docker-compose.local.yml` and must **not** be set here.
+
+4. Start the local backend stack
+
+   ```sh
+   docker compose --env-file .env.local -p freshr-local -f docker-compose.local.yml up -d
+   ```
+
+   This brings up Postgres+pgvector (host port `5433`), Redis (`6379`), gunicorn on `:8000` (migrations run on boot), a Celery worker, Dozzle on `:8080` and mkdocs on `:8001`.
+
+5. Configure the web client — `client/web/.env`
+
+   ```sh
+   VITE_API_BASE_URL=http://localhost:8000
+   VITE_GOOGLE_AUTH_CLIENT_ID=your_google_oauth_client_id
+   VITE_WEB3FORMS_ACCESS_KEY=your_web3forms_key
+   ```
+
+6. Install workspace packages and start Vite
+
+   ```sh
+   cd client
+   npm install
+   npm run dev
+   ```
+
+   The SPA is served at `http://localhost:5173`.
+
+7. Change the git remote url to avoid accidental pushes to the base project
+   ```sh
+   git remote set-url origin <your-fork-url>
+   git remote -v # confirm the changes
+   ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- USAGE EXAMPLES -->
+
+## Usage
+
+**Where things live once the stack is up**
+
+| Surface                 | URL                             |
+| ----------------------- | ------------------------------- |
+| Web app (Vite)          | `http://localhost:5173`         |
+| API root                | `http://localhost:8000/api/v1/` |
+| Swagger UI              | `http://localhost:8000/docs/`   |
+| ReDoc                   | `http://localhost:8000/redocs/` |
+| OpenAPI schema          | `http://localhost:8000/schema/` |
+| Django admin            | `http://localhost:8000/admin/`  |
+| Container logs (Dozzle) | `http://localhost:8080`         |
+| Server docs (mkdocs)    | `http://localhost:8001`         |
+
+Everything under `/api/v1/` is versioned by `API_VERSION` in `server/freshr/settings.py`. `admin/`, `docs/`, `redocs/` and `schema/` sit deliberately _outside_ `/api/` — nginx proxies only `/api/` to Django in production, so those routes are reachable in local development only.
+
+**API surface at a glance** (all paths relative to `/api/v1/`, all protected routes need `Authorization: Bearer <access_token>`):
+
+| Group            | Endpoints                                                                                                                                                   |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth/`          | `register/`, `login/`, `logout/`, `google-login/`, `token/refresh/`, `verify-email/`, `verify-email/confirm/`, `password-reset/`, `password-reset/confirm/` |
+| `users/`         | `accounts/`, `accounts/me/`, `accounts/me/usage/`                                                                                                           |
+| `notebooks/`     | list & create, `<id>`, `<id>/archive`, `<id>/unarchive`, `<id>/files`, `<id>/files/create`, `<id>/files/delete/<file_id>/`, `<id>/topics`                   |
+| `rag/`           | `query/`                                                                                                                                                    |
+| `chats/`         | list & create, `<chat_id>/`, `<chat_id>/messages/`, `<chat_id>/messages/stream/` (SSE)                                                                      |
+| `quizzes/`       | list & create, `favourites/`, `<quiz_id>/`, `<quiz_id>/submit/`, `<quiz_id>/retake/`                                                                        |
+| `presentation/`  | list & create, `favourites/`, `<presentation_id>/`                                                                                                          |
+| `transcription/` | `<notebook_id>/audio/transcribe`, `.../transcripts`, `.../transcripts/<id>`, `.../transcripts/<id>/update`, `.../transcripts/<id>/generate-notes`           |
+| `payments/`      | `initiate/`, `webhook/`, list                                                                                                                               |
+| `policies/`      | `<slug>/` (public)                                                                                                                                          |
+| `referral/`      | `validate/`                                                                                                                                                 |
+
+**Running the server test suite** — pytest needs Postgres, so point it at the dockerized one on host port `5433`:
+
+```sh
+cd server && source venv/bin/activate && DB_HOST=localhost DB_PORT=5433 DB_NAME=freshr DB_USER=freshr DB_PASSWORD=freshr pytest
 ```
 
-**2. Create the environment file**
+Tests all live in `server/tests/` (not per-app) and coverage is on by default — add `--no-cov` for a fast single-file run.
 
-Copy the example env file and fill in your API keys:
+**Running the web test suite**
 
-```bash
-cp server/.env.example server/.env
+```sh
+cd client/web && npx vitest run
 ```
 
-Then edit `server/.env`:
+**Triggering a Celery task by hand** — `celery call` is broken in this repo (`django_celery_results` imports models before `django.setup()`), so use the Django shell:
 
-```env
-GOOGLE_API_KEY=your_google_gemini_api_key
-ANTHROPIC_API_KEY=your_anthropic_api_key
+```sh
+docker compose -p freshr-local exec web python manage.py shell -c "from rag.tasks import ingest_note_task; ingest_note_task.delay()"
 ```
 
-> The `CONNECTION_STRING` and `REDIS_URL` are pre-configured for the Docker network in `docker-compose.yml` and do not need to be changed for local Docker use.
+**Building the web image manually**
 
-**3. Build and start all services**
-
-```bash
-docker compose up --build
+```sh
+docker build -f client/web/Dockerfile -t freshr-web ./client
 ```
 
-This starts five services:
+**Reading production logs** — Dozzle is not exposed publicly; tunnel to it over SSH and open `http://localhost:8888`:
 
-- `postgres` — PostgreSQL 16 with PGVector extension
-- `redis` — Redis 7 for Celery broker and result backend
-- `web` — Django development server on port `8000`
-- `celery` — Celery worker for asynchronous document indexing
-- `celery-beat` — Celery Beat scheduler for periodic tasks (e.g., subscription expiry)
-
-**4. Access the API**
-
-Once all services are healthy, the API is available at:
-
-```
-http://localhost:8000
+```sh
+ssh -L 8888:localhost:8888 deploy@163.61.236.102
 ```
 
-Swagger UI: `http://localhost:8000/api/docs/`
+**Scheduled jobs (subscription expiry)** — an hourly host `crontab` entry downgrades paid accounts once their subscription lapses, by running `accounts.tasks.expire_subscriptions` inside the prod web container and appending to `/var/log/freshr-expire-subscriptions.log`. Each run now logs a heartbeat line you can confirm with:
 
-**5. Stopping the services**
-
-```bash
-docker compose down
+```sh
+grep expire_subscriptions /var/log/freshr-expire-subscriptions.log | tail
 ```
 
-To also remove all volumes (resets the database):
+A health-check command reports (and exits non-zero on) any paid account stuck past its end date — wire it into a monitor or an alert-only cron:
 
-```bash
-docker compose down -v
+```sh
+docker exec freshr-prod-web-1 python manage.py check_expired_subscriptions
 ```
 
----
+Full details — the crontab line, Celery Beat alternative, observability and troubleshooting — are in [`server/docs/scheduled-jobs.md`](server/docs/scheduled-jobs.md).
 
-### Running Locally (Without Docker)
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-> **Important:** Running locally does **not** support the RAG pipeline. Document indexing, vector search, and all Celery-based features require Docker. Use this setup only for working on authentication, notebooks, or account management features.
+<!-- ROADMAP -->
 
-**1. Clone the repository**
+## Roadmap
 
-```bash
-git clone https://github.com/your-org/freshr.git
-cd freshr/server
-```
+- [x] Auth (email + Google), email verification, password reset
+- [x] Notebooks, file upload, archive/delete
+- [x] RAG ingestion pipeline (OCR → chunking → summarization → embeddings → PGVector)
+- [x] SSE streaming chat with multi-session history
+- [x] Quiz generation, taking, review and retake
+- [x] AI presentation builder with PDF and PPTX export
+- [x] Audio transcription and AI notes generation
+- [x] Per-tier usage limits and ZiniPay billing
+- [x] Campus Champions referral validation
+- [ ] Mobile app merged to `main` (currently on `feature/mobile-app`; only `package.json` is tracked here)
+  - [ ] EAS `submit.production` store credentials
+  - [ ] PPTX export parity with web
+- [ ] Photo scan-to-notes on `main` — camera batch capture, per-photo clarity/relevance validation, merged-PDF ingestion
+- [ ] Per-file rename endpoint (`renameFile` in `client/shared/src/services/notebooks.ts` is still a no-op stub)
+- [ ] Automated test coverage for `client/mobile`
+- [ ] Server test coverage beyond `users` and `presentation`
 
-**2. Create a virtual environment and install dependencies**
+See the [open issues](https://github.com/Refrsh-Products/beast-of-laugh-tale/issues) for a full list of proposed features (and known issues).
 
-```bash
-python3.13 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-**3. Set up PostgreSQL and Redis**
+<!-- CONTRIBUTING -->
 
-Ensure you have a running PostgreSQL instance and Redis server. Create a database named `freshr` with a user `freshr`.
+## Contributing
 
-**4. Create the environment file**
+This is a private product repository, so contributions come from the team rather than from forks. Any contributions you make are **greatly appreciated**.
 
-```bash
-cp .env.example .env
-```
+If you have a suggestion that would make this better, open an issue with the tag "enhancement" first so the approach can be agreed on before code is written.
 
-Update `.env` with your local database connection string and API keys:
+1. Branch off `main` using the existing convention (`<name>/feat/<slug>`, `<name>/fix/<slug>`)
+   ```sh
+   git checkout -b sheikh/feat/AmazingFeature
+   ```
+2. Keep shared business logic in `client/shared` — both web and mobile import it directly, with no build step
+3. Add or update tests (`server/tests/` for the API, `client/web/src/**/*.test.tsx` for the SPA) and run them locally
+4. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+5. Push to the Branch (`git push origin sheikh/feat/AmazingFeature`)
+6. Open a Pull Request — merging to `main` triggers the staging build-and-deploy workflow
 
-```env
-CONNECTION_STRING=postgresql+psycopg://freshr:freshr@localhost:5432/freshr
-GOOGLE_API_KEY=your_google_gemini_api_key
-ANTHROPIC_API_KEY=your_anthropic_api_key
-```
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-**5. Run migrations and start the server**
+### Top contributors:
 
-```bash
-python manage.py migrate
-python manage.py runserver
-```
+<a href="https://github.com/Refrsh-Products/beast-of-laugh-tale/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Refrsh-Products/beast-of-laugh-tale" alt="contrib.rocks image" />
+</a>
 
-**6. (Optional) Start Celery worker and beat scheduler**
-
-In a separate terminal (with the virtualenv activated):
-
-```bash
-celery -A freshr worker -l info
-celery -A freshr beat -l info
-```
-
----
-
-## Environment Variables
-
-| Variable            | Description                                                                   | Required |
-| ------------------- | ----------------------------------------------------------------------------- | -------- |
-| `GOOGLE_API_KEY`    | Google Gemini API key for document embeddings                                 | Yes      |
-| `ANTHROPIC_API_KEY` | Anthropic API key for AI-enhanced chunk summaries                             | Yes      |
-| `CONNECTION_STRING` | SQLAlchemy-format PostgreSQL connection string                                | Yes      |
-| `REDIS_URL`         | Redis connection URL (default: `redis://redis:6379/0`)                        | No       |
-| `FRONTEND_URL`      | Frontend base URL for password reset links (default: `http://localhost:3000`) | No       |
-| `SECRET_KEY`        | Django secret key — override in production                                    | No       |
-
----
-
-## API Documentation
-
-The API is fully documented with OpenAPI. Once the server is running, visit:
-
-| Interface          | URL                                 |
-| ------------------ | ----------------------------------- |
-| Swagger UI         | `http://localhost:8000/api/docs/`   |
-| ReDoc              | `http://localhost:8000/api/redocs/` |
-| Raw OpenAPI Schema | `http://localhost:8000/api/schema/` |
-
-### Quick Reference
-
-| Method   | Endpoint                        | Description                    |
-| -------- | ------------------------------- | ------------------------------ |
-| `POST`   | `/auth/register/`               | Register a new user            |
-| `POST`   | `/auth/token/`                  | Obtain JWT tokens              |
-| `POST`   | `/auth/token/refresh/`          | Refresh access token           |
-| `POST`   | `/auth/password-reset/`         | Request password reset email   |
-| `POST`   | `/auth/password-reset/confirm/` | Confirm password reset         |
-| `POST`   | `/notebooks/create/`            | Create a notebook              |
-| `DELETE` | `/notebooks/delete/<id>/`       | Delete a notebook              |
-| `POST`   | `/notebooks/<id>/file/create`   | Upload file to notebook        |
-| `DELETE` | `/notebooks/file/delete/<id>/`  | Delete a notebook file         |
-| `POST`   | `/rag/query/`                   | Query notebook content via RAG |
-
-All protected endpoints require the `Authorization: Bearer <access_token>` header.
-
----
+<!-- LICENSE -->
 
 ## License
 
-This project is licensed under the terms of the [LICENSE](LICENSE) file included in this repository.
+Copyright (c) 2026 REFRSH. All rights reserved. Confidential and proprietary — unauthorized copying or distribution via any medium is strictly prohibited. See [`LICENCE`](LICENCE) for the full text.
 
-## How to access Dozzle
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### The SSH Tunnel (Most Secure / Recommended)
+<!-- CONTACT -->
 
-On your laptop, run this command:
-ssh -L 8888:localhost:8888 deploy@163.61.236.102
+## Contact
 
-Now, open your browser and go to http://localhost:8888.
+REFRSH — [team@freshr.cc](mailto:team@freshr.cc) · [freshr.cc](https://freshr.cc)
 
-Your computer thinks Dozzle is running locally, but it’s actually securely pulling the data through your encrypted SSH connection.
+Project Link: [https://github.com/Refrsh-Products/beast-of-laugh-tale](https://github.com/Refrsh-Products/beast-of-laugh-tale)
 
-if you run docker build manually, the command is now:
-docker build -f client/web/Dockerfile -t freshr-web ./client
+Lead Developer: [sakifhossain71@gmail.com](mailto:sakifhossain71@gmail.com)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- ACKNOWLEDGMENTS -->
+
+## Acknowledgments
+
+- [Unstructured](https://unstructured.io/) — hi-res document extraction and OCR
+- [LangChain](https://www.langchain.com/) + [langchain-postgres](https://github.com/langchain-ai/langchain-postgres) — retrieval plumbing
+- [pgvector](https://github.com/pgvector/pgvector) — vector storage inside Postgres
+- [drf-spectacular](https://drf-spectacular.readthedocs.io/) — OpenAPI schema and Swagger UI
+- [shadcn/ui](https://ui.shadcn.com/) and [React Native Reusables](https://reactnativereusables.com/) — component foundations
+- [Dozzle](https://dozzle.dev/) — container log viewing
+- [Best-README-Template](https://github.com/othneildrew/Best-README-Template) — the structure of this file
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+<!-- MARKDOWN LINKS & IMAGES -->
+<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+
+[contributors-shield]: https://img.shields.io/github/contributors/Refrsh-Products/beast-of-laugh-tale.svg?style=for-the-badge
+[contributors-url]: https://github.com/Refrsh-Products/beast-of-laugh-tale/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/Refrsh-Products/beast-of-laugh-tale.svg?style=for-the-badge
+[forks-url]: https://github.com/Refrsh-Products/beast-of-laugh-tale/network/members
+[stars-shield]: https://img.shields.io/github/stars/Refrsh-Products/beast-of-laugh-tale.svg?style=for-the-badge
+[stars-url]: https://github.com/Refrsh-Products/beast-of-laugh-tale/stargazers
+[issues-shield]: https://img.shields.io/github/issues/Refrsh-Products/beast-of-laugh-tale.svg?style=for-the-badge
+[issues-url]: https://github.com/Refrsh-Products/beast-of-laugh-tale/issues
+[license-shield]: https://img.shields.io/badge/license-proprietary-19392E.svg?style=for-the-badge
+[license-url]: https://github.com/Refrsh-Products/beast-of-laugh-tale/blob/main/LICENCE
+[website-shield]: https://img.shields.io/badge/-freshr.cc-B4FF6E.svg?style=for-the-badge&logo=safari&logoColor=19392E
+[website-url]: https://freshr.cc
+[product-screenshot]: client/web/public/brand/full-logo-on-dark.svg
+
+<!-- Shields.io badges. You can a comprehensive list with many more badges at: https://github.com/inttter/md-badges -->
+
+[Django]: https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white
+[Django-url]: https://www.djangoproject.com/
+[DRF]: https://img.shields.io/badge/DRF-A30000?style=for-the-badge&logo=django&logoColor=white
+[DRF-url]: https://www.django-rest-framework.org/
+[Python]: https://img.shields.io/badge/Python%203.13-3776AB?style=for-the-badge&logo=python&logoColor=white
+[Python-url]: https://www.python.org/
+[Postgres]: https://img.shields.io/badge/PostgreSQL%2016-4169E1?style=for-the-badge&logo=postgresql&logoColor=white
+[Postgres-url]: https://www.postgresql.org/
+[Pgvector]: https://img.shields.io/badge/pgvector-336791?style=for-the-badge&logo=postgresql&logoColor=white
+[Pgvector-url]: https://github.com/pgvector/pgvector
+[Celery]: https://img.shields.io/badge/Celery-37814A?style=for-the-badge&logo=celery&logoColor=white
+[Celery-url]: https://docs.celeryq.dev/
+[Redis]: https://img.shields.io/badge/Redis%207-FF4438?style=for-the-badge&logo=redis&logoColor=white
+[Redis-url]: https://redis.io/
+[React.js]: https://img.shields.io/badge/React%2019-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
+[React-url]: https://react.dev/
+[TypeScript]: https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white
+[TypeScript-url]: https://www.typescriptlang.org/
+[Vite]: https://img.shields.io/badge/Vite%207-646CFF?style=for-the-badge&logo=vite&logoColor=white
+[Vite-url]: https://vite.dev/
+[Tailwind]: https://img.shields.io/badge/Tailwind%20v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white
+[Tailwind-url]: https://tailwindcss.com/
+[Expo]: https://img.shields.io/badge/Expo%20SDK%2056-000020?style=for-the-badge&logo=expo&logoColor=white
+[Expo-url]: https://expo.dev/
+[Anthropic]: https://img.shields.io/badge/Claude-D97757?style=for-the-badge&logo=anthropic&logoColor=white
+[Anthropic-url]: https://www.anthropic.com/
+[Gemini]: https://img.shields.io/badge/Gemini-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white
+[Gemini-url]: https://ai.google.dev/
+[Docker]: https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white
+[Docker-url]: https://www.docker.com/

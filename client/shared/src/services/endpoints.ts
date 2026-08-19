@@ -33,6 +33,7 @@ export const AuthServiceApiEndpoints = {
   register: `${AuthServiceApiBase}/register/`,
   verifyEmail: `${AuthServiceApiBase}/verify-email/`,
   verifyEmailConfirm: `${AuthServiceApiBase}/verify-email/confirm/`,
+  unsubscribe: `${AuthServiceApiBase}/unsubscribe/`,
 };
 
 // Notebooks
@@ -107,6 +108,8 @@ export const PaymentServiceApiBase = `${ApiPrefix}/payments`;
 export const PaymentServiceApiEndpoints = {
   getPayments: `${PaymentServiceApiBase}/`,
   initiatePayment: `${PaymentServiceApiBase}/initiate/`,
+  fallbackStatus: `${PaymentServiceApiBase}/fallback/`,
+  requestAssistance: `${PaymentServiceApiBase}/assistance/`,
 };
 
 // Referral

@@ -7,6 +7,10 @@ from accounts.models import Account, BillingInterval, SubscriptionStatus, TierPl
 
 SUBSCRIPTION_DURATIONS: dict[str, timedelta] = {
     BillingInterval.MONTHLY: timedelta(days=30),
+    BillingInterval.SEMESTER: timedelta(days=120),  # 4-month academic session
+    # Legacy value; historically (wrongly) granted a full year. Left as-is so we
+    # don't retroactively shorten access already sold under it. New purchases go
+    # through SEMESTER.
     BillingInterval.YEARLY: timedelta(days=365),
 }
 

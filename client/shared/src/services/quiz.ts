@@ -50,12 +50,14 @@ export function createQuizService(deps: ServiceDeps): QuizService {
 
   return {
     createQuizSession: async (payload: QuizCreatePayload) => {
+      // Returns 202 immediately with a QUEUED session — generation runs async on
+      // the server and clients poll fetchQuizSession for the status transition.
+      // (The old synchronous endpoint needed a 120s timeout override; no longer.)
       const { notebook, ...body } = payload;
       return await http.request<QuizSession>(
         QuizServiceApiEndpoints.createQuizSession(notebook),
         "POST",
         body,
-        { timeout: 120000 },
       );
     },
 

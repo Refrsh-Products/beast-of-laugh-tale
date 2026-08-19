@@ -1,7 +1,5 @@
 import QuizTakingScreenModal from "./QuizTakingScreenModal";
-import Button from "../../ui/Button";
-
-const B = "#000000"
+import { Button } from "@/components/ui/button";
 
 export default function TimesUpModal({
   timeLimit,
@@ -11,35 +9,12 @@ export default function TimesUpModal({
   onSeeResults: () => void;
 }) {
   return (
-    <QuizTakingScreenModal>
-      <h2
-        style={{
-          fontFamily: "'Syne', sans-serif",
-          fontSize: "1.4rem",
-          fontWeight: 800,
-          color: B,
-          margin: "0 0 12px",
-          letterSpacing: "-0.02em",
-        }}
-      >
-        Time's Up
-      </h2>
-      <p
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.78rem",
-          color: "#000000",
-          margin: "0 0 28px",
-          lineHeight: 1.7,
-        }}
-      >
-        You've used all {timeLimit} minutes.
-        <br />
-        Your answers have been recorded.
-      </p>
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <Button variant="green" onClick={onSeeResults}>See Results →</Button>
-      </div>
+    // No onClose: the quiz is already over, so there is nothing to go back to.
+    <QuizTakingScreenModal
+      title="Time's up"
+      description={`You've used all ${timeLimit} minutes. Your answers have been recorded.`}
+    >
+      <Button onClick={onSeeResults}>See results</Button>
     </QuizTakingScreenModal>
   );
 }

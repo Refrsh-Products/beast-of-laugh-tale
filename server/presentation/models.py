@@ -11,6 +11,19 @@ class TextLength(models.TextChoices):
     DETAILED = 'DETAILED', 'Detailed'
 
 
+class PresentationTheme(models.TextChoices):
+    """Slide colour scheme chosen by the user in the generator.
+
+    Purely presentational — the client maps the key to a palette when it renders
+    the deck in the viewer and in the PDF/PPTX exports.
+    """
+    FRESHR = 'freshr', 'Freshr'
+    MINIMAL = 'minimal', 'Minimal'
+    DARK = 'dark', 'Dark'
+    ACADEMIC = 'academic', 'Academic'
+    SERIF = 'serif', 'Serif'
+
+
 class PresentationStatus(models.TextChoices):
     QUEUED = 'QUEUED', 'Queued'
     GENERATING = 'GENERATING', 'Generating'
@@ -26,6 +39,7 @@ class Presentation(models.Model):
     custom_prompt = models.TextField(blank=True)
     slide_count = models.IntegerField()
     text_length = models.CharField(max_length=10, choices=TextLength, default=TextLength.BALANCED)
+    theme = models.CharField(max_length=16, choices=PresentationTheme, default=PresentationTheme.FRESHR)
     status = models.CharField(max_length=15, choices=PresentationStatus, default=PresentationStatus.QUEUED)
     error_message = models.TextField(blank=True)
     is_favourite = models.BooleanField(default=False)

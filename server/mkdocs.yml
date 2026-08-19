@@ -13,5 +13,7 @@ nav:
   - Payment Flow: payment-flow.md
   - Test Plan: test-plan.md
   - Testing Conventions: testing-conventions.md
+  - Prompt Evaluation: prompt-evaluation.md
   - Deployment Workflow: deployment-workflow.md
+  - Scheduled Jobs: scheduled-jobs.md
 theme: readthedocs

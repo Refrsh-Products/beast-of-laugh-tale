@@ -1,6 +1,6 @@
-# Freshr — Frontend
+# FRESHR — Frontend
 
-React + TypeScript + Vite frontend for the Freshr AI learning platform.
+React + TypeScript + Vite frontend for the FRESHR AI learning platform.
 
 ---
 
@@ -20,9 +20,9 @@ The app runs at `http://localhost:5173`.
 
 The frontend has two data modes controlled by a single environment variable: `VITE_USE_MOCK`.
 
-| Mode | What it does |
-|------|-------------|
-| `true` | Uses fake data stored in `localStorage` — no backend needed |
+| Mode    | What it does                                                       |
+| ------- | ------------------------------------------------------------------ |
+| `true`  | Uses fake data stored in `localStorage` — no backend needed        |
 | `false` | Makes real HTTP calls to the Django backend at `VITE_API_BASE_URL` |
 
 ### Default behaviour
@@ -99,12 +99,12 @@ client/
 Pages import from the service index files — they never import `storage.ts` directly or call axios directly:
 
 ```ts
-import authService from './services/auth'
-import notebookService from './services/notebooks'
+import authService from "./services/auth";
+import notebookService from "./services/notebooks";
 
 // Works in both mock and real mode:
-await authService.login(email, password)
-const notebooks = await notebookService.list()
+await authService.login(email, password);
+const notebooks = await notebookService.list();
 ```
 
 The service index (`services/auth/index.ts`) reads `import.meta.env.VITE_USE_MOCK` and exports either the mock or the API implementation. Pages don't know or care which one they get.
@@ -122,8 +122,8 @@ The service index (`services/auth/index.ts`) reads `import.meta.env.VITE_USE_MOC
 
 ## Environment files
 
-| File | Purpose | Git-tracked? |
-|------|---------|-------------|
-| `.env.development` | Mock mode on for `npm run dev` | Yes |
-| `.env.production` | Real API for builds | Yes |
-| `.env.local` | Your personal overrides (e.g. switch to real API locally) | No — git-ignored |
+| File               | Purpose                                                   | Git-tracked?     |
+| ------------------ | --------------------------------------------------------- | ---------------- |
+| `.env.development` | Mock mode on for `npm run dev`                            | Yes              |
+| `.env.production`  | Real API for builds                                       | Yes              |
+| `.env.local`       | Your personal overrides (e.g. switch to real API locally) | No — git-ignored |

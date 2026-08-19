@@ -1,13 +1,12 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import useAuthService from "../services/auth";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import CenteredCard from "../components/layout/CenteredCard";
+import { AuthFootLink } from "../components/auth/AuthShell";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 export default function VerifyEmailSentPage() {
-  const navigate = useNavigate();
   const location = useLocation();
   const authService = useAuthService();
   const email = (location.state as { email?: string })?.email ?? "";
@@ -44,146 +43,53 @@ export default function VerifyEmailSentPage() {
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: B,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "24px 16px",
-        fontFamily: "'IBM Plex Mono', monospace",
-      }}
-    >
-      <div
-        style={{
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${G}`,
-          padding: "48px 40px",
-          width: "100%",
-          maxWidth: 420,
-          boxSizing: "border-box",
-        }}
-      >
-        {/* Logo */}
-        <div
-          onClick={() => navigate("/")}
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.4rem",
-            letterSpacing: "-0.02em",
-            color: G,
-            cursor: "pointer",
-            userSelect: "none",
-            marginBottom: 32,
-          }}
-        >
-          FRESHR
-        </div>
-
-        {/* Title */}
-        <h1
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.75rem",
-            letterSpacing: "-0.02em",
-            lineHeight: 1.1,
-            marginBottom: 16,
-          }}
-        >
+    <CenteredCard
+      title={
+        <>
           Verify your
           <br />
           email
-        </h1>
+        </>
+      }
+    >
+      <p className="text-muted-foreground mb-2 text-sm">
+        We sent a verification link to
+      </p>
+      <p className="text-foreground mb-8 text-sm font-semibold break-all">
+        {email || "your email"}
+      </p>
 
-        <p
-          style={{
-            fontSize: "0.75rem",
-            color: "#555",
-            lineHeight: 1.7,
-            marginBottom: 8,
-          }}
-        >
-          We sent a verification link to
+      <p className="text-muted-foreground mb-6 text-xs leading-relaxed">
+        Click the link in the email to activate your account and continue to
+        onboarding.
+      </p>
+
+      <Separator className="mb-6" />
+
+      <p className="text-muted-foreground mb-1.5 text-xs">Didn't get it?</p>
+      <Button
+        variant="link"
+        size="sm"
+        className="h-auto p-0"
+        disabled={resendState === "sending"}
+        onClick={handleResend}
+      >
+        {resendState === "sending"
+          ? "Sending…"
+          : resendState === "sent"
+            ? "Sent! Check your inbox again."
+            : "Resend verification link"}
+      </Button>
+
+      {(resendState === "rate-limited" || resendState === "error") && (
+        <p role="alert" className="text-destructive mt-3 text-xs leading-relaxed">
+          {errorMessage}
         </p>
-        <p
-          style={{
-            fontSize: "0.82rem",
-            fontWeight: 700,
-            color: B,
-            marginBottom: 32,
-            wordBreak: "break-all",
-          }}
-        >
-          {email || "your email"}
-        </p>
+      )}
 
-        <p
-          style={{
-            fontSize: "0.72rem",
-            color: "#555",
-            lineHeight: 1.6,
-            marginBottom: 24,
-          }}
-        >
-          Click the link in the email to activate your account and continue to
-          onboarding.
-        </p>
-
-        {/* Divider */}
-        <div style={{ height: 3, background: B, marginBottom: 24 }} />
-
-        <p style={{ fontSize: "0.72rem", color: "#888", marginBottom: 6 }}>
-          Didn't get it?
-        </p>
-        <span
-          onClick={resendState === "sending" ? undefined : handleResend}
-          style={{
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            color: resendState === "sending" ? "#888" : B,
-            textDecoration: "underline",
-            textUnderlineOffset: 3,
-            cursor: resendState === "sending" ? "default" : "pointer",
-          }}
-        >
-          {resendState === "sending"
-            ? "Sending..."
-            : resendState === "sent"
-              ? "Sent! Check your inbox again."
-              : "Resend verification link"}
-        </span>
-
-        {(resendState === "rate-limited" || resendState === "error") && (
-          <p
-            style={{
-              marginTop: 12,
-              fontSize: "0.72rem",
-              color: "#cc0000",
-              lineHeight: 1.5,
-            }}
-          >
-            {errorMessage}
-          </p>
-        )}
-
-        {/* Back to login */}
-        <p style={{ marginTop: 32, fontSize: "0.75rem", color: "#555" }}>
-          <span
-            onClick={() => navigate("/login")}
-            style={{
-              cursor: "pointer",
-              textDecoration: "underline",
-              textUnderlineOffset: 3,
-            }}
-          >
-            ← Back to login
-          </span>
-        </p>
-      </div>
-    </div>
+      <p className="text-muted-foreground mt-8 text-sm">
+        <AuthFootLink to="/login">← Back to login</AuthFootLink>
+      </p>
+    </CenteredCard>
   );
 }

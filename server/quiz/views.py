@@ -1,7 +1,5 @@
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from datetime import date
-from django.db import transaction
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -9,13 +7,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from notebooks.models import Notebook
-from notebooks.errors import DailyQuizQuotaExceededError
-from accounts.models import Account, DailyUsage
-from accounts.services import quota
 from notebooks.services.activity import touch_notebook_activity
 from notebooks.services.archive import assert_notebook_writable
 from .models import QuizSession, QuizQuestion, QuizStatus
-from .services.quiz_generation import generate_quiz_from_rag, generate_quiz_from_entire_notebook
+from .services.quiz_creation import create_quiz_session
+from .tasks import generate_quiz_task
 from .serializers import (
     QuizSessionListSerializer,
     QuizSessionDetailSerializer,
@@ -56,61 +52,28 @@ class QuizSessionListCreateView(generics.ListCreateAPIView):
     def create(self, request, *_args, **_kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        quiz = self.perform_create(serializer)
+        quiz, topic_id = self.perform_create(serializer)
+        # Enqueue generation AFTER the atomic block commits so the worker can read the row.
+        generate_quiz_task.delay(str(quiz.id), topic_id)
         detail_serializer = QuizSessionDetailSerializer(quiz)
-        return Response(detail_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(detail_serializer.data, status=status.HTTP_202_ACCEPTED)
 
-    def perform_create(self, serializer):
+    def perform_create(self, serializer): # type: ignore[override]
         notebook_id = self.request.query_params.get("notebook") # type: ignore
         notebook = get_object_or_404(Notebook, id=notebook_id, user=self.request.user)
         assert_notebook_writable(notebook)
 
         data = serializer.validated_data
-        topic = data.get("topic", "")
-        topic_id = data.get("topic_id")
-
-        is_all_topics = not topic_id and (not topic or topic.strip() == "" or topic == "All Topics")
-
-        if is_all_topics:
-            serializer.validated_data["topic"] = "All Topics"
-            generated = generate_quiz_from_entire_notebook(
-                notebook_id=str(notebook.pk),
-                user_id=str(self.request.user.pk),
-                num_questions=data["num_questions"],
-                difficulty=data["difficulty"],
-            )
-        else:
-            generated = generate_quiz_from_rag(
-                topic=topic,
-                topic_id=str(topic_id) if topic_id else None,
-                notebook_id=str(notebook.pk),
-                user_id=str(self.request.user.pk),
-                num_questions=data["num_questions"],
-                difficulty=data["difficulty"],
-            )
-
-        with transaction.atomic():
-            account = Account.objects.select_for_update().get(user=self.request.user)
-            usage, _ = DailyUsage.objects.select_for_update().get_or_create(
-                account=account, date=date.today()
-            )
-            if not quota.check_daily_quiz_quota(account):
-                plan = quota.get_effective_plan(account)
-                limits = quota.get_limits(plan)
-                raise DailyQuizQuotaExceededError(limit=limits["max_quizzes_per_day"])
-
-            # Generate quiz
-            quiz = serializer.save(notebook=notebook, title=generated["title"])
-            QuizQuestion.objects.bulk_create([
-                QuizQuestion(quiz=quiz, **q) for q in generated["questions"]
-            ])
-
-            usage.quizzes_generated += 1
-            usage.save()
-
-            touch_notebook_activity(notebook_id=notebook_id)
-
-        return quiz
+        return create_quiz_session(
+            notebook=notebook,
+            user=self.request.user,
+            topic=data.get("topic", ""),
+            topic_id=data.get("topic_id"),
+            num_questions=data["num_questions"],
+            difficulty=data["difficulty"],
+            quiz_type=data.get("quiz_type"),
+            time_limit=data.get("time_limit"),
+        )
 
 
 class QuizSessionDetailView(generics.RetrieveUpdateDestroyAPIView):

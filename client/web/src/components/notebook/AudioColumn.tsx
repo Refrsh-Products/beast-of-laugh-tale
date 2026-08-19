@@ -1,18 +1,31 @@
 import { useState, useRef, useEffect } from "react";
-import { ACCEPTED_AUDIO_EXTENSIONS, ACCEPTED_AUDIO_TYPES, MAX_AUDIO_BYTES, isAudioFile } from "../../lib/constants";
+import {
+  ACCEPTED_AUDIO_EXTENSIONS,
+  ACCEPTED_AUDIO_TYPES,
+  MAX_AUDIO_BYTES,
+  isAudioFile,
+} from "../../lib/constants";
 import MathMarkdown from "../common/MathMarkdown";
-
-const B = "#000000";
-const W = "#FFFFFF";
-const G = "#84e487";
-const R = "#FF4D4D";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
+import {
+  RiMicLine,
+  RiAddLine,
+  RiLoader4Line,
+  RiArrowLeftLine,
+  RiUploadCloud2Line,
+  RiCloseLine,
+  RiCheckLine,
+  RiSparkling2Line,
+} from "@remixicon/react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 // Transcription DTOs live in @freshr/shared; imported here for local use.
-import type {
-  AudioTranscriptSummary,
-  AudioTranscriptDetail,
-} from "@freshr/shared";
+import type { AudioTranscriptDetail } from "@freshr/shared";
 
 type Tab = "new" | "history";
 type NewStep = "upload" | "transcribing" | "review" | "generating";
@@ -23,18 +36,24 @@ interface AudioColumnProps {
   // These functions return the final result — the parent hides any task-polling
   // behind the promise resolution. The column doesn't know whether the backend
   // is sync or async.
-  onTranscribeAudio: (file: File, title: string) => Promise<{ transcript_id: string; transcript: string }>;
+  onTranscribeAudio: (
+    file: File,
+    title: string,
+  ) => Promise<{ transcript_id: string; transcript: string }>;
   onGenerateNotes: (transcriptId: string) => Promise<string>;
-  onUpdateTranscript: (transcriptId: string, fields: { transcript_text?: string; title?: string }) => Promise<void>;
-  onListTranscripts: () => Promise<AudioTranscriptSummary[]>;
+  onUpdateTranscript: (
+    transcriptId: string,
+    fields: { transcript_text?: string; title?: string },
+  ) => Promise<void>;
   onGetTranscript: (transcriptId: string) => Promise<AudioTranscriptDetail>;
-  onDeleteTranscript: (transcriptId: string) => Promise<void>;
   onNotesGenerated?: () => void;
   // When false the user is on a plan that doesn't include audio. They can still
   // view past transcripts + notes (read-only) but can't create or edit any.
   canMutate?: boolean;
-  // Triggered when a user on a read-only view clicks any upgrade CTA.
   onUpgrade?: () => void;
+  selectedTranscriptId?: string | null;
+  onTranscriptStarted?: (id: string, title: string) => void;
+  onNotesSaved?: (id: string) => void;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -42,10 +61,6 @@ interface AudioColumnProps {
 function formatSize(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
 const acceptedExtList = ACCEPTED_AUDIO_EXTENSIONS.join(", ");
@@ -57,116 +72,123 @@ const TIPS = [
   "Start recording before the lecture begins.",
 ];
 
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontFamily: "'IBM Plex Mono', monospace",
-  fontSize: "0.68rem",
-  fontWeight: 700,
-  letterSpacing: "0.12em",
-  color: "#555",
-  marginBottom: 6,
-};
-
 // ─── Small components ─────────────────────────────────────────────────────────
 
+/** Kept as a component because the panels pass a pixel size. */
 function SpinnerIcon({ size = 18 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20">
-      <circle cx="10" cy="10" r="8" fill="none" stroke="#ddd" strokeWidth="2.5" />
-      <path d="M10 2 A8 8 0 0 1 18 10" fill="none" stroke={B} strokeWidth="2.5" strokeLinecap="round">
-        <animateTransform attributeName="transform" type="rotate" from="0 10 10" to="360 10 10" dur="0.7s" repeatCount="indefinite" />
-      </path>
-    </svg>
+    <RiLoader4Line
+      className="animate-spin"
+      style={{ width: size, height: size }} // eslint-disable-line no-restricted-syntax -- caller-supplied pixel size
+      aria-hidden="true"
+    />
   );
 }
 
+/** Markdown overrides for generated study notes. Mirrors ChatMessage's set. */
 const NOTES_MARKDOWN_COMPONENTS = {
   p: ({ children }: { children?: React.ReactNode }) => (
-    <p style={{ margin: "0 0 0.6em", lineHeight: 1.7 }}>{children}</p>
+    <p className="mb-2 leading-relaxed last:mb-0">{children}</p>
   ),
   strong: ({ children }: { children?: React.ReactNode }) => (
-    <strong style={{ fontWeight: 700 }}>{children}</strong>
+    <strong className="font-semibold">{children}</strong>
   ),
   em: ({ children }: { children?: React.ReactNode }) => (
-    <em style={{ fontStyle: "italic" }}>{children}</em>
+    <em className="italic">{children}</em>
   ),
   ul: ({ children }: { children?: React.ReactNode }) => (
-    <ul style={{ margin: "0.4em 0 0.6em", paddingLeft: "1.4em" }}>{children}</ul>
+    <ul className="my-2 list-disc pl-5">{children}</ul>
   ),
   ol: ({ children }: { children?: React.ReactNode }) => (
-    <ol style={{ margin: "0.4em 0 0.6em", paddingLeft: "1.4em" }}>{children}</ol>
+    <ol className="my-2 list-decimal pl-5">{children}</ol>
   ),
   li: ({ children }: { children?: React.ReactNode }) => (
-    <li style={{ marginBottom: "0.25em", lineHeight: 1.6 }}>{children}</li>
+    <li className="mb-1 leading-relaxed">{children}</li>
   ),
   h1: ({ children }: { children?: React.ReactNode }) => (
-    <h1 style={{ fontFamily: "'Syne', sans-serif", fontSize: "1.05rem", fontWeight: 800, margin: "0.8em 0 0.4em", color: B }}>{children}</h1>
+    <h1 className="mt-4 mb-2 text-lg font-bold tracking-[-0.01em]">
+      {children}
+    </h1>
   ),
   h2: ({ children }: { children?: React.ReactNode }) => (
-    <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: "0.95rem", fontWeight: 800, margin: "0.9em 0 0.4em", color: B }}>{children}</h2>
+    <h2 className="mt-4 mb-2 text-base font-bold">{children}</h2>
   ),
   h3: ({ children }: { children?: React.ReactNode }) => (
-    <h3 style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.78rem", fontWeight: 700, margin: "0.7em 0 0.3em", letterSpacing: "0.04em", color: B }}>{children}</h3>
+    <h3 className="mt-3 mb-1 text-sm font-semibold">{children}</h3>
   ),
-  hr: () => <hr style={{ border: "none", borderTop: `1px solid #ddd`, margin: "1em 0" }} />,
-  code: ({ children, className }: { children?: React.ReactNode; className?: string }) => {
+  hr: () => <hr className="border-border my-4" />,
+  table: ({ children }: { children?: React.ReactNode }) => (
+    <div className="my-2 overflow-x-auto">
+      <table className="w-full text-left text-sm">{children}</table>
+    </div>
+  ),
+  th: ({ children }: { children?: React.ReactNode }) => (
+    <th className="border-border border-b px-2 py-1 font-semibold">
+      {children}
+    </th>
+  ),
+  td: ({ children }: { children?: React.ReactNode }) => (
+    <td className="border-border border-b px-2 py-1">{children}</td>
+  ),
+  code: ({
+    children,
+    className,
+  }: {
+    children?: React.ReactNode;
+    className?: string;
+  }) => {
     const isBlock = className?.startsWith("language-");
     return isBlock ? (
-      <pre style={{ background: "#f0f0eb", border: "1px solid #ccc", padding: "8px 10px", overflowX: "auto", margin: "0.5em 0", fontSize: "0.72rem" }}>
-        <code>{children}</code>
+      <pre className="bg-muted border-border my-2 overflow-x-auto rounded-md border p-3">
+        <code className="font-mono text-xs">{children}</code>
       </pre>
     ) : (
-      <code style={{ background: "#f0f0eb", border: "1px solid #ddd", padding: "1px 4px", fontSize: "0.72rem" }}>{children}</code>
+      <code className="bg-muted border-border rounded border px-1 py-0.5 font-mono text-xs">
+        {children}
+      </code>
     );
   },
 };
 
 function NotesView({ notes }: { notes: string }) {
   return (
-    <div
-      style={{
-        flex: 1,
-        overflowY: "auto",
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: "0.74rem",
-        color: B,
-        background: "#fafafa",
-        border: `2px solid ${B}`,
-        padding: "14px 16px",
-        minHeight: 240,
-      }}
-    >
-      <MathMarkdown components={NOTES_MARKDOWN_COMPONENTS}>{notes}</MathMarkdown>
+    <div className="bg-card border-border freshr-scroll min-h-60 flex-1 overflow-y-auto rounded-lg border px-4 py-3.5 text-sm">
+      <MathMarkdown components={NOTES_MARKDOWN_COMPONENTS}>
+        {notes}
+      </MathMarkdown>
     </div>
   );
 }
 
-function AudioWaveIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
-      <path d="M3 9h1M5 6v6M7 4v10M9 7v4M11 5v8M13 6v6M15 9h1" stroke={B} strokeWidth="1.6" strokeLinecap="round" />
-    </svg>
-  );
-}
-
+/**
+ * Adapter over the shadcn Button, keeping the primary/danger/fullWidth prop
+ * shape the audio panels already use so they didn't all need rewriting.
+ */
 function ActionButton({
-  onClick, disabled, primary, danger, fullWidth, children,
+  onClick,
+  disabled,
+  primary,
+  danger,
+  fullWidth,
+  children,
 }: {
-  onClick: () => void; disabled?: boolean; primary?: boolean; danger?: boolean; fullWidth?: boolean; children: React.ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  primary?: boolean;
+  danger?: boolean;
+  fullWidth?: boolean;
+  children: React.ReactNode;
 }) {
-  const bg = disabled ? "#e0e0e0" : danger ? R : primary ? G : W;
-  const border = disabled ? "#ccc" : B;
-  const color = disabled ? "#888" : danger ? W : B;
   return (
-    <button
+    <Button
       onClick={onClick}
       disabled={disabled}
-      onMouseEnter={(e) => { if (!disabled) { e.currentTarget.style.transform = "translate(-2px,-2px)"; e.currentTarget.style.boxShadow = `4px 4px 0 ${B}`; } }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = primary && !disabled ? `3px 3px 0 ${B}` : "none"; }}
-      style={{ flex: fullWidth ? 1 : undefined, background: bg, color, border: `2px solid ${border}`, boxShadow: primary && !disabled ? `3px 3px 0 ${B}` : "none", padding: "9px 14px", fontFamily: "'IBM Plex Mono', monospace", fontWeight: 700, fontSize: "0.72rem", cursor: disabled ? "not-allowed" : "pointer", transition: "transform 0.15s, box-shadow 0.15s", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 6 }}
+      variant={danger ? "destructive" : primary ? "default" : "outline"}
+      size="sm"
+      className={cn("whitespace-nowrap", fullWidth && "flex-1")}
     >
       {children}
-    </button>
+    </Button>
   );
 }
 
@@ -181,74 +203,36 @@ const UPSELL_FEATURES = [
 
 function InlineUpsell({ onUpgrade }: { onUpgrade?: () => void }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
-      <div
-        style={{
-          display: "inline-flex",
-          alignSelf: "flex-start",
-          background: G,
-          border: `1.5px solid ${B}`,
-          padding: "3px 10px",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.62rem",
-          fontWeight: 700,
-          letterSpacing: "0.1em",
-          color: B,
-        }}
-      >
-        PRO FEATURE
-      </div>
-      <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "1.25rem", lineHeight: 1.25, color: B }}>
+    <div className="flex flex-1 flex-col gap-4">
+      <Badge variant="secondary" className="self-start">
+        Pro feature
+      </Badge>
+
+      <h3 className="text-2xl font-bold tracking-[-0.02em]">
         Turn your lecture recordings into ready-to-study notes
-      </div>
-      <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.74rem", color: "#555", lineHeight: 1.65 }}>
-        Record your professor, drop the file here, and Freshr handles the rest — transcription in Bangla and
-        English, then structured notes you can study from.
-      </div>
-      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
-        {UPSELL_FEATURES.map((f, i) => (
-          <li
-            key={i}
-            style={{
-              display: "flex",
-              gap: 10,
-              alignItems: "flex-start",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.72rem",
-              color: B,
-              lineHeight: 1.5,
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
-              <circle cx="7" cy="7" r="6" fill={G} stroke={B} strokeWidth="1.4" />
-              <path d="M4 7l2 2 4-4" stroke={B} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            {f}
+      </h3>
+      <p className="text-muted-foreground leading-relaxed">
+        Record your professor, drop the file here, and Freshr handles the rest —
+        transcription in Bangla and English, then structured notes you can study
+        from.
+      </p>
+
+      <ul className="flex flex-col gap-2">
+        {UPSELL_FEATURES.map((feature) => (
+          <li key={feature} className="flex items-start gap-2 text-sm">
+            <RiCheckLine
+              className="text-primary mt-0.5 size-4 shrink-0"
+              aria-hidden="true"
+            />
+            {feature}
           </li>
         ))}
       </ul>
-      {onUpgrade && (
-        <button
-          onClick={onUpgrade}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = "translate(-3px,-3px)"; e.currentTarget.style.boxShadow = `6px 6px 0 ${B}`; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = `3px 3px 0 ${B}`; }}
-          style={{
-            background: G,
-            color: B,
-            border: `2px solid ${B}`,
-            boxShadow: `3px 3px 0 ${B}`,
-            padding: "11px 16px",
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontWeight: 700,
-            fontSize: "0.78rem",
-            cursor: "pointer",
-            transition: "transform 0.15s, box-shadow 0.15s",
-            letterSpacing: "0.04em",
-          }}
-        >
-          Upgrade to Pro
-        </button>
-      )}
+
+      <Button onClick={onUpgrade} className="self-start">
+        <RiSparkling2Line aria-hidden="true" />
+        Upgrade to Pro
+      </Button>
     </div>
   );
 }
@@ -262,7 +246,10 @@ function NewTranscriptionPanel({
   onUpgrade,
 }: {
   onTranscribed: (id: string, transcript: string, title: string) => void;
-  onTranscribeAudio: (file: File, title: string) => Promise<{ transcript_id: string; transcript: string }>;
+  onTranscribeAudio: (
+    file: File,
+    title: string,
+  ) => Promise<{ transcript_id: string; transcript: string }>;
   canMutate: boolean;
   onUpgrade?: () => void;
 }) {
@@ -291,8 +278,12 @@ function NewTranscriptionPanel({
 
   function rejectNonAudio(files: File[]) {
     const first = files[0];
-    const ext = first?.name.includes(".") ? first.name.split(".").pop()!.toLowerCase() : "unknown";
-    setError(`.${ext} is not a supported audio format. Use ${acceptedExtList}.`);
+    const ext = first?.name.includes(".")
+      ? first.name.split(".").pop()!.toLowerCase()
+      : "unknown";
+    setError(
+      `.${ext} is not a supported audio format. Use ${acceptedExtList}.`,
+    );
     setFile(null);
     setTitle("");
   }
@@ -315,104 +306,173 @@ function NewTranscriptionPanel({
     setStep("transcribing");
     setError(null);
     try {
-      const { transcript_id, transcript } = await onTranscribeAudio(file, title || file.name.replace(/\.[^.]+$/, ""));
+      const { transcript_id, transcript } = await onTranscribeAudio(
+        file,
+        title || file.name.replace(/\.[^.]+$/, ""),
+      );
       onTranscribed(transcript_id, transcript, title);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Transcription failed. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Transcription failed. Please try again.",
+      );
       setStep("upload");
     }
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14, flex: 1 }}>
+    <div className="flex flex-1 flex-col gap-4">
       {step === "upload" && (
         <>
-          {/* Drop zone */}
           <div
-            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
-            onMouseEnter={(e) => { if (!isDragging) (e.currentTarget as HTMLElement).style.background = "#f0f0eb"; }}
-            onMouseLeave={(e) => { if (!isDragging) (e.currentTarget as HTMLElement).style.background = "#fafafa"; }}
-            style={{ border: `2px dashed ${isDragging ? G : "#ccc"}`, background: isDragging ? "#f0fff0" : "#fafafa", padding: "20px 12px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, cursor: "pointer", transition: "border-color 0.15s, background 0.15s", textAlign: "center" }}
+            className={cn(
+              "flex cursor-pointer flex-col items-center gap-2 rounded-lg border-2 border-dashed px-3 py-6 text-center transition-colors",
+              isDragging
+                ? "border-primary bg-accent"
+                : "border-input bg-card hover:bg-accent/50",
+            )}
           >
-            <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
-              <path d="M4 20v3a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-3" stroke={isDragging ? G : "#aaa"} strokeWidth="1.8" strokeLinecap="round" />
-              <path d="M14 18V8M14 8l-4 4M14 8l4 4" stroke={isDragging ? G : "#aaa"} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", color: isDragging ? G : B, lineHeight: 1.5 }}>
-              Drop audio file here<br />or click to upload
+            <RiUploadCloud2Line
+              className="text-muted-foreground size-7"
+              aria-hidden="true"
+            />
+            <span className="text-sm leading-relaxed">
+              Drop audio file here
+              <br />
+              or click to upload
             </span>
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.62rem", color: "#888" }}>{acceptedExtList}</span>
-            <input ref={fileInputRef} type="file" accept={ACCEPTED_AUDIO_TYPES} onChange={(e) => { selectFromList(Array.from(e.target.files ?? [])); e.target.value = ""; }} style={{ display: "none" }} />
+            <span className="text-muted-foreground text-xs">
+              {acceptedExtList}
+            </span>
+            <input
+              ref={fileInputRef}
+              type="file"
+              hidden
+              accept={ACCEPTED_AUDIO_TYPES}
+              onChange={(e) => {
+                selectFromList(Array.from(e.target.files ?? []));
+                e.target.value = "";
+              }}
+            />
           </div>
 
-          {/* Selected file */}
           {file && (
-            <div style={{ border: `1.5px solid ${fileTooLarge ? R : B}`, padding: "10px 12px", background: fileTooLarge ? "#fff5f5" : "#fafafa", display: "flex", gap: 10, alignItems: "center" }}>
-              <svg width="20" height="20" viewBox="0 0 22 22" fill="none"><rect x="1" y="1" width="20" height="20" rx="1" fill={G} stroke={B} strokeWidth="1.5" /><path d="M7 15V7M11 15V5M15 15V10" stroke={B} strokeWidth="1.8" strokeLinecap="round" /></svg>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: 700, color: B, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.name}</div>
-                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.65rem", color: fileTooLarge ? R : "#555", marginTop: 2 }}>{formatSize(file.size)}{fileTooLarge ? " · exceeds 500 MB" : ""}</div>
+            <div
+              className={cn(
+                "flex items-center gap-3 rounded-lg border px-3 py-2.5",
+                fileTooLarge
+                  ? "border-destructive bg-destructive/10"
+                  : "border-border bg-card",
+              )}
+            >
+              <RiMicLine
+                className="text-primary size-5 shrink-0"
+                aria-hidden="true"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-semibold">
+                  {file.name}
+                </div>
+                <div
+                  className={cn(
+                    "text-xs",
+                    fileTooLarge ? "text-destructive" : "text-muted-foreground",
+                  )}
+                >
+                  {formatSize(file.size)}
+                  {fileTooLarge ? " · exceeds 500 MB" : ""}
+                </div>
               </div>
-              <button onClick={(e) => { e.stopPropagation(); setFile(null); setTitle(""); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }}>
-                <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3L3 11" stroke={B} strokeWidth="1.8" strokeLinecap="round" /></svg>
-              </button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                aria-label="Remove file"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setFile(null);
+                  setTitle("");
+                }}
+              >
+                <RiCloseLine aria-hidden="true" />
+              </Button>
             </div>
           )}
 
           {file && !fileTooLarge && (
-            <div>
-              <label style={labelStyle}>LECTURE TITLE</label>
-              <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Data Structures — Lecture 5" style={{ width: "100%", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", color: B, background: W, border: `2px solid ${B}`, padding: "8px 10px", outline: "none", boxSizing: "border-box" }} />
+            <div className="flex flex-col gap-2">
+              <label
+                htmlFor="lecture-title"
+                className="text-xs font-semibold tracking-widest uppercase"
+              >
+                Lecture title
+              </label>
+              <Input
+                id="lecture-title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Data Structures — Lecture 5"
+              />
             </div>
           )}
 
-          {error && <div style={{ border: `1.5px solid ${R}`, background: "#fff5f5", padding: "10px 12px", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", color: R, lineHeight: 1.5 }}>{error}</div>}
+          {error && (
+            <p
+              role="alert"
+              className="border-destructive bg-destructive/10 text-destructive rounded-lg border px-3 py-2.5 text-sm"
+            >
+              {error}
+            </p>
+          )}
 
-          {/* Tips */}
-          <div style={{ border: `1.5px solid ${B}`, padding: "12px 14px", background: "#fffef0" }}>
-            <div style={{ ...labelStyle, marginBottom: 8 }}>TIPS FOR BETTER TRANSCRIPTION</div>
-            <ul style={{ margin: 0, paddingLeft: 16, display: "flex", flexDirection: "column", gap: 4 }}>
-              {TIPS.map((tip, i) => <li key={i} style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.7rem", color: B, lineHeight: 1.5 }}>{tip}</li>)}
+          <div className="bg-muted border-border rounded-lg border px-3.5 py-3">
+            <div className="mb-2 text-xs font-semibold tracking-widest uppercase">
+              Tips for better transcription
+            </div>
+            <ul className="text-muted-foreground list-disc pl-4 text-sm">
+              {TIPS.map((tip) => (
+                <li key={tip} className="mb-1 leading-relaxed last:mb-0">
+                  {tip}
+                </li>
+              ))}
             </ul>
           </div>
 
-          <div style={{ borderTop: `2px solid ${B}`, marginTop: 6, paddingTop: 16, paddingBottom: 4, display: "flex", justifyContent: "center" }}>
-            <button
+          <div className="border-border mt-1 flex justify-center border-t pt-4">
+            <Button
+              size="lg"
               onClick={handleTranscribe}
               disabled={!canTranscribe}
-              onMouseEnter={(e) => { if (canTranscribe) { e.currentTarget.style.transform = "translate(-3px,-3px)"; e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`; } }}
-              onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = canTranscribe ? `4px 4px 0 ${B}` : "none"; }}
-              onMouseDown={(e) => { if (canTranscribe) { e.currentTarget.style.transform = "translate(2px,2px)"; e.currentTarget.style.boxShadow = `2px 2px 0 ${B}`; } }}
-              onMouseUp={(e) => { if (canTranscribe) { e.currentTarget.style.transform = "translate(-3px,-3px)"; e.currentTarget.style.boxShadow = `7px 7px 0 ${B}`; } }}
-              style={{
-                background: canTranscribe ? G : "#eee",
-                color: B,
-                border: `2px solid ${canTranscribe ? B : "#ccc"}`,
-                boxShadow: canTranscribe ? `4px 4px 0 ${B}` : "none",
-                padding: "14px 40px",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontWeight: 700,
-                fontSize: "0.82rem",
-                letterSpacing: "0.06em",
-                cursor: canTranscribe ? "pointer" : "not-allowed",
-                transition: "transform 0.15s, box-shadow 0.15s",
-              }}
             >
-              Transcribe →
-            </button>
+              Transcribe
+            </Button>
           </div>
         </>
       )}
 
       {step === "transcribing" && (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, flex: 1, minHeight: 220, textAlign: "center" }}>
-          <SpinnerIcon size={40} />
+        <div className="flex min-h-56 flex-1 flex-col items-center justify-center gap-4 text-center">
+          <RiLoader4Line
+            className="text-primary size-10 animate-spin"
+            aria-hidden="true"
+          />
           <div>
-            <div style={{ fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "1rem", color: B, marginBottom: 8 }}>Transcribing your lecture…</div>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", color: "#555", lineHeight: 1.6 }}>This may take a minute for longer recordings.<br />Please keep this window open.</div>
+            <div className="mb-2 text-lg font-bold tracking-[-0.01em]">
+              Transcribing your lecture…
+            </div>
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              This may take a minute for longer recordings.
+              <br />
+              Please keep this window open.
+            </p>
           </div>
         </div>
       )}
@@ -433,16 +493,23 @@ function TranscriptDetailView({
 }: {
   detail: AudioTranscriptDetail;
   onGenerateNotes: (transcriptId: string) => Promise<string>;
-  onSaveTranscript: (transcriptId: string, fields: { transcript_text?: string; title?: string }) => Promise<void>;
+  onSaveTranscript: (
+    transcriptId: string,
+    fields: { transcript_text?: string; title?: string },
+  ) => Promise<void>;
   onBack: () => void;
   onNotesGenerated?: () => void;
   canMutate: boolean;
   onUpgrade?: () => void;
 }) {
-  const [detailTab, setDetailTab] = useState<DetailTab>(detail.has_notes ? "notes" : "transcript");
+  const [detailTab, setDetailTab] = useState<DetailTab>(
+    detail.has_notes ? "notes" : "transcript",
+  );
   const [transcript, setTranscript] = useState(detail.transcript_text);
   const [title, setTitle] = useState(detail.title);
-  const [savedTranscript, setSavedTranscript] = useState(detail.transcript_text);
+  const [savedTranscript, setSavedTranscript] = useState(
+    detail.transcript_text,
+  );
   const [savedTitle, setSavedTitle] = useState(detail.title);
   const [notes, setNotes] = useState(detail.notes_text);
   const [hasNotes, setHasNotes] = useState(detail.has_notes);
@@ -470,7 +537,9 @@ function TranscriptDetailView({
       setSavedTitle(title);
       setSaveSuccess(true);
     } catch (err: unknown) {
-      setSaveError(err instanceof Error ? err.message : "Save failed. Please try again.");
+      setSaveError(
+        err instanceof Error ? err.message : "Save failed. Please try again.",
+      );
     } finally {
       setSaving(false);
     }
@@ -486,94 +555,124 @@ function TranscriptDetailView({
       setDetailTab("notes");
       onNotesGenerated?.();
     } catch (err: unknown) {
-      setGenerateError(err instanceof Error ? err.message : "Notes generation failed.");
+      setGenerateError(
+        err instanceof Error ? err.message : "Notes generation failed.",
+      );
     } finally {
       setGenerating(false);
     }
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-      {/* Back + title row */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", padding: "2px 4px", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", color: "#555", display: "flex", alignItems: "center", gap: 4 }}>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M8 2L4 6l4 4" stroke={B} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="mb-3 flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={onBack}>
+          <RiArrowLeftLine aria-hidden="true" />
           Back
-        </button>
-        <input
+        </Button>
+        <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           readOnly={!canMutate}
-          style={{ flex: 1, fontFamily: "'Syne', sans-serif", fontWeight: 800, fontSize: "0.88rem", color: B, background: "transparent", border: "none", outline: "none", minWidth: 0, cursor: canMutate ? "text" : "default" }}
+          aria-label="Transcript title"
+          className="border-transparent bg-transparent text-base font-bold shadow-none"
         />
       </div>
 
-      {/* Tab bar */}
-      <div style={{ display: "flex", borderBottom: `2px solid ${B}`, marginBottom: 12, gap: 0 }}>
-        {(["transcript", "notes"] as DetailTab[]).map((t) => {
-          const isActive = detailTab === t;
-          return (
-            <button
-              key={t}
-              onClick={() => setDetailTab(t)}
-              style={{ padding: "7px 14px", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: isActive ? 700 : 400, color: isActive ? W : B, background: isActive ? B : "transparent", border: "none", cursor: "pointer", borderBottom: "none" }}
-            >
-              {t === "transcript" ? "Transcript" : `Notes${!hasNotes ? " (none yet)" : ""}`}
-            </button>
-          );
-        })}
-      </div>
+      <Tabs
+        value={detailTab}
+        onValueChange={(value) => setDetailTab(value as DetailTab)}
+        className="min-h-0 flex-1 gap-3"
+      >
+        <TabsList>
+          <TabsTrigger value="transcript">Transcript</TabsTrigger>
+          <TabsTrigger value="notes">
+            Notes{!hasNotes ? " (none yet)" : ""}
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Content area */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-        {detailTab === "transcript" && (
-          <>
-            <textarea
-              value={transcript}
-              onChange={(e) => setTranscript(e.target.value)}
-              readOnly={!canMutate}
-              style={{ flex: 1, minHeight: 260, width: "100%", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", color: B, background: "#fafafa", border: `2px solid ${B}`, padding: "10px 12px", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6, cursor: canMutate ? "text" : "default" }}
-            />
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 6 }}>
-              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.62rem", color: "#888" }}>
-                {transcript.trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words
-              </span>
-              {canMutate && isDirty && (
-                <ActionButton onClick={handleSave} disabled={saving}>
-                  {saving ? <><SpinnerIcon size={13} /> Saving…</> : saveSuccess ? "Saved ✓" : "Save changes"}
-                </ActionButton>
-              )}
-            </div>
-          </>
-        )}
-
-        {detailTab === "notes" && (
-          <>
-            {hasNotes ? (
-              <NotesView notes={notes} />
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 14, flex: 1, minHeight: 180, textAlign: "center" }}>
-                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", color: "#555", lineHeight: 1.6 }}>
-                  No notes generated yet.
-                  {canMutate ? <><br />Generate notes from the transcript below.</> : <><br />Upgrade to Pro to generate notes from this transcript.</>}
-                </div>
-              </div>
+        <TabsContent
+          value="transcript"
+          className="flex min-h-0 flex-1 flex-col gap-1.5"
+        >
+          <Textarea
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            readOnly={!canMutate}
+            aria-label="Transcript text"
+            className="min-h-64 flex-1 resize-y font-mono text-xs leading-relaxed"
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground text-xs">
+              {transcript
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean)
+                .length.toLocaleString()}{" "}
+              words
+            </span>
+            {canMutate && isDirty && (
+              <ActionButton onClick={handleSave} disabled={saving}>
+                {saving ? (
+                  <>
+                    <SpinnerIcon size={13} /> Saving…
+                  </>
+                ) : saveSuccess ? (
+                  <>
+                    <RiCheckLine aria-hidden="true" /> Saved
+                  </>
+                ) : (
+                  "Save changes"
+                )}
+              </ActionButton>
             )}
-          </>
-        )}
-      </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="notes" className="flex min-h-0 flex-1 flex-col">
+          {hasNotes ? (
+            <NotesView notes={notes} />
+          ) : (
+            <div className="text-muted-foreground flex min-h-44 flex-1 flex-col items-center justify-center gap-3 text-center text-sm leading-relaxed">
+              <p>
+                No notes generated yet.
+                <br />
+                {canMutate
+                  ? "Generate notes from the transcript."
+                  : "Upgrade to Pro to generate notes from this transcript."}
+              </p>
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {(generateError || saveError) && (
-        <div style={{ border: `1.5px solid ${R}`, background: "#fff5f5", padding: "9px 12px", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.7rem", color: R, marginTop: 8 }}>
+        <p
+          role="alert"
+          className="border-destructive bg-destructive/10 text-destructive mt-2 rounded-lg border px-3 py-2 text-sm"
+        >
           {generateError || saveError}
-        </div>
+        </p>
       )}
 
-      {/* Footer */}
-      <div style={{ paddingTop: 12, display: "flex", gap: 8 }}>
+      <div className="flex gap-2 pt-3">
         {canMutate ? (
-          <ActionButton onClick={handleGenerateNotes} disabled={generating} primary fullWidth>
-            {generating ? <><SpinnerIcon size={13} />Generating…</> : hasNotes ? "Regenerate notes" : "Generate notes"}
+          <ActionButton
+            onClick={handleGenerateNotes}
+            disabled={generating}
+            primary
+            fullWidth
+          >
+            {generating ? (
+              <>
+                <SpinnerIcon size={13} />
+                Generating…
+              </>
+            ) : hasNotes ? (
+              "Regenerate notes"
+            ) : (
+              "Generate notes"
+            )}
           </ActionButton>
         ) : (
           onUpgrade && (
@@ -587,87 +686,9 @@ function TranscriptDetailView({
   );
 }
 
-// ─── History list ─────────────────────────────────────────────────────────────
-
-function HistoryPanel({
-  transcripts,
-  loading,
-  onSelect,
-  onDelete,
-}: {
-  transcripts: AudioTranscriptSummary[];
-  loading: boolean;
-  onSelect: (id: string) => void;
-  onDelete: (id: string) => Promise<void>;
-}) {
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  async function handleDelete(e: React.MouseEvent, id: string) {
-    e.stopPropagation();
-    setDeletingId(id);
-    try {
-      await onDelete(id);
-    } finally {
-      setDeletingId(null);
-    }
-  }
-
-  if (loading) {
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1, gap: 10, color: "#888", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem" }}>
-        <SpinnerIcon size={16} /> Loading…
-      </div>
-    );
-  }
-
-  if (transcripts.length === 0) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: 8, textAlign: "center", padding: "20px 0" }}>
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect x="2" y="2" width="28" height="28" rx="2" stroke="#ccc" strokeWidth="1.5" /><path d="M8 16h5M12 11v10M17 13v6M22 11v10" stroke="#ccc" strokeWidth="1.5" strokeLinecap="round" /></svg>
-        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", color: "#aaa" }}>No transcriptions yet</span>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 0 }}>
-      {transcripts.map((t) => (
-        <div
-          key={t.id}
-          onClick={() => onSelect(t.id)}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "#f0f0eb"; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = W; }}
-          style={{ padding: "11px 14px", borderBottom: "1px solid #e0e0e0", background: W, cursor: "pointer", display: "flex", alignItems: "center", gap: 10, transition: "background 0.1s" }}
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ flexShrink: 0 }}>
-            <rect x="1" y="1" width="16" height="16" rx="1" fill={t.has_notes ? G : "#f0f0f0"} stroke={B} strokeWidth="1.3" />
-            <path d="M4 9h2M7 6v6M9.5 7.5v3M12 6v6M14 9h1" stroke={B} strokeWidth="1.3" strokeLinecap="round" />
-          </svg>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", fontWeight: 700, color: B, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</div>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.65rem", color: "#777", marginTop: 2 }}>
-              {formatDate(t.created_at)} · {t.has_notes ? "notes generated" : "transcript only"}
-            </div>
-          </div>
-          <button
-            onClick={(e) => handleDelete(e, t.id)}
-            disabled={deletingId === t.id}
-            style={{ background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0, opacity: 0.5 }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "1"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = "0.5"; }}
-            aria-label="Delete"
-          >
-            {deletingId === t.id ? <SpinnerIcon size={13} /> : (
-              <svg width="13" height="13" viewBox="0 0 14 14" fill="none"><path d="M3 3l8 8M11 3L3 11" stroke={R} strokeWidth="1.8" strokeLinecap="round" /></svg>
-            )}
-          </button>
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0 }}><path d="M3 2l4 3-4 3" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
-        </div>
-      ))}
-    </div>
-  );
-}
-
+// The history list lived here as HistoryPanel. It now renders in the
+// notebook sidebar (sidebar/TranscriptsPanel) alongside the other tools'
+// histories, and selection arrives through the selectedTranscriptId prop.
 // ─── Review panel (after transcription, before generating notes) ──────────────
 
 function ReviewPanel({
@@ -683,7 +704,10 @@ function ReviewPanel({
   initialTranscript: string;
   initialTitle: string;
   onGenerateNotes: (transcriptId: string) => Promise<string>;
-  onSaveTranscript: (transcriptId: string, fields: { transcript_text?: string; title?: string }) => Promise<void>;
+  onSaveTranscript: (
+    transcriptId: string,
+    fields: { transcript_text?: string; title?: string },
+  ) => Promise<void>;
   onNotesGenerated?: () => void;
   onReset: () => void;
 }) {
@@ -699,66 +723,114 @@ function ReviewPanel({
     setError(null);
     try {
       // Save any edits first so the task generates notes from the latest text.
-      await onSaveTranscript(transcriptId, { transcript_text: transcript, title });
+      await onSaveTranscript(transcriptId, {
+        transcript_text: transcript,
+        title,
+      });
       const notesText = await onGenerateNotes(transcriptId);
       setNotes(notesText);
       setDetailTab("notes");
       onNotesGenerated?.();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Notes generation failed. Please try again.");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Notes generation failed. Please try again.",
+      );
     } finally {
       setGenerating(false);
     }
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }}>
-      <div style={{ marginBottom: 10 }}>
-        <label style={labelStyle}>LECTURE TITLE</label>
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} style={{ width: "100%", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", color: B, background: W, border: `2px solid ${B}`, padding: "7px 10px", outline: "none", boxSizing: "border-box" }} />
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="mb-3 flex flex-col gap-2">
+        <label
+          htmlFor="review-title"
+          className="text-xs font-semibold tracking-widest uppercase"
+        >
+          Lecture title
+        </label>
+        <Input
+          id="review-title"
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
       </div>
 
-      {/* Tab bar */}
-      <div style={{ display: "flex", borderBottom: `2px solid ${B}`, marginBottom: 10 }}>
-        {(["transcript", "notes"] as DetailTab[]).map((t) => {
-          const isActive = detailTab === t;
-          return (
-            <button key={t} onClick={() => setDetailTab(t)} style={{ padding: "7px 14px", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: isActive ? 700 : 400, color: isActive ? W : B, background: isActive ? B : "transparent", border: "none", cursor: "pointer" }}>
-              {t === "transcript" ? "Transcript" : `Notes${notes ? "" : " (not yet)"}`}
-            </button>
-          );
-        })}
-      </div>
+      <Tabs
+        value={detailTab}
+        onValueChange={(value) => setDetailTab(value as DetailTab)}
+        className="min-h-0 flex-1 gap-3"
+      >
+        <TabsList>
+          <TabsTrigger value="transcript">Transcript</TabsTrigger>
+          <TabsTrigger value="notes">
+            Notes{notes ? "" : " (not yet)"}
+          </TabsTrigger>
+        </TabsList>
 
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>
-        {detailTab === "transcript" && (
-          <>
-            <textarea
-              value={transcript}
-              onChange={(e) => setTranscript(e.target.value)}
-              style={{ flex: 1, minHeight: 240, width: "100%", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", color: B, background: "#fafafa", border: `2px solid ${B}`, padding: "10px 12px", resize: "vertical", outline: "none", boxSizing: "border-box", lineHeight: 1.6 }}
-            />
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.62rem", color: "#888", marginTop: 4 }}>
-              {transcript.trim().split(/\s+/).filter(Boolean).length.toLocaleString()} words · edit any mistakes before generating
+        <TabsContent
+          value="transcript"
+          className="flex min-h-0 flex-1 flex-col gap-1.5"
+        >
+          <Textarea
+            value={transcript}
+            onChange={(e) => setTranscript(e.target.value)}
+            aria-label="Transcript text"
+            className="min-h-60 flex-1 resize-y font-mono text-xs leading-relaxed"
+          />
+          <p className="text-muted-foreground text-xs">
+            {transcript
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean)
+              .length.toLocaleString()}{" "}
+            words · edit any mistakes before generating
+          </p>
+        </TabsContent>
+
+        <TabsContent value="notes" className="flex min-h-0 flex-1 flex-col">
+          {notes ? (
+            <NotesView notes={notes} />
+          ) : (
+            <div className="text-muted-foreground flex flex-1 items-center justify-center text-sm">
+              Generate notes to see them here.
             </div>
-          </>
-        )}
+          )}
+        </TabsContent>
+      </Tabs>
 
-        {detailTab === "notes" && notes && <NotesView notes={notes} />}
+      {error && (
+        <p
+          role="alert"
+          className="border-destructive bg-destructive/10 text-destructive mt-2 rounded-lg border px-3 py-2 text-sm"
+        >
+          {error}
+        </p>
+      )}
 
-        {detailTab === "notes" && !notes && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1, fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", color: "#aaa" }}>
-            Generate notes to see them here.
-          </div>
-        )}
-      </div>
-
-      {error && <div style={{ border: `1.5px solid ${R}`, background: "#fff5f5", padding: "9px 12px", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.7rem", color: R, marginTop: 8 }}>{error}</div>}
-
-      <div style={{ paddingTop: 12, display: "flex", gap: 8 }}>
-        <ActionButton onClick={onReset} disabled={generating}>Start over</ActionButton>
-        <ActionButton onClick={handleGenerateNotes} disabled={generating || !transcript.trim()} primary fullWidth>
-          {generating ? <><SpinnerIcon size={13} />Generating…</> : notes ? "Regenerate notes" : "Generate notes"}
+      <div className="flex gap-2 pt-3">
+        <ActionButton onClick={onReset} disabled={generating}>
+          Start over
+        </ActionButton>
+        <ActionButton
+          onClick={handleGenerateNotes}
+          disabled={generating || !transcript.trim()}
+          primary
+          fullWidth
+        >
+          {generating ? (
+            <>
+              <SpinnerIcon size={13} />
+              Generating…
+            </>
+          ) : notes ? (
+            "Regenerate notes"
+          ) : (
+            "Generate notes"
+          )}
         </ActionButton>
       </div>
     </div>
@@ -771,49 +843,43 @@ export default function AudioColumn({
   onTranscribeAudio,
   onGenerateNotes,
   onUpdateTranscript,
-  onListTranscripts,
   onGetTranscript,
-  onDeleteTranscript,
   onNotesGenerated,
   canMutate = true,
   onUpgrade,
+  selectedTranscriptId = null,
+  onTranscriptStarted,
+  onNotesSaved,
 }: AudioColumnProps) {
+  // `tab` now only distinguishes the capture flow from a transcript opened in
+  // the sidebar; the history list itself moved out to NotebookSidebar.
   const [tab, setTab] = useState<Tab>("new");
-  const [transcripts, setTranscripts] = useState<AudioTranscriptSummary[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
 
   // After a successful transcription, we hold the ID + text to show the review panel
-  const [reviewState, setReviewState] = useState<{ id: string; transcript: string; title: string } | null>(null);
+  const [reviewState, setReviewState] = useState<{
+    id: string;
+    transcript: string;
+    title: string;
+  } | null>(null);
 
   // History detail
   const [detailLoading, setDetailLoading] = useState(false);
-  const [selectedDetail, setSelectedDetail] = useState<AudioTranscriptDetail | null>(null);
+  const [selectedDetail, setSelectedDetail] =
+    useState<AudioTranscriptDetail | null>(null);
 
-  async function loadHistory() {
-    setHistoryLoading(true);
-    try {
-      const list = await onListTranscripts();
-      setTranscripts(list);
-    } finally {
-      setHistoryLoading(false);
-    }
-  }
-
+  // The sidebar owns selection now; opening one there switches this panel to
+  // the matching detail view.
   useEffect(() => {
-    if (tab === "history") loadHistory();
-  }, [tab]);
+    if (!selectedTranscriptId) return;
+    setTab("history");
+    handleSelectTranscript(selectedTranscriptId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTranscriptId]);
 
   function handleTranscribed(id: string, transcript: string, title: string) {
     setReviewState({ id, transcript, title });
-    // Optimistically add to history list
-    setTranscripts((prev) => [{
-      id,
-      title,
-      has_notes: false,
-      transcription_status: "pending",
-      notes_status: "not_started",
-      created_at: new Date().toISOString(),
-    }, ...prev]);
+    // The sidebar shows the optimistic row; this panel just opens the review.
+    onTranscriptStarted?.(id, title);
   }
 
   function handleReset() {
@@ -831,46 +897,40 @@ export default function AudioColumn({
     }
   }
 
-  async function handleDeleteTranscript(id: string) {
-    await onDeleteTranscript(id);
-    setTranscripts((prev) => prev.filter((t) => t.id !== id));
-    if (selectedDetail?.id === id) setSelectedDetail(null);
-  }
-
   function handleNotesGenerated() {
-    // Refresh history list so the "notes generated" badge updates
-    setTranscripts((prev) => prev.map((t) => t.id === (reviewState?.id ?? selectedDetail?.id) ? { ...t, has_notes: true } : t));
+    const notedId = reviewState?.id ?? selectedDetail?.id;
+    // The sidebar owns the "has notes" badge.
+    if (notedId) onNotesSaved?.(notedId);
     onNotesGenerated?.();
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: W, overflow: "hidden", borderRight: `2px solid ${B}` }}>
-      {/* Header */}
-      <div style={{ height: 44, padding: "0 14px", borderBottom: `2px solid ${B}`, display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-        <AudioWaveIcon />
-        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.14em", color: B }}>AUDIO NOTES</span>
-      </div>
-
-      {/* Tab bar */}
-      <div style={{ display: "flex", borderBottom: `2px solid ${B}`, flexShrink: 0 }}>
-        {(["new", "history"] as Tab[]).map((t) => {
-          const isActive = tab === t;
-          return (
-            <button
-              key={t}
-              onClick={() => { setTab(t); if (t === "new") setSelectedDetail(null); }}
-              style={{ padding: "9px 18px", fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", fontWeight: isActive ? 700 : 400, color: isActive ? B : "#777", background: isActive ? G : "transparent", border: "none", borderBottom: isActive ? `2px solid ${B}` : "none", marginBottom: isActive ? -2 : 0, cursor: "pointer", letterSpacing: "0.04em" }}
-            >
-              {t === "new" ? "New" : `History${transcripts.length > 0 ? ` (${transcripts.length})` : ""}`}
-            </button>
-          );
-        })}
+    <div className="bg-background flex h-full flex-col overflow-hidden">
+      <div className="bg-card border-border flex h-11 shrink-0 items-center gap-2 border-b px-4">
+        <RiMicLine className="text-primary size-4" aria-hidden="true" />
+        <span className="text-muted-foreground text-xs font-semibold tracking-[0.12em] uppercase">
+          Audio notes
+        </span>
+        {tab === "history" && (
+          <Button
+            variant="ghost"
+            size="xs"
+            className="ml-auto"
+            onClick={() => {
+              setTab("new");
+              setSelectedDetail(null);
+            }}
+          >
+            <RiAddLine aria-hidden="true" />
+            New recording
+          </Button>
+        )}
       </div>
 
       {/* Body */}
-      <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 0, minHeight: 0 }}>
-        {tab === "new" && (
-          reviewState ? (
+      <div className="freshr-scroll flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
+        {tab === "new" &&
+          (reviewState ? (
             <ReviewPanel
               transcriptId={reviewState.id}
               initialTranscript={reviewState.transcript}
@@ -887,12 +947,11 @@ export default function AudioColumn({
               canMutate={canMutate}
               onUpgrade={onUpgrade}
             />
-          )
-        )}
+          ))}
 
-        {tab === "history" && (
-          detailLoading ? (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", flex: 1, gap: 10, fontFamily: "'IBM Plex Mono', monospace", fontSize: "0.72rem", color: "#888" }}>
+        {tab === "history" &&
+          (detailLoading ? (
+            <div className="text-muted-foreground flex flex-1 items-center justify-center gap-2 text-sm">
               <SpinnerIcon size={16} /> Loading…
             </div>
           ) : selectedDetail ? (
@@ -906,14 +965,11 @@ export default function AudioColumn({
               onUpgrade={onUpgrade}
             />
           ) : (
-            <HistoryPanel
-              transcripts={transcripts}
-              loading={historyLoading}
-              onSelect={handleSelectTranscript}
-              onDelete={handleDeleteTranscript}
-            />
-          )
-        )}
+            // Nothing selected in the sidebar yet.
+            <div className="text-muted-foreground flex flex-1 items-center justify-center text-sm">
+              Pick a transcript from the sidebar to read it.
+            </div>
+          ))}
       </div>
     </div>
   );

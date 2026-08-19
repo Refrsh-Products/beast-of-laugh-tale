@@ -2,12 +2,44 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" href="/brand/app-icon-1024.png" />
+    <meta name="theme-color" content="#f1f1e7" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Freshr — Your Personal Study AI</title>
+    <script>
+      // Runs before first paint so a dark-mode user never sees a white flash.
+      // Deliberately duplicates the small amount of logic in src/lib/theme.ts —
+      // the bundle loads too late to prevent the flash. Keep the storage key
+      // ("freshr_theme") and the class name in step with that module.
+      (function () {
+        try {
+          var pref = localStorage.getItem("freshr_theme") || "system";
+          var dark =
+            pref === "dark" ||
+            (pref === "system" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.classList.toggle("dark", dark);
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute("content", dark ? "#0d211b" : "#f1f1e7");
+        } catch (e) {
+          /* storage blocked — fall back to the light default */
+        }
+      })();
+    </script>
+    <title>FRESHR</title>
+    <!-- Instrument Sans, the brand typeface, is self-hosted via
+         @fontsource-variable and imported from src/index.css. Syne and IBM Plex
+         Mono are legacy faces still referenced by not-yet-migrated inline
+         styles; remove this link once those screens are on design tokens. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div id="root"></div>

@@ -1,6 +1,7 @@
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 
 export type ProfileTab = "profile" | "account" | "payment" | "support";
 
@@ -13,6 +14,13 @@ interface ProfileSidebarProps {
   onTabChange: (tab: ProfileTab) => void;
 }
 
+const TABS: Array<{ id: ProfileTab; label: string }> = [
+  { id: "profile", label: "Profile" },
+  { id: "account", label: "Account" },
+  { id: "payment", label: "Upgrade plan" },
+  { id: "support", label: "Support" },
+];
+
 function NavItem({
   label,
   active,
@@ -23,29 +31,19 @@ function NavItem({
   onClick: () => void;
 }) {
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
-      onMouseEnter={(e) => {
-        if (!active) (e.currentTarget as HTMLElement).style.color = B;
-      }}
-      onMouseLeave={(e) => {
-        if (!active) (e.currentTarget as HTMLElement).style.color = "#000000";
-      }}
-      style={{
-        padding: "10px 0 10px 14px",
-        borderLeft: `3px solid ${active ? B : "transparent"}`,
-        fontFamily: "'IBM Plex Mono', monospace",
-        fontSize: "0.75rem",
-        fontWeight: 700,
-        letterSpacing: "0.1em",
-        color: B,
-        cursor: "pointer",
-        userSelect: "none",
-        transition: "color 0.12s",
-      }}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "focus-visible:ring-ring/50 cursor-pointer border-l-[3px] py-2.5 pl-3.5 text-left text-xs font-bold tracking-[0.1em] uppercase transition-colors focus-visible:ring-[3px] focus-visible:outline-none",
+        active
+          ? "border-primary text-foreground"
+          : "text-muted-foreground hover:text-foreground border-transparent",
+      )}
     >
       {label}
-    </div>
+    </button>
   );
 }
 
@@ -58,125 +56,43 @@ export default function ProfileSidebar({
   onTabChange,
 }: ProfileSidebarProps) {
   return (
-    <div
-      style={{
-        width: 220,
-        minWidth: 220,
-        background: W,
-        borderRight: `2px solid ${B}`,
-        padding: "40px 24px",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      {/* Avatar */}
-      <div
-        style={{
-          width: 60,
-          height: 60,
-          background: G,
-          border: `3px solid ${B}`,
-          borderRadius: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          overflow: "hidden",
-          position: "relative",
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 800,
-          fontSize: "1.4rem",
-          color: B,
-          boxShadow: `3px 3px 0 ${B}`,
-          userSelect: "none",
-          marginBottom: 16,
-          flexShrink: 0,
-        }}
-      >
-        {avatar.startsWith("http") ? (
-          <img
-            src={avatar}
-            alt={name}
-            referrerPolicy="no-referrer"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : (
-          avatar // This is the single letter fallback
+    <div className="border-border bg-card flex w-55 min-w-55 flex-col border-r px-6 py-10">
+      <Avatar className="mb-4 size-15">
+        {avatar.startsWith("http") && (
+          <AvatarImage src={avatar} alt={name} referrerPolicy="no-referrer" />
         )}
-      </div>
+        <AvatarFallback className="font-heading text-xl font-bold">
+          {avatar.startsWith("http") ? (name || "?").charAt(0) : avatar}
+        </AvatarFallback>
+      </Avatar>
 
-      {/* Name */}
-      <div
-        style={{
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 800,
-          fontSize: "1rem",
-          letterSpacing: "-0.01em",
-          lineHeight: 1.2,
-          marginBottom: 6,
-          wordBreak: "break-word",
-        }}
-      >
+      <p className="font-heading text-foreground mb-1.5 text-base leading-tight font-bold break-words">
         {name || "Your Name"}
-      </div>
+      </p>
 
-      {/* Email */}
-      <div
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#000000",
-          marginBottom: 16,
-          wordBreak: "break-all",
-          lineHeight: 1.6,
-        }}
-      >
+      <p className="text-muted-foreground mb-4 text-xs leading-relaxed break-all">
         {email}
-      </div>
+      </p>
 
-      {/* Plan badge */}
-      <div
-        style={{
-          display: "inline-block",
-          border: `2px solid ${B}`,
-          padding: "4px 10px",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          fontWeight: 700,
-          letterSpacing: "0.1em",
-          background: plan === "FREE" ? W : G,
-          marginBottom: 32,
-          alignSelf: "flex-start",
-        }}
+      <Badge
+        variant={plan === "FREE" ? "outline" : "secondary"}
+        className="mb-8 self-start"
       >
-        {plan} PLAN
-      </div>
+        {plan} plan
+      </Badge>
 
-      {/* Divider */}
-      <div style={{ height: 1, background: "#e5e5e5", marginBottom: 16 }} />
+      <Separator className="mb-4" />
 
-      {/* Nav */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <NavItem
-          label="PROFILE"
-          active={activeTab === "profile"}
-          onClick={() => onTabChange("profile")}
-        />
-        <NavItem
-          label="ACCOUNT"
-          active={activeTab === "account"}
-          onClick={() => onTabChange("account")}
-        />
-        <NavItem
-          label="UPGRADE PLAN"
-          active={activeTab === "payment"}
-          onClick={() => onTabChange("payment")}
-        />
-        <NavItem
-          label="SUPPORT"
-          active={activeTab === "support"}
-          onClick={() => onTabChange("support")}
-        />
-      </div>
+      <nav className="flex flex-col gap-0.5">
+        {TABS.map((tab) => (
+          <NavItem
+            key={tab.id}
+            label={tab.label}
+            active={activeTab === tab.id}
+            onClick={() => onTabChange(tab.id)}
+          />
+        ))}
+      </nav>
     </div>
   );
 }

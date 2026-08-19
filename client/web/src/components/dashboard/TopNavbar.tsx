@@ -1,153 +1,102 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMediaQuery } from "../../hooks/useMediaQuery";
-import { BP_PHONE } from "../../constants/breakpoints";
-
-const G = "#84e487";
-const B = "#000000";
-const W = "#FFFFFF";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import FullLogoMark from "../logo/FullLogoMark";
+import ThemeToggle from "@/components/ui/ThemeToggle";
+import { RiUser3Line, RiLifebuoyLine, RiLogoutBoxRLine } from "@remixicon/react";
 
 interface TopNavbarProps {
   userEmail: string;
   userName?: string;
   profilePictureUrl?: string;
+  onLogout?: () => void;
 }
 
 export default function TopNavbar({
   userEmail,
   userName,
   profilePictureUrl,
+  onLogout,
 }: TopNavbarProps) {
   const navigate = useNavigate();
-  const isPhone = useMediaQuery(BP_PHONE);
   const displayLabel = userName?.trim() || userEmail;
-  const avatarLetter = (userName || userEmail || "?")[0].toUpperCase();
-  const [avatarError, setAvatarError] = useState(false);
-  const [profileHovered, setProfileHovered] = useState(false);
-
-  const hasAvatar =
-    !!profilePictureUrl && profilePictureUrl.trim() !== "" && !avatarError;
-
-  useEffect(() => {
-    setAvatarError(false);
-  }, [profilePictureUrl]);
+  const initial = (userName || userEmail || "?").trim()[0]?.toUpperCase() ?? "?";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: isPhone ? "0 16px" : "0 64px",
-        height: 56,
-        background: W,
-        color: B,
-        flexShrink: 0,
-        borderBottom: `3px solid ${B}`,
-      }}
-    >
-      {/* Logo */}
-      <div
+    <header className="bg-card border-border flex h-14 shrink-0 items-center justify-between gap-4 border-b px-4 md:px-8">
+      <button
+        type="button"
         onClick={() => navigate("/dashboard")}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 4,
-          cursor: "pointer",
-          userSelect: "none",
-        }}
+        aria-label="FRESHR dashboard"
+        className="text-primary flex cursor-pointer items-start gap-2"
       >
-        <span
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: isPhone ? "1.25rem" : "1.5rem",
-            letterSpacing: "-0.02em",
-            color: G,
-            lineHeight: 1,
-          }}
-        >
-          FRESHR
-        </span>
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.6rem",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            background: B,
-            color: G,
-            padding: "2px 4px",
-            alignSelf: "flex-start",
-            marginTop: -8,
-          }}
+        <FullLogoMark className="h-5 md:h-6" />
+        <Badge
+          variant="secondary"
+          className="hidden text-[0.6rem] font-bold sm:inline-flex"
         >
           BETA
-        </span>
-      </div>
+        </Badge>
+      </button>
 
-      {/* Profile */}
-      <div
-        onClick={() => navigate("/profile")}
-        onMouseEnter={() => setProfileHovered(true)}
-        onMouseLeave={() => setProfileHovered(false)}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          cursor: "pointer",
-          userSelect: "none",
-          padding: "5px 8px",
-          background: profileHovered ? "#f0f0f0" : "transparent",
-          transition: "background 0.12s",
-          minWidth: 0,
-        }}
-      >
-        <div
-          style={{
-            width: 28,
-            height: 28,
-            background: hasAvatar ? "transparent" : G,
-            color: B,
-            borderRadius: 0,
-            border: `2px solid ${B}`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "0.75rem",
-            flexShrink: 0,
-            overflow: "hidden",
-          }}
-        >
-          {hasAvatar ? (
-            <img
-              src={profilePictureUrl}
-              alt={displayLabel}
-              onError={() => setAvatarError(true)}
-              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-            />
-          ) : (
-            avatarLetter
+      <div className="flex items-center gap-1">
+        <ThemeToggle />
+
+        <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="h-auto gap-2 px-2 py-1.5">
+            <Avatar className="size-7">
+              {/* AvatarImage removes itself when the URL fails to load, so the
+                  fallback initial covers the broken-image case for free. */}
+              <AvatarImage src={profilePictureUrl} alt="" />
+              <AvatarFallback className="bg-secondary text-secondary-foreground text-xs font-semibold">
+                {initial}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-muted-foreground hidden max-w-40 truncate text-sm md:inline">
+              {displayLabel}
+            </span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel className="flex flex-col gap-0.5">
+            <span className="truncate font-semibold">{displayLabel}</span>
+            {userName?.trim() && (
+              <span className="text-muted-foreground truncate text-xs font-normal">
+                {userEmail}
+              </span>
+            )}
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => navigate("/profile")}>
+            <RiUser3Line aria-hidden="true" />
+            Profile &amp; account
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => navigate("/support")}>
+            <RiLifebuoyLine aria-hidden="true" />
+            Support
+          </DropdownMenuItem>
+          {onLogout && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onSelect={onLogout}>
+                <RiLogoutBoxRLine aria-hidden="true" />
+                Log out
+              </DropdownMenuItem>
+            </>
           )}
-        </div>
-        {!isPhone && (
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              color: "#000000",
-              maxWidth: 160,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {displayLabel}
-          </span>
-        )}
+        </DropdownMenuContent>
+        </DropdownMenu>
       </div>
-    </div>
+    </header>
   );
 }

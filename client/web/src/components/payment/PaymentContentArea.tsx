@@ -1,98 +1,28 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import type { PaymentFallbackStatus } from "@freshr/shared";
 import type { ProfileTab } from "../profile-account/ProfileSidebar";
+import PaymentFallbackPanel from "./PaymentFallbackPanel";
 import usePaymentService from "../../services/payment";
 import useAccountService from "../../services/account";
 import { useToast } from "../../hooks/useToast";
-import ToastContainer from "../ui/ToastContainer";
-import { BLACK as B, WHITE as W, GREEN as G } from "../../constants/theme";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import { RiCheckLine } from "@remixicon/react";
+import {
+  PLANS,
+  formatPrice,
+  cycleTotalNote,
+  planLabelForInterval,
+  type BillingInterval,
+  type Plan,
+  type PlanId,
+} from "../../constants/plans";
 
 interface PaymentContentAreaProps {
   activeTab: ProfileTab;
-}
-
-type PlanId = "free" | "monthly" | "semester";
-
-interface Plan {
-  id: PlanId;
-  label: string;
-  tagline: string;
-  price: number;
-  unit: string;
-  badge: string | null;
-  saving: string | null;
-  featured: boolean;
-  features: string[];
-  cta: string;
-  billingInterval: "MONTHLY" | "YEARLY" | null;
-}
-
-const PLANS: Plan[] = [
-  {
-    id: "free",
-    label: "BASIC",
-    tagline: "For students just getting started.",
-    price: 0,
-    unit: "forever",
-    badge: null,
-    saving: null,
-    featured: false,
-    features: [
-      "3 notebooks",
-      "500 MB storage",
-      "5 AI queries / day",
-      "5 quizzes / day",
-      "3 presentations / day",
-      "Community support",
-    ],
-    cta: "Subscribe — Free →",
-    billingInterval: null,
-  },
-  {
-    id: "monthly",
-    label: "PRO",
-    tagline: "For students who are serious.",
-    price: 350,
-    unit: "/ month",
-    badge: "POPULAR",
-    saving: null,
-    featured: true,
-    features: [
-      "Unlimited notebooks",
-      "5 GB storage",
-      "Unlimited AI queries",
-      "Unlimited quizzes",
-      "Unlimited presentations",
-      "Priority support",
-    ],
-    cta: "Subscribe Monthly →",
-    billingInterval: "MONTHLY",
-  },
-  {
-    id: "semester",
-    label: "SCHOLAR",
-    tagline: "For students going all in.",
-    price: 1200,
-    unit: "/ 4 months",
-    badge: "BEST VALUE",
-    saving: "Save 200 BDT vs monthly",
-    featured: false,
-    features: [
-      "Everything in Monthly",
-      "10 GB storage",
-      "Unlimited notebooks",
-      "Unlimited AI queries",
-      "Unlimited quizzes",
-      "Unlimited presentations",
-      "Priority support",
-    ],
-    cta: "Subscribe — One Semester →",
-    billingInterval: "YEARLY",
-  },
-];
-
-function formatPrice(n: number): string {
-  return n.toLocaleString("en-BD");
 }
 
 type ReferralStatus = "idle" | "loading" | "valid" | "invalid" | "already_used";
@@ -103,8 +33,8 @@ export default function PaymentContentArea({
   const paymentService = usePaymentService();
   const accountService = useAccountService();
   const navigate = useNavigate();
-  const { toasts, showToast } = useToast();
-  const [loading, setLoading] = useState<"MONTHLY" | "YEARLY" | null>(null);
+  const { showToast } = useToast();
+  const [loading, setLoading] = useState<BillingInterval | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentPlan, setCurrentPlan] = useState<PlanId>("free");
 
@@ -115,23 +45,56 @@ export default function PaymentContentArea({
   const [discountPct, setDiscountPct] = useState(0);
   const [championName, setChampionName] = useState("");
 
+  // Gateway-outage fallback state. `forcedByError` covers the gap between the
+  // gateway going down and someone flipping the admin toggle: a 502 from
+  // `initiate` puts us into the same contact-sales flow.
+  const [fallback, setFallback] = useState<PaymentFallbackStatus | null>(null);
+  const [forcedByError, setForcedByError] = useState(false);
+  const [assistanceInterval, setAssistanceInterval] =
+    useState<BillingInterval | null>(null);
+  const [accountPhone, setAccountPhone] = useState("");
+  const fallbackPanelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (activeTab !== "payment") return;
     accountService
       .getAccount()
       .then((res) => {
         if (!res) return;
-        const { tier_plan, billing_interval, subscription_status } =
+        const { tier_plan, billing_interval, subscription_status, phone } =
           res.account;
+        setAccountPhone(phone ?? "");
         if (tier_plan === "PAID" && subscription_status === "ACTIVE") {
           if (billing_interval === "MONTHLY") setCurrentPlan("monthly");
-          else if (billing_interval === "YEARLY") setCurrentPlan("semester");
+          // "YEARLY" is the legacy value for the same 4-month Scholar plan.
+          else if (billing_interval === "SEMESTER" || billing_interval === "YEARLY")
+            setCurrentPlan("semester");
         } else {
           setCurrentPlan("free");
         }
       })
       .catch(() => {});
   }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab !== "payment") return;
+    paymentService
+      .getFallbackStatus()
+      .then(setFallback)
+      // A failed status check must not block checkout — assume the gateway is
+      // fine and let the 502 path catch it if it isn't.
+      .catch(() => setFallback(null));
+  }, [activeTab]);
+
+  // Bring the form into view when a plan is picked; the panel sits above the
+  // cards, so otherwise the click would appear to do nothing.
+  useEffect(() => {
+    if (assistanceInterval === null) return;
+    fallbackPanelRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+  }, [assistanceInterval]);
 
   const handleApplyReferral = async () => {
     const code = referralInput.trim();
@@ -171,7 +134,7 @@ export default function PaymentContentArea({
     return Math.round(plan.price * (1 - discountPct / 100));
   };
 
-  const handlePayment = async (billing_interval: "MONTHLY" | "YEARLY") => {
+  const handlePayment = async (billing_interval: BillingInterval) => {
     setLoading(billing_interval);
     setError(null);
     try {
@@ -180,64 +143,63 @@ export default function PaymentContentArea({
         appliedCode || undefined,
       );
       window.location.href = payment_url;
-    } catch {
-      setError("Failed to initiate payment. Please try again.");
+    } catch (err) {
+      const statusCode = (err as { response?: { status?: number } })?.response
+        ?.status;
+      if (statusCode === 502) {
+        // The gateway is down and nobody has flipped the toggle yet — switch to
+        // the contact-sales flow rather than dead-ending on an error message.
+        setForcedByError(true);
+        setAssistanceInterval(billing_interval);
+      } else {
+        setError("Failed to initiate payment. Please try again.");
+      }
       setLoading(null);
     }
+  };
+
+  const handleAssistanceSubmit = (phone: string) => {
+    if (!assistanceInterval) {
+      return Promise.reject(new Error("No plan selected."));
+    }
+    return paymentService.requestAssistance(assistanceInterval, {
+      referral_code: appliedCode || undefined,
+      phone: phone || undefined,
+    });
   };
 
   if (activeTab !== "payment") return null;
 
   const isDiscountApplied = referralStatus === "valid" && discountPct > 0;
+  const fallbackActive = fallback?.enabled === true || forcedByError;
 
   return (
     <div>
-      <h2
-        style={{
-          fontFamily: "'Syne', sans-serif",
-          fontWeight: 800,
-          fontSize: "1.5rem",
-          letterSpacing: "-0.02em",
-          marginBottom: 8,
-          lineHeight: 1.1,
-        }}
-      >
+      <h2 className="font-heading text-foreground mb-2 text-2xl leading-tight font-bold tracking-tight">
         Pick your edge.
       </h2>
-      <p
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.78rem",
-          color: "#000000",
-          marginBottom: 24,
-        }}
-      >
+      <p className="text-muted-foreground mb-6 text-sm">
         One semester can change everything. Priced like it.
       </p>
 
-      {/* ── Referral code section ── */}
+      {/* ── Referral code ── */}
       <div
-        style={{
-          border: `2px solid ${B}`,
-          padding: "16px 20px",
-          marginBottom: 24,
-          background: isDiscountApplied ? "#f0fdf0" : W,
-        }}
+        className={cn(
+          "mb-6 rounded-2xl border p-5",
+          isDiscountApplied
+            ? "border-success bg-success/10"
+            : "border-border bg-card",
+        )}
       >
-        <div
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.78rem",
-            fontWeight: 700,
-            marginBottom: 10,
-            letterSpacing: "0.04em",
-          }}
+        <label
+          htmlFor="referral-code-input"
+          className="text-foreground mb-2.5 block text-sm font-semibold"
         >
           Have a referral code?
-        </div>
+        </label>
 
-        <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
-          <input
+        <div className="flex items-stretch gap-2">
+          <Input
             id="referral-code-input"
             type="text"
             value={referralInput}
@@ -256,358 +218,202 @@ export default function PaymentContentArea({
             }}
             placeholder="e.g. ABC-FRE-123"
             disabled={isDiscountApplied || referralStatus === "loading"}
-            style={{
-              flex: 1,
-              border: `2px solid ${B}`,
-              padding: "8px 12px",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.78rem",
-              letterSpacing: "0.06em",
-              outline: "none",
-              background: isDiscountApplied ? "#e8f5e9" : W,
-              color: B,
-              minWidth: 0,
-            }}
+            className="tracking-[0.06em]"
           />
           {!isDiscountApplied ? (
-            <button
+            <Button
               id="apply-referral-btn"
               onClick={handleApplyReferral}
               disabled={!referralInput.trim() || referralStatus === "loading"}
-              style={{
-                background: B,
-                color: W,
-                border: `2px solid ${B}`,
-                padding: "8px 16px",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                cursor:
-                  !referralInput.trim() || referralStatus === "loading"
-                    ? "not-allowed"
-                    : "pointer",
-                whiteSpace: "nowrap",
-                opacity:
-                  !referralInput.trim() || referralStatus === "loading"
-                    ? 0.5
-                    : 1,
-              }}
             >
-              {referralStatus === "loading" ? "CHECKING..." : "APPLY CODE →"}
-            </button>
+              {referralStatus === "loading" ? "Checking…" : "Apply code"}
+            </Button>
           ) : (
-            <button
+            <Button
               id="remove-referral-btn"
+              variant="outline"
               onClick={handleRemoveReferral}
-              style={{
-                background: W,
-                color: B,
-                border: `2px solid ${B}`,
-                padding: "8px 16px",
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-              }}
             >
-              REMOVE
-            </button>
+              Remove
+            </Button>
           )}
         </div>
 
         {isDiscountApplied && (
-          <div
-            style={{
-              marginTop: 10,
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              color: "#1a6e1a",
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <span>✓</span>
-            <span>
-              {discountPct}% discount applied
-              {championName ? ` (via ${championName})` : ""}
-            </span>
-          </div>
+          <p className="text-success mt-2.5 flex items-center gap-1.5 text-sm font-semibold">
+            <RiCheckLine className="size-4" aria-hidden="true" />
+            {discountPct}% discount applied
+            {championName ? ` (via ${championName})` : ""}
+          </p>
         )}
       </div>
 
       {error && (
         <div
-          style={{
-            border: `2px solid ${B}`,
-            background: "#ffe5e5",
-            padding: "12px 16px",
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            fontWeight: 700,
-            marginBottom: 24,
-          }}
+          role="alert"
+          className="border-destructive bg-destructive/10 text-destructive mb-6 rounded-2xl border px-4 py-3 text-sm font-semibold"
         >
           {error}
         </div>
       )}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: 16,
-        }}
-      >
+      {fallbackActive && (
+        <div ref={fallbackPanelRef}>
+          <PaymentFallbackPanel
+            // Re-key on the plan so switching plans returns to the form.
+            key={assistanceInterval ?? "none"}
+            headline={
+              fallback?.headline ?? "Online payment is temporarily unavailable"
+            }
+            message={
+              fallback?.message ??
+              "We're sorry for the inconvenience — our payment gateway is down right now. Leave your details and our team will contact you to get your paid access sorted."
+            }
+            whatsappUrl={fallback?.whatsapp_url ?? ""}
+            planLabel={
+              assistanceInterval
+                ? planLabelForInterval(assistanceInterval)
+                : null
+            }
+            defaultPhone={accountPhone}
+            referralCode={isDiscountApplied ? appliedCode : ""}
+            onSubmit={handleAssistanceSubmit}
+          />
+        </div>
+      )}
+
+      <div className="grid gap-4 sm:grid-cols-[repeat(auto-fit,minmax(13rem,1fr))]">
         {PLANS.map((plan) => {
           const discountedPrice = getDiscountedPrice(plan);
           const hasDiscount = discountedPrice !== null;
 
+          const isCurrent = plan.id === currentPlan;
+          const isPaidUserOnFreeCard =
+            plan.id === "free" && currentPlan !== "free";
+          const isInactive = isCurrent || isPaidUserOnFreeCard;
+          const isLoading =
+            plan.billingInterval !== null && loading === plan.billingInterval;
+
+          const isSelectedForAssistance =
+            fallbackActive &&
+            plan.billingInterval !== null &&
+            plan.billingInterval === assistanceInterval;
+
+          let label: string;
+          if (isLoading) label = "Redirecting…";
+          else if (isCurrent) label = "Current plan";
+          else if (isPaidUserOnFreeCard) label = "Included";
+          else if (isSelectedForAssistance) label = "Selected";
+          else if (fallbackActive && plan.billingInterval !== null)
+            label = "Request paid access";
+          else label = plan.cta;
+
           return (
             <div
               key={plan.id}
-              style={{
-                border: `3px solid ${B}`,
-                padding: "28px 24px",
-                display: "flex",
-                flexDirection: "column",
-                background: plan.id === "semester" ? G : W,
-                boxShadow: plan.id === "semester" ? `4px 4px 0 ${B}` : "none",
-                position: "relative",
-              }}
+              className={cn(
+                "relative flex flex-col rounded-3xl border p-6",
+                plan.featured
+                  ? "border-primary bg-card"
+                  : "border-border bg-card",
+              )}
             >
-              {/* Badge row: plan badge + discount badge */}
               {(plan.badge || hasDiscount) && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: -13,
-                    left: 20,
-                    display: "flex",
-                    gap: 6,
-                  }}
-                >
+                <div className="absolute -top-3 left-5 flex gap-1.5">
                   {plan.badge && (
-                    <div
-                      style={{
-                        background: B,
-                        color: W,
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        letterSpacing: "0.14em",
-                        padding: "4px 10px",
-                      }}
-                    >
-                      {plan.badge}
-                    </div>
+                    <Badge variant="default">{plan.badge}</Badge>
                   )}
                   {hasDiscount && (
-                    <div
-                      style={{
-                        background: "#1a6e1a",
-                        color: W,
-                        fontFamily: "'IBM Plex Mono', monospace",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        letterSpacing: "0.14em",
-                        padding: "4px 10px",
-                      }}
-                    >
+                    <Badge className="bg-success text-success-foreground">
                       {discountPct}% OFF
-                    </div>
+                    </Badge>
                   )}
                 </div>
               )}
 
-              <div
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.14em",
-                  marginBottom: 8,
-                }}
-              >
+              <div className="text-muted-foreground mb-2 text-xs font-semibold tracking-[0.14em] uppercase">
                 {plan.label}
               </div>
 
-              <div
-                style={{
-                  fontFamily: "'Syne', sans-serif",
-                  fontWeight: 800,
-                  fontSize: "2rem",
-                  lineHeight: 1,
-                  marginBottom: 2,
-                }}
-              >
-                {hasDiscount && (
-                  <div
-                    style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.85rem",
-                      fontWeight: 700,
-                      color: "#888",
-                      textDecoration: "line-through",
-                      marginBottom: 2,
-                    }}
-                  >
-                    ৳{formatPrice(plan.price)}
-                  </div>
-                )}
+              {hasDiscount && (
+                <div className="text-muted-foreground mb-0.5 text-sm font-semibold line-through">
+                  ৳{formatPrice(plan.price)}
+                </div>
+              )}
+              <div className="font-heading text-foreground mb-0.5 text-3xl leading-none font-bold">
                 ৳{formatPrice(hasDiscount ? discountedPrice! : plan.price)}
               </div>
-              <div
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  color: "#000000",
-                  marginBottom: 6,
-                }}
-              >
+              <div className="text-muted-foreground mb-1.5 text-xs">
                 {plan.unit}
               </div>
 
+              {cycleTotalNote(plan, hasDiscount ? discountPct : 0) && (
+                <div className="text-muted-foreground mb-1.5 text-xs">
+                  {cycleTotalNote(plan, hasDiscount ? discountPct : 0)}
+                </div>
+              )}
+
               {plan.saving && (
-                <div
-                  style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    marginBottom: 8,
-                    color: "#1a6e1a",
-                  }}
-                >
+                <div className="text-success mb-2 text-xs font-semibold">
                   ↓ {plan.saving}
                 </div>
               )}
 
-              <p
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: "0.75rem",
-                  color: "#000000",
-                  marginBottom: 20,
-                  lineHeight: 1.6,
-                }}
-              >
+              <p className="text-muted-foreground mb-5 text-xs leading-relaxed">
                 {plan.tagline}
               </p>
 
-              <div
-                style={{
-                  borderTop: `2px solid ${B}`,
-                  paddingTop: 16,
-                  marginBottom: 24,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  flex: 1,
+              <ul className="border-border mb-6 flex flex-1 flex-col gap-2 border-t pt-4">
+                {plan.features.map((f) => (
+                  <li
+                    key={f}
+                    className="text-foreground flex items-center gap-2 text-xs"
+                  >
+                    <RiCheckLine
+                      className="text-primary size-3.5 shrink-0"
+                      aria-hidden="true"
+                    />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+
+              <Button
+                className="w-full"
+                variant={plan.featured ? "default" : "outline"}
+                disabled={isInactive || loading !== null}
+                onClick={() => {
+                  if (isInactive) return;
+                  if (!plan.billingInterval) {
+                    navigate("/dashboard");
+                  } else if (fallbackActive) {
+                    // Checkout is off entirely while the gateway is down; the
+                    // plan choice just feeds the contact-sales request.
+                    setAssistanceInterval(plan.billingInterval);
+                  } else {
+                    handlePayment(plan.billingInterval);
+                  }
                 }}
               >
-                {plan.features.map((f) => (
-                  <div
-                    key={f}
-                    style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.75rem",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                    }}
-                  >
-                    <span style={{ fontWeight: 700 }}>◆</span> {f}
-                  </div>
-                ))}
-              </div>
-
-              {(() => {
-                const isCurrent = plan.id === currentPlan;
-                const isPaidUserOnFreeCard =
-                  plan.id === "free" && currentPlan !== "free";
-                const isInactive = isCurrent || isPaidUserOnFreeCard;
-                const isLoading =
-                  plan.billingInterval !== null &&
-                  loading === plan.billingInterval;
-                let label: string;
-                if (isLoading) label = "REDIRECTING...";
-                else if (isCurrent) label = "Current Plan";
-                else if (isPaidUserOnFreeCard) label = "Included";
-                else label = plan.cta;
-                return (
-                  <button
-                    disabled={isInactive || loading !== null}
-                    onClick={() => {
-                      if (isInactive) return;
-                      if (plan.billingInterval)
-                        handlePayment(plan.billingInterval);
-                      else navigate("/dashboard");
-                    }}
-                    style={{
-                      background: isInactive ? "#eee" : B,
-                      color: isInactive ? B : W,
-                      border: `2px solid ${isInactive ? "#ccc" : B}`,
-                      padding: "10px 16px",
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      letterSpacing: "0.06em",
-                      cursor: isInactive ? "default" : "pointer",
-                      width: "100%",
-                      textAlign: "center",
-                    }}
-                  >
-                    {label}
-                  </button>
-                );
-              })()}
+                {label}
+              </Button>
             </div>
           );
         })}
       </div>
 
-      <p
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#000000",
-          marginTop: 24,
-          textAlign: "center",
-        }}
-      >
+      <p className="text-muted-foreground mt-6 text-center text-xs">
         * Pricing in Bangladeshi Taka (BDT). Features are placeholders — final
         limits subject to change.
       </p>
-      <p
-        style={{
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: "0.75rem",
-          color: "#000000",
-          marginTop: 8,
-          textAlign: "center",
-        }}
-      >
-        <span
-          onClick={() => navigate("/refund-policy")}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.textDecoration = "underline")
-          }
-          onMouseLeave={(e) => (e.currentTarget.style.textDecoration = "none")}
-          style={{
-            cursor: "pointer",
-            fontWeight: 700,
-            textUnderlineOffset: 3,
-          }}
+      <p className="mt-2 text-center text-xs">
+        <Link
+          to="/refund-policy"
+          className="text-primary font-semibold underline underline-offset-[3px] hover:no-underline"
         >
           Read our Refund Policy →
-        </span>
+        </Link>
       </p>
-
-      <ToastContainer toasts={toasts} />
     </div>
   );
 }

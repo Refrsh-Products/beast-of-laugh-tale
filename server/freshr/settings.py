@@ -282,9 +282,12 @@ EMAIL_BACKEND = 'anymail.backends.resend.EmailBackend'
 ANYMAIL = {
     "RESEND_API_KEY": os.environ.get("RESEND_API_KEY"),
 }
-DEFAULT_FROM_EMAIL = 'REFRSH <no-reply@no-reply.freshr.cc>'
-PASSWORD_RESET_FROM_EMAIL = 'REFRSH Support <support@no-reply.freshr.cc>'
-VERIFICATION_FROM_EMAIL = 'REFRSH <security@no-reply.freshr.cc>'
+DEFAULT_FROM_EMAIL = 'FRESHR <no-reply@no-reply.freshr.cc>'
+PASSWORD_RESET_FROM_EMAIL = 'FRESHR Support <support@no-reply.freshr.cc>'
+VERIFICATION_FROM_EMAIL = 'FRESHR <security@no-reply.freshr.cc>'
+WELCOME_FROM_EMAIL = 'FRESHR <hello@no-reply.freshr.cc>'
+NOTIFICATION_FROM_EMAIL = 'FRESHR <no-reply@no-reply.freshr.cc>'
+PROMOTIONAL_FROM_EMAIL = 'FRESHR <hello@no-reply.freshr.cc>'
 FRONTEND_URL = os.getenv("FRONTEND_URL", 'http://localhost:3000')
 
 # Google OAuth2.0
@@ -293,6 +296,9 @@ GOOGLE_OAUTH_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH_CLIENT_SECRET')
 # ZiniPay
 ZINIPAY_API_KEY = os.getenv('ZINIPAY_API_KEY', '')
 ZINIPAY_MONTHLY_PRICE = os.getenv('ZINIPAY_MONTHLY_PRICE', '350')
+ZINIPAY_SEMESTER_PRICE = os.getenv('ZINIPAY_SEMESTER_PRICE', '1200')  # 4-month academic session
+# Legacy price for the old "yearly" (really semester) plan; kept only for the
+# handful of accounts still on that interval. New checkouts use the semester price.
 ZINIPAY_YEARLY_PRICE = os.getenv('ZINIPAY_YEARLY_PRICE', '1200')
 
 USE_MOCK_PAYMENT_GATEWAY = os.getenv('USE_MOCK_PAYMENT_GATEWAY', '').lower() in ('true', '1', 'yes')

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { GREEN as G, BLACK as B, WHITE as W } from "../../constants/theme";
+import { GREEN as G, BLACK as B, WHITE as W } from "./landingTheme";
 import LineWaves from "./LineWaves";
 
 const PLANS = [

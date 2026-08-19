@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import useQuizService from "../../services/quiz";
 import useNotebookService from "../../services/notebooks";
 import type { ToastVariant } from "../useToast";
@@ -6,7 +6,7 @@ import type { UseQuizSessions } from "./useQuizSessions.type";
 import type { QuizSession } from "@freshr/shared";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import type { ActiveView } from "../../components/notebook/OptionsColumn";
+import type { ActiveView } from "../../components/notebook/types";
 import type { NotebookTopic } from "@freshr/shared";
 import { track } from "../../lib/analytics";
 
@@ -35,6 +35,15 @@ const useQuizSessions = (
   const [previousQuizzes, setPreviousQuizzes] = useState<QuizSession[]>([]);
   const [selectedQuiz, setSelectedQuiz] = useState<QuizSession | null>(null);
   const [activeQuiz, setActiveQuiz] = useState<QuizSession | null>(null);
+
+  // Active generation-poll intervals, cleared on unmount so a poll doesn't
+  // outlive the notebook page.
+  const quizPollRefs = useRef<Set<ReturnType<typeof setInterval>>>(new Set());
+  useEffect(() => {
+    return () => {
+      quizPollRefs.current.forEach(clearInterval);
+    };
+  }, []);
 
   useEffect(() => {
     if (activeView !== "quiz") return;
@@ -80,13 +89,18 @@ const useQuizSessions = (
         num_questions: options.questionCount,
       };
 
+      let created: QuizSession;
       try {
-        const quiz = await quizService.createQuizSession(payload);
-        setSelectedQuiz(null);
-        setActiveQuiz(quiz);
+        // 202 — a QUEUED session; generation runs async on the server.
+        created = await quizService.createQuizSession(payload);
       } catch (err) {
+        // Create-time rejections only: quota/archived (403) and validation
+        // (400). Content-unavailable / LLM failures now surface via the poll's
+        // FAILED status below, not here.
         if (axios.isAxiosError(err) && err.response?.status === 403) {
-          if (err.response.data?.code === "notebook_archived") {
+          const code = (err.response.data as { code?: string } | undefined)
+            ?.code;
+          if (code === "notebook_archived") {
             onNotebookArchived();
           } else {
             onUpgradeRequired();
@@ -94,9 +108,38 @@ const useQuizSessions = (
         } else {
           showToast("Failed to generate quiz", "danger");
         }
-      } finally {
         setIsGeneratingQuiz(false);
+        return;
       }
+
+      // Poll the detail endpoint until generation reaches a terminal state.
+      const intervalId = setInterval(async () => {
+        try {
+          const updated = await quizService.fetchQuizSession(created.id!);
+          if (updated.generation_status === "COMPLETED") {
+            clearInterval(intervalId);
+            quizPollRefs.current.delete(intervalId);
+            setSelectedQuiz(null);
+            setActiveQuiz(updated);
+            setIsGeneratingQuiz(false);
+          } else if (updated.generation_status === "FAILED") {
+            clearInterval(intervalId);
+            quizPollRefs.current.delete(intervalId);
+            setIsGeneratingQuiz(false);
+            showToast(
+              updated.error_message ||
+                "Quiz generation failed. Please try again.",
+              "danger",
+            );
+          }
+        } catch {
+          clearInterval(intervalId);
+          quizPollRefs.current.delete(intervalId);
+          setIsGeneratingQuiz(false);
+          showToast("Failed to generate quiz", "danger");
+        }
+      }, 3000);
+      quizPollRefs.current.add(intervalId);
     },
 
     handleQuizComplete: async (userAnswers, _timeTaken, _flaggedQuestions) => {
@@ -156,8 +199,21 @@ const useQuizSessions = (
       onTakeToChat(formatted);
     },
 
-    handleQuizClick: (quiz) => {
-      setSelectedQuiz(quiz);
+    handleQuizClick: async (quiz) => {
+      // Past-quiz list items come from QuizSessionListSerializer, which omits
+      // nested questions — so fetch the full detail before opening the review,
+      // otherwise it renders the score with no questions.
+      if (!quiz.id) {
+        setSelectedQuiz(quiz);
+        return;
+      }
+      try {
+        const full = await quizService.fetchQuizSession(quiz.id);
+        setSelectedQuiz(full);
+      } catch {
+        setSelectedQuiz(quiz);
+        showToast("Failed to load quiz details", "danger");
+      }
     },
 
     handleBackToGenerator: () => {

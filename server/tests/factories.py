@@ -1,8 +1,12 @@
 import factory
 from factory.django import DjangoModelFactory
 from users.models import User
-from accounts.models import Account, TierPlan
-from notebooks.models import Notebook
+from decimal import Decimal
+from accounts.models import Account, BillingInterval, TierPlan
+from payments.models import Payment
+from campus_champions.models import CampusChampion
+from quiz.models import QuizSession, QuizQuestion, QuestionType
+from notebooks.models import Notebook, NotebookFile
 
 
 class UserFactory(DjangoModelFactory):
@@ -51,26 +55,104 @@ class AccountFactory(DjangoModelFactory):
             (see quota.get_effective_plan).
     """
 
-    class Meta:  # type: ignore
+    class Meta: # type: ignore
         model = Account
 
-    user = factory.SubFactory(UserFactory)
+    user = factory.SubFactory(UserFactory) # type: ignore
+
     first_name = "Test"
     last_name = "User"
     address1 = "123 Test St"
-    city = "Testville"
-    postal_code = "12345"
-    phone = "0000000000"
+    city = "Dhaka"
+    postal_code = "1200"
+    phone = "01700000000"
     tier_plan = TierPlan.FREE
     storage_bytes_used = 0
 
 
-class NotebookFactory(DjangoModelFactory):
-    """A Notebook owned by a user."""
 
-    class Meta:  # type: ignore
+class PaymentFactory(DjangoModelFactory):
+    """
+    Blueprint for creating Payment objects in tests.
+    """
+
+    class Meta: # type: ignore
+        model = Payment
+
+    account = factory.SubFactory(AccountFactory) # type: ignore
+
+    amount = Decimal("350.00")
+    billing_interval = BillingInterval.MONTHLY
+
+
+class CampusChampionFactory(DjangoModelFactory):
+    """
+    Blueprint for creating Campus Champion objects in tests.
+    """
+
+    class Meta: # type: ignore
+        model = CampusChampion
+
+    # The generated referral code sequence depends on name: first-3-letters-of-name + random 3 digits 
+    # factory's name is constant. 
+    # So every champion starts 'TES-FRE-***' with only the digits varying — 1000 combos, 10 retries.
+    # If more needed during create_batch make the name Sequencial
+    name = "Test Campus Champ"
+    contact_email = 'example@email.com'
+    university = 'Testing University'
+    phone_number = '01700000000'
+    notes = 'Test notes'
+
+
+class NotebookFactory(DjangoModelFactory):
+    """
+    Blueprint for creating Notebook objects in tests.
+    """
+
+    class Meta: # type: ignore
         model = Notebook
 
-    user = factory.SubFactory(UserFactory)
-    title = factory.Sequence(lambda n: f"Notebook {n}")  # type: ignore
+    user = factory.SubFactory(UserFactory) # type: ignore
+    # Sequence keeps titles unique across create_batch; archive tests flip is_archived.
+    title = factory.Sequence(lambda n: f"Notebook {n}") # type: ignore
     is_archived = False
+
+
+class QuizSessionFactory(DjangoModelFactory):
+    """
+    Blueprint for creating Quiz Session objects in tests.
+    """
+
+    class Meta: # type: ignore
+        model = QuizSession
+
+    notebook = factory.SubFactory(NotebookFactory) # type: ignore
+    # Nullable self-referential FK — set only for retakes, e.g.
+    # QuizSessionFactory(source_session=original). Defaults to None (a fresh quiz).
+    source_session = None
+    title = "Test Quiz Title"
+    topic = "" # empty topic triggers the "All Topics" generation branch
+    num_questions = 10
+
+
+class QuizQuestionFactory(DjangoModelFactory):
+    """
+    Blueprint for creating Quiz Question objects in tests.
+
+    Defaults to a 4-choice MCQ whose correct_answer ("A") is one of the choices.
+    For a True/False question override choices + type, e.g.
+        QuizQuestionFactory(question_type=QuestionType.TRUE_FALSE,
+                            choices=[], correct_answer="True")
+    """
+
+    class Meta: # type: ignore
+        model = QuizQuestion
+
+    quiz = factory.SubFactory(QuizSessionFactory) # type: ignore
+    question_text = factory.Sequence(lambda n: f"Question {n}?") # type: ignore
+    question_type = QuestionType.MCQ
+    choices = ["A", "B", "C", "D"]
+    correct_answer = "A"
+    explanation = "Because A is correct."
+    # order_index has no model default — Sequence keeps it unique per question.
+    order_index = factory.Sequence(lambda n: n) # type: ignore

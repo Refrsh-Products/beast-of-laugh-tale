@@ -1,5 +1,17 @@
-import { useEffect, type ReactNode } from "react";
-import { BLACK, WHITE } from "../../constants/theme";
+import type { ReactNode } from "react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { VisuallyHidden } from "radix-ui";
+
+/**
+ * Compatibility adapter over the shadcn Sheet.
+ *
+ * The hand-rolled drawer managed its own body-scroll lock, Escape handler and
+ * backdrop, and set role="dialog" without ever trapping focus — so keyboard
+ * users could tab out of an open drawer into the page behind it. Radix's
+ * Dialog (which Sheet wraps) handles all of that properly.
+ *
+ * The prop shape is unchanged so the existing call sites keep working.
+ */
 
 interface MobileDrawerProps {
   open: boolean;
@@ -18,66 +30,23 @@ export default function MobileDrawer({
   children,
   ariaLabel = "Navigation drawer",
 }: MobileDrawerProps) {
-  // Body-scroll lock + ESC to close
-  useEffect(() => {
-    if (!open) return;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open, onClose]);
-
-  if (!open) return null;
-
-  const isLeft = side === "left";
-
   return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1100,
-        display: "flex",
-        flexDirection: isLeft ? "row" : "row-reverse",
-      }}
-      role="dialog"
-      aria-modal="true"
-      aria-label={ariaLabel}
-    >
-      {/* Panel */}
-      <div
-        style={{
-          width,
-          maxWidth: "100%",
-          height: "100dvh",
-          background: WHITE,
-          borderRight: isLeft ? `3px solid ${BLACK}` : "none",
-          borderLeft: !isLeft ? `3px solid ${BLACK}` : "none",
-          overflowY: "auto",
-          animation: `${isLeft ? "drawer-slide-in-left" : "drawer-slide-in-right"} 0.18s ease-out`,
-          flexShrink: 0,
-        }}
-        onClick={(e) => e.stopPropagation()}
+    <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
+      <SheetContent
+        side={side}
+        // Callers pass an arbitrary width, including responsive min()
+        // expressions, so there is no utility class that can express it.
+        // eslint-disable-next-line no-restricted-syntax -- runtime-computed width, not styling
+        style={{ width, maxWidth: "100%" }}
+        className="overflow-y-auto p-0"
       >
+        {/* Radix requires a title for the dialog's accessible name; the
+            drawers render their own headers, so it is visually hidden. */}
+        <VisuallyHidden.Root asChild>
+          <SheetTitle>{ariaLabel}</SheetTitle>
+        </VisuallyHidden.Root>
         {children}
-      </div>
-
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          flex: 1,
-          background: "rgba(0,0,0,0.4)",
-        }}
-      />
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

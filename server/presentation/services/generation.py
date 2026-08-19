@@ -3,8 +3,9 @@ Presentation generation service.
 
 generate_presentation_from_rag() retrieves relevant chunks from the vector
 store for the selected topic, runs a two-stage Claude pipeline (outline ->
-drafts), and returns a structured deck. The Celery task layer wraps this
-function and persists the result.
+drafts) with Wikimedia image lookup overlapping the drafts, and returns a
+structured deck with images already attached to each slide. The Celery task
+layer wraps this function and persists the result.
 
 Unlike quiz generation, this service does NOT silently fall back to mock
 content on failure: empty RAG context raises InsufficientContextError, and
@@ -16,6 +17,7 @@ import os
 import json
 import asyncio
 import concurrent.futures
+import threading
 from typing import TypedDict
 import logging
 
@@ -25,6 +27,17 @@ from anthropic.types import TextBlock
 logger = logging.getLogger(__name__)
 
 MODEL = "claude-haiku-4-5-20251001"
+
+# Slide drafts are independent Claude calls that spend nearly all their time
+# waiting on the network, so a flat cap of 5 just queued decks into waves —
+# slide_count is validated up to 30 (presentation/serializers.py). Bounded
+# rather than unbounded: the Celery worker runs --pool=threads --concurrency=10,
+# so per-task threads multiply across concurrent presentations, and a large
+# simultaneous burst of Haiku calls invites 429s.
+_MAX_DRAFT_WORKERS = 12
+
+# Wikimedia rate-limits aggressive concurrency at the CDN — keep this small.
+_MAX_IMAGE_WORKERS = 3
 
 LAYOUTS = {
     "bullets": {
@@ -119,6 +132,9 @@ class DraftedSlide(_DraftedSlideRequired, total=False):
     quote: str
     quote_source: str
     caption: str
+    # Resolved {query, url, attribution, source_page} entries. Set by the
+    # orchestrator, not by draft_single_slide.
+    images: list[dict]
 
 
 class GeneratedPresentation(TypedDict):
@@ -133,8 +149,30 @@ class InsufficientContextError(Exception):
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
+_anthropic_client: Anthropic | None = None
+_anthropic_client_lock = threading.Lock()
+
+
 def _client() -> Anthropic:
-    return Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+    """Return the process-wide Anthropic client, built on first use.
+
+    Shared rather than per-call so the drafting threads reuse one HTTP
+    connection pool instead of each opening their own — worth roughly 0.1s a
+    call, which is small but free, and every call here is on the critical path.
+    The SDK's sync client wraps a thread-safe httpx.Client, so sharing it across
+    the draft pool is safe. Built lazily so forked gunicorn workers don't
+    inherit a parent's sockets.
+    """
+    global _anthropic_client
+
+    if _anthropic_client is not None:
+        return _anthropic_client
+
+    with _anthropic_client_lock:
+        if _anthropic_client is None:
+            _anthropic_client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+
+    return _anthropic_client
 
 
 def _strip_fences(text: str) -> str:
@@ -384,6 +422,51 @@ Rules:
         drafted["caption"] = raw.get("caption", "") or ""
     return drafted
 
+# ── Stage 2b: images ─────────────────────────────────────────────────────────
+
+def _fetch_one_image(query: str) -> dict:
+    """Fetch a single image, never raising — see services/images.py, image
+    fetching is best-effort and a slide with a placeholder beats a failed deck."""
+    from .images import fallback_image, fetch_wikimedia_image
+
+    try:
+        return fetch_wikimedia_image(query) or fallback_image(query)
+    except Exception:
+        logger.exception("Wikimedia fetch failed for query=%r", query)
+        return fallback_image(query)
+
+
+def _fetch_outline_images(outline: list[OutlineSlide]) -> list[list[dict]]:
+    """Resolve every image the outline asks for, returning one list per slide.
+
+    Queries are deduped so a phrase two slides both want costs one Wikimedia
+    call. Depends only on the outline, which is what lets this run alongside
+    slide drafting rather than after it.
+    """
+    flat_queries: list[tuple[int, str]] = [
+        (i, q)
+        for i, s in enumerate(outline)
+        for q in s.get("image_queries", [])
+    ]
+    per_slide_images: list[list[dict]] = [[] for _ in outline]
+    if not flat_queries:
+        return per_slide_images
+
+    unique_queries = list({q for _, q in flat_queries})
+    with concurrent.futures.ThreadPoolExecutor(max_workers=_MAX_IMAGE_WORKERS) as pool:
+        fetched = dict(zip(unique_queries, pool.map(_fetch_one_image, unique_queries)))
+
+    for slide_idx, query in flat_queries:
+        img = fetched[query]
+        per_slide_images[slide_idx].append({
+            "query": query,
+            "url": img["url"],
+            "attribution": img["attribution"],
+            "source_page": img["source_page"],
+        })
+    return per_slide_images
+
+
 # ── Orchestrator ─────────────────────────────────────────────────────────────
 
 def generate_presentation_from_rag(
@@ -420,39 +503,55 @@ def generate_presentation_from_rag(
 
     # Step 1: Generate the full outline (LLM also picks a polished deck title)
     deck_title, outline = generate_outline(topic, custom_prompt, slide_count, text_length, context)
-    
-    # Step 2: Draft slides concurrently
+
     drafted_slides: list[DraftedSlide | None] = [None] * len(outline)  # Pre-allocate list to maintain correct slide order
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
-        futures = {
-            executor.submit(
-                draft_single_slide, 
-                i, 
-                slide, 
-                outline, 
-                context, 
-                text_length
-            ): i
-            for i, slide in enumerate(outline)
-        }
+    # Step 2: Draft slides and fetch images concurrently. The image queries come
+    # out of the outline and never depend on the drafted text, so fetching them
+    # on a side thread takes Wikimedia off the critical path entirely instead of
+    # tacking it onto the end (it has a 6s timeout and retries — a slow run used
+    # to be added straight to the user's wait).
+    with concurrent.futures.ThreadPoolExecutor(
+        max_workers=1, thread_name_prefix="pres-images"
+    ) as image_executor:
+        images_future = image_executor.submit(_fetch_outline_images, outline)
 
-        # As each task finishes, place it in the correct index
-        for future in concurrent.futures.as_completed(futures):
-            original_index = futures[future]
-            try:
-                drafted_slides[original_index] = future.result()
-            except Exception as e:
-                # Handle potential LLM failures gracefully for individual slides
-                logger.exception(f"Error generating slide {original_index}: {e}")
-                drafted_slides[original_index] = {
-                    "order_index": original_index,
-                    "title": outline[original_index].get("title", "Error generating slide"),
-                    "layout": outline[original_index].get("layout", "bullets"),
-                    "bullets": ["Failed to generate content. Please retry."],
-                    "speaker_notes": "",
-                    "image_queries": outline[original_index].get("image_queries", [])
-                }
+        draft_workers = max(1, min(len(outline), _MAX_DRAFT_WORKERS))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=draft_workers) as executor:
+            futures = {
+                executor.submit(
+                    draft_single_slide,
+                    i,
+                    slide,
+                    outline,
+                    context,
+                    text_length
+                ): i
+                for i, slide in enumerate(outline)
+            }
+
+            # As each task finishes, place it in the correct index
+            for future in concurrent.futures.as_completed(futures):
+                original_index = futures[future]
+                try:
+                    drafted_slides[original_index] = future.result()
+                except Exception as e:
+                    # Handle potential LLM failures gracefully for individual slides
+                    logger.exception(f"Error generating slide {original_index}: {e}")
+                    drafted_slides[original_index] = {
+                        "order_index": original_index,
+                        "title": outline[original_index].get("title", "Error generating slide"),
+                        "layout": outline[original_index].get("layout", "bullets"),
+                        "bullets": ["Failed to generate content. Please retry."],
+                        "speaker_notes": "",
+                        "image_queries": outline[original_index].get("image_queries", [])
+                    }
+
+        per_slide_images = images_future.result()
+
+    for i, slide in enumerate(drafted_slides):
+        if slide is not None:
+            slide["images"] = per_slide_images[i]
 
     # Narrow the optional list to a list of DraftedSlide for return
     final_slides: list[DraftedSlide] = [s for s in drafted_slides if s is not None]

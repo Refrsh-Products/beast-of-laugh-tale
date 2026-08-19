@@ -50,7 +50,8 @@ def test_google_auth_new_user(api_client):
     Then:   200 returned, new user created in DB with registration_method='google'
             and an unusable password (they have no email/password to log in with)
     """
-    with patch("users.views.http_requests.get", return_value=make_google_response()):
+    with patch("users.views.http_requests.get", return_value=make_google_response()), \
+         patch("users.views.send_welcome_email") as mock_welcome:
         response = api_client.post(GOOGLE_OAUTH_URL, {"token": "fake-google-token"})
 
     assert response.status_code == status.HTTP_200_OK
@@ -67,6 +68,9 @@ def test_google_auth_new_user(api_client):
     assert user.registration_method == "google"
     assert not user.has_usable_password()
 
+    # New Google sign-ins are already verified, so they only get the welcome email
+    mock_welcome.assert_called_once_with(user)
+
 
 @pytest.mark.django_db
 def test_google_auth_existing_google_user(api_client):
@@ -79,7 +83,8 @@ def test_google_auth_existing_google_user(api_client):
     existing_user.set_unusable_password()
     existing_user.save()
 
-    with patch("users.views.http_requests.get", return_value=make_google_response(email=existing_user.email)):
+    with patch("users.views.http_requests.get", return_value=make_google_response(email=existing_user.email)), \
+         patch("users.views.send_welcome_email") as mock_welcome:
         response = api_client.post(GOOGLE_OAUTH_URL, {"token": "fake-google-token"})
 
     assert response.status_code == status.HTTP_200_OK
@@ -87,6 +92,9 @@ def test_google_auth_existing_google_user(api_client):
     data = response.json()
     assert data["new_user"] is False
     assert "tokens" in data
+
+    # Returning users already got their welcome email on first sign-in
+    mock_welcome.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

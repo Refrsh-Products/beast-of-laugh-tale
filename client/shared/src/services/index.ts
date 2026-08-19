@@ -28,9 +28,15 @@ export type {
   PaymentService,
   Payment,
   ValidateReferralResponse,
+  PaymentFallbackStatus,
+  PaymentAssistanceRequest,
 } from "./payment";
 
-export { createPresentationService } from "./presentation";
+export {
+  createPresentationService,
+  PRESENTATION_THEME_KEYS,
+  DEFAULT_PRESENTATION_THEME_KEY,
+} from "./presentation";
 export type {
   PresentationService,
   PresentationSession,
@@ -38,6 +44,7 @@ export type {
   PresentationCreatePayload,
   PresentationLayout,
   PresentationStatus,
+  PresentationThemeKey,
   SlideImage,
   SlideUpdatePayload,
   TextLength,

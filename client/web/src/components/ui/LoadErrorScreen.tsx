@@ -1,8 +1,6 @@
-import Button from "./Button";
 import FreshrLogo from "../logo/FreshrLogo";
-
-const B = "#000000";
-const W = "#FFFFFF";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface LoadErrorScreenProps {
   title?: string;
@@ -18,57 +16,21 @@ export default function LoadErrorScreen({
   retrying = false,
 }: LoadErrorScreenProps) {
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: "#f5f5f0",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "32px 16px",
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 480,
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${B}`,
-          padding: "40px 40px 36px",
-          boxSizing: "border-box",
-        }}
-      >
-        <FreshrLogo />
-        <h1
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.75rem",
-            letterSpacing: "-0.02em",
-            margin: "0 0 12px",
-            lineHeight: 1.1,
-            color: B,
-          }}
-        >
-          {title}
-        </h1>
-        <p
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.78rem",
-            color: B,
-            margin: "0 0 28px",
-            lineHeight: 1.6,
-          }}
-        >
-          {message}
-        </p>
-        <Button variant="green" fullWidth onClick={onRetry} disabled={retrying}>
-          {retrying ? "Retrying..." : "Try again"}
-        </Button>
-      </div>
+    <div className="bg-background flex min-h-dvh items-center justify-center px-4 py-8">
+      <Card className="w-full max-w-[480px]">
+        <CardContent className="flex flex-col gap-6 p-10">
+          <FreshrLogo />
+          <div className="flex flex-col gap-3">
+            <h1 className="text-3xl leading-tight font-bold tracking-[-0.02em]">
+              {title}
+            </h1>
+            <p className="text-muted-foreground leading-relaxed">{message}</p>
+          </div>
+          <Button onClick={onRetry} disabled={retrying} className="w-full">
+            {retrying ? "Retrying..." : "Try again"}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

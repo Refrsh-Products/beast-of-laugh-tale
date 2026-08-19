@@ -1,5 +1,6 @@
 import pytest
 import factory
+from unittest.mock import patch
 from django.urls import reverse
 from rest_framework import status
 
@@ -133,3 +134,61 @@ def test_register_weak_password(api_client):
         response = api_client.post(REGISTER_URL, payload)
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+# ---------------------------------------------------------------------------
+# Welcome email
+# ---------------------------------------------------------------------------
+
+@pytest.mark.django_db
+def test_register_sends_welcome_email_once(api_client):
+    """
+    Given:  an unregistered email
+    When:   POST /auth/register/
+    Then:   the welcome email is sent exactly once for the newly created account
+
+    Both the welcome and verification sends are mocked so no real network call
+    to Resend happens during the test.
+    """
+    payload = {
+        "email": DEFAULT_EMAIL,
+        "password": DEFAULT_PASSWORD,
+        "password_confirm": DEFAULT_PASSWORD,
+    }
+    with patch("users.views.send_welcome_email") as mock_welcome, \
+         patch("users.views.send_verification_email") as mock_verify:
+        response = api_client.post(REGISTER_URL, payload)
+
+    assert response.status_code == status.HTTP_201_CREATED
+    mock_welcome.assert_called_once()
+    mock_verify.assert_called_once()
+
+    (welcomed_user,), _ = mock_welcome.call_args
+    assert welcomed_user.email == DEFAULT_EMAIL
+
+
+@pytest.mark.django_db
+def test_register_resend_does_not_resend_welcome_email(api_client):
+    """
+    Given:  an existing but unverified account (lost their verification email)
+    When:   they submit the registration form again with the same email
+    Then:   the verification email is resent, but the welcome email is NOT —
+            they already received it on the first registration.
+    """
+    payload = {
+        "email": DEFAULT_EMAIL,
+        "password": DEFAULT_PASSWORD,
+        "password_confirm": DEFAULT_PASSWORD,
+    }
+    with patch("users.views.send_welcome_email"), \
+         patch("users.views.send_verification_email"):
+        first = api_client.post(REGISTER_URL, payload)
+    assert first.status_code == status.HTTP_201_CREATED
+
+    with patch("users.views.send_welcome_email") as mock_welcome, \
+         patch("users.views.send_verification_email") as mock_verify:
+        second = api_client.post(REGISTER_URL, payload)
+
+    assert second.status_code == status.HTTP_201_CREATED
+    mock_welcome.assert_not_called()
+    mock_verify.assert_called_once()

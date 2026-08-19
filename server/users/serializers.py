@@ -87,3 +87,35 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
                 {"new_password_confirm": "Passwords do not match."}
             )
         return attrs
+
+
+class PromotionalEmailSendSerializer(serializers.Serializer):
+    """Admin-triggered promotional campaign send. Every text field maps directly
+    to a slot in emails/promotional.html so the content is fully editable per send
+    — nothing is hardcoded in the template itself."""
+    recipients = serializers.ListField(
+        child=serializers.EmailField(), allow_empty=False, max_length=500,
+    )
+    subject = serializers.CharField(max_length=255)
+    eyebrow = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    heading = serializers.CharField(max_length=200)
+    body = serializers.CharField()
+    cta_text = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    cta_url = serializers.URLField(required=False, allow_blank=True)
+    offer_eyebrow = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    offer_body = serializers.CharField(required=False, allow_blank=True)
+    offer_cta_text = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    offer_cta_url = serializers.URLField(required=False, allow_blank=True)
+
+
+class PromotionalEmailSendResponseSerializer(serializers.Serializer):
+    """Response for a promotional email send: which recipients succeeded, failed,
+    or were skipped because they'd opted out of marketing email."""
+    sent = serializers.ListField(child=serializers.EmailField())
+    failed = serializers.ListField(child=serializers.EmailField())
+    skipped = serializers.ListField(child=serializers.EmailField())
+
+
+class UnsubscribeSerializer(serializers.Serializer):
+    """Opt out of marketing email via the signed token from the email footer."""
+    token = serializers.CharField()

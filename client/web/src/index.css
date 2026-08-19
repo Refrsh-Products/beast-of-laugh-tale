@@ -1,10 +1,335 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/instrument-sans";
 
-*, *::before, *::after {
+@custom-variant dark (&:is(.dark *));
+
+/* =============================================================================
+   DESIGN TOKENS — the single source of truth for the app's visual language.
+   Derived from FRESHR Brandbook V1 (2026).
+
+   This file is the ONLY place in client/web where a raw colour value may
+   appear. Components reference tokens through Tailwind utilities
+   (bg-card, text-muted-foreground, border-border) and never hardcode a value.
+   Rebranding = editing the blocks below.
+
+   Exempt from this rule (documented, not accidental):
+     - src/components/landing/**  — bespoke WebGL/ogl marketing visuals
+     - the presentation exporters — jspdf/pptxgenjs need literal colours at
+       export time and cannot read CSS custom properties
+   ========================================================================== */
+
+/* --- Brand ramps ----------------------------------------------------------
+   The three scales from the brandbook, verbatim. Semantic tokens below are
+   defined in terms of these — reach for a semantic token in components, not
+   a ramp step, unless you genuinely need a specific shade.
+
+   The brand anchors each scale at a different step:
+     Primary   = brand-900 Timber Green  #19392E
+     Secondary = brand-300 Sulu          #B4FF6E
+     Tertiary  = brand-100 Ecru White    #F1F1E7
+   -------------------------------------------------------------------------- */
+:root {
+  --brand-primary-50: #f1f8f4;
+  --brand-primary-100: #dcefe4;
+  --brand-primary-200: #bcdecc;
+  --brand-primary-300: #8fc6ac;
+  --brand-primary-400: #5fa888;
+  --brand-primary-500: #3e8b6b;
+  --brand-primary-600: #2c6f55;
+  --brand-primary-700: #245845;
+  --brand-primary-800: #1e4738;
+  --brand-primary-900: #19392e;
+  --brand-primary-950: #0d211b;
+
+  --brand-secondary-50: #f3ffe5;
+  --brand-secondary-100: #e4ffc7;
+  --brand-secondary-200: #caff95;
+  --brand-secondary-300: #b4ff6e;
+  --brand-secondary-400: #87f625;
+  --brand-secondary-500: #67dd05;
+  --brand-secondary-600: #4db100;
+  --brand-secondary-700: #3b8605;
+  --brand-secondary-800: #32690b;
+  --brand-secondary-900: #2b590e;
+  --brand-secondary-950: #133201;
+
+  --brand-tertiary-50: #f8f8f3;
+  --brand-tertiary-100: #f1f1e7;
+  --brand-tertiary-200: #eaeadb;
+  --brand-tertiary-300: #d3d3b4;
+  --brand-tertiary-400: #bcba8d;
+  --brand-tertiary-500: #aca773;
+  --brand-tertiary-600: #9f9461;
+  --brand-tertiary-700: #8b7c54;
+  --brand-tertiary-800: #756448;
+  --brand-tertiary-900: #61533f;
+  --brand-tertiary-950: #514536;
+
+  /* Brandbook text colours and gradient stops. */
+  --brand-ink: #0e0f0c;
+  --brand-paper: #e0e4de;
+  --brand-gradient-linear: linear-gradient(
+    180deg,
+    var(--brand-primary-600),
+    var(--brand-primary-900)
+  );
+  --brand-gradient-radial: radial-gradient(
+    circle,
+    var(--brand-secondary-300),
+    var(--brand-secondary-500)
+  );
+}
+
+/* --- Semantic tokens: light (default) -------------------------------------
+   Sulu is an ACCENT, never a text colour on a light surface — the brandbook
+   is explicit that the neon green breaks contrast on light backgrounds
+   (it scores 1.3:1 on Ecru). Green text uses Timber Green, which is
+   --primary, so `text-primary` is always the safe choice.
+   -------------------------------------------------------------------------- */
+:root {
+  --background: var(--brand-tertiary-100);
+  --foreground: var(--brand-ink);
+  --card: var(--brand-tertiary-50);
+  --card-foreground: var(--brand-ink);
+  --popover: var(--brand-tertiary-50);
+  --popover-foreground: var(--brand-ink);
+
+  --primary: var(--brand-primary-900);
+  --primary-foreground: var(--brand-paper);
+  --secondary: var(--brand-secondary-300);
+  --secondary-foreground: var(--brand-primary-900);
+
+  --muted: var(--brand-tertiary-200);
+  --muted-foreground: #4a5a50;
+  /* --accent backs hover and selected states across menus, ghost buttons and
+     card surfaces, so it has to be quiet. Sulu is far too loud repeated at
+     that density — it stays reserved for --secondary, where it marks a
+     deliberate call to action. This is the pale end of the Timber Green ramp. */
+  --accent: var(--brand-primary-100);
+  --accent-foreground: var(--brand-primary-900);
+
+  --destructive: #b3261e;
+  --destructive-foreground: #ffffff;
+
+  /* The affirmative counterpart to --destructive, for graded results: a marked
+     answer is right or wrong, and colour is how that reads at a glance. Like
+     --destructive it has to work both as text on a surface and as a fill
+     carrying --success-foreground, so it sits deep on the Sulu ramp rather
+     than on Sulu itself, which fails contrast on every light surface. */
+  --success: var(--brand-secondary-800);
+  --success-foreground: #ffffff;
+
+  /* Three separate jobs, deliberately three tokens:
+       --border  decorative dividers, may be soft
+       --input   the OUTLINE of a control, so it must clear the 3:1 non-text
+                 minimum of WCAG 1.4.11 (the brand's tan border steps only
+                 reach 1.3:1, hence not reusing --border)
+       --field   the FILL inside a control. The shadcn components render this
+                 as bg-field; it has to stay near the surface colour or every
+                 input reads as a muddy block. */
+  --border: var(--brand-tertiary-300);
+  --input: var(--brand-tertiary-700);
+  --field: var(--brand-tertiary-100);
+  --ring: var(--brand-primary-600);
+
+  --chart-1: var(--brand-primary-900);
+  --chart-2: var(--brand-secondary-500);
+  --chart-3: var(--brand-primary-500);
+  --chart-4: var(--brand-secondary-700);
+  --chart-5: var(--brand-primary-300);
+
+  --radius: 0.75rem;
+
+  --sidebar: var(--brand-tertiary-50);
+  --sidebar-foreground: var(--brand-ink);
+  --sidebar-primary: var(--brand-primary-900);
+  --sidebar-primary-foreground: var(--brand-paper);
+  --sidebar-accent: var(--brand-primary-100);
+  --sidebar-accent-foreground: var(--brand-primary-900);
+  --sidebar-border: var(--brand-tertiary-300);
+  --sidebar-ring: var(--brand-primary-600);
+}
+
+/* --- Semantic tokens: dark ------------------------------------------------
+   Dark mode inverts the brand's own logo rule: on a Timber Green surface the
+   mark is Sulu, so --primary becomes the neon and carries Timber Green text.
+   This matches the app icon exactly.
+   -------------------------------------------------------------------------- */
+.dark {
+  --background: var(--brand-primary-950);
+  --foreground: var(--brand-paper);
+  --card: var(--brand-primary-900);
+  --card-foreground: var(--brand-paper);
+  --popover: var(--brand-primary-900);
+  --popover-foreground: var(--brand-paper);
+
+  --primary: var(--brand-secondary-300);
+  --primary-foreground: var(--brand-primary-900);
+  --secondary: var(--brand-primary-700);
+  --secondary-foreground: var(--brand-paper);
+
+  --muted: var(--brand-primary-800);
+  --muted-foreground: #a8bdb0;
+  --accent: var(--brand-primary-600);
+  --accent-foreground: var(--brand-tertiary-100);
+
+  --destructive: #ff8a7a;
+  --destructive-foreground: var(--brand-ink);
+
+  /* Bright enough to read on the dark surfaces, and deliberately a step off
+     --primary (Sulu) so "correct" and "call to action" stay distinguishable. */
+  --success: var(--brand-secondary-400);
+  --success-foreground: var(--brand-ink);
+
+  --border: var(--brand-primary-700);
+  --input: var(--brand-primary-400);
+  --field: var(--brand-primary-800);
+  --ring: var(--brand-secondary-300);
+
+  --chart-1: var(--brand-secondary-300);
+  --chart-2: var(--brand-primary-300);
+  --chart-3: var(--brand-secondary-500);
+  --chart-4: var(--brand-primary-400);
+  --chart-5: var(--brand-secondary-200);
+
+  --sidebar: var(--brand-primary-900);
+  --sidebar-foreground: var(--brand-paper);
+  --sidebar-primary: var(--brand-secondary-300);
+  --sidebar-primary-foreground: var(--brand-primary-900);
+  --sidebar-accent: var(--brand-primary-600);
+  --sidebar-accent-foreground: var(--brand-tertiary-100);
+  --sidebar-border: var(--brand-primary-700);
+  --sidebar-ring: var(--brand-secondary-300);
+}
+
+/* Maps the tokens above onto Tailwind utilities: --color-card becomes
+   bg-card / text-card / border-card, and so on. Adding a token means adding
+   one line here — that is the whole extension mechanism. */
+@theme inline {
+  /* Instrument Sans is the brand's single typeface — headings, body and UI
+     all use it (Brandbook, Typography). --font-mono is not a brand face; it
+     exists only for code and transcript output. */
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-field: var(--field);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Ramp steps as utilities, for the rare case a component needs a specific
+     shade (chart series, illustration fills) rather than a semantic role. */
+
+  /* The two brandbook neutrals. The landing page pins itself to the brand ramp
+     rather than the semantic tokens — a marketing surface has one deliberate
+     look and must not invert with the app's theme — so it needs these two
+     reachable from a className like every other step. */
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-paper: var(--brand-paper);
+
+  --color-brand-primary-50: var(--brand-primary-50);
+  --color-brand-primary-100: var(--brand-primary-100);
+  --color-brand-primary-200: var(--brand-primary-200);
+  --color-brand-primary-300: var(--brand-primary-300);
+  --color-brand-primary-400: var(--brand-primary-400);
+  --color-brand-primary-500: var(--brand-primary-500);
+  --color-brand-primary-600: var(--brand-primary-600);
+  --color-brand-primary-700: var(--brand-primary-700);
+  --color-brand-primary-800: var(--brand-primary-800);
+  --color-brand-primary-900: var(--brand-primary-900);
+  --color-brand-primary-950: var(--brand-primary-950);
+  --color-brand-secondary-50: var(--brand-secondary-50);
+  --color-brand-secondary-100: var(--brand-secondary-100);
+  --color-brand-secondary-200: var(--brand-secondary-200);
+  --color-brand-secondary-300: var(--brand-secondary-300);
+  --color-brand-secondary-400: var(--brand-secondary-400);
+  --color-brand-secondary-500: var(--brand-secondary-500);
+  --color-brand-secondary-600: var(--brand-secondary-600);
+  --color-brand-secondary-700: var(--brand-secondary-700);
+  --color-brand-secondary-800: var(--brand-secondary-800);
+  --color-brand-secondary-900: var(--brand-secondary-900);
+  --color-brand-secondary-950: var(--brand-secondary-950);
+  --color-brand-tertiary-50: var(--brand-tertiary-50);
+  --color-brand-tertiary-100: var(--brand-tertiary-100);
+  --color-brand-tertiary-200: var(--brand-tertiary-200);
+  --color-brand-tertiary-300: var(--brand-tertiary-300);
+  --color-brand-tertiary-400: var(--brand-tertiary-400);
+  --color-brand-tertiary-500: var(--brand-tertiary-500);
+  --color-brand-tertiary-600: var(--brand-tertiary-600);
+  --color-brand-tertiary-700: var(--brand-tertiary-700);
+  --color-brand-tertiary-800: var(--brand-tertiary-800);
+  --color-brand-tertiary-900: var(--brand-tertiary-900);
+  --color-brand-tertiary-950: var(--brand-tertiary-950);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  /* Brandbook type scale tightens tracking as size grows. */
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+  }
+}
+
+*,
+*::before,
+*::after {
   box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
 }
@@ -17,40 +342,173 @@ html, body {
   text-align: left;
 }
 
-@keyframes ticker {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0; }
-}
-
-@keyframes drawer-slide-in-left {
-  from { transform: translateX(-100%); }
-  to   { transform: translateX(0); }
-}
-
-@keyframes drawer-slide-in-right {
-  from { transform: translateX(100%); }
-  to   { transform: translateX(0); }
-}
-
 /* Prevent media from overflowing on small screens */
-img, video {
+img,
+video {
   max-width: 100%;
   height: auto;
 }
 
-.freshr-scroll::-webkit-scrollbar { width: 6px; }
-.freshr-scroll::-webkit-scrollbar-track { background: transparent; }
-.freshr-scroll::-webkit-scrollbar-thumb { background: #ccc; }
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
 
-/* Global scrollbar */
-::-webkit-scrollbar { width: 6px; }
-::-webkit-scrollbar-track { background: #000; }
-::-webkit-scrollbar-thumb { background: #84e487; border-radius: 0; }
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
 
-/* Firefox */
-* { scrollbar-width: thin; scrollbar-color: #84e487 #000; }
+@keyframes drawer-slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes drawer-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.freshr-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.freshr-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.freshr-scroll::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: var(--radius-sm);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--muted);
+}
+
+/* --- Landing page --------------------------------------------------------
+   Two effects the landing design uses repeatedly that have no utility-class
+   equivalent. Both resolve from the brand ramp, so the marketing page still
+   has no colour of its own.
+
+   The landing page deliberately pins itself to the ramp rather than the
+   semantic tokens: it must look identical whether the app is in light or dark
+   mode, the way a printed brochure does. */
+
+/* Highlighter stroke behind a word — sits low so it reads as marker ink
+   rather than a filled block. */
+.landing-mark {
+  background-image: linear-gradient(
+    transparent 55%,
+    color-mix(in srgb, var(--brand-secondary-300) 60%, transparent) 55%
+  );
+  padding-inline: 2px;
+}
+
+/* The lifted-card shadow shared by the hero stack and the deck sections.
+   Two layers: a wide soft cast in Timber Green, and a tight contact shadow
+   in ink. */
+.landing-lift {
+  box-shadow:
+    0 30px 60px -30px color-mix(in srgb, var(--brand-primary-900) 45%, transparent),
+    0 8px 24px -12px color-mix(in srgb, var(--brand-ink) 18%, transparent);
+}
+
+/* Reveal-on-scroll, driven by useRevealOnScroll(). The hook sets
+   data-revealed once an element enters the viewport.
+
+   The hidden state is scoped inside the media query on purpose: with reduced
+   motion the rule never applies at all, so content is visible even if the
+   hook never runs. Never hide something by default that JavaScript has to
+   come back and un-hide. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.6s ease,
+      transform 0.6s ease;
+  }
+  [data-reveal][data-revealed="true"] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* The document scrollbar while the landing page is mounted.
+   
+   The global rule further up paints the thumb with var(--primary) and the
+   track with var(--muted), both of which invert with the app theme. On a page
+   that is deliberately theme-independent that leaves the light-mode visitor
+   with a pale Ecru gutter down the side of a Timber Green page. Scoping off
+   the landing root pins it to the ramp like everything else on the page.
+
+   :has() is used rather than a class toggled from JS so there is no global
+   side effect on <html> that a route change has to remember to clean up. */
+html:has(#landing)::-webkit-scrollbar-track {
+  background: var(--brand-primary-900);
+}
+html:has(#landing)::-webkit-scrollbar-thumb {
+  background: var(--brand-primary-700);
+}
+html:has(#landing) {
+  scrollbar-color: var(--brand-primary-700) var(--brand-primary-900);
+}
+
+/* The hero card's slow tilt.
+   
+   Both the keyframes and the class live inside the media query, so under
+   reduced motion the rule simply does not exist and the card sits square —
+   no animation to override, nothing to reset. */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes landing-tilt {
+    0%,
+    100% {
+      transform: rotate(-0.6deg);
+    }
+    50% {
+      transform: rotate(0.6deg);
+    }
+  }
+  .landing-tilt {
+    animation: landing-tilt 6s ease-in-out infinite;
+  }
+}
+
+/* The soft cast under the hero card stack, so it reads as sitting on a
+   surface rather than floating in the green. */
+.landing-peek-shadow {
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in srgb, var(--brand-ink) 40%, transparent),
+    transparent 70%
+  );
+  filter: blur(8px);
+}

@@ -151,6 +151,7 @@ export function addNotebookFile(
     notebook: notebookId,
     name,
     file_type: fileType,
+    file_size: 0, // no File handle here — the real size arrives from the API
     ingestion_status: "pending",
     uploaded_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
@@ -193,6 +194,7 @@ export function createFile(notebookId: string, file: File): NotebookFile {
     notebook: notebookId,
     name: file.name,
     file_type: file.name.split(".").pop() ?? "unknown",
+    file_size: file.size,
     ingestion_status: "pending",
     uploaded_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

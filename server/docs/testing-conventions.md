@@ -1,4 +1,4 @@
-# Freshr Testing Conventions
+# FRESHR Testing Conventions
 
 **Stack baseline:** Django 6.0.1 · Celery 5.6 · Redis 7 · PostgreSQL 16 + pgvector · Anthropic · Gemini · ZiniPay · React 19 · TypeScript · Vite 7
 

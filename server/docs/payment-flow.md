@@ -1,6 +1,6 @@
 # Payment Flow
 
-Freshr uses [ZiniPay](https://zinipay.com) as its payment gateway. Subscriptions are managed manually — ZiniPay handles the one-time transaction, and the backend activates the subscription upon receiving a successful webhook notification.
+FRESHR uses [ZiniPay](https://zinipay.com) as its payment gateway. Subscriptions are managed manually — ZiniPay handles the one-time transaction, and the backend activates the subscription upon receiving a successful webhook notification.
 
 ---
 

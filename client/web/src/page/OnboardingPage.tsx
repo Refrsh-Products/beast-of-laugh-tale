@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useId, useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
@@ -6,10 +6,57 @@ import type { OnboardingStatus } from "@freshr/shared";
 import FreshrLogo from "../components/logo/FreshrLogo";
 import LoadErrorScreen from "../components/ui/LoadErrorScreen";
 import { getGoogleProfile, clearGoogleProfile } from "../storage";
-import Button from "../components/ui/Button";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-const B = "#000000";
-const W = "#FFFFFF";
+/**
+ * One labelled input. Required fields mark themselves with aria-invalid once
+ * the form has been submitted empty, which drives both the red outline (via
+ * the Input variant) and the announcement — the old version painted the
+ * border directly and told assistive tech nothing.
+ *
+ * Deliberately `aria-required` rather than the native `required` attribute:
+ * this form validates in JS so it can show one combined message and mark
+ * every offending field at once. A native `required` would make the browser
+ * block submission first with its own single-field tooltip, and handleSubmit
+ * would never run.
+ */
+function Field({
+  label,
+  required = false,
+  invalid = false,
+  ...props
+}: {
+  label: string;
+  required?: boolean;
+  invalid?: boolean;
+} & React.ComponentProps<typeof Input>) {
+  const id = useId();
+  return (
+    <div className="flex-1">
+      <Label
+        htmlFor={id}
+        className="text-muted-foreground mb-1.5 text-xs font-semibold tracking-[0.12em] uppercase"
+      >
+        {label}{" "}
+        {required ? (
+          <span className="text-destructive" aria-hidden="true">
+            *
+          </span>
+        ) : (
+          <span className="font-normal opacity-60">(optional)</span>
+        )}
+      </Label>
+      <Input
+        id={id}
+        aria-required={required || undefined}
+        aria-invalid={invalid}
+        {...props}
+      />
+    </div>
+  );
+}
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -81,187 +128,114 @@ export default function OnboardingPage() {
     }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    border: `3px solid ${B}`,
-    borderRadius: 0,
-    padding: "12px 14px",
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.82rem",
-    background: W,
-    outline: "none",
-    boxSizing: "border-box",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: "block",
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: "0.75rem",
-    fontWeight: 700,
-    letterSpacing: "0.12em",
-    marginBottom: 6,
-    color: B,
-  };
+  const missing = (value: string) => showErrors && !value.trim();
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        background: "#f5f5f0",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "32px 16px",
-        boxSizing: "border-box",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: 480,
-          background: W,
-          border: `2px solid ${B}`,
-          boxShadow: `8px 8px 0 ${B}`,
-          padding: "40px 40px 36px",
-          boxSizing: "border-box",
-        }}
-      >
-        {/* Logo */}
-        <FreshrLogo />
+    <div className="bg-background flex min-h-dvh items-center justify-center p-4 sm:p-8">
+      <div className="bg-card ring-foreground/5 w-full max-w-120 rounded-3xl p-8 shadow-lg ring-1 sm:p-10">
+        <div className="mb-6">
+          <FreshrLogo />
+        </div>
 
-        <h1
-          style={{
-            fontFamily: "'Syne', sans-serif",
-            fontWeight: 800,
-            fontSize: "1.75rem",
-            letterSpacing: "-0.02em",
-            margin: "0 0 8px",
-            lineHeight: 1.1,
-            color: B,
-          }}
-        >
+        <h1 className="font-heading text-foreground mb-2 text-2xl leading-tight font-bold tracking-tight">
           One last step
         </h1>
-        <p
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: "0.75rem",
-            color: "#000000",
-            margin: "0 0 32px",
-            lineHeight: 1.6,
-          }}
-        >
+        <p className="text-muted-foreground mb-8 text-sm leading-relaxed">
           Tell us a bit about yourself to complete your profile.
         </p>
 
         {error && (
-          <p
-            style={{
-              color: "#cc0000",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              margin: "0 0 20px",
-            }}
-          >
+          <p role="alert" className="text-destructive mb-5 text-sm">
             {error}
           </p>
         )}
 
         <form
-          style={{ display: "flex", flexDirection: "column", gap: 20 }}
+          className="flex flex-col gap-5"
           onSubmit={(e) => {
             e.preventDefault();
             handleSubmit();
           }}
         >
-          <div style={{ display: "flex", gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>FIRST NAME <span style={{ color: "#cc0000" }}>*</span></label>
-              <input
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="Jane"
-                style={{ ...inputStyle, borderColor: showErrors && !firstName.trim() ? "#cc0000" : B }}
-                autoFocus
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>LAST NAME <span style={{ color: "#cc0000" }}>*</span></label>
-              <input
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Smith"
-                style={{ ...inputStyle, borderColor: showErrors && !lastName.trim() ? "#cc0000" : B }}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label style={labelStyle}>PHONE NUMBER <span style={{ color: "#cc0000" }}>*</span></label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value.replace(/[^\d+\-\s().]/g, ""))}
-              placeholder="+1 (555) 000-0000"
-              style={{ ...inputStyle, borderColor: showErrors && !phone.trim() ? "#cc0000" : B }}
+          <div className="flex flex-col gap-5 sm:flex-row sm:gap-3">
+            <Field
+              label="First name"
+              required
+              invalid={missing(firstName)}
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Jane"
+              autoComplete="given-name"
+              autoFocus
+            />
+            <Field
+              label="Last name"
+              required
+              invalid={missing(lastName)}
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Smith"
+              autoComplete="family-name"
             />
           </div>
 
-          <div>
-            <label style={labelStyle}>ADDRESS LINE 1 <span style={{ color: "#cc0000" }}>*</span></label>
-            <input
-              type="text"
-              value={address1}
-              onChange={(e) => setAddress1(e.target.value)}
-              placeholder="123 Main St"
-              style={{ ...inputStyle, borderColor: showErrors && !address1.trim() ? "#cc0000" : B }}
+          <Field
+            label="Phone number"
+            required
+            invalid={missing(phone)}
+            type="tel"
+            value={phone}
+            onChange={(e) =>
+              setPhone(e.target.value.replace(/[^\d+\-\s().]/g, ""))
+            }
+            placeholder="+1 (555) 000-0000"
+            autoComplete="tel"
+          />
+
+          <Field
+            label="Address line 1"
+            required
+            invalid={missing(address1)}
+            value={address1}
+            onChange={(e) => setAddress1(e.target.value)}
+            placeholder="123 Main St"
+            autoComplete="address-line1"
+          />
+
+          <Field
+            label="Address line 2"
+            value={address2}
+            onChange={(e) => setAddress2(e.target.value)}
+            placeholder="Apt 4B"
+            autoComplete="address-line2"
+          />
+
+          <div className="flex flex-col gap-5 sm:flex-row sm:gap-3">
+            <Field
+              label="City"
+              required
+              invalid={missing(city)}
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              placeholder="New York"
+              autoComplete="address-level2"
+            />
+            <Field
+              label="Postal code"
+              required
+              invalid={missing(postalCode)}
+              value={postalCode}
+              onChange={(e) =>
+                setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 4))
+              }
+              placeholder="1234"
+              autoComplete="postal-code"
             />
           </div>
 
-          <div>
-            <label style={labelStyle}>
-              ADDRESS LINE 2{" "}
-              <span style={{ fontWeight: 400, opacity: 0.5 }}>(OPTIONAL)</span>
-            </label>
-            <input
-              type="text"
-              value={address2}
-              onChange={(e) => setAddress2(e.target.value)}
-              placeholder="Apt 4B"
-              style={inputStyle}
-            />
-          </div>
-
-          <div style={{ display: "flex", gap: 12 }}>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>CITY <span style={{ color: "#cc0000" }}>*</span></label>
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                placeholder="New York"
-                style={{ ...inputStyle, borderColor: showErrors && !city.trim() ? "#cc0000" : B }}
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={labelStyle}>POSTAL CODE <span style={{ color: "#cc0000" }}>*</span></label>
-              <input
-                type="text"
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
-                placeholder="1234"
-                style={{ ...inputStyle, borderColor: showErrors && !postalCode.trim() ? "#cc0000" : B }}
-              />
-            </div>
-          </div>
-
-          <div style={{ marginTop: 8 }}>
-            <Button variant="green" fullWidth type="submit">
-              Go to dashboard →
-            </Button>
-          </div>
+          <Button type="submit" size="lg" className="mt-2 w-full">
+            Go to dashboard
+          </Button>
         </form>
       </div>
     </div>

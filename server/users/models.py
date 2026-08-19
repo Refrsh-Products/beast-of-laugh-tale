@@ -53,6 +53,14 @@ class User(AbstractBaseUser, PermissionsMixin):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    marketing_unsubscribed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the user opted out of marketing/promotional email. Null means "
+                  "still subscribed. Transactional email (welcome, verification, password reset) "
+                  "always sends and ignores this flag.",
+    )
+
     objects = CustomUserManager()
 
     USERNAME_FIELD = 'email'

@@ -10,24 +10,30 @@ import useNotebookService from "../services/notebooks";
 import useAccountService from "../services/account";
 import type { Notebook, NotebookFile } from "@freshr/shared";
 
-import NotebookTitle from "../components/notebook/NotebookTitle";
-import FilesColumn, {
-  type FileUploadState,
-} from "../components/notebook/FilesColumn";
 import ChatColumn from "../components/notebook/ChatColumn";
-import OptionsColumn, {
-  type ActiveView,
-} from "../components/notebook/OptionsColumn";
+import { type ActiveView } from "../components/notebook/types";
 import QuizReviewColumn from "../components/notebook/QuizReviewColumn";
 import QuizTakingScreen from "../components/notebook/QuizTakingScreen";
-import PastQuizColumn from "../components/notebook/PastQuizColumn";
 import QuizColumn from "../components/notebook/QuizColumn";
 import PresentationColumn from "../components/notebook/PresentationColumn";
-import PastPresentationsColumn from "../components/notebook/PastPresentationsColumn";
 import AudioColumn from "../components/notebook/AudioColumn";
+
+import NotebookToolRail from "../components/notebook/NotebookToolRail";
+import NotebookTopBar from "../components/notebook/NotebookTopBar";
+import NotebookSidebar from "../components/notebook/sidebar/NotebookSidebar";
+import ChatSessionsPanel from "../components/notebook/sidebar/ChatSessionsPanel";
+import PastQuizzesPanel from "../components/notebook/sidebar/PastQuizzesPanel";
+import PresentationsPanel from "../components/notebook/sidebar/PresentationsPanel";
+import TranscriptsPanel from "../components/notebook/sidebar/TranscriptsPanel";
+import MaterialsPanel, {
+  type FileUploadState,
+} from "../components/notebook/sidebar/MaterialsPanel";
+import useAudioTranscripts from "../hooks/audio/useAudioTranscripts";
+import DeleteNotebookModal from "../components/dashboard/DeleteNotebookModal";
+import { getAccount as getCachedAccount } from "../storage";
 import PresentationViewer from "../components/presentation/PresentationViewer";
+import { resolveSlideTheme } from "../components/presentation/presentationThemes";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
-import ToastContainer from "../components/ui/ToastContainer";
 import { useToast } from "../hooks/useToast";
 import useChatService from "../services/chat";
 import { track } from "../lib/analytics";
@@ -40,9 +46,6 @@ import { useMediaQuery } from "../hooks/useMediaQuery";
 import { BP_TABLET } from "../constants/breakpoints";
 import useTranscriptionService from "../services/transcription";
 
-const B = "#000000";
-const W = "#FFFFFF";
-
 export default function NotebookPage() {
   const { id } = useParams<{ id: string }>();
   const authService = useAuthService();
@@ -51,7 +54,7 @@ export default function NotebookPage() {
   const accountService = useAccountService();
   const chatService = useChatService();
   const navigate = useNavigate();
-  const { toasts, showToast } = useToast();
+  const { showToast } = useToast();
   const [audioFeatureEnabled, setAudioFeatureEnabled] = useState<
     boolean | null
   >(null);
@@ -92,8 +95,11 @@ export default function NotebookPage() {
   );
   const hasReadyFiles = files.some((f) => f.ingestion_status === "ready");
   const isCompact = useMediaQuery(BP_TABLET);
-  const [toolsDrawerOpen, setToolsDrawerOpen] = useState(false);
-  const [filesDrawerOpen, setFilesDrawerOpen] = useState(false);
+  const [panelsDrawerOpen, setPanelsDrawerOpen] = useState(false);
+  const [confirmDeleteNotebook, setConfirmDeleteNotebook] = useState(false);
+  // Bumped to ask the top bar's title field to open for editing.
+  const [titleEditSignal, setTitleEditSignal] = useState(0);
+  const account = getCachedAccount();
 
   const notebookArchivedModal = {
     title: "Notebook is archived",
@@ -137,6 +143,17 @@ export default function NotebookPage() {
       }),
     () => setUpgradeModal(notebookArchivedModal),
   );
+
+  // Transcript history is owned here rather than inside AudioColumn so the
+  // sidebar can render it next to the other tools' histories.
+  const audioTranscripts = useAudioTranscripts({
+    notebookId,
+    listTranscripts: () =>
+      transcriptionService.listAudioTranscripts(notebookId),
+    deleteTranscript: (transcriptId) =>
+      transcriptionService.deleteAudioTranscript(notebookId, transcriptId),
+    enabled: activeView === "audio",
+  });
 
   // Poll file list every 3s while any file is still being ingested
   useEffect(() => {
@@ -289,21 +306,6 @@ export default function NotebookPage() {
     setTimeout(() => setUploadProgress([]), 6000);
   }
 
-  async function handleDeleteSelectedFiles(ids: string[]) {
-    try {
-      await Promise.all(
-        ids.map((id) => notebookService.deleteFile(notebookId, id)),
-      );
-      setFiles((prev) => prev.filter((f) => !ids.includes(f.id)));
-      showToast(
-        `${ids.length} file${ids.length > 1 ? "s" : ""} deleted`,
-        "danger",
-      );
-    } catch (err) {
-      console.error(`[NotebookPage.tsx] Error while trying to delete file.`);
-    }
-  }
-
   /** NotbookFile Stuff */
   async function handleDeleteOneFile(id: string) {
     try {
@@ -327,6 +329,44 @@ export default function NotebookPage() {
     }
   }
 
+  /** Notebook-scoped actions behind the rail's settings menu. */
+  async function handleToggleArchive() {
+    if (!notebook) return;
+    try {
+      if (notebook.is_archived) {
+        await notebookService.unarchive(notebookId);
+        setNotebook((prev) => (prev ? { ...prev, is_archived: false } : prev));
+        showToast("Notebook restored", "neutral");
+      } else {
+        await notebookService.archive(notebookId);
+        setNotebook((prev) => (prev ? { ...prev, is_archived: true } : prev));
+        showToast("Notebook archived", "neutral");
+      }
+    } catch (err) {
+      const code = (err as any)?.response?.data?.code;
+      if (code === "notebook_quota_exceeded") {
+        setUpgradeModal({
+          title: "Notebook limit reached",
+          description:
+            "You've reached your active notebook limit. Archive another notebook or upgrade to Pro for unlimited notebooks.",
+        });
+      } else {
+        showToast("Couldn't update the notebook", "danger");
+      }
+    }
+  }
+
+  async function handleDeleteNotebook() {
+    try {
+      await notebookService.delete(notebookId);
+      showToast("Notebook deleted", "danger");
+      navigate("/dashboard", { replace: true });
+    } catch (err) {
+      console.error("[NotebookPage] delete notebook failed:", err);
+      showToast("Couldn't delete the notebook", "danger");
+    }
+  }
+
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
   if (notebookNotFound) return <Navigate to="/dashboard" replace />;
   if (!notebook) return null; // need to replace this with a loading skeleton screen
@@ -347,13 +387,8 @@ export default function NotebookPage() {
       return (
         <ChatColumn
           onSend={chatSessions.handleSendMessage}
-          sessions={chatSessions.chatSessions}
           activeSessionId={chatSessions.activeSessionId}
-          onSessionSelect={chatSessions.handleSessionSelect}
-          onNewSession={chatSessions.handleNewSession}
           onSessionCreated={chatSessions.handleSessionCreated}
-          onRenameSession={chatSessions.handleRenameSession}
-          onDeleteSession={chatSessions.handleDeleteSession}
           getChatMessages={chatService.getChatSessionMessages}
           chatDisabled={files.length > 0 && !hasReadyFiles}
           initialInput={pendingChatInput}
@@ -470,14 +505,8 @@ export default function NotebookPage() {
               ),
             )
           }
-          onListTranscripts={() =>
-            transcriptionService.listAudioTranscripts(notebookId)
-          }
           onGetTranscript={(transcriptId) =>
             transcriptionService.getAudioTranscript(notebookId, transcriptId)
-          }
-          onDeleteTranscript={(transcriptId) =>
-            transcriptionService.deleteAudioTranscript(notebookId, transcriptId)
           }
           onNotesGenerated={() => {
             notebookService
@@ -489,6 +518,14 @@ export default function NotebookPage() {
           // is the source of truth and will 403 if the user actually isn't paid).
           canMutate={audioFeatureEnabled !== false}
           onUpgrade={showAudioUpgrade}
+          selectedTranscriptId={audioTranscripts.selectedId}
+          onTranscriptStarted={(transcriptId, title) => {
+            audioTranscripts.addPending(transcriptId, title);
+            audioTranscripts.setSelectedId(transcriptId);
+          }}
+          onNotesSaved={(transcriptId) =>
+            audioTranscripts.markHasNotes(transcriptId)
+          }
         />
       );
     }
@@ -511,236 +548,164 @@ export default function NotebookPage() {
     );
   }
 
-  // Dynamic main window (Chat, Quiz, or Presentation)
-  function renderRightPanel() {
+  /**
+   * The sidebar's upper region. Unlike the old right column this never shows
+   * files — those live in the materials panel below it, on every tool.
+   */
+  function renderContextPanel() {
+    const isArchived = !!notebook?.is_archived;
+
     if (activeView === "quiz")
       return (
-        <PastQuizColumn
+        <PastQuizzesPanel
           quizzes={quizSessions.previousQuizzes}
           selectedQuizId={quizSessions.selectedQuiz?.id ?? null}
           onQuizClick={quizSessions.handleQuizClick}
           onDeleteSelected={quizSessions.handleDeleteQuizSessions}
+          disabled={isArchived}
         />
       );
     if (activeView === "presentation")
       return (
-        <PastPresentationsColumn
+        <PresentationsPanel
           presentations={presentationSession.presentations}
           onPresentationClick={presentationSession.handlePresentationClick}
           onDeleteSelected={presentationSession.handleDeletePresentations}
+          disabled={isArchived}
+        />
+      );
+    if (activeView === "audio")
+      return (
+        <TranscriptsPanel
+          transcripts={audioTranscripts.transcripts}
+          selectedTranscriptId={audioTranscripts.selectedId}
+          loading={audioTranscripts.loading}
+          onTranscriptClick={(t) => audioTranscripts.setSelectedId(t.id)}
+          onDelete={(id) => audioTranscripts.remove(id)}
+          disabled={isArchived}
         />
       );
     return (
-      <FilesColumn
-        files={files}
-        onUpload={handleUpload}
-        onDeleteSelected={handleDeleteSelectedFiles}
-        onDeleteOne={handleDeleteOneFile}
-        onRename={handleRenameFile}
-        uploadProgress={uploadProgress}
+      <ChatSessionsPanel
+        sessions={chatSessions.chatSessions}
+        activeSessionId={chatSessions.activeSessionId}
+        onSessionSelect={chatSessions.handleSessionSelect}
+        onNewSession={() => chatSessions.handleNewSession()}
+        onRenameSession={chatSessions.handleRenameSession}
+        onDeleteSession={chatSessions.handleDeleteSession}
+        disabled={isArchived}
       />
     );
   }
 
-  return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100dvh",
-        overflow: "hidden",
-        fontFamily: "'IBM Plex Mono', monospace",
-      }}
-    >
-      {/* Archived banner */}
-      {notebook.is_archived && (
-        <div
-          style={{
-            background: "#f5f0e0",
-            borderBottom: `2px solid ${B}`,
-            padding: "8px 24px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 12,
-            flexShrink: 0,
-          }}
-        >
-          <span
-            style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              color: "#7a5c00",
-            }}
-          >
-            ARCHIVED — this notebook is read-only. Go to the dashboard to
-            unarchive it.
-          </span>
-        </div>
-      )}
-
-      {/* Top bar */}
-      <div
-        style={{
-          background: W,
-          borderBottom: `3px solid ${B}`,
-          padding: isCompact ? "0 12px" : "0 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          height: 56,
-          flexShrink: 0,
-          gap: 8,
-        }}
-      >
-        {isCompact ? (
-          <button
-            onClick={() => setToolsDrawerOpen(true)}
-            aria-label="Open tools"
-            style={{
-              background: W,
-              border: `2px solid ${B}`,
-              padding: "4px 10px",
-              cursor: "pointer",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "1rem",
-              lineHeight: 1,
-              color: B,
-              flexShrink: 0,
-            }}
-          >
-            ☰
-          </button>
-        ) : (
-          <span
-            onClick={() => navigate("/dashboard")}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.textDecoration = "underline")
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.textDecoration = "none")
-            }
-            style={{
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              color: B,
-              cursor: "pointer",
-              letterSpacing: "0.04em",
-              flexShrink: 0,
-              textDecoration: "none",
-              textUnderlineOffset: "3px",
-            }}
-          >
-            ← Back to dashboard
-          </span>
-        )}
-
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            justifyContent: "center",
-            minWidth: 0,
-          }}
-        >
-          <NotebookTitle
-            title={notebook.title}
-            onSave={handleNotebookTitleSave}
+  function renderSidebar(className?: string) {
+    return (
+      <NotebookSidebar
+        className={className}
+        contextPanel={renderContextPanel()}
+        materialsPanel={
+          <MaterialsPanel
+            files={files}
+            uploadProgress={uploadProgress}
+            onUpload={handleUpload}
+            onDeleteOne={handleDeleteOneFile}
+            onRename={handleRenameFile}
+            disabled={!!notebook?.is_archived}
           />
-        </div>
+        }
+      />
+    );
+  }
 
-        {isCompact ? (
-          <button
-            onClick={() => setFilesDrawerOpen(true)}
-            aria-label="Open files / panel"
-            style={{
-              background: W,
-              border: `2px solid ${B}`,
-              padding: "4px 10px",
-              cursor: "pointer",
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: "0.85rem",
-              lineHeight: 1,
-              color: B,
-              flexShrink: 0,
-            }}
-          >
-            ▦
-          </button>
-        ) : (
-          <div style={{ width: 140, flexShrink: 0 }} />
-        )}
-      </div>
+  const userLabel =
+    [account?.first_name, account?.last_name]
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
+    (authService.getUser()?.email ?? "Account");
 
-      {/* 3-column layout (single column on phone) */}
-      <div
-        style={{
-          flex: 1,
-          display: "grid",
-          gridTemplateColumns: isCompact ? "1fr" : "220px 1fr 260px",
-          overflow: "hidden",
-          position: "relative",
-          minHeight: 0,
-        }}
-      >
-        {/* Options/Tools nav column (inline on desktop, in drawer on phone) */}
-        {!isCompact && (
-          <OptionsColumn activeView={activeView} onViewChange={setActiveView} />
-        )}
+  const settingsActions = {
+    onRename: () => setTitleEditSignal((n) => n + 1),
+    onArchive: handleToggleArchive,
+    onDelete: () => setConfirmDeleteNotebook(true),
+    isArchived: !!notebook.is_archived,
+  };
 
-        {renderCenterPanel()}
-
-        {!isCompact && renderRightPanel()}
-      </div>
-
-      {/* Phone-only drawers */}
-      {isCompact && (
+  return (
+    <div className="bg-background flex h-dvh overflow-hidden">
+      {/* Rail and sidebar are fixed columns on desktop and collapse into a
+          single drawer below the tablet breakpoint. */}
+      {!isCompact && (
         <>
-          <MobileDrawer
-            open={toolsDrawerOpen}
-            onClose={() => setToolsDrawerOpen(false)}
-            side="left"
-            width="min(240px, 85vw)"
-            ariaLabel="Notebook tools"
-          >
-            <OptionsColumn
-              activeView={activeView}
-              onViewChange={(v) => {
-                setActiveView(v);
-                setToolsDrawerOpen(false);
-              }}
-            />
-          </MobileDrawer>
-
-          <MobileDrawer
-            open={filesDrawerOpen}
-            onClose={() => setFilesDrawerOpen(false)}
-            side="right"
-            width="min(320px, 90vw)"
-            ariaLabel="Files panel"
-          >
-            <div
-              style={{
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-              }}
-            >
-              {renderRightPanel()}
-            </div>
-          </MobileDrawer>
+          <NotebookToolRail
+            activeView={activeView}
+            onViewChange={setActiveView}
+            settings={settingsActions}
+          />
+          {renderSidebar()}
         </>
       )}
 
-      <ToastContainer toasts={toasts} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <NotebookTopBar
+          title={notebook.title}
+          onTitleSave={handleNotebookTitleSave}
+          isArchived={!!notebook.is_archived}
+          profilePictureUrl={account?.profile_picture_url ?? ""}
+          userLabel={userLabel}
+          titleEditSignal={titleEditSignal}
+          onOpenSidebar={
+            isCompact ? () => setPanelsDrawerOpen(true) : undefined
+          }
+        />
+
+        {notebook.is_archived && (
+          <div className="bg-muted text-muted-foreground border-border shrink-0 border-b px-4 py-2 text-center text-xs">
+            This notebook is archived and read-only. Restore it from the
+            settings menu to make changes.
+          </div>
+        )}
+
+        <main className="min-h-0 flex-1 overflow-hidden">
+          {renderCenterPanel()}
+        </main>
+      </div>
+
+      {isCompact && (
+        <MobileDrawer
+          open={panelsDrawerOpen}
+          onClose={() => setPanelsDrawerOpen(false)}
+          side="left"
+          width="min(340px, 92vw)"
+          ariaLabel="Notebook tools and materials"
+        >
+          <div className="flex h-full">
+            <NotebookToolRail
+              activeView={activeView}
+              onViewChange={(view) => {
+                setActiveView(view);
+                setPanelsDrawerOpen(false);
+              }}
+              settings={settingsActions}
+            />
+            {renderSidebar("min-w-0 flex-1 border-r-0")}
+          </div>
+        </MobileDrawer>
+      )}
 
       {upgradeModal && (
         <UpgradeModal
           onClose={() => setUpgradeModal(null)}
           title={upgradeModal.title}
           description={upgradeModal.description}
+        />
+      )}
+
+      {confirmDeleteNotebook && (
+        <DeleteNotebookModal
+          notebook={notebook}
+          onConfirm={handleDeleteNotebook}
+          onClose={() => setConfirmDeleteNotebook(false)}
         />
       )}
 
@@ -761,6 +726,9 @@ export default function NotebookPage() {
           onClose={presentationSession.handleClosePresentation}
           onUpdate={presentationSession.handleUpdatePresentation}
           onRefineSlide={presentationSession.handleRefineSlide}
+          theme={resolveSlideTheme(
+            presentationSession.activePresentation.theme,
+          )}
         />
       )}
     </div>
