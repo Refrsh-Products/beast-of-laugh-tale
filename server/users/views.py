@@ -256,7 +256,6 @@ class RegistrationView(APIView):
             user = existing
         else:
             user = cast(User, serializer.save())
-            send_welcome_email(user)
 
         send_verification_email(user)
 
@@ -342,6 +341,16 @@ class EmailVerificationConfirmView(APIView):
         # request.user.account exists. The onboarding form then PATCHes this
         # row and flips onboarding_completed to True.
         ensure_account(user)
+
+        # Welcome the user now that they've proved ownership of the address —
+        # sending it at registration would email inboxes that may never verify.
+        # Kept last and guarded: a mail-provider hiccup must not undo the
+        # verification/account work above or 500 the request. Worst case the
+        # user just doesn't get a welcome email.
+        try:
+            send_welcome_email(user)
+        except Exception:
+            logger.exception("Welcome email failed for user %s; verification still succeeded", user.pk)
 
         refresh = RefreshToken.for_user(user)
         return Response({
