@@ -2,7 +2,7 @@ import factory
 from factory.django import DjangoModelFactory
 from users.models import User
 from decimal import Decimal
-from accounts.models import Account, BillingInterval
+from accounts.models import Account, BillingInterval, TierPlan
 from payments.models import Payment
 from campus_champions.models import CampusChampion
 from quiz.models import QuizSession, QuizQuestion, QuestionType
@@ -42,9 +42,17 @@ class UserFactory(DjangoModelFactory):
         if create:
             self.save() # type: ignore
 
+
 class AccountFactory(DjangoModelFactory):
     """
-    Blueprint for creating Account objects in tests.
+    An Account row. In production Accounts are created lazily during onboarding,
+    so tests that hit quota-gated endpoints must create one explicitly.
+
+    Usage:
+        account = AccountFactory(user=user)                    # FREE tier
+        account = AccountFactory(user=user, tier_plan="PAID")  # note: PAID also
+            needs subscription_status ACTIVE + a future end date to be *effective*
+            (see quota.get_effective_plan).
     """
 
     class Meta: # type: ignore
@@ -58,7 +66,11 @@ class AccountFactory(DjangoModelFactory):
     city = "Dhaka"
     postal_code = "1200"
     phone = "01700000000"
-    
+    tier_plan = TierPlan.FREE
+    storage_bytes_used = 0
+
+
+
 class PaymentFactory(DjangoModelFactory):
     """
     Blueprint for creating Payment objects in tests.
@@ -101,7 +113,9 @@ class NotebookFactory(DjangoModelFactory):
         model = Notebook
 
     user = factory.SubFactory(UserFactory) # type: ignore
-    title = "Test Notebook"
+    # Sequence keeps titles unique across create_batch; archive tests flip is_archived.
+    title = factory.Sequence(lambda n: f"Notebook {n}") # type: ignore
+    is_archived = False
 
 
 class QuizSessionFactory(DjangoModelFactory):

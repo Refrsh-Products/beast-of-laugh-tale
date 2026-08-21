@@ -18,6 +18,9 @@ export { createNotebookService } from "./notebooks";
 export type {
   NotebookService,
   NotebookFileCreateResponse,
+  ScanPhotoValidationResult,
+  NotebookScanCreateResponse,
+  NotebookScanRejectionResponse,
 } from "./notebooks";
 
 export { createPaymentService } from "./payment";

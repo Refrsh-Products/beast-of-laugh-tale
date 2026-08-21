@@ -5,6 +5,7 @@ import type {
   LoginResponse,
   RegistrationResponse,
   AccountMeResponse,
+  GoogleLoginResponse,
 } from "../types/dto";
 import { AuthServiceApiEndpoints, UserServiceApiEndpoints } from "./endpoints";
 
@@ -22,7 +23,18 @@ export interface AuthService {
   isLoggedIn(): boolean;
   getUser(): StoredUser | null;
   login(email: string, password: string): Promise<StoredUser>;
-  logout(): void;
+  /**
+   * Exchange a Google OAuth access token (obtained client-side) for Freshr JWT
+   * tokens. `isNewUser` is true when the backend just provisioned the account,
+   * so the UI can route to onboarding instead of the dashboard; `profile`
+   * carries the Google name/picture so onboarding can prefill those fields.
+   */
+  googleLogin(accessToken: string): Promise<{
+    user: StoredUser;
+    isNewUser: boolean;
+    profile: GoogleLoginResponse["profile"];
+  }>;
+  logout(): Promise<void>;
   register(
     email: string,
     password: string,
@@ -30,13 +42,13 @@ export interface AuthService {
   ): Promise<void>;
   requestEmailVerification(email: string): Promise<void>;
   confirmEmailVerification(uid: string, token: string): Promise<StoredUser>;
-  requestPasswordReset(email: string): void;
+  requestPasswordReset(email: string): Promise<void>;
   resetPassword(
     uid: string,
     token: string,
     new_password: string,
     new_password_confirm: string,
-  ): void;
+  ): Promise<void>;
   unsubscribe(token: string): Promise<void>;
 }
 
@@ -87,8 +99,16 @@ export function createAuthService(deps: ServiceDeps): AuthService {
             subscription_status: accountResp.subscription_status,
           };
           session.saveAccount(account);
-        } catch (err) {
-          console.error("[AuthService] Failed to fetch account: ", err);
+        } catch (err: any) {
+          // A 404 here means the user hasn't completed onboarding yet, so no
+          // Account profile exists to cache — expected, not an error.
+          if (err?.response?.status === 404) {
+            console.debug(
+              "[AuthService] No account profile yet (pre-onboarding).",
+            );
+          } else {
+            console.error("[AuthService] Failed to fetch account: ", err);
+          }
         }
 
         const user: StoredUser = {
@@ -113,6 +133,69 @@ export function createAuthService(deps: ServiceDeps): AuthService {
         console.error("[AuthService] Login failed: ", err);
         throw err;
       }
+    },
+
+    googleLogin: async (accessToken) => {
+      const data = await http.request<GoogleLoginResponse>(
+        AuthServiceApiEndpoints.googleLogin,
+        "POST",
+        { token: accessToken },
+      );
+
+      session.setTokens({
+        access: data.tokens.access ?? "",
+        refresh: data.tokens.refresh ?? "",
+      });
+      session.setIdentity(data.user.id ?? "", data.user.email ?? "");
+
+      const user: StoredUser = {
+        id: data.user.id,
+        email: data.user.email,
+        is_active: data.user.is_active,
+        created_at: data.user.created_at,
+      };
+      session.saveUser(user);
+
+      // Existing users get their profile cached eagerly (mirrors `login`); new
+      // users have no account yet, so skip the fetch and let the caller route
+      // to onboarding.
+      if (!data.new_user) {
+        try {
+          const accountResp = await http.request<AccountMeResponse>(
+            UserServiceApiEndpoints.accountMe,
+            "GET",
+            null,
+            { headers: { Authorization: `Bearer ${data.tokens.access}` } },
+          );
+          const account: StoredAccount = {
+            id: accountResp.id,
+            first_name: accountResp.first_name,
+            last_name: accountResp.last_name,
+            profile_picture_url: accountResp.profile_picture_url,
+            address1: accountResp.address1,
+            address2: accountResp.address2 ?? "",
+            city: accountResp.city,
+            postal_code: accountResp.postal_code,
+            phone: accountResp.phone,
+            tier_plan: accountResp.tier_plan,
+            billing_interval: accountResp.billing_interval,
+            subscription_status: accountResp.subscription_status,
+          };
+          session.saveAccount(account);
+        } catch (err: any) {
+          // Returning user without a profile (404) just hasn't onboarded yet.
+          if (err?.response?.status === 404) {
+            console.debug(
+              "[AuthService] No account profile yet (pre-onboarding).",
+            );
+          } else {
+            console.error("[AuthService] Failed to fetch account: ", err);
+          }
+        }
+      }
+
+      session.startSession();
+      return { user, isNewUser: data.new_user, profile: data.profile };
     },
 
     logout: async () => {
@@ -150,9 +233,6 @@ export function createAuthService(deps: ServiceDeps): AuthService {
             password_confirm: password_confirm,
           },
         );
-        // Cache the password so the mock auth flow keeps working in dev; the
-        // real flow doesn't depend on it post-verification.
-        session.savePassword(password);
       } catch (err: any) {
         if (err.response?.data) {
           const data = err.response.data;

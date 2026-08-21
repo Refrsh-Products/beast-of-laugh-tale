@@ -10,6 +10,31 @@ export interface NotebookFileCreateResponse {
   ingestion_status: string;
 }
 
+/** Per-photo verdict from the server-side clarity/relevance check. */
+export interface ScanPhotoValidationResult {
+  index: number;
+  acceptable: boolean;
+  clarity: "clear" | "blurry" | "unreadable";
+  relevance: "notes" | "unrelated";
+  reason: string;
+}
+
+/** 201 response when a scanned batch is accepted and merged into one PDF. */
+export interface NotebookScanCreateResponse {
+  success: boolean;
+  errors: [];
+  id: string;
+  ingestion_status: string;
+  photo_count: number;
+}
+
+/** 422 body when one or more photos are rejected (all-or-nothing batch). */
+export interface NotebookScanRejectionResponse {
+  code: "photo_validation_failed";
+  message: string;
+  photos: ScanPhotoValidationResult[];
+}
+
 export interface NotebookService {
   list(): Promise<Notebook[]>; // List of all the notebooks for the user
   listArchived(): Promise<Notebook[]>; // List of all the archived notebooks for the user

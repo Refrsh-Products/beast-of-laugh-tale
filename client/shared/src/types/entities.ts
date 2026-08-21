@@ -22,7 +22,7 @@ export interface Notebook {
   is_archived: boolean;
 }
 
-export interface AccountUseage {
+export interface AccountUsage {
   plan: string;
   notebooks: {
     used: number;
@@ -64,6 +64,7 @@ export interface NotebookFile {
   id: string;
   notebook: string;
   name: string;
+  file_size: number;
   file_type: string;
   ingestion_status: "pending" | "processing" | "ready" | "failed";
   ingestion_error?: string;

@@ -1,12 +1,21 @@
 {
   "name": "freshr-client",
   "private": true,
-  "workspaces": ["shared", "web", "mobile"],
+  "workspaces": [
+    "shared",
+    "web",
+    "mobile"
+  ],
   "scripts": {
     "dev": "npm run dev --workspace=@freshr/web",
     "build": "npm run build --workspace=@freshr/web",
     "test": "npm run test --workspace=@freshr/web",
     "lint": "npm run lint --workspace=@freshr/web",
     "build:shared": "npm run build --workspace=@freshr/shared"
+  },
+  "overrides": {
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native-gesture-handler": "2.31.2"
   }
 }

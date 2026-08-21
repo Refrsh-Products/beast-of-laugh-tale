@@ -1,4 +1,4 @@
-import type { AccountUseage } from "@freshr/shared";
+import type { AccountUsage } from "@freshr/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -51,7 +51,7 @@ export default function UsageOverview({
   usage,
   onUpgrade,
 }: {
-  usage: AccountUseage;
+  usage: AccountUsage;
   onUpgrade: () => void;
 }) {
   const storageUsed = Number(usage.storage.used_bytes);

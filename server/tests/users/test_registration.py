@@ -2,9 +2,13 @@ import pytest
 import factory
 from unittest.mock import patch
 from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 from rest_framework import status
 
+from tests.factories import UserFactory
 from users.models import User
+from users.tokens import email_verification_token
 
 
 # ---------------------------------------------------------------------------
@@ -13,6 +17,7 @@ from users.models import User
 
 # Using reverse() means the test won't break if the URL path ever changes.
 REGISTER_URL = reverse("users:register")
+VERIFY_CONFIRM_URL = reverse("users:verify-email-confirm")
 
 # The default password set by UserFactory
 DEFAULT_EMAIL = "test_user@gmail.com"
@@ -23,40 +28,46 @@ DEFAULT_PASSWORD = "TestPassword123!"
 # Happy path
 # ---------------------------------------------------------------------------
 @pytest.mark.django_db
-def test_register_success(api_client):
+def test_register_success(api_client, mailoutbox):
     """
+    When a new user registers for an account, they are send a verification email, so that users cannot create account using fake emails.
+    They are no longer sent JWT tokens right after creating an account.
+
     Given:  an unregistered user
     When:   POST /auth/register/
-    Then:   a new user is creted and appropriate status with user information is returned
+    Then:   a new user with is_active=False is creted and verification email is sent
     """
     payload = {
         "email": DEFAULT_EMAIL,
         "password": DEFAULT_PASSWORD,
         "password_confirm": DEFAULT_PASSWORD,
     }
-    response = api_client.post(REGISTER_URL, payload)
+    response = api_client.post(REGISTER_URL, payload, format='json')
 
-    # check if 201 created
+    # 201 Created with the "check your email" confirmation message
     assert response.status_code == status.HTTP_201_CREATED
-
     data = response.json()
-    
-    # check if tokens present
-    assert "tokens" in data
-    assert "access" in data["tokens"]
-    assert "refresh" in data["tokens"]
+    assert data["message"] == "Account created. Check your email to verify your account."
 
-    # check if user created
-    assert data["user"]["email"] == DEFAULT_EMAIL
-    assert "id" in data["user"]
+    # No JWT tokens are issued at registration — they come after verification.
+    assert "access" not in data
+    assert "refresh" not in data
 
+    # Only the verification email goes out at registration. The welcome email
+    # is deferred until the account is verified (EmailVerificationConfirmView).
+    assert len(mailoutbox) == 1, "verification email only"
+    verification = mailoutbox[0]
+    assert verification.to == [DEFAULT_EMAIL]
+    assert verification.subject == "Verify your email address"
+    assert "/verify-email?uid=" in verification.body
+    assert "token=" in verification.body
+
+    # The user is persisted, with a hashed password and inactive until verified.
     user_in_db = User.objects.get(email=DEFAULT_EMAIL)
     assert user_in_db.email == DEFAULT_EMAIL
     assert user_in_db.check_password(DEFAULT_PASSWORD)
+    assert user_in_db.is_active is False
 
-    # check if password hashed
-    assert user_in_db.password != DEFAULT_PASSWORD
-    
 """
 Duplicate email — register with the same email twice → 400
 Case-insensitive duplicate — register with User@example.com when user@example.com already exists → 400
@@ -71,33 +82,22 @@ Weak password — e.g. "password" or "12345" → 400 (Django validators)
 @pytest.mark.django_db
 def test_register_duplicate_email_case_insensitive(api_client):
     """
-    Given:  An existing registered user in the system
+    Given:  An existing *verified* user in the system
     When:   Registering a new user with the same email (identical or different case)
     Then:   The API returns 400 Bad Request and prevents duplicate account creation
     """
-    payload = {
-        "email": DEFAULT_EMAIL,
-        "password": DEFAULT_PASSWORD,
-        "password_confirm": DEFAULT_PASSWORD,
-    }
-    response = api_client.post(REGISTER_URL, payload)
-
-    assert response.status_code == status.HTTP_201_CREATED, 'Frist registration should succeed'
+    user = UserFactory(email=DEFAULT_EMAIL, password=DEFAULT_PASSWORD, is_active=True)
     
-    # register another user with the same email
-    response = api_client.post(REGISTER_URL, payload)
-
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-    # emails should be case insensitive
+    # attempt to register again with the same email (all upper case)
     payload = {
         "email": DEFAULT_EMAIL.upper(),
         "password": DEFAULT_PASSWORD,
         "password_confirm": DEFAULT_PASSWORD,
     }
-    response = api_client.post(REGISTER_URL, payload)
+    response = api_client.post(REGISTER_URL, payload, format='json')
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "already exists" in response.json()["error"].lower()
 
 
 @pytest.mark.django_db
@@ -141,14 +141,15 @@ def test_register_weak_password(api_client):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.django_db
-def test_register_sends_welcome_email_once(api_client):
+def test_register_does_not_send_welcome_email(api_client):
     """
     Given:  an unregistered email
     When:   POST /auth/register/
-    Then:   the welcome email is sent exactly once for the newly created account
+    Then:   only the verification email is sent — the welcome email is deferred
+            until the user verifies their account (EmailVerificationConfirmView),
+            so we never welcome an address that may never be confirmed.
 
-    Both the welcome and verification sends are mocked so no real network call
-    to Resend happens during the test.
+    Both sends are mocked so no real network call to Resend happens.
     """
     payload = {
         "email": DEFAULT_EMAIL,
@@ -160,35 +161,39 @@ def test_register_sends_welcome_email_once(api_client):
         response = api_client.post(REGISTER_URL, payload)
 
     assert response.status_code == status.HTTP_201_CREATED
-    mock_welcome.assert_called_once()
     mock_verify.assert_called_once()
+    mock_welcome.assert_not_called()
 
-    (welcomed_user,), _ = mock_welcome.call_args
-    assert welcomed_user.email == DEFAULT_EMAIL
+    (verified_user,), _ = mock_verify.call_args
+    assert verified_user.email == DEFAULT_EMAIL
 
+
+# ---------------------------------------------------------------------------
+# Verification confirm — where the welcome email now lives
+# ---------------------------------------------------------------------------
 
 @pytest.mark.django_db
-def test_register_resend_does_not_resend_welcome_email(api_client):
+def test_verify_confirm_activates_and_sends_welcome_email(api_client):
     """
-    Given:  an existing but unverified account (lost their verification email)
-    When:   they submit the registration form again with the same email
-    Then:   the verification email is resent, but the welcome email is NOT —
-            they already received it on the first registration.
+    Given:  an unverified account with a valid verification link
+    When:   POST /auth/verify-email/confirm/ with the uid + token
+    Then:   the account is activated and the welcome email is sent exactly once —
+            this is the send that used to happen at registration.
     """
+    user = UserFactory(email=DEFAULT_EMAIL, is_active=False)
     payload = {
-        "email": DEFAULT_EMAIL,
-        "password": DEFAULT_PASSWORD,
-        "password_confirm": DEFAULT_PASSWORD,
+        "uid": urlsafe_base64_encode(force_bytes(str(user.pk))),
+        "token": email_verification_token.make_token(user),
     }
-    with patch("users.views.send_welcome_email"), \
-         patch("users.views.send_verification_email"):
-        first = api_client.post(REGISTER_URL, payload)
-    assert first.status_code == status.HTTP_201_CREATED
 
-    with patch("users.views.send_welcome_email") as mock_welcome, \
-         patch("users.views.send_verification_email") as mock_verify:
-        second = api_client.post(REGISTER_URL, payload)
+    with patch("users.views.send_welcome_email") as mock_welcome:
+        response = api_client.post(VERIFY_CONFIRM_URL, payload, format="json")
 
-    assert second.status_code == status.HTTP_201_CREATED
-    mock_welcome.assert_not_called()
-    mock_verify.assert_called_once()
+    assert response.status_code == status.HTTP_200_OK
+
+    user.refresh_from_db()
+    assert user.is_active is True
+
+    mock_welcome.assert_called_once()
+    (welcomed_user,), _ = mock_welcome.call_args
+    assert welcomed_user.pk == user.pk

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
-import type { Notebook, AccountUseage } from "@freshr/shared";
+import type { Notebook, AccountUsage } from "@freshr/shared";
 
 import DashboardPage from "../DashboardPage";
 import useAuthService from "../../services/auth";
@@ -22,7 +22,7 @@ const ACCOUNT = {
   profile_picture_url: "",
 };
 
-const USAGE: AccountUseage = {
+const USAGE: AccountUsage = {
   plan: "FREE",
   notebooks: { used: 1, limit: 3 },
   storage: { used_bytes: BigInt(2_097_152), limit_bytes: BigInt(10_485_760) },
@@ -44,7 +44,7 @@ function notebook(overrides: Partial<Notebook> = {}): Notebook {
 
 let notebooks: Notebook[] = [];
 let archived: Notebook[] = [];
-let usage: AccountUseage | null = USAGE;
+let usage: AccountUsage | null = USAGE;
 let account: typeof ACCOUNT | null = ACCOUNT;
 /**
  * Held here rather than read back off the mock's call history: beforeEach

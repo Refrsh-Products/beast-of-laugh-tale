@@ -6,6 +6,7 @@ from .views import (
     NotebookFileDeleteAPIView,
     NotebookFileListAPIView,
     NotebookListAPIView,
+    NotebookScanCreateAPIView,
     NotebookUnarchiveAPIView,
 )
 from rag.views import NotebookTopicsAPIView
@@ -19,6 +20,7 @@ urlpatterns = [
 
     path("<uuid:notebook_id>/files", NotebookFileListAPIView.as_view(), name="list-notebook-files"),
     path("<uuid:notebook_id>/files/create", NotebookFileCreateAPIView.as_view(), name="file-create"),
+    path("<uuid:notebook_id>/files/scan", NotebookScanCreateAPIView.as_view(), name="file-scan"),
     path("<uuid:notebook_id>/files/delete/<uuid:pk>/", NotebookFileDeleteAPIView.as_view(), name="file-delete"),
 
     path("<uuid:notebook_id>/topics", NotebookTopicsAPIView.as_view(), name="notebook-topics"),

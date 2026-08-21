@@ -36,6 +36,7 @@ class NotebookFile(models.Model):
 
     name = models.CharField(max_length=255, default="Untitled")
     file_url = models.CharField(max_length=500, blank=True)
+    file_size = models.PositiveBigIntegerField(default=0)
     file_type = models.CharField(max_length=20)
     ingestion_status = models.CharField(
         max_length=20,

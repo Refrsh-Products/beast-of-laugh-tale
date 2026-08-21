@@ -114,6 +114,7 @@ def generate_notes_task(self, transcript_id: str, user_id: int):
                 name=filename,
                 file=django_file,
                 file_type="md",
+                file_size=len(notes_bytes),
             )
             notebook_file.file_url = notebook_file.file.url
             notebook_file.save(update_fields=["file_url"])
