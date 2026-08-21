@@ -4,14 +4,9 @@
     "slug": "freshr",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/freshr-logo.png",
+    "icon": "./assets/images/icon.png",
     "scheme": "freshr",
     "userInterfaceStyle": "automatic",
-    "splash": {
-      "image": "./assets/images/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -22,7 +17,8 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "monochromeImage": "./assets/images/adaptive-icon-monochrome.png",
+        "backgroundColor": "#19392E"
       },
       "package": "cc.freshr.app"
     },
@@ -33,7 +29,15 @@
     },
     "plugins": [
       "expo-router",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#19392E"
+        }
+      ],
       "expo-status-bar"
     ],
     "experiments": {

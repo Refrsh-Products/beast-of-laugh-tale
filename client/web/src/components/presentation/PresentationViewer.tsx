@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { Deck, Slide } from "@revealjs/react";
-import resetCssUrl from "reveal.js/reset.css?url";
 import revealCssUrl from "reveal.js/reveal.css?url";
 import type { PresentationSession, PresentationSlide } from "@freshr/shared";
 import SlideEditor from "./SlideEditor";
@@ -225,17 +224,27 @@ export default function PresentationViewer({
   const [chatDrawerOpen, setChatDrawerOpen] = useState(false);
   const [slidesDrawerOpen, setSlidesDrawerOpen] = useState(false);
 
-  // Inject / remove reveal.js CSS in normal mode
+  // Inject / remove reveal.js CSS in normal mode.
+  //
+  // reveal.css only — never reveal.js/reset.css. Tailwind v4 emits every
+  // utility inside `@layer utilities`, and an UNLAYERED declaration beats any
+  // layered one no matter how specific the layered selector is. reset.css is
+  // unlayered and global (`html,body,div,span,… { font: inherit; border: 0;
+  // margin: 0; padding: 0 }`), so appending it here silently outranked the
+  // whole design system for as long as the viewer was open: `html` lost
+  // font-sans and fell back to the browser serif, and every div — this
+  // component's chrome plus the portalled export menu and drawers — lost its
+  // padding and borders. Tailwind's own preflight already resets what
+  // reveal.css assumes, and reveal.css is fully `.reveal`-scoped (its one
+  // `body` rule sits inside @media print), so the deck renders correctly
+  // without it.
   useEffect(() => {
     if (editMode) return;
-    const links = [resetCssUrl, revealCssUrl].map((href) => {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = href;
-      document.head.appendChild(link);
-      return link;
-    });
-    return () => links.forEach((l) => l.remove());
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = revealCssUrl;
+    document.head.appendChild(link);
+    return () => link.remove();
   }, [editMode]);
 
   // ResizeObserver for reveal.js layout
@@ -408,10 +417,6 @@ export default function PresentationViewer({
     </div>
   );
 
-  // The viewer is a full-screen media surface, so its chrome is pinned to the
-  // dark palette regardless of the app's theme — the same reasoning as a
-  // lightbox. Scoping the `dark` class here keeps that a token lookup rather
-  // than a second set of hardcoded colours.
   // Follows the app's own theme rather than pinning itself dark like a
   // lightbox: the export menu and the mobile drawers are portalled to <body>,
   // so they escape any theme class scoped to this subtree and would render

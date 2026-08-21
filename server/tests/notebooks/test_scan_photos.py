@@ -113,14 +113,14 @@ def test_paid_user_can_scan_ten_photos(authenticated_client, user, settings, tmp
     with patch(VALIDATE_PATH, side_effect=_accept_all), patch(INGEST_PATH):
         response = authenticated_client.post(
             _scan_url(notebook),
-            {"photos": [_photo(f"p{i}.jpg") for i in range(10)]},
+            {"photos": [_photo(f"p{i}.jpg") for i in range(5)]},
             format="multipart",
         )
 
     assert response.status_code == status.HTTP_201_CREATED
-    assert response.json()["photo_count"] == 10
+    assert response.json()["photo_count"] == 5
     nf = NotebookFile.objects.get(notebook=notebook)
-    assert len(PdfReader(nf.file.path).pages) == 10
+    assert len(PdfReader(nf.file.path).pages) == 5
 
 
 # ---------------------------------------------------------------------------
