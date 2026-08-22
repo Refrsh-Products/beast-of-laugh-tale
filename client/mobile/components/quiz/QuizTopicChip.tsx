@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable } from 'react-native';
 import { Text } from '@/components/ui/text';
+import { cn } from '@/lib/utils';
 
 interface QuizTopicChipProps {
   label: string;
@@ -9,51 +9,20 @@ interface QuizTopicChipProps {
 }
 
 export function QuizTopicChip({ label, selected, onToggle }: QuizTopicChipProps) {
-  const [pressed, setPressed] = useState(false);
-
   return (
     <Pressable
       onPress={onToggle}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
-      style={[
-        styles.chip,
-        selected && styles.chipSelected,
-        pressed && styles.chipPressed,
-      ]}>
+      className={cn(
+        'rounded-full border px-4 py-2 active:opacity-70',
+        selected ? 'bg-primary border-primary' : 'bg-field border-border'
+      )}>
       <Text
-        style={[
-          styles.label,
-          selected && styles.labelSelected,
-        ]}>
+        className={cn(
+          'text-[13px] font-medium',
+          selected ? 'text-primary-foreground' : 'text-foreground'
+        )}>
         {label}
       </Text>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#D4D4D8',
-    backgroundColor: '#FFFFFF',
-  },
-  chipSelected: {
-    backgroundColor: '#18181B',
-    borderColor: '#18181B',
-  },
-  chipPressed: {
-    opacity: 0.7,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#18181B',
-  },
-  labelSelected: {
-    color: '#FFFFFF',
-  },
-});

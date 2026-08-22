@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
+import { hsl, ink } from '@/lib/design';
 
 const SHEET_HEIGHT = 280;
 
@@ -58,21 +59,34 @@ export function UpgradeSheet({
         <View style={styles.backdrop} />
       </TouchableWithoutFeedback>
 
-      <Animated.View style={[styles.sheet, { transform: [{ translateY: slideAnim }] }]}>
+      <Animated.View
+        className="bg-brand-primary-950 absolute bottom-0 left-0 right-0 rounded-t-[20px] px-6 pb-9 pt-3"
+        style={[styles.sheetLift, { transform: [{ translateY: slideAnim }] }]}>
         {/* Drag handle */}
-        <View style={styles.handle} />
+        <View className="bg-brand-paper/25 mb-5 h-1 w-9 self-center rounded-sm" />
 
-        <Text style={styles.sheetTitle}>{title}</Text>
-        <Text style={styles.sheetBody}>{body}</Text>
+        <Text className="text-brand-paper mb-2.5 text-center text-xl font-bold leading-7">
+          {title}
+        </Text>
+        <Text className="text-brand-paper/60 text-center text-sm leading-5">{body}</Text>
 
-        <Button variant="secondary" className="h-13 mt-6 rounded-full" onPress={onClose}>
-          <Text className="text-base font-bold">Got it</Text>
+        <Button
+          className="bg-brand-secondary-300 h-13 mt-6 rounded-full"
+          onPress={onClose}>
+          <Text className="text-brand-primary-900 text-base font-bold">Got it</Text>
         </Button>
       </Animated.View>
     </Modal>
   );
 }
 
+// This sheet is deliberately pinned to the brand ramp rather than the theme
+// tokens: it's a fixed dark panel in both light and dark mode, the way the
+// landing page is on web. Timber Green at the deep end of the ramp, with the
+// Sulu call to action the brandbook puts on a dark surface.
+//
+// Only the scrim and the lift are left here — RN needs shadow offsets and the
+// full-bleed backdrop as real style values.
 const styles = StyleSheet.create({
   backdrop: {
     position: 'absolute',
@@ -82,43 +96,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'rgba(0, 0, 0, 0.55)',
   },
-  sheet: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#1a1a1a',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 36,
-    shadowColor: '#000',
+  sheetLift: {
+    shadowColor: hsl(ink),
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 20,
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  sheetTitle: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '700',
-    textAlign: 'center',
-    lineHeight: 28,
-    marginBottom: 10,
-  },
-  sheetBody: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 20,
   },
 });

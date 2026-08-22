@@ -1,5 +1,6 @@
 import { AuthHeader } from '@/components/auth/AuthHeader';
 import { Button } from '@/components/ui/button';
+import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
 import { useAuthService } from '@/hooks/useAuthService';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -43,7 +44,7 @@ export default function VerifyEmailScreen() {
       <AuthHeader />
 
       <View className="items-center gap-4">
-        <MailCheck size={56} color="#34c759" />
+        <Icon as={MailCheck} size={56} className="text-success" />
         <Text className="text-center text-3xl font-bold">Check your email</Text>
         <Text className="text-center text-base text-muted-foreground">
           We&apos;ve sent a verification link to{'\n'}

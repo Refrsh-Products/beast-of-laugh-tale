@@ -1,4 +1,5 @@
 import { Wordmark } from '@/components/auth/Wordmark';
+import { Icon } from '@/components/ui/icon';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { Pressable, View } from 'react-native';
@@ -27,7 +28,9 @@ export function AuthHeader({ showBack = false }: { showBack?: boolean }) {
           accessibilityLabel="Go back"
           hitSlop={8}
           className="absolute bottom-0 -left-1 top-0 w-8 justify-center">
-          <ChevronLeft size={28} />
+          {/* Via `Icon`, not the bare lucide component: a bare one has no colour
+              of its own and renders black, which disappears on a dark surface. */}
+          <Icon as={ChevronLeft} size={28} className="text-foreground" />
         </Pressable>
       ) : null}
     </View>

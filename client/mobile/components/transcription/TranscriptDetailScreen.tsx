@@ -11,11 +11,13 @@ import {
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/button-spinner';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { fontSans } from '@/lib/design';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import Markdown from 'react-native-markdown-display';
-import { useColorScheme } from '@/hooks/useColorScheme';
 import type { AudioTranscriptDetail } from '@freshr/shared';
 import type { TranscriptionService } from '@freshr/shared';
 
@@ -45,7 +47,7 @@ export function TranscriptDetailScreen({
   onBack,
   onDeleted,
 }: TranscriptDetailScreenProps) {
-  const { isDarkColorScheme } = useColorScheme();
+  const colors = useThemeColors();
   const [detail, setDetail] = useState(initialDetail);
   const [activeTab, setActiveTab] = useState<DetailTab>(
     initialDetail.has_notes ? 'notes' : 'transcript'
@@ -197,7 +199,7 @@ export function TranscriptDetailScreen({
               {detail.title || 'Untitled Recording'}
             </Text>
           </View>
-          <Separator style={{ marginTop: 10, backgroundColor: '#E4E4E7', height: 1 }} />
+          <Separator className="mt-2.5 h-px" />
         </View>
 
         {/* Tab bar */}
@@ -259,7 +261,7 @@ export function TranscriptDetailScreen({
                     </Button>
                     <Button className="flex-1" onPress={handleSave} disabled={isSaving}>
                       {isSaving ? (
-                        <ActivityIndicator color="#fff" size="small" />
+                        <ButtonSpinner size="small" />
                       ) : (
                         <Text>{saveSuccess ? 'Saved ✓' : 'Save Changes'}</Text>
                       )}
@@ -308,7 +310,7 @@ export function TranscriptDetailScreen({
                     <CardTitle>AI Notes</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <Markdown style={{ body: { color: isDarkColorScheme ? '#fff' : '#000' } }}>
+                    <Markdown style={{ body: { color: colors.foreground, fontFamily: fontSans } }}>
                       {detail.notes_text}
                     </Markdown>
                   </CardContent>
@@ -332,7 +334,7 @@ export function TranscriptDetailScreen({
           >
             {isGeneratingNotes ? (
               <View className="flex-row items-center gap-2">
-                <ActivityIndicator color="#fff" size="small" />
+                <ButtonSpinner size="small" />
                 <Text>Generating Notes…</Text>
               </View>
             ) : (

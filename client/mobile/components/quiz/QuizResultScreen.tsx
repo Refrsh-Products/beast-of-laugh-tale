@@ -1,9 +1,23 @@
 import { useState } from 'react';
-import { View, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
+import { cn } from '@/lib/utils';
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { ChevronLeft, ChevronDown, ChevronUp, EllipsisVertical } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Repeated shapes, named once so a pill in one branch can't drift from another.
+const BADGE = 'bg-primary min-w-[100px] items-center rounded-md px-5 py-2.5';
+const BADGE_LABEL = 'text-primary-foreground/70 mb-0.5 text-[10px] font-semibold uppercase tracking-wide';
+const BADGE_VALUE = 'text-primary-foreground text-lg font-extrabold';
+
+const ANSWER_PILL = 'flex-row items-center justify-between rounded-md border px-3.5 py-2.5';
+// Tinted fills rather than solid ones, matching how web renders quiz review:
+// the 10% wash reads as a state on both the light and the dark card.
+const PILL_CORRECT = 'border-success bg-success/10';
+const PILL_WRONG = 'border-destructive bg-destructive/10';
+
+const ACTION_BUTTON = 'flex-1 items-center justify-center rounded-md py-3.5';
 import { ScoreRing } from '../ui/score-ring';
 
 import type { QuizSession } from '@freshr/shared';
@@ -68,70 +82,71 @@ export function QuizResultScreen({
   }
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View className="bg-background flex-1" style={{ paddingTop: insets.top }}>
       {/* Header */}
-      <View style={styles.header}>
-        <Pressable onPress={onBack} style={styles.headerButton}>
+      <View className="flex-row items-center justify-between px-3 py-2.5">
+        <Pressable onPress={onBack} className="p-2">
           <Icon as={ChevronLeft} size={24} className="text-foreground" />
         </Pressable>
-        <Text style={styles.headerTitle} numberOfLines={1}>
+        <Text
+          className="text-foreground flex-1 text-center text-base font-extrabold tracking-wider"
+          numberOfLines={1}>
           {quizTitle.toUpperCase()}
         </Text>
-        <Pressable style={styles.headerButton}>
+        <Pressable className="p-2">
           <Icon as={EllipsisVertical} size={20} className="text-foreground" />
         </Pressable>
       </View>
 
       <ScrollView
-        style={styles.scrollArea}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: Math.max(insets.bottom, 24) + 80 },
-        ]}
+        className="flex-1"
+        contentContainerClassName="px-5"
+        contentContainerStyle={{ paddingBottom: Math.max(insets.bottom, 24) + 80 }}
         showsVerticalScrollIndicator={false}>
         {/* Score section */}
-        <View style={styles.scoreSection}>
+        <View className="bg-muted mb-7 items-center rounded-2xl px-5 py-7">
           <ScoreRing scorePercent={scorePercent} />
 
           {/* Badges */}
-          <View style={styles.badgeRow}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeLabel}>Time</Text>
-              <Text style={styles.badgeValue}>{displayTime}</Text>
+          <View className="mt-5 flex-row gap-3">
+            <View className={BADGE}>
+              <Text className={BADGE_LABEL}>Time</Text>
+              <Text className={BADGE_VALUE}>{displayTime}</Text>
             </View>
-            <View style={styles.badge}>
-              <Text style={styles.badgeLabel}>Difficulty</Text>
-              <Text style={styles.badgeValue}>{difficultyLabel.toUpperCase()}</Text>
+            <View className={BADGE}>
+              <Text className={BADGE_LABEL}>Difficulty</Text>
+              <Text className={BADGE_VALUE}>{difficultyLabel.toUpperCase()}</Text>
             </View>
           </View>
         </View>
 
         {/* Detailed Review */}
-        <View style={styles.reviewHeaderRow}>
-          <Text style={styles.reviewTitle}>Detailed Review</Text>
+        <View className="mb-4 flex-row items-center justify-between">
+          <Text className="text-foreground text-xl font-bold">Detailed Review</Text>
 
-          <View style={styles.filterTabs}>
-            <Pressable
-              style={[styles.filterTab, filter === 'all' && styles.filterTabActive]}
-              onPress={() => setFilter('all')}>
-              <Text style={[styles.filterTabText, filter === 'all' && styles.filterTabTextActive]}>
-                All
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[styles.filterTab, filter === 'wrong' && styles.filterTabActive]}
-              onPress={() => setFilter('wrong')}>
-              <Text
-                style={[styles.filterTabText, filter === 'wrong' && styles.filterTabTextActive]}>
-                Wrong
-              </Text>
-            </Pressable>
+          <View className="bg-muted flex-row rounded-md p-1">
+            {(['all', 'wrong'] as const).map((key) => (
+              <Pressable
+                key={key}
+                className={cn('rounded-sm px-3 py-1.5', filter === key && 'bg-accent')}
+                onPress={() => setFilter(key)}>
+                <Text
+                  className={cn(
+                    'text-[13px] font-medium',
+                    filter === key ? 'text-accent-foreground font-semibold' : 'text-muted-foreground'
+                  )}>
+                  {key === 'all' ? 'All' : 'Wrong'}
+                </Text>
+              </Pressable>
+            ))}
           </View>
         </View>
 
-        <View style={styles.reviewList}>
+        <View className="gap-4">
           {filteredQuestions.length === 0 ? (
-            <Text style={styles.noQuestionsText}>No questions to display.</Text>
+            <Text className="text-muted-foreground py-5 text-center text-sm">
+              No questions to display.
+            </Text>
           ) : (
             filteredQuestions.map((q) => {
               const qi = questions.indexOf(q);
@@ -141,42 +156,36 @@ export function QuizResultScreen({
               const correctAnswerText = q.correct_answer || '—';
 
               return (
-                <View key={q.id} style={styles.reviewCard}>
+                <View key={q.id} className="border-border bg-card rounded-lg border p-[18px]">
                   {/* Question header */}
-                  <Text style={styles.reviewQuestionTitle}>Question {qi + 1}</Text>
-                  <Text style={styles.reviewQuestionText}>{q.question_text}</Text>
+                  <Text className="text-foreground mb-1 text-sm font-bold">Question {qi + 1}</Text>
+                  <Text className="text-foreground mb-3.5 text-[13px] leading-5">
+                    {q.question_text}
+                  </Text>
 
                   {/* Answer pills */}
-                  <View style={styles.answerPills}>
+                  <View className="mb-3 gap-2">
                     {/* User's answer */}
-                    <View
-                      style={[
-                        styles.answerPill,
-                        correct ? styles.answerPillCorrect : styles.answerPillWrong,
-                      ]}>
-                      <Text
-                        style={[
-                          styles.answerPillText,
-                          correct ? styles.answerPillTextCorrect : styles.answerPillTextWrong,
-                        ]}>
+                    <View className={cn(ANSWER_PILL, correct ? PILL_CORRECT : PILL_WRONG)}>
+                      <Text className="text-foreground flex-1 text-[13px] font-semibold">
                         {userAnswerText}
                       </Text>
                       <Text
-                        style={[
-                          styles.answerPillLabel,
-                          correct ? styles.answerPillLabelCorrect : styles.answerPillLabelWrong,
-                        ]}>
+                        className={cn(
+                          'text-[11px] font-semibold',
+                          correct ? 'text-success' : 'text-destructive'
+                        )}>
                         {correct ? 'Correct Answer' : 'Wrong Answer'}
                       </Text>
                     </View>
 
                     {/* If wrong, show the correct answer */}
                     {!correct && (
-                      <View style={[styles.answerPill, styles.answerPillCorrect]}>
-                        <Text style={[styles.answerPillText, styles.answerPillTextCorrect]}>
+                      <View className={cn(ANSWER_PILL, PILL_CORRECT)}>
+                        <Text className="text-foreground flex-1 text-[13px] font-semibold">
                           {correctAnswerText}
                         </Text>
-                        <Text style={[styles.answerPillLabel, styles.answerPillLabelCorrect]}>
+                        <Text className="text-success text-[11px] font-semibold">
                           Correct Answer
                         </Text>
                       </View>
@@ -187,9 +196,11 @@ export function QuizResultScreen({
                   {q.explanation && (
                     <>
                       <Pressable
-                        style={styles.explanationToggle}
+                        className="flex-row items-center justify-between py-2"
                         onPress={() => toggleExplanation(qi)}>
-                        <Text style={styles.explanationToggleText}>AI Explanation</Text>
+                        <Text className="text-muted-foreground text-[13px] font-medium">
+                          AI Explanation
+                        </Text>
                         <Icon
                           as={openExplanations.has(qi) ? ChevronUp : ChevronDown}
                           size={16}
@@ -197,22 +208,26 @@ export function QuizResultScreen({
                         />
                       </Pressable>
                       {openExplanations.has(qi) && (
-                        <View style={styles.explanationContent}>
-                          <Text style={styles.explanationText}>{q.explanation}</Text>
+                        <View className="pb-2">
+                          <Text className="text-foreground text-[13px] leading-5">
+                            {q.explanation}
+                          </Text>
                         </View>
                       )}
                     </>
                   )}
 
                   {/* Take to Chat button */}
-                  <View style={styles.takeToChatRow}>
+                  <View className="mt-1 flex-row justify-end">
                     <Pressable
-                      style={styles.takeToChatButton}
+                      className="bg-primary rounded-sm px-3.5 py-2"
                       onPress={() => {
                         const choices = q.choices?.length > 0 ? q.choices : ['True', 'False'];
                         onTakeToChat(q.question_text, choices, topicLabel);
                       }}>
-                      <Text style={styles.takeToChatText}>Take to Chat</Text>
+                      <Text className="text-primary-foreground text-xs font-semibold">
+                        Take to Chat
+                      </Text>
                     </Pressable>
                   </View>
                 </View>
@@ -223,265 +238,20 @@ export function QuizResultScreen({
       </ScrollView>
 
       {/* Bottom action buttons */}
-      <View style={[styles.bottomActions, { paddingBottom: Math.max(insets.bottom, 16) }]}>
+      <View
+        className="border-border bg-card flex-row gap-3 border-t px-5 pt-3"
+        style={{ paddingBottom: Math.max(insets.bottom, 16) }}>
         {!isArchived && (
-          <Pressable style={[styles.actionButton, styles.actionButtonOutline]} onPress={onRetake}>
-            <Text style={styles.actionButtonOutlineText}>Retake Quiz</Text>
+          <Pressable
+            className={cn(ACTION_BUTTON, 'border-primary bg-field border-[1.5px]')}
+            onPress={onRetake}>
+            <Text className="text-foreground text-sm font-bold">Retake Quiz</Text>
           </Pressable>
         )}
-        <Pressable style={[styles.actionButton, styles.actionButtonFilled]} onPress={onBack}>
-          <Text style={styles.actionButtonFilledText}>Back to Quiz</Text>
+        <Pressable className={cn(ACTION_BUTTON, 'bg-primary')} onPress={onBack}>
+          <Text className="text-primary-foreground text-sm font-bold">Back to Quiz</Text>
         </Pressable>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  headerButton: {
-    padding: 8,
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#18181B',
-    letterSpacing: 1,
-    flex: 1,
-    textAlign: 'center',
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-  },
-  // Score section
-  scoreSection: {
-    backgroundColor: '#F4F4F5',
-    borderRadius: 16,
-    paddingVertical: 28,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-    marginBottom: 28,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-  },
-  badge: {
-    backgroundColor: '#18181B',
-    borderRadius: 10,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    alignItems: 'center',
-    minWidth: 100,
-  },
-  badgeLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#A1A1AA',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  badgeValue: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  // Review
-  reviewHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  reviewTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#18181B',
-  },
-  filterTabs: {
-    flexDirection: 'row',
-    backgroundColor: '#F4F4F5',
-    borderRadius: 8,
-    padding: 4,
-  },
-  filterTab: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-  },
-  filterTabActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  filterTabText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#71717A',
-  },
-  filterTabTextActive: {
-    color: '#18181B',
-    fontWeight: '600',
-  },
-  noQuestionsText: {
-    fontSize: 14,
-    color: '#71717A',
-    textAlign: 'center',
-    paddingVertical: 20,
-  },
-  reviewList: {
-    gap: 16,
-  },
-  reviewCard: {
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
-    borderRadius: 12,
-    padding: 18,
-    backgroundColor: '#FAFAFA',
-  },
-  reviewQuestionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#18181B',
-    marginBottom: 4,
-  },
-  reviewQuestionText: {
-    fontSize: 13,
-    color: '#3F3F46',
-    lineHeight: 20,
-    marginBottom: 14,
-  },
-  // Answer pills
-  answerPills: {
-    gap: 8,
-    marginBottom: 12,
-  },
-  answerPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  answerPillCorrect: {
-    backgroundColor: '#DCFCE7',
-    borderColor: '#86EFAC',
-  },
-  answerPillWrong: {
-    backgroundColor: '#FEE2E2',
-    borderColor: '#FCA5A5',
-  },
-  answerPillText: {
-    fontSize: 13,
-    fontWeight: '600',
-    flex: 1,
-  },
-  answerPillTextCorrect: {
-    color: '#166534',
-  },
-  answerPillTextWrong: {
-    color: '#991B1B',
-  },
-  answerPillLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  answerPillLabelCorrect: {
-    color: '#16A34A',
-  },
-  answerPillLabelWrong: {
-    color: '#DC2626',
-  },
-  // Explanation
-  explanationToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-  },
-  explanationToggleText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#71717A',
-  },
-  explanationContent: {
-    paddingBottom: 8,
-  },
-  explanationText: {
-    fontSize: 13,
-    color: '#3F3F46',
-    lineHeight: 20,
-  },
-  // Take to Chat
-  takeToChatRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 4,
-  },
-  takeToChatButton: {
-    backgroundColor: '#18181B',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  takeToChatText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  // Bottom actions
-  bottomActions: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E4E4E7',
-    backgroundColor: '#FFFFFF',
-  },
-  actionButton: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 10,
-  },
-  actionButtonOutline: {
-    borderWidth: 1.5,
-    borderColor: '#18181B',
-    backgroundColor: '#FFFFFF',
-  },
-  actionButtonFilled: {
-    backgroundColor: '#18181B',
-  },
-  actionButtonOutlineText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#18181B',
-  },
-  actionButtonFilledText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#FFFFFF',
-  },
-});

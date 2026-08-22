@@ -1,5 +1,6 @@
 import { Wordmark } from '@/components/auth/Wordmark';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/button-spinner';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { useAuth } from '@/context/AuthContext';
@@ -70,7 +71,7 @@ export default function OnboardingScreen() {
           We couldn&apos;t load your account. Check your connection and try again.
         </Text>
         <Button className="h-14 w-full rounded-xl" onPress={onRetry} disabled={retrying}>
-          {retrying ? <ActivityIndicator /> : <Text className="font-semibold">Try again</Text>}
+          {retrying ? <ButtonSpinner /> : <Text className="font-semibold">Try again</Text>}
         </Button>
       </View>
     );
@@ -247,7 +248,7 @@ export default function OnboardingScreen() {
 
           <Button className="mt-2 h-14 rounded-xl" onPress={onSubmit} disabled={submitting}>
             {submitting ? (
-              <ActivityIndicator color="#fff" />
+              <ButtonSpinner />
             ) : (
               <Text className="text-base font-semibold">Go to notebooks →</Text>
             )}

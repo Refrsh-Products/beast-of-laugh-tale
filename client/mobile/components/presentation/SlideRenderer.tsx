@@ -1,9 +1,13 @@
 import { View, Text, Image, StyleSheet, ScrollView } from 'react-native';
 import type { PresentationSlide } from '@freshr/shared';
 
-const G = '#84e487';
-const B = '#000000';
-const W = '#FFFFFF';
+import { SLIDE_PALETTE } from './slidePalette';
+
+// Short local aliases: these appear dozens of times in the layout below, and
+// `SLIDE_PALETTE.green` at every call site would drown the geometry.
+const G = SLIDE_PALETTE.green;
+const B = SLIDE_PALETTE.ink;
+const W = SLIDE_PALETTE.paper;
 
 interface SlideRendererProps {
   slide: PresentationSlide;
@@ -100,7 +104,7 @@ export function SlideRenderer({ slide, width, height, safeInsets }: SlideRendere
               contentContainerStyle={{ gap: fs(8), justifyContent: 'center', flexGrow: 1 }}
               showsVerticalScrollIndicator={false}>
               {titleBlock}
-              <Text style={{ fontSize: fs(13), color: '#333333', lineHeight: fs(22) }}>
+              <Text style={{ fontSize: fs(13), color: SLIDE_PALETTE.body, lineHeight: fs(22) }}>
                 {slide.body_text || slide.bullets.join(' ')}
               </Text>
             </ScrollView>
@@ -125,7 +129,7 @@ export function SlideRenderer({ slide, width, height, safeInsets }: SlideRendere
                 style={{
                   flex: 1,
                   borderRightWidth: 1,
-                  borderRightColor: '#eeeeee',
+                  borderRightColor: SLIDE_PALETTE.ruleLight,
                   paddingRight: fs(12),
                 }}>
                 {bulletList(left, fs(13))}
@@ -194,7 +198,7 @@ export function SlideRenderer({ slide, width, height, safeInsets }: SlideRendere
               <Text
                 style={{
                   fontSize: fs(12),
-                  color: '#555555',
+                  color: SLIDE_PALETTE.caption,
                   fontStyle: 'italic',
                   paddingLeft: fs(4),
                 }}>
@@ -262,7 +266,7 @@ export function SlideRenderer({ slide, width, height, safeInsets }: SlideRendere
               <Text
                 style={{
                   fontSize: fs(11),
-                  color: '#666666',
+                  color: SLIDE_PALETTE.source,
                   letterSpacing: 0.5,
                   textAlign: 'center',
                 }}>
@@ -291,7 +295,7 @@ export function SlideRenderer({ slide, width, height, safeInsets }: SlideRendere
                     )}
                   </View>
                   {slide.bullets[idx] ? (
-                    <Text style={{ fontSize: fs(10), color: '#555555', textAlign: 'center' }}>
+                    <Text style={{ fontSize: fs(10), color: SLIDE_PALETTE.caption, textAlign: 'center' }}>
                       {slide.bullets[idx]}
                     </Text>
                   ) : null}
@@ -333,16 +337,16 @@ export function SlideRenderer({ slide, width, height, safeInsets }: SlideRendere
       <View
         style={{
           borderTopWidth: 1,
-          borderTopColor: '#dddddd',
+          borderTopColor: SLIDE_PALETTE.rule,
           marginTop: fs(6),
           paddingTop: fs(4),
           flexDirection: 'row',
           justifyContent: 'space-between',
         }}>
-        <Text style={{ fontSize: fs(9), color: '#888888', letterSpacing: 1 }}>
+        <Text style={{ fontSize: fs(9), color: SLIDE_PALETTE.footer, letterSpacing: 1 }}>
           {slide.title?.toUpperCase().slice(0, 30)}
         </Text>
-        <Text style={{ fontSize: fs(9), color: '#888888' }}>{slide.order_index + 1}</Text>
+        <Text style={{ fontSize: fs(9), color: SLIDE_PALETTE.footer }}>{slide.order_index + 1}</Text>
       </View>
     </View>
   );

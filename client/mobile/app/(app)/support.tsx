@@ -12,6 +12,7 @@ import { ChevronLeft, Clock, LucideIcon, Mail, MapPin, Phone } from 'lucide-reac
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/button-spinner';
 import { Input } from '@/components/ui/input';
 import { Icon } from '@/components/ui/icon';
 import { useAuth } from '@/context/AuthContext';
@@ -158,7 +159,7 @@ export default function SupportScreen() {
 
             <Button size="lg" onPress={handleSubmit} disabled={!canSubmit || isSending}>
               {isSending ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ButtonSpinner size="small" />
               ) : (
                 <Text>Send Message</Text>
               )}

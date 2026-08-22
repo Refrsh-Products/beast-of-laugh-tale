@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { View, ScrollView, Pressable, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, Pressable, Alert } from 'react-native';
+import { cn } from '@/lib/utils';
 import { Text } from '@/components/ui/text';
 import { Progress } from '@/components/ui/progress';
 import { Icon } from '@/components/ui/icon';
@@ -7,6 +8,10 @@ import { Flag, LayoutGrid, ChevronDown, ChevronUp, X } from 'lucide-react-native
 import { QuizNavigatorGrid } from './QuizNavigatorGrid';
 import type { QuizSession } from '@freshr/shared';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// The three bottom-bar buttons share a shape; only the fill differs.
+const NAV_BUTTON = 'flex-1 items-center justify-center rounded-md py-3.5';
+const NAV_BUTTON_OUTLINE = 'border-input bg-field border';
 
 interface QuizTakingScreenProps {
   quiz: QuizSession;
@@ -157,21 +162,23 @@ export function QuizTakingScreen({
   const quizTitle = quiz.title || quiz.topic || 'Quiz';
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View className="bg-background flex-1" style={{ paddingTop: insets.top }}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.quizTitle} numberOfLines={1}>
+      <View className="flex-row items-center justify-between px-5 py-3">
+        <Text
+          className="text-foreground mr-3 flex-1 text-lg font-extrabold tracking-widest"
+          numberOfLines={1}>
           {quizTitle.toUpperCase()}
         </Text>
-        <Pressable onPress={handleExit} style={styles.exitButton}>
-          <Icon as={X} size={14} color="#DC2626" />
-          <Text style={styles.exitText}>Exit Quiz</Text>
+        <Pressable onPress={handleExit} className="flex-row items-center gap-1">
+          <Icon as={X} size={14} className="text-destructive" />
+          <Text className="text-destructive text-[13px] font-semibold">Exit Quiz</Text>
         </Pressable>
       </View>
 
       {/* Question counter + progress */}
-      <View style={styles.progressSection}>
-        <Text style={styles.questionCounter}>
+      <View className="px-5 pb-3">
+        <Text className="text-muted-foreground mb-1 text-[13px] font-medium">
           Question {currentQ + 1} of {numQuestions}
         </Text>
         <Progress value={progressPercent} className="h-1.5 mt-1" />
@@ -179,33 +186,41 @@ export function QuizTakingScreen({
 
       {/* Scrollable question area */}
       <ScrollView
-        style={styles.scrollArea}
-        contentContainerStyle={styles.scrollContent}
+        className="flex-1"
+        contentContainerClassName="px-5 pt-2 pb-6"
         showsVerticalScrollIndicator={false}>
         {/* Question card */}
-        <View style={styles.questionCard}>
-          <Text style={styles.questionTitle}>
+        <View className="border-border bg-card mb-4 rounded-lg border p-5">
+          <Text className="text-foreground mb-2.5 text-[15px] font-bold">
             Question {currentQ + 1}
           </Text>
-          <Text style={styles.questionText}>{question.question_text}</Text>
+          <Text className="text-foreground text-sm leading-[22px]">{question.question_text}</Text>
         </View>
 
         {/* Answer options */}
-        <View style={styles.optionsList}>
+        <View className="mb-4 gap-2">
           {displayChoices.map((opt: string, oi: number) => {
             const selected = userAnswers[currentQ] === oi;
             return (
               <Pressable
                 key={oi}
-                style={[
-                  styles.optionRow,
-                  selected && styles.optionRowSelected,
-                ]}
+                className={cn(
+                  'border-border bg-field flex-row items-center gap-3.5 rounded-md border px-4 py-3.5',
+                  selected && 'border-primary bg-accent border-2'
+                )}
                 onPress={() => selectAnswer(oi)}>
-                <View style={[styles.radio, selected && styles.radioSelected]}>
-                  {selected && <View style={styles.radioDot} />}
+                <View
+                  className={cn(
+                    'border-input size-[22px] items-center justify-center rounded-full border-[1.5px]',
+                    selected && 'border-primary'
+                  )}>
+                  {selected && <View className="bg-primary size-3 rounded-full" />}
                 </View>
-                <Text style={[styles.optionText, selected && styles.optionTextSelected]}>
+                <Text
+                  className={cn(
+                    'text-foreground flex-1 text-sm leading-5',
+                    selected && 'font-semibold'
+                  )}>
                   {opt}
                 </Text>
               </Pressable>
@@ -216,9 +231,9 @@ export function QuizTakingScreen({
         {/* Hint accordion (practice mode) */}
         {isPractice && question.explanation && (
           <Pressable
-            style={styles.hintToggle}
+            className="border-border bg-card mb-2 flex-row items-center justify-between rounded-md border px-4 py-3.5"
             onPress={() => setHintOpen(!hintOpen)}>
-            <Text style={styles.hintToggleText}>Hint</Text>
+            <Text className="text-foreground text-sm font-semibold">Hint</Text>
             <Icon
               as={hintOpen ? ChevronUp : ChevronDown}
               size={18}
@@ -227,23 +242,23 @@ export function QuizTakingScreen({
           </Pressable>
         )}
         {hintOpen && question.explanation && (
-          <View style={styles.hintContent}>
-            <Text style={styles.hintText}>{question.explanation}</Text>
+          <View className="border-border bg-muted mb-4 rounded-md border px-4 py-3.5">
+            <Text className="text-foreground text-[13px] leading-5">{question.explanation}</Text>
           </View>
         )}
 
         {/* Flag + Navigator row */}
-        <View style={styles.actionRow}>
-          <Pressable onPress={toggleFlag} style={styles.flagButton}>
+        <View className="mt-2 flex-row items-center justify-between">
+          <Pressable onPress={toggleFlag} className="p-2">
             <Icon
               as={Flag}
               size={18}
-              color={isFlagged ? '#18181B' : '#A1A1AA'}
+              className={isFlagged ? 'text-warning' : 'text-muted-foreground'}
             />
           </Pressable>
 
           <Pressable
-            style={styles.navigatorButton}
+            className="border-input bg-muted size-11 items-center justify-center rounded-full border"
             onPress={() => setShowNavigator(true)}>
             <Icon as={LayoutGrid} size={22} className="text-foreground" />
           </Pressable>
@@ -251,37 +266,31 @@ export function QuizTakingScreen({
       </ScrollView>
 
       {/* Bottom navigation */}
-      <View style={[styles.bottomNav, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+      <View
+        className="border-border bg-card flex-row justify-between gap-2.5 border-t px-5 pt-3"
+        style={{ paddingBottom: Math.max(insets.bottom, 12) }}>
         <Pressable
-          style={[styles.navButton, styles.navButtonOutline, currentQ === 0 && styles.navButtonDisabled]}
+          className={cn(NAV_BUTTON, NAV_BUTTON_OUTLINE, currentQ === 0 && 'opacity-35')}
           onPress={() => setCurrentQ((q) => q - 1)}
           disabled={currentQ === 0}>
-          <Text style={[styles.navButtonText, currentQ === 0 && styles.navButtonTextDisabled]}>
-            Previous
-          </Text>
+          <Text className="text-foreground text-sm font-semibold">Previous</Text>
         </Pressable>
 
         <Pressable
-          style={[styles.navButton, styles.navButtonOutline]}
+          className={cn(NAV_BUTTON, NAV_BUTTON_OUTLINE)}
           onPress={handleSubmitClick}>
-          <Text style={styles.navButtonText}>Submit</Text>
+          <Text className="text-foreground text-sm font-semibold">Submit</Text>
         </Pressable>
 
         <Pressable
-          style={[
-            styles.navButton,
-            styles.navButtonFilled,
-            currentQ === numQuestions - 1 && styles.navButtonDisabled,
-          ]}
+          className={cn(
+            NAV_BUTTON,
+            'bg-primary',
+            currentQ === numQuestions - 1 && 'opacity-35'
+          )}
           onPress={() => setCurrentQ((q) => q + 1)}
           disabled={currentQ === numQuestions - 1}>
-          <Text
-            style={[
-              styles.navButtonFilledText,
-              currentQ === numQuestions - 1 && styles.navButtonTextDisabled,
-            ]}>
-            Next
-          </Text>
+          <Text className="text-primary-foreground text-sm font-semibold">Next</Text>
         </Pressable>
       </View>
 
@@ -298,211 +307,3 @@ export function QuizTakingScreen({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  quizTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#18181B',
-    letterSpacing: 1,
-    flex: 1,
-    marginRight: 12,
-  },
-  exitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  exitText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#DC2626',
-  },
-  progressSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-  },
-  questionCounter: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#71717A',
-    marginBottom: 4,
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 24,
-  },
-  questionCard: {
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    backgroundColor: '#FAFAFA',
-  },
-  questionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#18181B',
-    marginBottom: 10,
-  },
-  questionText: {
-    fontSize: 14,
-    color: '#3F3F46',
-    lineHeight: 22,
-  },
-  optionsList: {
-    gap: 8,
-    marginBottom: 16,
-  },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-  },
-  optionRowSelected: {
-    borderColor: '#18181B',
-    borderWidth: 2,
-    backgroundColor: '#FAFAFA',
-  },
-  radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 1.5,
-    borderColor: '#D4D4D8',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  radioSelected: {
-    borderColor: '#18181B',
-  },
-  radioDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#18181B',
-  },
-  optionText: {
-    fontSize: 14,
-    color: '#3F3F46',
-    flex: 1,
-    lineHeight: 20,
-  },
-  optionTextSelected: {
-    color: '#18181B',
-    fontWeight: '600',
-  },
-  hintToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
-    borderRadius: 10,
-    backgroundColor: '#FAFAFA',
-    marginBottom: 8,
-  },
-  hintToggleText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#18181B',
-  },
-  hintContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
-    borderRadius: 10,
-    backgroundColor: '#F4F4F5',
-    marginBottom: 16,
-  },
-  hintText: {
-    fontSize: 13,
-    color: '#3F3F46',
-    lineHeight: 20,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  flagButton: {
-    padding: 8,
-  },
-  navigatorButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#F4F4F5',
-    borderWidth: 1,
-    borderColor: '#D4D4D8',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 10,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E4E4E7',
-    backgroundColor: '#FFFFFF',
-  },
-  navButton: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 10,
-  },
-  navButtonOutline: {
-    borderWidth: 1,
-    borderColor: '#D4D4D8',
-    backgroundColor: '#FFFFFF',
-  },
-  navButtonFilled: {
-    backgroundColor: '#18181B',
-  },
-  navButtonDisabled: {
-    opacity: 0.35,
-  },
-  navButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#18181B',
-  },
-  navButtonTextDisabled: {
-    color: '#A1A1AA',
-  },
-  navButtonFilledText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-});

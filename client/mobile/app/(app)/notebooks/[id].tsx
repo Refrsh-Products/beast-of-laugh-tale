@@ -283,8 +283,10 @@ export default function NotebookDetailScreen() {
                             closeCurrentRow();
                             handleDeleteFile(notebookFile);
                           }}>
-                          <Icon as={Trash2} color="white" size={22} />
-                          <Text className="mt-1 text-xs font-medium text-white">Delete</Text>
+                          <Icon as={Trash2} className="text-destructive-foreground" size={22} />
+                          <Text className="text-destructive-foreground mt-1 text-xs font-medium">
+                            Delete
+                          </Text>
                         </Pressable>
                       </View>
                     )}>

@@ -1,6 +1,7 @@
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 import { AuthHeader } from '@/components/auth/AuthHeader';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/button-spinner';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { useAuthService } from '@/hooks/useAuthService';
@@ -8,7 +9,7 @@ import { validateEmail, validatePassword, validatePasswordConfirm } from '@/lib/
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
 
 type FieldErrors = { email?: string; password?: string; confirm?: string };
 
@@ -118,7 +119,7 @@ export default function RegisterScreen() {
 
           <Button className="mt-2 h-14 rounded-xl" onPress={onSubmit} disabled={loading}>
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ButtonSpinner />
             ) : (
               <Text className="text-base font-semibold">Sign up</Text>
             )}

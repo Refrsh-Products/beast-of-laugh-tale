@@ -26,6 +26,16 @@ export function useThemeColors(): ThemeColors {
   return isDarkColorScheme ? THEME.dark : THEME.light;
 }
 
+/**
+ * The names of the colour entries only. `ThemeColors` also carries `radius`,
+ * which is a number and not something you can hand to a colour prop — so
+ * anything typed as "a token to colour something with" wants this, not
+ * `keyof ThemeColors`.
+ */
+export type ThemeColorName = {
+  [K in keyof ThemeColors]: ThemeColors[K] extends string ? K : never;
+}[keyof ThemeColors];
+
 export type { ThemeColors };
 
 export default useThemeColors;

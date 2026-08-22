@@ -44,12 +44,8 @@ const ALLOWLIST = new Map([
     'Generated from lib/design/tokens.ts by `npm run tokens`.',
   ],
   [
-    'components/presentation/SlideRenderer.tsx',
-    'A slide is a fixed-design canvas: it must match how web renders the same deck and how it exports to PDF, and must NOT invert with the app theme. Colours live in SLIDE_PALETTE at the top of the file.',
-  ],
-  [
-    'components/presentation/exportPresentation.ts',
-    'Same as SlideRenderer — the exported document has to look identical to web, which needs literal colours at export time.',
+    'components/presentation/slidePalette.ts',
+    'The colours a generated slide is drawn in. A slide is a fixed-design document that must render identically on web, on screen, in the thumbnail grid and in the exported PDF, so it must NOT follow the app theme. SlideRenderer, SlideThumbnail and exportPresentation all read from here rather than holding literals of their own.',
   ],
   [
     'components/auth/GoogleSignInButton.tsx',

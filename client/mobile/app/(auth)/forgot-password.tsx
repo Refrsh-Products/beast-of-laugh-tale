@@ -1,5 +1,7 @@
 import { AuthHeader } from '@/components/auth/AuthHeader';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/button-spinner';
+import { Icon } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { useAuthService } from '@/hooks/useAuthService';
@@ -7,7 +9,7 @@ import { validateEmail } from '@/lib/validation';
 import { useRouter } from 'expo-router';
 import { MailCheck } from 'lucide-react-native';
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
 
 /**
  * Collects an email and hits the password-reset endpoint. The reset
@@ -47,7 +49,7 @@ export default function ForgotPasswordScreen() {
       <View className="flex-1 bg-background px-6">
         <AuthHeader />
         <View className="items-center gap-4">
-          <MailCheck size={56} color="#34c759" />
+          <Icon as={MailCheck} size={56} className="text-success" />
           <Text className="text-center text-3xl font-bold">Check your email</Text>
           <Text className="text-center text-base text-muted-foreground">
             If an account exists for{'\n'}
@@ -92,7 +94,7 @@ export default function ForgotPasswordScreen() {
 
         <Button className="mt-6 h-14 rounded-xl" onPress={onSubmit} disabled={loading}>
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ButtonSpinner />
           ) : (
             <Text className="text-base font-semibold">Send reset link</Text>
           )}

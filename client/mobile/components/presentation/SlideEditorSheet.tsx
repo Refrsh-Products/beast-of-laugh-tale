@@ -9,14 +9,25 @@ import {
   KeyboardAvoidingView,
   ActivityIndicator,
 } from 'react-native';
+import { ButtonSpinner } from '@/components/ui/button-spinner';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { fontWeights } from '@/lib/design';
+import { cn } from '@/lib/utils';
+import { SLIDE_PALETTE } from './slidePalette';
+
+// Field shapes reused across every slide-kind editor below.
+const FIELD_GROUP = 'gap-2';
+const FIELD_LABEL = 'text-muted-foreground text-[11px] font-bold tracking-widest';
+const TEXT_INPUT = 'border-input bg-field text-foreground rounded-md border p-3 text-sm';
+const BODY_INPUT = `${TEXT_INPUT} min-h-[100px] leading-[22px]`;
+const AI_MESSAGE = 'max-w-[85%] rounded-md p-2.5';
+
 import { Text } from '@/components/ui/text';
 import { Icon } from '@/components/ui/icon';
 import { X, Plus, Trash2, Send } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { PresentationSlide, SlideImage } from '@freshr/shared';
 
-const G = '#84e487';
-const B = '#18181B';
 
 interface AiMessage {
   role: 'user' | 'ai';
@@ -40,6 +51,7 @@ export function SlideEditorSheet({
   onDiscard,
   onRefineSlide,
 }: SlideEditorSheetProps) {
+  const colors = useThemeColors();
   const insets = useSafeAreaInsets();
 
   const [localTitle, setLocalTitle] = useState(slide.title);
@@ -141,14 +153,14 @@ export function SlideEditorSheet({
 
   function renderTitleField() {
     return (
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>TITLE</Text>
+      <View className={FIELD_GROUP}>
+        <Text className={FIELD_LABEL}>TITLE</Text>
         <TextInput
-          style={styles.titleInput}
+          className="border-primary text-foreground border-b-2 py-1 pb-2 text-[22px] font-extrabold"
           value={localTitle}
           onChangeText={setLocalTitle}
           placeholder="Slide title..."
-          placeholderTextColor="#A1A1AA"
+          placeholderTextColor={colors.mutedForeground}
         />
       </View>
     );
@@ -156,28 +168,28 @@ export function SlideEditorSheet({
 
   function renderBulletsField(hint?: string) {
     return (
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>BULLETS{hint ? ` · ${hint}` : ''}</Text>
+      <View className={FIELD_GROUP}>
+        <Text className={FIELD_LABEL}>BULLETS{hint ? ` · ${hint}` : ''}</Text>
         {localBullets.map((bullet, i) => (
-          <View key={i} style={styles.bulletRow}>
+          <View key={i} className="flex-row items-center gap-2.5">
             <Text style={styles.bulletDot}>•</Text>
             <TextInput
-              style={styles.bulletInput}
+              className="border-border text-foreground flex-1 border-b-hairline py-2 text-sm"
               value={bullet}
               onChangeText={(text) => setBullet(i, text)}
               placeholder="Bullet point..."
-              placeholderTextColor="#A1A1AA"
+              placeholderTextColor={colors.mutedForeground}
             />
             {localBullets.length > 1 && (
-              <Pressable onPress={() => removeBullet(i)} style={styles.removeBulletButton}>
-                <Icon as={Trash2} size={14} color="#DC2626" />
+              <Pressable onPress={() => removeBullet(i)} className="p-1.5">
+                <Icon as={Trash2} size={14} className="text-destructive" />
               </Pressable>
             )}
           </View>
         ))}
-        <Pressable onPress={addBullet} style={styles.addBulletButton}>
-          <Icon as={Plus} size={14} color="#71717A" />
-          <Text style={styles.addBulletText}>Add bullet</Text>
+        <Pressable onPress={addBullet} className="flex-row items-center gap-1.5 self-start py-2">
+          <Icon as={Plus} size={14} className="text-muted-foreground" />
+          <Text className="text-muted-foreground text-[13px] font-medium">Add bullet</Text>
         </Pressable>
       </View>
     );
@@ -185,14 +197,14 @@ export function SlideEditorSheet({
 
   function renderBodyTextField() {
     return (
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>BODY TEXT</Text>
+      <View className={FIELD_GROUP}>
+        <Text className={FIELD_LABEL}>BODY TEXT</Text>
         <TextInput
-          style={styles.bodyInput}
+          className={BODY_INPUT}
           value={localBodyText}
           onChangeText={setLocalBodyText}
           placeholder="Write your paragraph here..."
-          placeholderTextColor="#A1A1AA"
+          placeholderTextColor={colors.mutedForeground}
           multiline
           numberOfLines={5}
           textAlignVertical="top"
@@ -204,27 +216,27 @@ export function SlideEditorSheet({
   function renderQuoteField() {
     return (
       <>
-        <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>QUOTE</Text>
+        <View className={FIELD_GROUP}>
+          <Text className={FIELD_LABEL}>QUOTE</Text>
           <TextInput
-            style={styles.bodyInput}
+            className={BODY_INPUT}
             value={localQuote}
             onChangeText={setLocalQuote}
             placeholder="Quote text..."
-            placeholderTextColor="#A1A1AA"
+            placeholderTextColor={colors.mutedForeground}
             multiline
             numberOfLines={4}
             textAlignVertical="top"
           />
         </View>
-        <View style={styles.fieldGroup}>
-          <Text style={styles.fieldLabel}>SOURCE</Text>
+        <View className={FIELD_GROUP}>
+          <Text className={FIELD_LABEL}>SOURCE</Text>
           <TextInput
-            style={styles.textInput}
+            className={TEXT_INPUT}
             value={localQuoteSource}
             onChangeText={setLocalQuoteSource}
             placeholder="— Source / attribution"
-            placeholderTextColor="#A1A1AA"
+            placeholderTextColor={colors.mutedForeground}
           />
         </View>
       </>
@@ -233,14 +245,14 @@ export function SlideEditorSheet({
 
   function renderImageField(index: number, label = 'IMAGE URL') {
     return (
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>{label}</Text>
+      <View className={FIELD_GROUP}>
+        <Text className={FIELD_LABEL}>{label}</Text>
         <TextInput
-          style={styles.textInput}
+          className={TEXT_INPUT}
           value={localImages[index]?.url ?? ''}
           onChangeText={(text) => setImage(index, text)}
           placeholder="https://..."
-          placeholderTextColor="#A1A1AA"
+          placeholderTextColor={colors.mutedForeground}
           autoCapitalize="none"
           keyboardType="url"
         />
@@ -250,14 +262,14 @@ export function SlideEditorSheet({
 
   function renderCaptionField() {
     return (
-      <View style={styles.fieldGroup}>
-        <Text style={styles.fieldLabel}>CAPTION</Text>
+      <View className={FIELD_GROUP}>
+        <Text className={FIELD_LABEL}>CAPTION</Text>
         <TextInput
-          style={styles.textInput}
+          className={TEXT_INPUT}
           value={localCaption}
           onChangeText={setLocalCaption}
           placeholder="Caption..."
-          placeholderTextColor="#A1A1AA"
+          placeholderTextColor={colors.mutedForeground}
         />
       </View>
     );
@@ -302,33 +314,34 @@ export function SlideEditorSheet({
       supportedOrientations={['portrait', 'landscape', 'landscape-left', 'landscape-right']}
     >
       <KeyboardAvoidingView
-        style={[styles.container, { paddingTop: insets.top }]}
+        className="bg-background flex-1"
+        style={{ paddingTop: insets.top }}
         behavior="padding"
       >
         {/* Header */}
-        <View style={styles.header}>
+        <View className="border-border flex-row items-center justify-between border-b px-5 py-3">
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>
+            <Text className="text-foreground text-sm font-bold tracking-wide">
               SLIDE {slide.order_index + 1} OF {totalSlides}
             </Text>
-            <Text style={styles.headerSubtitle}>
+            <Text className="text-muted-foreground mt-0.5 text-[11px] tracking-wide">
               {slide.layout.toUpperCase()}
             </Text>
           </View>
-          <View style={styles.headerButtons}>
-            <Pressable onPress={handleSave} style={styles.saveButton}>
-              <Text style={styles.saveButtonText}>Done</Text>
+          <View className="flex-row items-center gap-2.5">
+            <Pressable onPress={handleSave} className="bg-primary rounded-md px-4 py-2">
+              <Text className="text-primary-foreground text-sm font-semibold">Done</Text>
             </Pressable>
-            <Pressable onPress={onDiscard} style={styles.discardButton}>
-              <Icon as={X} size={18} color="#71717A" />
+            <Pressable onPress={onDiscard} className="p-1">
+              <Icon as={X} size={18} className="text-muted-foreground" />
             </Pressable>
           </View>
         </View>
 
         {/* Scrollable form */}
         <ScrollView
-          style={styles.scrollArea}
-          contentContainerStyle={styles.scrollContent}
+          className="flex-1"
+          contentContainerClassName="gap-5 p-5 pb-10"
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
@@ -336,29 +349,27 @@ export function SlideEditorSheet({
 
           {/* AI messages */}
           {aiMessages.length > 0 && (
-            <View style={styles.aiSection}>
-              <Text style={styles.fieldLabel}>AI CHAT</Text>
+            <View className="border-border gap-2 border-t pt-3">
+              <Text className={FIELD_LABEL}>AI CHAT</Text>
               {aiMessages.map((msg, i) => (
                 <View
                   key={i}
-                  style={[
-                    styles.aiMessage,
-                    msg.role === 'user' ? styles.aiMessageUser : styles.aiMessageAi,
-                  ]}
-                >
+                  className={cn(
+                    AI_MESSAGE,
+                    msg.role === 'user' ? 'bg-primary self-end' : 'bg-muted self-start'
+                  )}>
                   <Text
-                    style={[
-                      styles.aiMessageText,
-                      msg.role === 'user' && styles.aiMessageTextUser,
-                    ]}
-                  >
+                    className={cn(
+                      'text-[13px] leading-[18px]',
+                      msg.role === 'user' ? 'text-primary-foreground' : 'text-foreground'
+                    )}>
                     {msg.content}
                   </Text>
                 </View>
               ))}
               {isRefining && (
-                <View style={[styles.aiMessage, styles.aiMessageAi]}>
-                  <Text style={styles.aiMessageText}>Thinking...</Text>
+                <View className={cn(AI_MESSAGE, 'bg-muted self-start')}>
+                  <Text className="text-foreground text-[13px] leading-[18px]">Thinking...</Text>
                 </View>
               )}
             </View>
@@ -366,13 +377,15 @@ export function SlideEditorSheet({
         </ScrollView>
 
         {/* AI chat input — fixed at bottom */}
-        <View style={[styles.chatInputContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+        <View
+          className="border-border bg-card flex-row gap-2.5 border-t px-5 pt-3"
+          style={{ paddingBottom: Math.max(insets.bottom, 12) }}>
           <TextInput
-            style={styles.chatInput}
+            className="border-input bg-field text-foreground flex-1 rounded-md border px-3 py-2.5 text-sm"
             value={chatInput}
             onChangeText={setChatInput}
             placeholder="Ask AI to edit this slide..."
-            placeholderTextColor="#A1A1AA"
+            placeholderTextColor={colors.mutedForeground}
             editable={!isRefining}
             onSubmitEditing={handleSendChat}
             returnKeyType="send"
@@ -380,15 +393,15 @@ export function SlideEditorSheet({
           <Pressable
             onPress={handleSendChat}
             disabled={isRefining || !chatInput.trim()}
-            style={[
-              styles.sendButton,
-              (isRefining || !chatInput.trim()) && styles.sendButtonDisabled,
-            ]}
+            className={cn(
+              'bg-primary size-[42px] items-center justify-center rounded-md',
+              (isRefining || !chatInput.trim()) && 'opacity-40'
+            )}
           >
             {isRefining ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ButtonSpinner size="small" />
             ) : (
-              <Icon as={Send} size={16} color="#FFFFFF" />
+              <Icon as={Send} size={16} className="text-primary-foreground" />
             )}
           </Pressable>
         </View>
@@ -397,186 +410,14 @@ export function SlideEditorSheet({
   );
 }
 
+// The bullet marker is the deck's own accent — it previews how the slide will
+// actually render — so it comes from the slide palette, not a theme token.
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E4E4E7',
-  },
-  headerTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#18181B',
-    letterSpacing: 0.5,
-  },
-  headerSubtitle: {
-    fontSize: 11,
-    color: '#71717A',
-    letterSpacing: 0.5,
-    marginTop: 2,
-  },
-  headerButtons: {
-    flexDirection: 'row',
-    gap: 10,
-    alignItems: 'center',
-  },
-  saveButton: {
-    backgroundColor: '#18181B',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  discardButton: {
-    padding: 4,
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-    gap: 20,
-    paddingBottom: 40,
-  },
-  fieldGroup: {
-    gap: 8,
-  },
-  fieldLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#71717A',
-    letterSpacing: 1,
-  },
-  titleInput: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#18181B',
-    borderBottomWidth: 2,
-    borderBottomColor: '#18181B',
-    paddingBottom: 8,
-    paddingVertical: 4,
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: '#D4D4D8',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    color: '#18181B',
-    backgroundColor: '#FAFAFA',
-  },
-  bodyInput: {
-    borderWidth: 1,
-    borderColor: '#D4D4D8',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    color: '#18181B',
-    backgroundColor: '#FAFAFA',
-    minHeight: 100,
-    lineHeight: 22,
-  },
-  bulletRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
   bulletDot: {
-    color: '#84e487',
+    color: SLIDE_PALETTE.green,
+    fontFamily: fontWeights.bold.family,
     fontWeight: '700',
     fontSize: 18,
     lineHeight: 22,
-  },
-  bulletInput: {
-    flex: 1,
-    fontSize: 14,
-    color: '#18181B',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E4E4E7',
-    paddingVertical: 8,
-  },
-  removeBulletButton: {
-    padding: 6,
-  },
-  addBulletButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    alignSelf: 'flex-start',
-  },
-  addBulletText: {
-    fontSize: 13,
-    color: '#71717A',
-    fontWeight: '500',
-  },
-  aiSection: {
-    gap: 8,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E4E4E7',
-  },
-  aiMessage: {
-    maxWidth: '85%',
-    padding: 10,
-    borderRadius: 8,
-  },
-  aiMessageUser: {
-    backgroundColor: '#18181B',
-    alignSelf: 'flex-end',
-  },
-  aiMessageAi: {
-    backgroundColor: '#F4F4F5',
-    alignSelf: 'flex-start',
-  },
-  aiMessageText: {
-    fontSize: 13,
-    color: '#18181B',
-    lineHeight: 18,
-  },
-  aiMessageTextUser: {
-    color: '#FFFFFF',
-  },
-  chatInputContainer: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E4E4E7',
-    backgroundColor: '#FFFFFF',
-  },
-  chatInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#D4D4D8',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#18181B',
-  },
-  sendButton: {
-    backgroundColor: '#18181B',
-    borderRadius: 8,
-    width: 42,
-    height: 42,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendButtonDisabled: {
-    opacity: 0.4,
   },
 });

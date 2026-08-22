@@ -2,8 +2,10 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import type { PresentationSession, PresentationSlide } from '@freshr/shared';
 
-const G = '#84e487';
-const B = '#000000';
+import { SLIDE_PALETTE } from './slidePalette';
+
+const G = SLIDE_PALETTE.green;
+const B = SLIDE_PALETTE.ink;
 
 /**
  * Generates a landscape PDF from the presentation data using expo-print
@@ -67,19 +69,19 @@ function buildHtml(topic: string, slides: PresentationSlide[]): string {
         .bullet-list li::before {
           content: '•'; color: ${G}; font-weight: 700; position: absolute; left: 0;
         }
-        .body-text { font-size: 15px; color: #333; line-height: 1.8; }
+        .body-text { font-size: 15px; color: ${SLIDE_PALETTE.body}; line-height: 1.8; }
         .quote-mark { font-size: 48px; font-weight: 800; color: ${G}; text-align: center; }
         .quote-text { font-size: 22px; font-weight: 700; color: ${B}; text-align: center; line-height: 1.4; margin-bottom: 12px; }
-        .quote-source { font-size: 13px; color: #666; text-align: center; }
+        .quote-source { font-size: 13px; color: ${SLIDE_PALETTE.source}; text-align: center; }
         .slide-footer {
-          border-top: 1px solid #ddd; margin-top: 12px; padding-top: 6px;
-          display: flex; justify-content: space-between; font-size: 10px; color: #888;
+          border-top: 1px solid ${SLIDE_PALETTE.rule}; margin-top: 12px; padding-top: 6px;
+          display: flex; justify-content: space-between; font-size: 10px; color: ${SLIDE_PALETTE.footer};
           letter-spacing: 1px; flex-shrink: 0;
         }
         .slide-img { width: 100%; height: 100%; object-fit: cover; border: 2px solid ${B}; }
         .two-col { display: flex; flex: 1; gap: 24px; }
         .two-col > div { flex: 1; }
-        .caption { font-size: 13px; color: #555; font-style: italic; margin-top: 6px; }
+        .caption { font-size: 13px; color: ${SLIDE_PALETTE.caption}; font-style: italic; margin-top: 6px; }
       </style>
     </head>
     <body>
