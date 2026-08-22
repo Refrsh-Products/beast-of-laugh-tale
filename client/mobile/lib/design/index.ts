@@ -15,7 +15,7 @@
  * `tokens.ts` is the file to edit; everything else is derived from it.
  */
 
-export { brand, ink, paper, primary, secondary, tertiary, white } from './brand';
+export { brand, hsl, ink, paper, primary, secondary, tertiary, white } from './brand';
 export type { Ramp, RampStep } from './brand';
 
 export { dark, light, radius, themes } from './tokens';

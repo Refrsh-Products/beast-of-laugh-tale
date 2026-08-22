@@ -30,6 +30,8 @@
     --destructive-foreground: 0 0% 100%;
     --success: 95.1 81% 22.7%;
     --success-foreground: 0 0% 100%;
+    --warning: 37.3 23.8% 37.1%;
+    --warning-foreground: 0 0% 100%;
     --border: 60 26.1% 76.7%;
     --input: 43.6 24.7% 43.7%;
     --field: 60 26.3% 92.5%;
@@ -61,6 +63,8 @@
     --destructive-foreground: 80 11.1% 5.3%;
     --success: 91.9 92.1% 55.5%;
     --success-foreground: 80 11.1% 5.3%;
+    --warning: 57.4 26% 64.5%;
+    --warning-foreground: 80 11.1% 5.3%;
     --border: 158.1 41.9% 24.3%;
     --input: 153.7 29.6% 51.6%;
     --field: 158 40.6% 19.8%;

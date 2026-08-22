@@ -59,6 +59,8 @@ export type TokenName =
   | 'destructive-foreground'
   | 'success'
   | 'success-foreground'
+  | 'warning'
+  | 'warning-foreground'
   | 'border'
   | 'input'
   | 'field'
@@ -104,6 +106,17 @@ export const light: TokenMap = {
   success: secondary['800'],
   'success-foreground': white,
 
+  // The middle band between success and destructive — a partial result, not yet
+  // a failure. The brandbook has no warm accent at all, and the tertiary ramp is
+  // the only warm family in it, so "amber" here is brand tan rather than a
+  // borrowed orange. Deep enough on the ramp to work as text on a light surface
+  // (5.1:1 on --background) as well as a fill carrying white (5.8:1).
+  //
+  // Web has no equivalent yet: its quiz review is a binary right/wrong, so it
+  // never needed a third state. If it grows one, it takes this same role.
+  warning: tertiary['800'],
+  'warning-foreground': white,
+
   // Three separate jobs, deliberately three tokens:
   //   --border  decorative dividers, may be soft
   //   --input   the OUTLINE of a control, so it must clear the 3:1 non-text
@@ -148,6 +161,12 @@ export const dark: TokenMap = {
   // --primary (Sulu) so "correct" and "call to action" stay distinguishable.
   success: secondary['400'],
   'success-foreground': ink,
+
+  // Light end of the tan ramp, so it stays warm against the green surfaces and
+  // reads at 8.4:1 on --background. Carries ink rather than white, like every
+  // pale fill in dark mode.
+  warning: tertiary['400'],
+  'warning-foreground': ink,
 
   border: primary['700'],
   input: primary['400'],

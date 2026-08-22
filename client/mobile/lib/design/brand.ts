@@ -88,3 +88,11 @@ export const paper = '100 10% 88.2%'; // #e0e4de
 export const white = '0 0% 100%';
 
 export const brand = { primary, secondary, tertiary, ink, paper, white };
+
+/**
+ * Wraps a triplet into a colour React Native can parse: `hsl(ink)` → `'hsl(80 11.1% 5.3%)'`.
+ *
+ * Only needed when passing a ramp step to a style prop. Semantic colours already
+ * arrive wrapped from `useThemeColors()`, and classNames need none of this.
+ */
+export const hsl = (triplet: string) => `hsl(${triplet})`;

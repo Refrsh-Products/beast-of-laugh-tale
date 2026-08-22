@@ -26,6 +26,8 @@ const colors = {
   'destructive-foreground': 'hsl(var(--destructive-foreground))',
   'success': 'hsl(var(--success))',
   'success-foreground': 'hsl(var(--success-foreground))',
+  'warning': 'hsl(var(--warning))',
+  'warning-foreground': 'hsl(var(--warning-foreground))',
   'border': 'hsl(var(--border))',
   'input': 'hsl(var(--input))',
   'field': 'hsl(var(--field))',
