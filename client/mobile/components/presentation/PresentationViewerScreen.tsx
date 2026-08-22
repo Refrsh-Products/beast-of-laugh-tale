@@ -18,6 +18,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SlideRenderer } from './SlideRenderer';
 import { SlideEditorSheet } from './SlideEditorSheet';
 import { SlideNavigatorGrid } from './SlideNavigatorGrid';
+import { fontWeights } from '@/lib/design';
+import { SLIDE_PALETTE } from './slidePalette';
 import { exportAsPdf } from './exportPresentation';
 import type { PresentationSession, PresentationSlide } from '@freshr/shared';
 
@@ -179,7 +181,10 @@ export function PresentationViewerScreen({
   const keyExtractor = useCallback((item: PresentationSlide) => item.id, []);
 
   return (
-    <View style={styles.container}>
+    // Presenter mode is deliberately theme-invariant: a deck is presented
+    // against black with translucent chrome over it, like a video player, so
+    // the overlay reads against the SLIDE rather than against the app.
+    <View className="flex-1 bg-black">
       <StatusBar hidden />
 
       {/* Slides FlatList — tap to toggle controls */}
@@ -212,28 +217,28 @@ export function PresentationViewerScreen({
           <View style={styles.topBarActions}>
             {/* Slide navigator */}
             <Pressable onPress={() => { setShowNavigator(true); if (hideTimerRef.current) clearTimeout(hideTimerRef.current); }} style={styles.topBarButton}>
-              <Icon as={LayoutGrid} size={18} color="#FFFFFF" />
+              <Icon as={LayoutGrid} size={18} className="text-white" />
             </Pressable>
 
             {/* Edit */}
             {!isArchived && (
               <Pressable onPress={() => { handleEditCurrent(); if (hideTimerRef.current) clearTimeout(hideTimerRef.current); }} style={styles.topBarButton}>
-                <Icon as={Edit3} size={18} color="#FFFFFF" />
+                <Icon as={Edit3} size={18} className="text-white" />
               </Pressable>
             )}
 
             {/* Export */}
             <Pressable onPress={handleExport} disabled={isExporting} style={styles.topBarButton}>
               {isExporting ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color="white" />
               ) : (
-                <Icon as={Download} size={18} color="#FFFFFF" />
+                <Icon as={Download} size={18} className="text-white" />
               )}
             </Pressable>
 
             {/* Close */}
             <Pressable onPress={handleClose} style={styles.topBarButton}>
-              <Icon as={X} size={18} color="#FFFFFF" />
+              <Icon as={X} size={18} className="text-white" />
             </Pressable>
           </View>
         </Animated.View>
@@ -247,10 +252,14 @@ export function PresentationViewerScreen({
             disabled={currentIndex === 0}
             style={[styles.navArrow, currentIndex === 0 && styles.navArrowDisabled]}
           >
-            <Icon as={ChevronLeft} size={20} color={currentIndex === 0 ? '#666' : '#FFFFFF'} />
+            <Icon
+              as={ChevronLeft}
+              size={20}
+              className={currentIndex === 0 ? 'text-white/40' : 'text-white'}
+            />
           </Pressable>
 
-          <Text style={styles.slideCounter}>
+          <Text className="min-w-[50px] text-center text-[13px] font-semibold tracking-wide text-white">
             {currentIndex + 1} / {slides.length}
           </Text>
 
@@ -259,7 +268,11 @@ export function PresentationViewerScreen({
             disabled={currentIndex === slides.length - 1}
             style={[styles.navArrow, currentIndex === slides.length - 1 && styles.navArrowDisabled]}
           >
-            <Icon as={ChevronRight} size={20} color={currentIndex === slides.length - 1 ? '#666' : '#FFFFFF'} />
+            <Icon
+              as={ChevronRight}
+              size={20}
+              className={currentIndex === slides.length - 1 ? 'text-white/40' : 'text-white'}
+            />
           </Pressable>
         </Animated.View>
       )}
@@ -292,10 +305,6 @@ export function PresentationViewerScreen({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
   topBar: {
     position: 'absolute',
     top: 0,
@@ -309,8 +318,11 @@ const styles = StyleSheet.create({
   },
   topBarTitle: {
     fontSize: 14,
+    fontFamily: fontWeights.bold.family,
     fontWeight: '700',
-    color: '#84e487',
+    // The deck's own accent, so it comes from the slide palette rather than a
+    // theme token — the bar sits over the slide, not over the app.
+    color: SLIDE_PALETTE.green,
     letterSpacing: 0.5,
     flex: 1,
     marginRight: 12,
@@ -335,14 +347,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     gap: 20,
-  },
-  slideCounter: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-    minWidth: 50,
-    textAlign: 'center',
   },
   navArrow: {
     padding: 8,

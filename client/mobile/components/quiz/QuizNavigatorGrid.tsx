@@ -1,6 +1,8 @@
 import { Modal, View, Pressable, StyleSheet, ScrollView } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Text } from '@/components/ui/text';
+import { hsl, ink } from '@/lib/design';
+import { cn } from '@/lib/utils';
 
 interface QuizNavigatorGridProps {
   visible: boolean;
@@ -11,6 +13,13 @@ interface QuizNavigatorGridProps {
   flaggedQuestions: number[];
   onNavigate: (index: number) => void;
 }
+
+/** The legend swatches, so they can't drift from the cell styles below. */
+const LEGEND = [
+  { label: 'Answered', className: 'bg-primary' },
+  { label: 'Current', className: 'bg-field border-primary border' },
+  { label: 'Flagged', className: 'bg-field border-warning border-2' },
+];
 
 export function QuizNavigatorGrid({
   visible,
@@ -28,71 +37,55 @@ export function QuizNavigatorGrid({
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
       </View>
 
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Questions</Text>
+      <View
+        className="bg-popover absolute bottom-0 left-0 right-0 max-h-[60%] rounded-t-[20px] px-6 pb-8 pt-5"
+        style={styles.sheetLift}>
+        <View className="mb-4 flex-row items-center justify-between">
+          <Text className="text-foreground text-lg font-bold">Questions</Text>
           <Pressable onPress={onClose}>
-            <Text style={styles.closeText}>Done</Text>
+            <Text className="text-muted-foreground text-sm font-semibold">Done</Text>
           </Pressable>
         </View>
 
         {/* Legend */}
-        <View style={styles.legend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#18181B' }]} />
-            <Text style={styles.legendText}>Answered</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#18181B' }]} />
-            <Text style={styles.legendText}>Current</Text>
-          </View>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendDot, { backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#F97316' }]} />
-            <Text style={styles.legendText}>Flagged</Text>
-          </View>
+        <View className="mb-4 flex-row gap-4">
+          {LEGEND.map((item) => (
+            <View key={item.label} className="flex-row items-center gap-1.5">
+              <View className={cn('size-3 rounded-[3px]', item.className)} />
+              <Text className="text-muted-foreground text-[11px]">{item.label}</Text>
+            </View>
+          ))}
         </View>
 
-        <ScrollView contentContainerStyle={styles.grid}>
+        <ScrollView contentContainerClassName="flex-row flex-wrap gap-2 pb-2">
           {Array.from({ length: totalQuestions }, (_, i) => {
             const isCurrent = i === currentIndex;
             const isAnswered = userAnswers[i] !== null;
             const isFlagged = flaggedQuestions.includes(i);
 
-            let bgColor = '#FFFFFF';
-            let textColor = '#18181B';
-            let borderColor = '#D4D4D8';
-            let borderWidth = 1;
-
-            if (isAnswered) {
-              bgColor = '#18181B';
-              textColor = '#FFFFFF';
-              borderColor = '#18181B';
-            }
-            if (isCurrent) {
-              borderWidth = 2;
-              borderColor = isAnswered ? '#18181B' : '#18181B';
-            }
-            if (isFlagged) {
-              borderColor = '#F97316';
-              borderWidth = 2;
-            }
-
             return (
               <Pressable
                 key={i}
-                style={[
-                  styles.cell,
-                  {
-                    backgroundColor: bgColor,
-                    borderColor,
-                    borderWidth,
-                  },
-                ]}
+                className={cn(
+                  'size-[42px] items-center justify-center rounded-md border',
+                  isAnswered ? 'bg-primary border-primary' : 'bg-field border-border',
+                  // Current and flagged are outline states, so they layer over
+                  // whichever fill the cell already has. Flagged wins — it's the
+                  // one you went out of your way to mark.
+                  isCurrent && 'border-primary border-2',
+                  isFlagged && 'border-warning border-2'
+                )}
                 onPress={() => {
                   onNavigate(i);
                   onClose();
                 }}>
-                <Text style={[styles.cellText, { color: textColor }]}>{i + 1}</Text>
+                <Text
+                  className={cn(
+                    'text-sm font-semibold',
+                    isAnswered ? 'text-primary-foreground' : 'text-foreground'
+                  )}>
+                  {i + 1}
+                </Text>
               </Pressable>
             );
           })}
@@ -102,75 +95,15 @@ export function QuizNavigatorGrid({
   );
 }
 
+// Shadow only — React Native needs the offset/radius as real style values, and
+// a sheet rising from the bottom casts upward. Shadows are cast in ink in both
+// themes, so this is a ramp constant rather than a semantic token.
 const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '60%',
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    paddingBottom: 32,
-    shadowColor: '#000',
+  sheetLift: {
+    shadowColor: hsl(ink),
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#18181B',
-  },
-  closeText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#71717A',
-  },
-  legend: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 16,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 3,
-  },
-  legendText: {
-    fontSize: 11,
-    color: '#71717A',
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    paddingBottom: 8,
-  },
-  cell: {
-    width: 42,
-    height: 42,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cellText: {
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

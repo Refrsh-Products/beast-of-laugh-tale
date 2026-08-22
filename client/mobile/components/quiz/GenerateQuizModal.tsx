@@ -1,4 +1,8 @@
 import { Modal, View, ScrollView, ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { ButtonSpinner } from '@/components/ui/button-spinner';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { hsl, ink } from '@/lib/design';
+import { cn } from '@/lib/utils';
 import { BlurView } from 'expo-blur';
 import { Text } from '@/components/ui/text';
 import { useState, useEffect } from 'react';
@@ -37,6 +41,7 @@ export function GenerateQuizModal({
   isGenerating,
   notebookId,
 }: GenerateQuizModalProps) {
+  const colors = useThemeColors();
   const notebookService = useNotebookService();
   const insets = useSafeAreaInsets();
 
@@ -123,42 +128,40 @@ export function GenerateQuizModal({
       </View>
 
       <View
-        style={[
-          styles.modalContainer,
-          { paddingBottom: Math.max(insets.bottom, 16) },
-        ]}>
+        className="bg-popover absolute bottom-0 left-0 right-0 max-h-[90%] rounded-t-[20px]"
+        style={[styles.sheetLift, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          className="flex-grow-0"
+          contentContainerClassName="p-6 pb-2"
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
           {/* Header */}
-          <View style={styles.header}>
+          <View className="mb-5 flex-row items-start justify-between">
             <View>
-              <Text style={styles.title}>Select Topics</Text>
-              <Text style={styles.subtitle}>
+              <Text className="text-foreground mb-1 text-xl font-bold">Select Topics</Text>
+              <Text className="text-muted-foreground max-w-[260px] text-[13px] leading-[18px]">
                 Select the topics you want to generate the quiz based on.
               </Text>
             </View>
-            <Pressable onPress={onClose} disabled={isGenerating} style={styles.closeButton}>
+            <Pressable onPress={onClose} disabled={isGenerating} className="mt-0.5 p-1">
               <Icon as={X} size={20} className="text-foreground" />
             </Pressable>
           </View>
 
           {/* Topics section */}
-          <View style={styles.section}>
+          <View className="mb-1">
             {isLoadingTopics ? (
-              <View style={styles.topicsLoading}>
-                <ActivityIndicator size="small" />
-                <Text style={styles.topicsLoadingText}>Loading topics...</Text>
+              <View className="flex-row items-center gap-2 p-4">
+                <ActivityIndicator size="small" color={colors.mutedForeground} />
+                <Text className="text-muted-foreground text-[13px]">Loading topics...</Text>
               </View>
             ) : topics.length === 0 ? (
-              <Text style={styles.noTopicsText}>
+              <Text className="text-muted-foreground p-4 text-[13px] leading-5">
                 No topics found. Upload files to your notebook first.
               </Text>
             ) : (
-              <View style={styles.topicsContainer}>
-                <View style={styles.chipWrap}>
+              <View className="border-border rounded-lg border p-3.5">
+                <View className="flex-row flex-wrap gap-2">
                   {(topicsExpanded ? topics : previewTopics).map((topic) => (
                     <QuizTopicChip
                       key={topic.id}
@@ -169,25 +172,27 @@ export function GenerateQuizModal({
                   ))}
                 </View>
 
-                <View style={styles.topicsFooter}>
+                <View className="mt-3 flex-row items-center justify-between">
                   {selectedTopics.length > 0 ? (
-                    <Text style={styles.topicsHint}>
+                    <Text className="text-muted-foreground flex-1 text-xs">
                       {selectedTopics.length} topic{selectedTopics.length > 1 ? 's' : ''} selected
                     </Text>
                   ) : (
-                    <Text style={styles.topicsHint}>
+                    <Text className="text-muted-foreground flex-1 text-xs">
                       No topics selected - Quiz will cover all topics
                     </Text>
                   )}
 
                   {!topicsExpanded && hiddenCount > 0 && (
                     <Pressable onPress={() => setTopicsExpanded(true)}>
-                      <Text style={styles.moreButton}>+{hiddenCount} More</Text>
+                      <Text className="text-muted-foreground text-xs font-semibold">
+                        +{hiddenCount} More
+                      </Text>
                     </Pressable>
                   )}
                   {topicsExpanded && topics.length > COLLAPSED_MAX && (
                     <Pressable onPress={() => setTopicsExpanded(false)}>
-                      <Text style={styles.moreButton}>Collapse</Text>
+                      <Text className="text-muted-foreground text-xs font-semibold">Collapse</Text>
                     </Pressable>
                   )}
                 </View>
@@ -196,21 +201,24 @@ export function GenerateQuizModal({
           </View>
 
           {/* Divider */}
-          <View style={styles.divider} />
+          <View className="bg-border my-4 h-px" />
 
           {/* Custom prompt section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>
+          <View className="mb-1">
+            <Text className="text-foreground mb-2.5 text-sm leading-5">
               Or describe what you want to be quizzed on
             </Text>
             <TextInput
-              style={[styles.promptInput, !hasTopics && styles.promptInputDisabled]}
+              className={cn(
+                'border-input bg-field text-foreground min-h-[90px] rounded-lg border p-3.5 text-sm leading-5',
+                !hasTopics && 'border-border bg-muted'
+              )}
               placeholder={
                 hasTopics
                   ? 'e.g. Generate a quiz on unit conversion'
                   : 'Upload files to your notebook to enable this'
               }
-              placeholderTextColor="#A1A1AA"
+              placeholderTextColor={colors.mutedForeground}
               value={prompt}
               onChangeText={setPrompt}
               multiline
@@ -221,10 +229,10 @@ export function GenerateQuizModal({
           </View>
 
           {/* Divider */}
-          <View style={styles.divider} />
+          <View className="bg-border my-4 h-px" />
 
           {/* Settings row 1: Questions + Difficulty */}
-          <View style={styles.settingsRow}>
+          <View className="flex-row">
             <PickerDropdown
               label="Number of Questions"
               value={questionCount}
@@ -249,7 +257,7 @@ export function GenerateQuizModal({
           </View>
 
           {/* Settings row 2: Mode + Timer */}
-          <View style={[styles.settingsRow, { marginTop: 16 }]}>
+          <View className="mt-4 flex-row">
             <PickerDropdown
               label="Quiz Mode"
               value={quizType}
@@ -276,19 +284,22 @@ export function GenerateQuizModal({
         </ScrollView>
 
         {/* Generate Button */}
-        <View style={styles.buttonContainer}>
+        <View className="px-6 pb-2 pt-3">
           <Pressable
-            style={[styles.generateButton, !canGenerate && styles.generateButtonDisabled]}
+            className={cn(
+              'bg-primary items-center justify-center rounded-lg py-4',
+              !canGenerate && 'opacity-50'
+            )}
             onPress={handleGenerate}
             disabled={!canGenerate}>
             {isGenerating ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ButtonSpinner />
             ) : (
-              <Text style={styles.generateButtonText}>Generate Quiz</Text>
+              <Text className="text-primary-foreground text-base font-bold">Generate Quiz</Text>
             )}
           </Pressable>
           {!hasTopics && !isLoadingTopics && (
-            <Text style={styles.generateHint}>
+            <Text className="text-muted-foreground mt-2 text-center text-xs">
               Add at least one file to your notebook to generate a quiz.
             </Text>
           )}
@@ -298,150 +309,15 @@ export function GenerateQuizModal({
   );
 }
 
+// Shadow only — everything else is a utility class, so the sheet follows the
+// theme. A sheet rising from the bottom casts upward, and shadows are cast in
+// ink in both themes.
 const styles = StyleSheet.create({
-  modalContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '90%',
-    shadowColor: '#000',
+  sheetLift: {
+    shadowColor: hsl(ink),
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 20,
-  },
-  scrollView: {
-    flexGrow: 0,
-  },
-  scrollContent: {
-    padding: 24,
-    paddingBottom: 8,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 20,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#18181B',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 13,
-    color: '#71717A',
-    lineHeight: 18,
-    maxWidth: 260,
-  },
-  closeButton: {
-    padding: 4,
-    marginTop: 2,
-  },
-  section: {
-    marginBottom: 4,
-  },
-  sectionLabel: {
-    fontSize: 14,
-    color: '#3F3F46',
-    marginBottom: 10,
-    lineHeight: 20,
-  },
-  topicsLoading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    padding: 16,
-  },
-  topicsLoadingText: {
-    fontSize: 13,
-    color: '#71717A',
-  },
-  noTopicsText: {
-    fontSize: 13,
-    color: '#71717A',
-    padding: 16,
-    lineHeight: 20,
-  },
-  topicsContainer: {
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
-    borderRadius: 12,
-    padding: 14,
-  },
-  chipWrap: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  topicsFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  topicsHint: {
-    fontSize: 12,
-    color: '#A1A1AA',
-    flex: 1,
-  },
-  moreButton: {
-    fontSize: 12,
-    color: '#71717A',
-    fontWeight: '600',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#E4E4E7',
-    marginVertical: 16,
-  },
-  promptInput: {
-    borderWidth: 1,
-    borderColor: '#D4D4D8',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 14,
-    color: '#18181B',
-    backgroundColor: '#FFFFFF',
-    minHeight: 90,
-    lineHeight: 20,
-  },
-  promptInputDisabled: {
-    backgroundColor: '#F4F4F5',
-    borderColor: '#E4E4E7',
-  },
-  settingsRow: {
-    flexDirection: 'row',
-  },
-  buttonContainer: {
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 8,
-  },
-  generateButton: {
-    backgroundColor: '#18181B',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  generateButtonDisabled: {
-    opacity: 0.5,
-  },
-  generateButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  generateHint: {
-    fontSize: 12,
-    color: '#A1A1AA',
-    textAlign: 'center',
-    marginTop: 8,
   },
 });

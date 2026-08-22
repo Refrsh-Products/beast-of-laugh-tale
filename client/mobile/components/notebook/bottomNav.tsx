@@ -23,6 +23,8 @@ import {
 } from '../ui/dropdown-menu';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { hsl, ink } from '@/lib/design';
+import { cn } from '@/lib/utils';
 
 type SectionKey = 'files' | 'chat' | 'quiz' | 'presentation' | 'transcription';
 
@@ -52,13 +54,17 @@ function BottomNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isDarkColorScheme } = useColorScheme();
   const insets = useSafeAreaInsets();
-  // The active slot must contrast with the `bg-muted` pill, so it can't reuse
-  // the `background` token (which nearly matches muted AND the screen — the
-  // highlight vanished). A raised surface — white in light, a lighter gray in
-  // dark — plus a soft shadow reads clearly, Linear-style.
+  // The active slot has to contrast with the `bg-muted` pill it sits in. Under
+  // the old greyscale palette nothing semantic did — `background` nearly matched
+  // muted and the highlight vanished — hence the hardcoded white/grey this used
+  // to carry. `accent` is now both the right look and the right meaning: it is
+  // the token that backs selected states, and it separates from muted in each
+  // theme (pale Timber Green on ecru; a lighter green on the dark pill).
+  //
+  // The shadow keeps the Linear-style lift. Shadows are cast in ink regardless
+  // of theme — a shadow tinted with `foreground` would become a halo in dark.
   const activeSlotStyle: ViewStyle = {
-    backgroundColor: isDarkColorScheme ? 'hsl(0 0% 32%)' : '#ffffff',
-    shadowColor: '#000',
+    shadowColor: hsl(ink),
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: isDarkColorScheme ? 0.4 : 0.12,
     shadowRadius: 3,
@@ -128,15 +134,20 @@ function BottomNav() {
         <DropdownMenuTrigger asChild>
           <Pressable
             accessibilityLabel="More tools"
-            className="flex-row items-center justify-center gap-1 rounded-full px-5 py-2.5 active:opacity-70"
+            className={cn(
+              'flex-row items-center justify-center gap-1 rounded-full px-5 py-2.5 active:opacity-70',
+              (isToolActive || isMenuOpen) && 'bg-accent'
+            )}
             style={isToolActive || isMenuOpen ? activeSlotStyle : undefined}>
             <Icon
               as={isToolActive ? SECTION_ICONS[active] : ChevronsUpDown}
               size={20}
-              className={isToolActive || isMenuOpen ? 'text-foreground' : 'text-muted-foreground'}
+              className={
+                isToolActive || isMenuOpen ? 'text-accent-foreground' : 'text-muted-foreground'
+              }
             />
             {isToolActive && (
-              <Icon as={ChevronsUpDown} size={12} className="text-muted-foreground" />
+              <Icon as={ChevronsUpDown} size={12} className="text-accent-foreground" />
             )}
           </Pressable>
         </DropdownMenuTrigger>
@@ -202,9 +213,16 @@ function NavSlot({
     <Pressable
       onPress={onPress}
       accessibilityLabel={label}
-      className="items-center justify-center rounded-full px-5 py-2.5 active:opacity-70"
+      className={cn(
+        'items-center justify-center rounded-full px-5 py-2.5 active:opacity-70',
+        active && 'bg-accent'
+      )}
       style={active ? activeStyle : undefined}>
-      <Icon as={icon} size={20} className={active ? 'text-foreground' : 'text-muted-foreground'} />
+      <Icon
+        as={icon}
+        size={20}
+        className={active ? 'text-accent-foreground' : 'text-muted-foreground'}
+      />
     </Pressable>
   );
 }

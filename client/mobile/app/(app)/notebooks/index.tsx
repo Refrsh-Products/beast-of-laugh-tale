@@ -24,6 +24,9 @@ import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
 import { Screen } from '@/components/ui/screen';
+import { useThemeColors } from '@/hooks/useThemeColors';
+import { hsl, ink } from '@/lib/design';
+import { cn } from '@/lib/utils';
 import { UpgradeSheet } from '@/components/account/upgradeSheet';
 import { UsageCard } from '@/components/notebook/usageCard';
 import { getApiErrorCode, NOTEBOOK_QUOTA_EXCEEDED } from '@/lib/apiError';
@@ -33,6 +36,7 @@ import { useAccountService } from '@/hooks/useAccountService';
 import { Notebook, AccountUsage } from '@freshr/shared';
 import { mobileSessionStore } from '@/lib/session';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Wordmark } from '@/components/auth/Wordmark';
 
 type Tab = 'active' | 'archived';
 type SortMode = 'newest' | 'oldest' | 'a-z' | 'z-a';
@@ -70,6 +74,7 @@ function formatRelativeTime(iso: string): string {
 }
 
 export default function NotebookListScreen() {
+  const colors = useThemeColors();
   const notebookService = useNotebookService();
   const accountService = useAccountService();
 
@@ -253,7 +258,12 @@ export default function NotebookListScreen() {
             />
           </View>
         ) : (
-          <Text className="text-3xl font-bold tracking-widest">FRESHR</Text>
+          /* The wordmark's own class list is sized for the auth screens (full
+             width, centred). In this row it has to sit at intrinsic size on the
+             left, or it eats the whole row and shoves the icons off screen.
+             137x32 keeps the artwork's 30:7 ratio and matches the 40px controls
+             beside it. */
+          <Wordmark className="h-8 w-[137px]" />
         )}
         <View className="flex-row items-center gap-3">
           <Pressable
@@ -295,8 +305,8 @@ export default function NotebookListScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={['#9Bd35A', '#689F38']}
-            tintColor="#689F38"
+            colors={[colors.primary]}
+            tintColor={colors.primary}
           />
         }>
         {/* Usage Overview */}
@@ -357,9 +367,12 @@ export default function NotebookListScreen() {
         <View className="flex-row items-center justify-between px-5">
           <View className="flex max-w-sm flex-col gap-6">
             <Tabs value={value} onValueChange={handleTabChange}>
+              {/* Layout only. Colour comes from the TabsList/TabsTrigger
+                  primitives, which already carry `bg-muted` and the active
+                  `bg-accent` — the local overrides that used to sit here
+                  hardcoded a grey pill and a white active tab. */}
               <TabsList
                 style={{
-                  backgroundColor: '#d3d3d3', // The base gray background
                   padding: 4,
                   borderRadius: 10,
                   flexDirection: 'row',
@@ -376,17 +389,19 @@ export default function NotebookListScreen() {
                       borderRadius: 8,
                       borderWidth: 0, // Kills the hard black border on inactive tabs
                     },
-                    // Highlights only the active tab with white bg + shadow
+                    // The active tab's fill comes from TabsTrigger; this is
+                    // just the lift. Shadows are cast in ink in both themes.
                     value === 'active' && {
-                      backgroundColor: '#ffffff',
-                      shadowColor: '#000',
+                      shadowColor: hsl(ink),
                       shadowOffset: { width: 0, height: 1 },
                       shadowOpacity: 0.1,
                       shadowRadius: 2,
                       elevation: 2,
                     },
                   ]}>
-                  <Text style={{ fontWeight: value === 'active' ? '600' : '400' }}>Active</Text>
+                  <Text className={value === 'active' ? 'font-semibold' : 'font-normal'}>
+                    Active
+                  </Text>
                 </TabsTrigger>
                 <TabsTrigger
                   value="archived"
@@ -399,17 +414,19 @@ export default function NotebookListScreen() {
                       borderRadius: 8,
                       borderWidth: 0, // Kills the hard black border on inactive tabs
                     },
-                    // Highlights only the active tab with white bg + shadow
+                    // The active tab's fill comes from TabsTrigger; this is
+                    // just the lift. Shadows are cast in ink in both themes.
                     value === 'archived' && {
-                      backgroundColor: '#ffffff',
-                      shadowColor: '#000',
+                      shadowColor: hsl(ink),
                       shadowOffset: { width: 0, height: 1 },
                       shadowOpacity: 0.1,
                       shadowRadius: 2,
                       elevation: 2,
                     },
                   ]}>
-                  <Text style={{ fontWeight: value === 'archived' ? '600' : '400' }}>Archived</Text>
+                  <Text className={value === 'archived' ? 'font-semibold' : 'font-normal'}>
+                    Archived
+                  </Text>
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -451,16 +468,32 @@ export default function NotebookListScreen() {
                 }}
                 renderRightActions={() => (
                   <View className="flex-row gap-2">
+                    {/* Restore is the affirmative action, so it takes `primary`;
+                        archive is the cautionary one, so it takes `warning`. The
+                        blue/amber pair these replace had no place in the brand
+                        palette and inverted badly in dark mode. */}
                     <Pressable
-                      className="ml-3 w-20 items-center justify-center rounded-2xl"
-                      style={{ backgroundColor: notebook.is_archived ? '#3b82f6' : '#f59e0b' }}
+                      className={cn(
+                        'ml-3 w-20 items-center justify-center rounded-2xl',
+                        notebook.is_archived ? 'bg-primary' : 'bg-warning'
+                      )}
                       onPress={() => handleToggleArchive(notebook)}>
                       <Icon
                         as={notebook.is_archived ? ArchiveRestore : Archive}
-                        color="white"
+                        className={
+                          notebook.is_archived
+                            ? 'text-primary-foreground'
+                            : 'text-warning-foreground'
+                        }
                         size={22}
                       />
-                      <Text className="mt-1 text-xs font-medium text-white">
+                      <Text
+                        className={cn(
+                          'mt-1 text-xs font-medium',
+                          notebook.is_archived
+                            ? 'text-primary-foreground'
+                            : 'text-warning-foreground'
+                        )}>
                         {notebook.is_archived ? 'Restore' : 'Archive'}
                       </Text>
                     </Pressable>
@@ -470,8 +503,10 @@ export default function NotebookListScreen() {
                         closeCurrentRow();
                         handleDeleteNotebook(notebook);
                       }}>
-                      <Icon as={Trash2} color="white" size={22} />
-                      <Text className="mt-1 text-xs font-medium text-white">Delete</Text>
+                      <Icon as={Trash2} className="text-destructive-foreground" size={22} />
+                      <Text className="mt-1 text-xs font-medium text-destructive-foreground">
+                        Delete
+                      </Text>
                     </Pressable>
                   </View>
                 )}>
@@ -510,7 +545,9 @@ export default function NotebookListScreen() {
       <View className="px-5 py-4">
         <Link href="/notebooks/create" asChild>
           <Button variant="default" size="lg">
-            <Text>+ Create Notebook</Text>
+            <Text className="text-center text-base font-bold text-primary-foreground">
+              + Create Notebook
+            </Text>
           </Button>
         </Link>
       </View>

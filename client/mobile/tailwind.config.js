@@ -1,4 +1,9 @@
 const { hairlineWidth } = require('nativewind/theme');
+const plugin = require('tailwindcss/plugin');
+
+// Generated from lib/design/ by `npm run tokens`. Tailwind loads this config in
+// plain Node, so it can't read the TypeScript sources directly.
+const tokens = require('./lib/design/tailwind-tokens.generated.js');
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -8,44 +13,19 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
-        primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
-        },
-        secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
-        },
-        destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
-        },
-        muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
-        },
-        accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
-        },
-        popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
-        },
-        card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
-        },
+        ...tokens.colors,
+        ...tokens.brandColors,
+      },
+      fontFamily: {
+        sans: [tokens.fontSans],
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        sm: tokens.radius.sm,
+        md: tokens.radius.md,
+        lg: tokens.radius.lg,
+        xl: tokens.radius.xl,
+        '2xl': tokens.radius['2xl'],
+        '3xl': tokens.radius['3xl'],
       },
       borderWidth: {
         hairline: hairlineWidth(),
@@ -69,5 +49,21 @@ module.exports = {
   future: {
     hoverOnlyWhenSupported: true,
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+
+    // Weight utilities have to carry the font FAMILY as well as the weight.
+    // React Native won't pick InstrumentSans_600SemiBold out of a `fontWeight: 600`
+    // when the family is a static face — it renders Regular, or a synthesised
+    // fake-bold, depending on platform. Redefining the utilities here means the
+    // ~566 existing `font-semibold`/`font-bold` classNames across the app resolve
+    // to the right face with no edits. See lib/design/typography.ts.
+    plugin(({ addUtilities }) => {
+      const utilities = {};
+      for (const [name, { weight, family }] of Object.entries(tokens.fontWeights)) {
+        utilities[`.font-${name}`] = { fontFamily: family, fontWeight: weight };
+      }
+      addUtilities(utilities);
+    }),
+  ],
 };

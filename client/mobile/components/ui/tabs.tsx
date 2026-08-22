@@ -35,7 +35,11 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
             web: 'inline-flex cursor-default whitespace-nowrap transition-[color,box-shadow] focus-visible:border-ring focus-visible:outline-1 focus-visible:outline-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0',
           }),
           props.disabled && 'opacity-50',
-          props.value === value && 'bg-background dark:border-foreground/10 dark:bg-input/30',
+          // `accent` is the token that backs selected states, and it's the only
+          // surface that reads as raised in BOTH themes against the `bg-muted`
+          // tab list — in dark, `card`/`background` are darker than muted, so a
+          // stock `bg-background` active tab would recede instead of lifting.
+          props.value === value && 'bg-accent dark:border-foreground/10',
           className
         )}
         {...props}

@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/ui/icon';
 import { X } from 'lucide-react-native';
 import type { PresentationSlide } from '@freshr/shared';
+import { hsl, ink } from '@/lib/design';
 
 interface SlideNavigatorGridProps {
   visible: boolean;
@@ -42,15 +43,12 @@ export function SlideNavigatorGrid({
       </View>
 
       <View
-        style={[
-          styles.container,
-          { paddingBottom: Math.max(insets.bottom, 16) },
-        ]}
-      >
+        className="bg-popover absolute bottom-0 left-0 right-0 max-h-[80%] rounded-t-[20px]"
+        style={[styles.sheetLift, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Slides</Text>
-          <Pressable onPress={onClose} style={styles.closeButton}>
+        <View className="border-border flex-row items-center justify-between border-b-hairline p-5">
+          <Text className="text-foreground text-lg font-bold">Slides</Text>
+          <Pressable onPress={onClose} className="p-1">
             <Icon as={X} size={20} className="text-foreground" />
           </Pressable>
         </View>
@@ -60,10 +58,10 @@ export function SlideNavigatorGrid({
           data={slides}
           numColumns={3}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.gridContent}
-          columnWrapperStyle={styles.gridRow}
+          contentContainerClassName="p-3"
+          columnWrapperClassName="gap-2"
           renderItem={({ item, index }) => (
-            <View style={styles.gridItem}>
+            <View className="max-w-[33.33%] flex-1">
               <SlideThumbnail
                 slide={item}
                 index={index}
@@ -78,46 +76,14 @@ export function SlideNavigatorGrid({
   );
 }
 
+// Shadow only — a sheet rising from the bottom casts upward, and shadows are
+// cast in ink in both themes.
 const styles = StyleSheet.create({
-  container: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    maxHeight: '80%',
-    shadowColor: '#000',
+  sheetLift: {
+    shadowColor: hsl(ink),
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E4E4E7',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#18181B',
-  },
-  closeButton: {
-    padding: 4,
-  },
-  gridContent: {
-    padding: 12,
-  },
-  gridRow: {
-    gap: 8,
-  },
-  gridItem: {
-    flex: 1,
-    maxWidth: '33.33%',
   },
 });

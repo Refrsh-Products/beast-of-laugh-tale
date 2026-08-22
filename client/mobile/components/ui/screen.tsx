@@ -18,7 +18,7 @@ type ScreenProps = React.ComponentProps<typeof SafeAreaView> & {
  * `SafeAreaView`, which collapses without an explicit flex.
  */
 function Screen({ className, edges = DEFAULT_EDGES, ...props }: ScreenProps) {
-  return <SafeAreaView edges={edges} className={cn('flex-1', className)} {...props} />;
+  return <SafeAreaView edges={edges} className={cn('flex-1 pt-5', className)} {...props} />;
 }
 
 export { Screen };

@@ -1,6 +1,7 @@
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
-import { Wordmark } from '@/components/auth/Wordmark';
+import { AuthHeader } from '@/components/auth/AuthHeader';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/button-spinner';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { useAuthService } from '@/hooks/useAuthService';
@@ -8,7 +9,7 @@ import { validateEmail, validatePassword } from '@/lib/validation';
 import { NeedsVerificationError } from '@freshr/shared';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -50,11 +51,11 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-background"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior="padding">
       <ScrollView
-        contentContainerClassName="flex-grow px-6 pb-10 pt-24"
+        contentContainerClassName="flex-grow px-6 pb-10"
         keyboardShouldPersistTaps="handled">
-        <Wordmark className="mb-20" />
+        <AuthHeader />
 
         <Text className="mb-8 text-3xl font-bold">Log in with your Account</Text>
 
@@ -101,7 +102,7 @@ export default function LoginScreen() {
 
           <Button className="mt-2 h-14 rounded-xl" onPress={onSubmit} disabled={loading}>
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ButtonSpinner />
             ) : (
               <Text className="text-base font-semibold">Sign in</Text>
             )}

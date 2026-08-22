@@ -1,22 +1,15 @@
 import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
-import { Wordmark } from '@/components/auth/Wordmark';
+import { AuthHeader } from '@/components/auth/AuthHeader';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/button-spinner';
 import { Input } from '@/components/ui/input';
 import { Text } from '@/components/ui/text';
 import { useAuthService } from '@/hooks/useAuthService';
 import { validateEmail, validatePassword, validatePasswordConfirm } from '@/lib/validation';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ChevronLeft } from 'lucide-react-native';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, ScrollView, View } from 'react-native';
 
 type FieldErrors = { email?: string; password?: string; confirm?: string };
 
@@ -26,9 +19,7 @@ const TERMS_URL = 'https://freshr.cc/terms-of-service';
 const PRIVACY_URL = 'https://freshr.cc/privacy-policy';
 
 function openPolicy(url: string) {
-  WebBrowser.openBrowserAsync(url).catch((err) =>
-    console.warn('Failed to open policy page', err)
-  );
+  WebBrowser.openBrowserAsync(url).catch((err) => console.warn('Failed to open policy page', err));
 }
 
 export default function RegisterScreen() {
@@ -64,17 +55,11 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1 bg-background"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView className="flex-1 bg-background" behavior="padding">
       <ScrollView
-        contentContainerClassName="flex-grow px-6 pb-10 pt-16"
+        contentContainerClassName="flex-grow px-6 pb-10"
         keyboardShouldPersistTaps="handled">
-        <Pressable onPress={() => router.back()} className="-ml-1 mb-6 h-8 w-8 justify-center">
-          <ChevronLeft size={28} />
-        </Pressable>
-
-        <Wordmark className="mb-12" />
+        <AuthHeader showBack />
 
         <Text className="mb-8 text-3xl font-bold">Create your Account</Text>
 
@@ -134,7 +119,7 @@ export default function RegisterScreen() {
 
           <Button className="mt-2 h-14 rounded-xl" onPress={onSubmit} disabled={loading}>
             {loading ? (
-              <ActivityIndicator color="#fff" />
+              <ButtonSpinner />
             ) : (
               <Text className="text-base font-semibold">Sign up</Text>
             )}

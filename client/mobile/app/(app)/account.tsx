@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/button-spinner';
 import { Text } from '@/components/ui/text';
 import { useAuth } from '@/context/AuthContext';
 import { useAuthService } from '@/hooks/useAuthService';
@@ -82,7 +83,7 @@ export default function AccountScreen() {
 
   return (
     <Screen className="flex-1 bg-background">
-      <ScrollView contentContainerClassName="p-4 gap-6">
+      <ScrollView contentContainerClassName="px-4 pb-4 gap-6">
         {/** Header of profile page */}
         <View className="flex-row items-center gap-2">
           <Button variant="ghost" size="icon" onPress={() => router.back()}>
@@ -200,13 +201,12 @@ export default function AccountScreen() {
           onPress={onLogout}
           disabled={loggingOut}>
           {loggingOut ? (
-            <ActivityIndicator color="#fff" />
+            <ButtonSpinner variant="destructive" />
           ) : (
-            <Text className="text-base font-semibold text-white">Log out</Text>
+            <Text className="text-destructive-foreground text-base font-semibold">Log out</Text>
           )}
         </Button>
       </ScrollView>
     </Screen>
   );
 }
-

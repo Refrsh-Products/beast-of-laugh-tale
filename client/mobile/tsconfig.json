@@ -3,6 +3,9 @@
   "compilerOptions": {
     "strict": true,
     "ignoreDeprecations": "6.0",
+    // lib/design/tokens.ts imports './brand.ts' with the extension so that
+    // `npm run tokens` can load it in plain Node. See that import for details.
+    "allowImportingTsExtensions": true,
     "baseUrl": ".",
     "paths": {
       "@/*": ["*"]

@@ -1,23 +1,28 @@
 import { View, StyleSheet } from 'react-native';
 import { Text } from '@/components/ui/text';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 import Svg, { Circle } from 'react-native-svg';
 
+/** Score bands, high to low. The first one the score clears wins. */
+const BANDS = [
+  { min: 75, message: 'Great Job!', token: 'success' },
+  { min: 50, message: 'Good Effort!', token: 'warning' },
+  { min: 0, message: 'Keep Trying!', token: 'destructive' },
+] as const;
+
 function ScoreRing({ scorePercent }: { scorePercent: number }) {
+  // react-native-svg takes colours as props, not classNames, so the ring is one
+  // of the few places that reads the theme directly rather than via a utility.
+  const colors = useThemeColors();
+
   const size = 140;
   const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (circumference * scorePercent) / 100;
 
-  let ringColor = '#22C55E'; // green
-  if (scorePercent < 50)
-    ringColor = '#EF4444'; // red
-  else if (scorePercent < 75) ringColor = '#F59E0B'; // amber
-
-  let message = 'Great Job!';
-  if (scorePercent < 50) message = 'Keep Trying!';
-  else if (scorePercent < 75) message = 'Good Effort!';
+  const band = BANDS.find((b) => scorePercent >= b.min) ?? BANDS[BANDS.length - 1];
 
   return (
     <View style={ringStyles.container}>
@@ -27,7 +32,7 @@ function ScoreRing({ scorePercent }: { scorePercent: number }) {
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="#E4E4E7"
+          stroke={colors.border}
           strokeWidth={strokeWidth}
           fill="transparent"
         />
@@ -36,7 +41,7 @@ function ScoreRing({ scorePercent }: { scorePercent: number }) {
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={ringColor}
+          stroke={colors[band.token]}
           strokeWidth={strokeWidth}
           fill="transparent"
           strokeDasharray={`${circumference}`}
@@ -46,8 +51,10 @@ function ScoreRing({ scorePercent }: { scorePercent: number }) {
         />
       </Svg>
       <View style={ringStyles.labelOverlay}>
-        <Text style={ringStyles.percentText}>{scorePercent}%</Text>
-        <Text style={ringStyles.messageText}>{message}</Text>
+        <Text className="text-foreground text-[28px] font-extrabold leading-[34px]">
+          {scorePercent}%
+        </Text>
+        <Text className="text-muted-foreground mt-0.5 text-xs font-medium">{band.message}</Text>
       </View>
     </View>
   );
@@ -62,18 +69,6 @@ const ringStyles = StyleSheet.create({
   labelOverlay: {
     position: 'absolute',
     alignItems: 'center',
-  },
-  percentText: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#18181B',
-    lineHeight: 34,
-  },
-  messageText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#71717A',
-    marginTop: 2,
   },
 });
 

@@ -5,6 +5,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { Screen } from '@/components/ui/screen';
 import { Text } from '@/components/ui/text';
 import { Button } from '@/components/ui/button';
+import { ButtonSpinner } from '@/components/ui/button-spinner';
 import { Input } from '@/components/ui/input';
 import { Header } from '@/components/notebook/header';
 import { BottomNav } from '@/components/notebook/bottomNav';
@@ -456,7 +457,7 @@ export default function TranscriptionScreen() {
             {/* Upload button */}
             <Button onPress={handleUpload} disabled={isUploading || !audioFile} size="lg">
               {isUploading ? (
-                <ActivityIndicator color="#fff" />
+                <ButtonSpinner />
               ) : (
                 <Text>Upload & Transcribe →</Text>
               )}

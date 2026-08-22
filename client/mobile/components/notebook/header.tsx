@@ -168,13 +168,9 @@ function Header({ title, actualId, onNotebookUpdate }: HeaderProps) {
         </DropdownMenu>
       </View>
 
-      <Separator
-        style={{
-          marginTop: 10,
-          backgroundColor: '#E4E4E7',
-          height: 1,
-        }}
-      />
+      {/* Separator already paints itself `bg-border`; the local override was
+          pinning it to a grey that only worked in light mode. */}
+      <Separator className="mt-2.5 h-px" />
 
       {/* Rename Dialog */}
       <AlertDialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>

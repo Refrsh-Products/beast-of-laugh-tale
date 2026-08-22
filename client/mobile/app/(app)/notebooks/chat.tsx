@@ -26,6 +26,7 @@ import { Header } from '@/components/notebook/header';
 import { BottomNav } from '@/components/notebook/bottomNav';
 import { Icon } from '@/components/ui/icon';
 import { SessionHistorySheet } from '@/components/chat/sessionHistorySheet';
+import { fontMono, fontSans, fontWeights } from '@/lib/design';
 import { THEME } from '@/lib/theme';
 
 /** Tap-to-fill starters shown on an empty chat. */
@@ -485,12 +486,13 @@ function ThinkingIndicator() {
  * borders instead of filled boxes.
  */
 function buildMarkdownStyles(t: (typeof THEME)['light']) {
-  const mono = Platform.select({ ios: 'Menlo', default: 'monospace' });
+  const mono = Platform.select(fontMono);
   return {
-    body: { color: t.foreground, fontSize: 16, lineHeight: 25 },
+    body: { color: t.foreground, fontFamily: fontSans, fontSize: 16, lineHeight: 25 },
     paragraph: { marginTop: 0, marginBottom: 12 },
     heading1: {
       fontSize: 22,
+      fontFamily: fontWeights.bold.family,
       fontWeight: '700' as const,
       marginTop: 8,
       marginBottom: 8,
@@ -498,6 +500,7 @@ function buildMarkdownStyles(t: (typeof THEME)['light']) {
     },
     heading2: {
       fontSize: 19,
+      fontFamily: fontWeights.bold.family,
       fontWeight: '700' as const,
       marginTop: 8,
       marginBottom: 6,
@@ -505,12 +508,13 @@ function buildMarkdownStyles(t: (typeof THEME)['light']) {
     },
     heading3: {
       fontSize: 17,
+      fontFamily: fontWeights.semibold.family,
       fontWeight: '600' as const,
       marginTop: 6,
       marginBottom: 4,
       lineHeight: 24,
     },
-    strong: { fontWeight: '700' as const },
+    strong: { fontFamily: fontWeights.bold.family, fontWeight: '700' as const },
     link: { color: t.foreground, textDecorationLine: 'underline' as const },
     code_inline: {
       backgroundColor: t.muted,

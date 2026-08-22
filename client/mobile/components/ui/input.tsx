@@ -11,7 +11,11 @@ function Input({
     <TextInput
       aria-invalid={ariaInvalid}
       className={cn(
-        'flex h-10 w-full min-w-0 flex-row items-center rounded-md border border-input bg-background px-3 py-1 text-base leading-5 text-foreground shadow-sm shadow-black/5 dark:bg-input/30 sm:h-9',
+        // `bg-field`, not `bg-background`: --field exists precisely to be the
+        // fill inside a control, kept near the surface colour so an input reads
+        // as an inset rather than a block. --input is the OUTLINE, which is a
+        // different job and a much stronger colour (it has to clear 3:1).
+        'flex h-10 w-full min-w-0 flex-row items-center rounded-md border border-input bg-field px-3 py-1 text-base leading-5 text-foreground shadow-sm shadow-black/5 sm:h-9',
         props.editable === false &&
           cn(
             'opacity-50',

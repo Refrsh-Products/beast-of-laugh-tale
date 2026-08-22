@@ -2,7 +2,7 @@ import { View, Pressable, StyleSheet } from 'react-native';
 import { Text } from '@/components/ui/text';
 import { ChevronDown } from 'lucide-react-native';
 import { Icon } from '@/components/ui/icon';
-
+import { cn } from '@/lib/utils';
 
 interface PickerDropdownProps<T> {
   label: string;
@@ -31,13 +31,16 @@ function PickerDropdown<T>({
   const displayText = selectedOption?.label ?? placeholder ?? 'Select';
 
   return (
-    <View style={pickerStyles.container}>
-      <Text style={pickerStyles.label}>{label}</Text>
+    <View className="flex-1" style={pickerStyles.container}>
+      <Text className="text-foreground mb-1.5 text-xs font-semibold">{label}</Text>
       <Pressable
-        style={[pickerStyles.trigger, disabled && pickerStyles.triggerDisabled]}
+        className={cn(
+          'border-input bg-field flex-row items-center justify-between rounded-md border px-3 py-2.5',
+          disabled && 'border-border bg-muted'
+        )}
         onPress={() => !disabled && onToggle()}
         disabled={disabled}>
-        <Text style={[pickerStyles.triggerText, disabled && pickerStyles.triggerTextDisabled]}>
+        <Text className={cn('text-foreground text-sm', disabled && 'text-muted-foreground')}>
           {displayText}
         </Text>
         <Icon as={ChevronDown} size={16} className="text-muted-foreground" />
@@ -46,30 +49,29 @@ function PickerDropdown<T>({
       {isOpen && (
         <>
           {/* Backdrop to close dropdown on outside tap */}
-          <Pressable
-            style={pickerStyles.backdrop}
-            onPress={onClose}
-          />
-          <View style={pickerStyles.optionsList}>
+          <Pressable style={pickerStyles.backdrop} onPress={onClose} />
+          <View
+            className="border-input bg-popover mt-1 overflow-hidden rounded-md border"
+            style={pickerStyles.optionsList}>
             {options.map((option, idx) => {
               const isSelected = option.value === value;
               return (
                 <Pressable
                   key={String(option.value)}
-                  style={[
-                    pickerStyles.option,
-                    isSelected && pickerStyles.optionSelected,
-                    idx < options.length - 1 && pickerStyles.optionBorder,
-                  ]}
+                  className={cn(
+                    'px-3 py-2.5',
+                    isSelected && 'bg-accent',
+                    idx < options.length - 1 && 'border-border border-b-hairline'
+                  )}
                   onPress={() => {
                     onChange(option.value);
                     onClose();
                   }}>
                   <Text
-                    style={[
-                      pickerStyles.optionText,
-                      isSelected && pickerStyles.optionTextSelected,
-                    ]}>
+                    className={cn(
+                      'text-popover-foreground text-sm',
+                      isSelected && 'text-accent-foreground font-semibold'
+                    )}>
                     {option.label}
                   </Text>
                 </Pressable>
@@ -82,38 +84,11 @@ function PickerDropdown<T>({
   );
 }
 
+// Stacking and the full-bleed backdrop only: everything visual is a utility
+// class above, so the dropdown follows the theme like the rest of the app.
 const pickerStyles = StyleSheet.create({
   container: {
-    flex: 1,
     zIndex: 1,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#18181B',
-    marginBottom: 6,
-  },
-  trigger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#D4D4D8',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
-  },
-  triggerDisabled: {
-    backgroundColor: '#F4F4F5',
-    borderColor: '#E4E4E7',
-  },
-  triggerText: {
-    fontSize: 14,
-    color: '#18181B',
-  },
-  triggerTextDisabled: {
-    color: '#A1A1AA',
   },
   backdrop: {
     position: 'absolute',
@@ -124,32 +99,8 @@ const pickerStyles = StyleSheet.create({
     zIndex: -1,
   },
   optionsList: {
-    marginTop: 4,
-    borderWidth: 1,
-    borderColor: '#D4D4D8',
-    borderRadius: 8,
-    backgroundColor: '#FFFFFF',
-    overflow: 'hidden',
     zIndex: 10,
-  },
-  option: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  optionSelected: {
-    backgroundColor: '#F4F4F5',
-  },
-  optionBorder: {
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: '#E4E4E7',
-  },
-  optionText: {
-    fontSize: 14,
-    color: '#18181B',
-  },
-  optionTextSelected: {
-    fontWeight: '600',
   },
 });
 
-export { PickerDropdown }
+export { PickerDropdown };

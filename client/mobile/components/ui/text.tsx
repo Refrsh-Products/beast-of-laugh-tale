@@ -6,7 +6,10 @@ import { Platform, Text as RNText, type Role } from 'react-native';
 
 const textVariants = cva(
   cn(
-    'text-foreground text-base',
+    // `font-sans` is the Instrument Sans Regular face. A variant that also sets a
+    // weight (font-semibold, font-bold) overrides the family with the matching
+    // face — see the weight plugin in tailwind.config.js.
+    'text-foreground font-sans text-base',
     Platform.select({
       web: 'select-text',
     })
