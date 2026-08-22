@@ -7,7 +7,6 @@ import {
   Pressable,
   StyleSheet,
   KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
 } from 'react-native';
 import { Text } from '@/components/ui/text';
@@ -304,7 +303,7 @@ export function SlideEditorSheet({
     >
       <KeyboardAvoidingView
         style={[styles.container, { paddingTop: insets.top }]}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
       >
         {/* Header */}
         <View style={styles.header}>

@@ -11,7 +11,6 @@ import { useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
   ScrollView,
   View,
 } from 'react-native';
@@ -141,7 +140,7 @@ export default function OnboardingScreen() {
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-background"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      behavior="padding">
       <ScrollView
         contentContainerClassName="flex-grow px-6 pb-10 pt-24"
         keyboardShouldPersistTaps="handled">

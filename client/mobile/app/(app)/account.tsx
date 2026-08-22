@@ -82,7 +82,7 @@ export default function AccountScreen() {
 
   return (
     <Screen className="flex-1 bg-background">
-      <ScrollView contentContainerClassName="p-4 gap-6">
+      <ScrollView contentContainerClassName="px-4 pb-4 gap-6">
         {/** Header of profile page */}
         <View className="flex-row items-center gap-2">
           <Button variant="ghost" size="icon" onPress={() => router.back()}>
@@ -209,4 +209,3 @@ export default function AccountScreen() {
     </Screen>
   );
 }
-

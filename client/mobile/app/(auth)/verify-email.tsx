@@ -1,4 +1,4 @@
-import { Wordmark } from '@/components/auth/Wordmark';
+import { AuthHeader } from '@/components/auth/AuthHeader';
 import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useAuthService } from '@/hooks/useAuthService';
@@ -39,8 +39,8 @@ export default function VerifyEmailScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background px-6 pt-24">
-      <Wordmark className="mb-16" />
+    <View className="flex-1 bg-background px-6">
+      <AuthHeader />
 
       <View className="items-center gap-4">
         <MailCheck size={56} color="#34c759" />

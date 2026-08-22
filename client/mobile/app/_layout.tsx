@@ -2,7 +2,15 @@ import '@/global.css';
 
 import { NAV_THEME } from '@/lib/theme';
 import { AuthProvider, useAuth, type OnboardingState } from '@/context/AuthContext';
+// Imported per face rather than from the package root: the root index pulls in
+// all eight files, and the four italics we never register would ride along as
+// ~280KB of dead weight in the bundle.
+import { InstrumentSans_400Regular } from '@expo-google-fonts/instrument-sans/400Regular';
+import { InstrumentSans_500Medium } from '@expo-google-fonts/instrument-sans/500Medium';
+import { InstrumentSans_600SemiBold } from '@expo-google-fonts/instrument-sans/600SemiBold';
+import { InstrumentSans_700Bold } from '@expo-google-fonts/instrument-sans/700Bold';
 import { ThemeProvider } from '@react-navigation/native';
+import { useFonts } from 'expo-font';
 import { PortalHost } from '@rn-primitives/portal';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -59,7 +67,24 @@ function RootNavigator() {
   const { ready, isLoggedIn, onboarding } = useAuth();
   useProtectedRoute(ready, isLoggedIn, onboarding);
 
-  if (!ready) {
+  // Instrument Sans is the brand's only typeface. The weight utilities name its
+  // faces directly (see lib/design/typography.ts), so rendering before they load
+  // would flash the system font across every screen. Waiting is one frame's cost
+  // on cold start and nothing thereafter — the fonts are bundled, not fetched.
+  const [fontsLoaded, fontError] = useFonts({
+    InstrumentSans_400Regular,
+    InstrumentSans_500Medium,
+    InstrumentSans_600SemiBold,
+    InstrumentSans_700Bold,
+  });
+
+  // A font that fails to load is a cosmetic problem, not a reason to hold the
+  // app hostage: fall through to the system face rather than spinning forever.
+  if (fontError) {
+    console.warn('Instrument Sans failed to load; falling back to the system font.', fontError);
+  }
+
+  if (!ready || (!fontsLoaded && !fontError)) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" />

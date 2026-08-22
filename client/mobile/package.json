@@ -7,9 +7,14 @@
     "android": "expo start -c --android",
     "ios": "expo start -c --ios",
     "web": "expo start -c --web",
-    "clean": "rm -rf .expo node_modules"
+    "clean": "rm -rf .expo node_modules",
+    "tokens": "node --experimental-strip-types --no-warnings scripts/generate-tokens.mjs",
+    "tokens:check": "node --experimental-strip-types --no-warnings scripts/generate-tokens.mjs --check",
+    "check:tokens": "node --no-warnings scripts/check-tokens.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@expo-google-fonts/instrument-sans": "^0.4.2",
     "@react-navigation/native": "^7.0.0",
     "@rn-primitives/alert-dialog": "^1.5.2",
     "@rn-primitives/avatar": "^1.4.0",
@@ -29,6 +34,7 @@
     "expo-constants": "~56.0.18",
     "expo-crypto": "~56.0.4",
     "expo-document-picker": "~56.0.4",
+    "expo-font": "~56.0.7",
     "expo-linking": "~56.0.14",
     "expo-print": "~56.0.4",
     "expo-router": "~56.2.11",
