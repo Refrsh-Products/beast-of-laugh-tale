@@ -1,9 +1,11 @@
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 
+// Origins only — no `/api`. `@freshr/shared`'s endpoints.ts already prefixes
+// every path with `/api/v${API_VERSION}`, so a suffix here yields `/api/api/v1/…`.
 const API_BASE_URL: Record<string, string> = {
   development: 'http://localhost:8000',
-  preview: 'https://staging.freshr.cc/api',
-  production: 'https://freshr.cc/api',
+  preview: 'https://staging.freshr.cc',
+  production: 'https://freshr.cc',
 };
 
 export default ({ config }: ConfigContext): ExpoConfig => {

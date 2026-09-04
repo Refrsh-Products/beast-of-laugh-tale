@@ -13,7 +13,17 @@ import type { StreamClient } from '@freshr/shared';
 export const mobileStreamClient: StreamClient = {
   streamSse: (url, token, onChunk) => {
     return new Promise((resolve, reject) => {
-      const headers: Record<string, string> = {};
+      const headers: Record<string, string> = {
+        // react-native-sse hardcodes `Accept: text/event-stream`; RN's XHR lets a
+        // caller header replace it (it overwrites rather than appending, unlike
+        // the spec). We widen it to also accept JSON so DRF content negotiation
+        // succeeds against servers whose stream view predates
+        // `chats.renderers.ServerSentEventRenderer` — those 406 on a bare
+        // `text/event-stream`. The happy path returns a StreamingHttpResponse,
+        // which bypasses DRF rendering, so whichever renderer negotiation picks
+        // the body is still SSE.
+        Accept: 'text/event-stream, application/json',
+      };
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }

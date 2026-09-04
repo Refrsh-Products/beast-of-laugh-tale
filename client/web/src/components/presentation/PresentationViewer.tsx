@@ -86,11 +86,9 @@ function SlideThumbnail({
         style={{ background: theme.bg }}
       >
         {theme.accentStrip && (
-          <div
-            style={{ width: 4, background: theme.accent, flexShrink: 0 }}
-          />
+          <div style={{ width: 4, background: theme.accent, flexShrink: 0 }} />
         )}
-        <div className="flex flex-1 flex-col gap-[3px] overflow-hidden px-[7px] py-[5px]">
+        <div className="flex flex-1 flex-col gap-0.75 overflow-hidden px-1.75 py-1.25">
           <div
             className="truncate text-[0.42rem] leading-tight font-bold"
             style={{ color: theme.text }}
@@ -98,9 +96,9 @@ function SlideThumbnail({
             {slide.title || slide.caption || slide.quote || "Untitled"}
           </div>
           {slide.bullets.slice(0, 3).map((bullet, i) => (
-            <div key={i} className="flex items-start gap-[3px]">
+            <div key={i} className="flex items-start gap-0.75">
               <div
-                className="mt-[2px] size-[2px] shrink-0 rounded-full"
+                className="mt-0.5 size-0.5 shrink-0 rounded-full"
                 style={{ background: theme.accent }}
               />
               <div
@@ -116,7 +114,7 @@ function SlideThumbnail({
 
       <div
         className={cn(
-          "mt-[5px] text-center text-[0.58rem] tabular-nums",
+          "mt-1.25 text-center text-[0.58rem] tabular-nums",
           selected ? "text-foreground font-bold" : "text-muted-foreground",
         )}
       >
@@ -189,7 +187,7 @@ function PanelHeader({
 }) {
   return (
     <div className="border-border flex h-10 shrink-0 items-center justify-between border-b px-3">
-      <span className="text-muted-foreground text-xs font-semibold tracking-[0.1em] uppercase">
+      <span className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
         {title}
       </span>
       {action}
@@ -354,7 +352,7 @@ export default function PresentationViewer({
             <RiMenuLine aria-hidden="true" />
           </Button>
         )}
-        <span className="text-primary truncate text-xs font-bold tracking-[0.1em]">
+        <span className="text-primary truncate text-xs font-bold tracking-widest">
           {presentation.topic || "Presentation"}
         </span>
         {editMode && (

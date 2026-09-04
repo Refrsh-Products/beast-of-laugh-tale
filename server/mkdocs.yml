@@ -1,19 +1,40 @@
 site_name: FRESHR DOCS
 nav:
   - Home: index.md
-  - About: about.md
-  - Project Requirements: project-requirements.md
-  - Software Design: software-design.md
-  - Project Management: project-management.md
-  - Team: team.md
-  - Deployment Instruction: deployemnt-instruction.md
-  - Job Description: job-description.md
-  - User Manual: user-manual.md
-  - Static Code Analysis: static-code-analysis.md
-  - Payment Flow: payment-flow.md
-  - Test Plan: test-plan.md
-  - Testing Conventions: testing-conventions.md
-  - Prompt Evaluation: prompt-evaluation.md
-  - Deployment Workflow: deployment-workflow.md
-  - Scheduled Jobs: scheduled-jobs.md
-theme: readthedocs
+  - Server:
+      - Project Requirements: project-requirements.md
+      - Software Design: software-design.md
+      - Project Management: project-management.md
+      - Team: team.md
+      - Deployment Instruction: deployemnt-instruction.md
+      - Job Description: job-description.md
+      - User Manual: user-manual.md
+      - Static Code Analysis: static-code-analysis.md
+      - Payment Flow: payment-flow.md
+      - Test Plan: test-plan.md
+      - Testing Conventions: testing-conventions.md
+      - Prompt Evaluation: prompt-evaluation.md
+      - Deployment Workflow: deployment-workflow.md
+      - Scheduled Jobs: scheduled-jobs.md
+  - Mobile:
+      - Overview: mobile/overview.md
+      - Architecture & Navigation: mobile/architecture.md
+      - Design System: mobile/design-system.md
+      - Data Layer & State: mobile/data-layer.md
+      - Auth: mobile/auth.md
+      - Feature Status: mobile/feature-status.md
+      - Build & Release: mobile/build-release.md
+      - Troubleshooting: mobile/troubleshooting.md
+theme:
+  name: material
+  logo: img/brand/logomark-mono-white.svg
+  favicon: img/brand/favicon.png
+  palette:
+    primary: green
+    accent: green
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+extra_css:
+  - stylesheets/brand.css

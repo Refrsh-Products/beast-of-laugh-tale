@@ -37,7 +37,10 @@ const SUGGESTIONS = [
 ];
 
 export default function ChatScreen() {
-  const { notebookId } = useLocalSearchParams<{ notebookId: string }>();
+  const { notebookId, prefillMessage } = useLocalSearchParams<{
+    notebookId: string;
+    prefillMessage?: string;
+  }>();
   const chatService = useChatService();
   const { isDarkColorScheme } = useColorScheme();
 
@@ -103,6 +106,13 @@ export default function ChatScreen() {
   };
 
   const flatListRef = useRef<FlatList>(null);
+  const prefillAppliedRef = useRef(false);
+
+  useEffect(() => {
+    if (prefillAppliedRef.current || !prefillMessage) return;
+    prefillAppliedRef.current = true;
+    setInputText(Array.isArray(prefillMessage) ? prefillMessage[0] : prefillMessage);
+  }, [prefillMessage]);
 
   useEffect(() => {
     async function loadChat() {
