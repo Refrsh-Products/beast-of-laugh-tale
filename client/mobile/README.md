@@ -1,73 +1,89 @@
-# Minimal Template
+# FRESHR — Mobile
 
-This is a [React Native](https://reactnative.dev/) project built with [Expo](https://expo.dev/) and [React Native Reusables](https://reactnativereusables.com).
-
-It was initialized using the following command, then the `Minimal (Nativewind)` template was selected when prompted:
-
-```bash
-npx @react-native-reusables/cli@latest init
-```
-
-## Getting Started
-
-To run the development server:
-
-```bash
-    npm run dev
-    # or
-    yarn dev
-    # or
-    pnpm dev
-    # or
-    bun dev
-```
-
-This will start the Expo Dev Server. Open the app in:
-
-- **iOS**: press `i` to launch in the iOS simulator _(Mac only)_
-- **Android**: press `a` to launch in the Android emulator
-- **Web**: press `w` to run in a browser
-
-You can also scan the QR code using the [Expo Go](https://expo.dev/go) app on your device. This project fully supports running in Expo Go for quick testing on physical devices.
-
-## Adding components
-
-You can add more reusable components using the CLI:
-
-```bash
-npx react-native-reusables/cli@latest add [...components]
-```
-
-> e.g. `npx react-native-reusables/cli@latest add input textarea`
-
-If you don't specify any component names, you'll be prompted to select which components to add interactively. Use the `--all` flag to install all available components at once.
-
-## Project Features
-
-- ⚛️ Built with [Expo Router](https://expo.dev/router)
-- 🎨 Styled with [Tailwind CSS](https://tailwindcss.com/) via [Nativewind](https://www.nativewind.dev/)
-- 📦 UI powered by [React Native Reusables](https://github.com/founded-labs/react-native-reusables)
-- 🚀 New Architecture enabled
-- 🔥 Edge to Edge enabled
-- 📱 Runs on iOS, Android, and Web
-
-## Learn More
-
-To dive deeper into the technologies used:
-
-- [React Native Docs](https://reactnative.dev/docs/getting-started)
-- [Expo Docs](https://docs.expo.dev/)
-- [Nativewind Docs](https://www.nativewind.dev/)
-- [React Native Reusables](https://reactnativereusables.com)
-
-## Deploy with EAS
-
-The easiest way to deploy your app is with [Expo Application Services (EAS)](https://expo.dev/eas).
-
-- [EAS Build](https://docs.expo.dev/build/introduction/)
-- [EAS Updates](https://docs.expo.dev/eas-update/introduction/)
-- [EAS Submit](https://docs.expo.dev/submit/introduction/)
+Expo / React Native app for the FRESHR AI study platform, built with `expo-router`,
+NativeWind, and React Native Reusables.
 
 ---
 
-If you enjoy using React Native Reusables, please consider giving it a ⭐ on [GitHub](https://github.com/founded-labs/react-native-reusables). Your support means a lot!
+## Prerequisites
+
+- Node + npm, and the whole `client/` workspace installed (`npm install` from `client/`,
+  not from `client/mobile/` — this package has no standalone lockfile).
+- Xcode (for the iOS Simulator) and/or Android Studio (for the emulator).
+- The Django backend running locally (see the root `CLAUDE.md`), or point at a deployed
+  environment via `EXPO_PUBLIC_API_BASE_URL`.
+- A `.env.local` in `client/mobile/` (git-ignored) if you need Google Sign-In or the
+  contact form working locally:
+
+  ```
+  EXPO_PUBLIC_API_BASE_URL=http://localhost:8000
+  EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=...
+  EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID=...
+  EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=...
+  EXPO_PUBLIC_WEB3FORMS_ACCESS_KEY=...
+  ```
+
+  Without the Google client IDs set, the "Continue with Google" button just hides itself
+  — everything else works fine.
+
+## Getting started
+
+```bash
+cd client/mobile
+npx expo start        # or: npm run dev (same thing, plus -c to clear the Metro cache)
+```
+
+Then press `i` for the iOS Simulator or `a` for the Android emulator.
+
+**Physical devices via Expo Go won't work** — Expo Go is capped at SDK 54 and this app is
+SDK 56. Development happens in the Simulator/emulator; a real device needs a dev build
+(`npx expo run:ios` / `run:android`), which is also required for Google Sign-In (Expo Go
+blocks it outright with an in-app alert, since Google rejects its `exp://` redirect URI).
+
+## Project layout
+
+```
+client/mobile/
+  app/                    — expo-router screens (file-based routing)
+    (auth)/                 login, register, forgot-password, verify-email
+    (app)/
+      notebooks/            index, [id], create modal, chat, quiz, presentation, transcription
+      account/
+    onboarding.tsx
+  components/             — screen composites, by domain (notebook/, chat/, auth/, ui/)
+  hooks/                  — use<Domain>Service wrappers around @freshr/shared, useFileUpload, etc.
+  lib/                    — deps.ts (service DI), http.ts, session.ts, design/ (design tokens)
+  context/AuthContext.tsx — the app's one React context
+```
+
+Business logic and API calls live in `@freshr/shared` (`client/shared/`), not here —
+mobile only wires that shared layer up to its own HTTP client and session store. See
+`hooks/use<Domain>Service.ts` for the pattern, and `lib/deps.ts` for what gets injected.
+
+## Docs
+
+For the deeper reference material — architecture, the design token system, auth flow,
+current feature status, and how to build/release without EAS — see the **Client / Mobile**
+section of the FRESHR docs site (`server/mkdocs.yml`, served at `http://localhost:8001`
+via the local Docker stack):
+
+- [Overview](../../server/docs/mobile/overview.md)
+- [Architecture & Navigation](../../server/docs/mobile/architecture.md)
+- [Design System](../../server/docs/mobile/design-system.md)
+- [Data Layer & State](../../server/docs/mobile/data-layer.md)
+- [Auth](../../server/docs/mobile/auth.md)
+- [Feature Status](../../server/docs/mobile/feature-status.md)
+- [Build & Release](../../server/docs/mobile/build-release.md)
+- [Troubleshooting](../../server/docs/mobile/troubleshooting.md)
+
+## Useful scripts
+
+| Script | What it does |
+|---|---|
+| `npm run dev` | `expo start -c` |
+| `npm run tokens` | Regenerate `global.css` / `lib/theme.ts` / the Tailwind tokens module from `lib/design/tokens.ts` |
+| `npm run tokens:check` | Fail if the generated files are out of sync with `tokens.ts` |
+| `npm run check:tokens` | Fail if any hex colour outside the documented allowlist is used |
+| `npm run typecheck` | `tsc --noEmit` |
+
+No automated test suite exists for mobile yet.

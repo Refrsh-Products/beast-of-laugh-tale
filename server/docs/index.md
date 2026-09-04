@@ -1,17 +1,16 @@
-# Welcome to MkDocs
+<p align="center">
+  <img src="img/brand/full-logo-on-light.svg" alt="FRESHR" width="360">
+</p>
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+FRESHR is an AI learning platform: users upload documents into notebooks, a RAG pipeline
+indexes them, and AI features (chat/tutoring, quizzes, presentations, audio transcription,
+photo scan-to-notes (mobile only feature)) build on that.
 
-## Commands
+This site covers two areas:
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+- **Server** — the Django REST API: requirements, software design, deployment, testing,
+  payments, and the RAG/prompt pipeline.
+- **Client / Mobile** — the Expo/React Native app: architecture, the design token system,
+  auth, and how to build and release it.
 
-## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+For day-to-day commands (running the app, running tests, local Docker stack) see the per-package `README.md` files — this site is the deeper reference, not the quickstart.
