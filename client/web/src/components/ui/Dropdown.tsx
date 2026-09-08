@@ -29,6 +29,8 @@ interface DropdownProps {
   placeholder: string;
   options: SelectOption[];
   disabled?: boolean;
+  /** Forwarded to the trigger so an external <Label htmlFor> binds to it. */
+  id?: string;
 }
 
 export default function Dropdown({
@@ -37,6 +39,7 @@ export default function Dropdown({
   placeholder,
   options,
   disabled = false,
+  id,
 }: DropdownProps) {
   return (
     <Select
@@ -44,7 +47,7 @@ export default function Dropdown({
       onValueChange={onChange}
       disabled={disabled}
     >
-      <SelectTrigger className="w-full">
+      <SelectTrigger id={id} className="w-full">
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

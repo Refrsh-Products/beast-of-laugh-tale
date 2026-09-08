@@ -1,80 +1,53 @@
-import { useId, useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import useAuthService from "../services/auth";
 import useAccountService from "../services/account";
-import type { OnboardingStatus } from "@freshr/shared";
+import {
+  COMMUNITY_OFF,
+  type CommunityStatus,
+  type OnboardingStatus,
+} from "@freshr/shared";
 import FreshrLogo from "../components/logo/FreshrLogo";
 import LoadErrorScreen from "../components/ui/LoadErrorScreen";
+import StepDots from "../components/ui/StepDots";
+import WelcomeStep from "../components/onboarding/WelcomeStep";
+import ProfileStep, {
+  type ProfileValues,
+} from "../components/onboarding/ProfileStep";
+import CommunityStep from "../components/onboarding/CommunityStep";
 import { getGoogleProfile, clearGoogleProfile } from "../storage";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 
 /**
- * One labelled input. Required fields mark themselves with aria-invalid once
- * the form has been submitted empty, which drives both the red outline (via
- * the Input variant) and the announcement — the old version painted the
- * border directly and told assistive tech nothing.
+ * Three steps: welcome → profile form → WhatsApp community.
  *
- * Deliberately `aria-required` rather than the native `required` attribute:
- * this form validates in JS so it can show one combined message and mark
- * every offending field at once. A native `required` would make the browser
- * block submission first with its own single-field tooltip, and handleSubmit
- * would never run.
+ * The profile saves at the end of step 2, not step 3. That ordering is the whole
+ * safety property: once the form is saved the user is onboarded server-side, so
+ * the community ask can never block, fail, or trap anyone. Closing the tab on
+ * step 3 is a complete onboarding.
  */
-function Field({
-  label,
-  required = false,
-  invalid = false,
-  ...props
-}: {
-  label: string;
-  required?: boolean;
-  invalid?: boolean;
-} & React.ComponentProps<typeof Input>) {
-  const id = useId();
-  return (
-    <div className="flex-1">
-      <Label
-        htmlFor={id}
-        className="text-muted-foreground mb-1.5 text-xs font-semibold tracking-[0.12em] uppercase"
-      >
-        {label}{" "}
-        {required ? (
-          <span className="text-destructive" aria-hidden="true">
-            *
-          </span>
-        ) : (
-          <span className="font-normal opacity-60">(optional)</span>
-        )}
-      </Label>
-      <Input
-        id={id}
-        aria-required={required || undefined}
-        aria-invalid={invalid}
-        {...props}
-      />
-    </div>
-  );
-}
-
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const authService = useAuthService();
   const accountService = useAccountService();
-  const googleProfile = getGoogleProfile();
-  const [firstName, setFirstName] = useState(googleProfile?.first_name ?? "");
-  const [lastName, setLastName] = useState(googleProfile?.last_name ?? "");
-  const [phone, setPhone] = useState("");
-  const [address1, setAddress1] = useState("");
-  const [address2, setAddress2] = useState("");
-  const [city, setCity] = useState("");
-  const [postalCode, setPostalCode] = useState("");
-  const [error, setError] = useState("");
-  const [showErrors, setShowErrors] = useState(false);
+
+  // Captured once: `getGoogleProfile()` reads sessionStorage on every render and
+  // goes null after clearGoogleProfile(), which would blank the step-3 greeting.
+  const [googleProfile] = useState(() => getGoogleProfile());
+
+  const [step, setStep] = useState(1);
   const [status, setStatus] = useState<OnboardingStatus | "loading">("loading");
   const [retrying, setRetrying] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [community, setCommunity] = useState<CommunityStatus>(COMMUNITY_OFF);
+  // Step 3 greets by name, which is only guaranteed after step 2.
+  const [firstName, setFirstName] = useState(googleProfile?.first_name ?? "");
 
+  // Held so step 2's submit can await a request that started at mount rather
+  // than firing one and making the user watch it.
+  const communityPromise = useRef<Promise<CommunityStatus> | null>(null);
+
+  /** Retry handler for the error screen — an event handler, not an effect. */
   async function checkStatus() {
     setRetrying(true);
     const next = await accountService.getOnboardingStatus();
@@ -84,7 +57,23 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     if (!authService.isLoggedIn()) return;
-    checkStatus();
+    let cancelled = false;
+
+    // Both settle in callbacks rather than synchronously in the effect body, so
+    // neither triggers a cascading render on mount.
+    accountService.getOnboardingStatus().then((next) => {
+      if (!cancelled) setStatus(next);
+    });
+    // No .catch: getCommunity never rejects, it resolves to COMMUNITY_OFF. That
+    // is what makes "the community step can never block onboarding" structural.
+    communityPromise.current = accountService.getCommunity().then((c) => {
+      if (!cancelled) setCommunity(c);
+      return c;
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
@@ -94,41 +83,56 @@ export default function OnboardingPage() {
   }
   if (status === "complete") return <Navigate to="/dashboard" replace />;
 
-  async function handleSubmit() {
-    setError("");
-    if (
-      !firstName.trim() ||
-      !lastName.trim() ||
-      !phone.trim() ||
-      !address1.trim() ||
-      !city.trim() ||
-      !postalCode.trim()
-    ) {
-      setShowErrors(true);
-      setError("Please fill in all required fields.");
-      return;
-    }
-    setShowErrors(false);
+  function finish() {
+    clearGoogleProfile();
+    navigate("/dashboard");
+  }
+
+  async function handleProfileSubmit(values: ProfileValues) {
+    setSaveError("");
+    setSaving(true);
+    setFirstName(values.firstName);
+
+    // The try wraps ONLY the save. Widening it would report a post-save bug as
+    // "failed to save your profile" on a profile that did save.
     try {
       await accountService.updateAccount({
-        first_name: firstName.trim(),
-        last_name: lastName.trim(),
-        phone: phone.trim(),
-        address1: address1.trim(),
-        address2: address2.trim() || "",
-        city: city.trim(),
-        postal_code: postalCode.trim(),
+        first_name: values.firstName,
+        last_name: values.lastName,
+        phone: values.phone,
+        university: values.university,
+        year_of_study: values.yearOfStudy,
         profile_picture_url: googleProfile?.profile_picture_url,
         onboarding_completed: true,
       });
-      clearGoogleProfile();
-      navigate("/dashboard");
     } catch {
-      setError("Failed to save your profile. Please try again.");
+      setSaveError("Failed to save your profile. Please try again.");
+      setSaving(false);
+      return; // stay on step 2
     }
+
+    // Past this line the user IS onboarded server-side. Nothing below may keep
+    // them here or surface an error.
+    const live = (await communityPromise.current) ?? COMMUNITY_OFF;
+    setSaving(false);
+    if (live.enabled) setStep(3);
+    else finish();
   }
 
-  const missing = (value: string) => showErrors && !value.trim();
+  function handleJoin() {
+    // Must be the first statement in the gesture: after an await, transient user
+    // activation is gone and Safari/Firefox block the popup. The URL is already
+    // in hand from the mount-time prefetch, so nothing needs awaiting.
+    window.open(community.invite_url, "_blank", "noopener,noreferrer");
+    // Best-effort. The consent record must never gate the exit, and an SPA route
+    // change doesn't unload the document, so this isn't cancelled.
+    void accountService.joinCommunity().catch(() => {});
+    finish();
+  }
+
+  // Grows to 3 only once the prefetch says the community is live — better a dot
+  // fading in than telling someone "step 2 of 3" and finishing at 2.
+  const totalSteps = community.enabled ? 3 : 2;
 
   return (
     <div className="bg-background flex min-h-dvh items-center justify-center p-4 sm:p-8">
@@ -137,106 +141,33 @@ export default function OnboardingPage() {
           <FreshrLogo />
         </div>
 
-        <h1 className="font-heading text-foreground mb-2 text-2xl leading-tight font-bold tracking-tight">
-          One last step
-        </h1>
-        <p className="text-muted-foreground mb-8 text-sm leading-relaxed">
-          Tell us a bit about yourself to complete your profile.
-        </p>
-
-        {error && (
-          <p role="alert" className="text-destructive mb-5 text-sm">
-            {error}
-          </p>
+        {step === 1 && (
+          <WelcomeStep
+            firstName={googleProfile?.first_name}
+            onContinue={() => setStep(2)}
+          />
         )}
 
-        <form
-          className="flex flex-col gap-5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit();
-          }}
-        >
-          <div className="flex flex-col gap-5 sm:flex-row sm:gap-3">
-            <Field
-              label="First name"
-              required
-              invalid={missing(firstName)}
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              placeholder="Jane"
-              autoComplete="given-name"
-              autoFocus
-            />
-            <Field
-              label="Last name"
-              required
-              invalid={missing(lastName)}
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              placeholder="Smith"
-              autoComplete="family-name"
-            />
-          </div>
-
-          <Field
-            label="Phone number"
-            required
-            invalid={missing(phone)}
-            type="tel"
-            value={phone}
-            onChange={(e) =>
-              setPhone(e.target.value.replace(/[^\d+\-\s().]/g, ""))
-            }
-            placeholder="+1 (555) 000-0000"
-            autoComplete="tel"
+        {step === 2 && (
+          <ProfileStep
+            initialFirstName={googleProfile?.first_name ?? ""}
+            initialLastName={googleProfile?.last_name ?? ""}
+            saving={saving}
+            error={saveError}
+            onSubmit={handleProfileSubmit}
           />
+        )}
 
-          <Field
-            label="Address line 1"
-            required
-            invalid={missing(address1)}
-            value={address1}
-            onChange={(e) => setAddress1(e.target.value)}
-            placeholder="123 Main St"
-            autoComplete="address-line1"
+        {step === 3 && (
+          <CommunityStep
+            community={community}
+            firstName={firstName}
+            onJoin={handleJoin}
+            onSkip={finish}
           />
+        )}
 
-          <Field
-            label="Address line 2"
-            value={address2}
-            onChange={(e) => setAddress2(e.target.value)}
-            placeholder="Apt 4B"
-            autoComplete="address-line2"
-          />
-
-          <div className="flex flex-col gap-5 sm:flex-row sm:gap-3">
-            <Field
-              label="City"
-              required
-              invalid={missing(city)}
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              placeholder="New York"
-              autoComplete="address-level2"
-            />
-            <Field
-              label="Postal code"
-              required
-              invalid={missing(postalCode)}
-              value={postalCode}
-              onChange={(e) =>
-                setPostalCode(e.target.value.replace(/\D/g, "").slice(0, 4))
-              }
-              placeholder="1234"
-              autoComplete="postal-code"
-            />
-          </div>
-
-          <Button type="submit" size="lg" className="mt-2 w-full">
-            Go to dashboard
-          </Button>
-        </form>
+        <StepDots total={totalSteps} current={step} className="mt-8" />
       </div>
     </div>
   );

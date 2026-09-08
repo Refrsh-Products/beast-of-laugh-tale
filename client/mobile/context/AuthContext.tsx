@@ -19,6 +19,17 @@ interface AuthState {
   onboarding: OnboardingState;
   /** Re-check onboarding status (e.g. after submitting the form). */
   refreshOnboarding: () => Promise<void>;
+  /**
+   * Assert completion locally, without a round trip.
+   *
+   * Onboarding needs this because the route guard replaces to /notebooks the
+   * instant this reads 'complete'. The form saves at the end of step 2, but the
+   * user should stay on step 3 — so we hold the local state until they leave it.
+   * It's also strictly safer than refreshing: we already know the PATCH returned
+   * 200, whereas refreshOnboarding can resolve to 'error' on a network blip and
+   * strand a fully onboarded user on the retry screen.
+   */
+  markOnboardingComplete: () => void;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -84,12 +95,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [ready, isLoggedIn, refreshOnboarding]);
 
+  const markOnboardingComplete = useCallback(() => setOnboarding('complete'), []);
+
   const value: AuthState = {
     ready,
     isLoggedIn,
     user: mobileSessionStore.getUser(),
     onboarding,
     refreshOnboarding,
+    markOnboardingComplete,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

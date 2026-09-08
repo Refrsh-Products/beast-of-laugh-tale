@@ -19,6 +19,7 @@ export const UserServiceApiEndpoints = {
   accounts: `${UserServiceApiBase}/accounts/`,
   accountMe: `${UserServiceApiBase}/accounts/me/`,
   accountUsage: `${UserServiceApiBase}/accounts/me/usage/`,
+  accountCommunity: `${UserServiceApiBase}/accounts/me/community/`,
 };
 
 // Auth

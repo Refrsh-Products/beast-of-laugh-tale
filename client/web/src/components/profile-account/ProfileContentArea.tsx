@@ -1,10 +1,15 @@
 import { useState, useEffect, type ReactNode } from "react";
 import type { ProfileTab } from "./ProfileSidebar";
-import type { StoredAccount } from "@freshr/shared";
+import {
+  YEAR_OF_STUDY_OPTIONS,
+  type StoredAccount,
+  type YearOfStudy,
+} from "@freshr/shared";
 import { getAccount as getCachedAccount } from "../../storage";
 import SettingsField from "../settings/SettingsField";
 import useAccountService from "../../services/account";
 import { Button } from "@/components/ui/button";
+import Dropdown from "@/components/ui/Dropdown";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -12,7 +17,25 @@ interface ProfileTabProps {
   activeTab: ProfileTab;
 }
 
-type EditableField = "name" | "phone" | "address" | "city" | "postal_code";
+type EditableField =
+  | "name"
+  | "phone"
+  | "university"
+  | "year_of_study"
+  | "address"
+  | "city"
+  | "postal_code";
+
+/** Field keys don't make readable prose on their own ("Year_of_study updated"). */
+const FIELD_LABELS: Record<EditableField, string> = {
+  name: "Name",
+  phone: "Phone",
+  university: "University",
+  year_of_study: "Year of study",
+  address: "Address",
+  city: "City",
+  postal_code: "Postal code",
+};
 
 /**
  * A field that edits two inputs at once — name (first/last) and address
@@ -69,6 +92,11 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
   const [editAddress2, setEditAddress2] = useState("");
   const [nameError, setNameError] = useState<string | null>(null);
   const [phone, setPhone] = useState(cached?.phone ?? "");
+  const [university, setUniversity] = useState(cached?.university ?? "");
+  const [yearOfStudy, setYearOfStudy] = useState<YearOfStudy | "">(
+    cached?.year_of_study ?? "",
+  );
+  const [editYearOfStudy, setEditYearOfStudy] = useState<YearOfStudy | "">("");
   const [address, setAddress] = useState(cached?.address1 ?? "");
   const [address2, setAddress2] = useState(cached?.address2 ?? "");
   const [city, setCity] = useState(cached?.city ?? "");
@@ -84,6 +112,8 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
         setAccount(acc);
         setName(`${acc.first_name} ${acc.last_name}`.trim());
         setPhone(acc.phone ?? "");
+        setUniversity(acc.university ?? "");
+        setYearOfStudy(acc.year_of_study ?? "");
         setAddress(acc.address1 ?? "");
         setAddress2(acc.address2 ?? "");
         setCity(acc.city ?? "");
@@ -100,9 +130,12 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
     } else if (field === "address") {
       setEditValue(address);
       setEditAddress2(address2);
+    } else if (field === "year_of_study") {
+      setEditYearOfStudy(yearOfStudy);
     } else {
       const valueMap: Record<string, string> = {
         phone,
+        university,
         city,
         postal_code: postalCode,
       };
@@ -117,6 +150,7 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
     setEditFirstName("");
     setEditLastName("");
     setEditAddress2("");
+    setEditYearOfStudy("");
     setNameError(null);
   }
 
@@ -138,38 +172,50 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
       updated = { ...account, first_name: fn, last_name: ln };
       setName(`${fn} ${ln}`.trim());
     } else if (editingField === "address") {
+      // No empty-value guard: the address is optional server-side now, so
+      // clearing it has to actually save.
       const a1 = editValue.trim();
-      if (!a1) return;
       const a2 = editAddress2.trim();
       updated = { ...account, address1: a1, address2: a2 };
       setAddress(a1);
       setAddress2(a2);
+    } else if (editingField === "year_of_study") {
+      updated = { ...account, year_of_study: editYearOfStudy };
+      setYearOfStudy(editYearOfStudy);
     } else {
       const trimmed = editValue.trim();
-      if (!trimmed) return;
+      // Phone is the only one of these still required.
+      if (editingField === "phone" && !trimmed) return;
       updated = {
         ...account,
         phone: editingField === "phone" ? trimmed : account.phone,
+        university:
+          editingField === "university" ? trimmed : account.university,
         city: editingField === "city" ? trimmed : account.city,
         postal_code:
           editingField === "postal_code" ? trimmed : account.postal_code,
       };
       if (editingField === "phone") setPhone(trimmed);
+      if (editingField === "university") setUniversity(trimmed);
       if (editingField === "city") setCity(trimmed);
       if (editingField === "postal_code") setPostalCode(trimmed);
     }
 
+    const savedField = editingField;
     setEditingField(null);
     setEditValue("");
     setEditFirstName("");
     setEditLastName("");
     setEditAddress2("");
+    setEditYearOfStudy("");
 
     try {
       await accountService.updateAccount(updated);
-      setSuccess(
-        `${editingField.charAt(0).toUpperCase() + editingField.slice(1)} updated.`,
-      );
+      // Keep the local copy in step: every branch above builds its payload by
+      // spreading `account`, so a stale one would resend the pre-edit value of
+      // whatever was changed last.
+      setAccount(updated);
+      setSuccess(`${FIELD_LABELS[savedField]} updated.`);
     } catch {
       setSuccess("Failed to save. Please try again.");
     }
@@ -244,6 +290,42 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
           onCancel={cancelEdit}
         />
 
+        <SettingsField
+          label="University"
+          value={editingField === "university" ? editValue : university}
+          isEditing={editingField === "university"}
+          onChange={setEditValue}
+          onEditStart={() => startEdit("university")}
+          onSave={saveEdit}
+          onCancel={cancelEdit}
+        />
+
+        {editingField === "year_of_study" ? (
+          <TwoPartField
+            label="Year of study"
+            onSave={saveEdit}
+            onCancel={cancelEdit}
+          >
+            <Dropdown
+              value={editYearOfStudy}
+              onChange={(v) => setEditYearOfStudy(v as YearOfStudy)}
+              placeholder="Select your year"
+              options={YEAR_OF_STUDY_OPTIONS}
+            />
+          </TwoPartField>
+        ) : (
+          <SettingsField
+            label="Year of study"
+            value={
+              YEAR_OF_STUDY_OPTIONS.find((o) => o.value === yearOfStudy)
+                ?.label ?? ""
+            }
+            onEditStart={() => startEdit("year_of_study")}
+            onSave={saveEdit}
+            onCancel={cancelEdit}
+          />
+        )}
+
         {editingField === "address" ? (
           <TwoPartField
             label="Address"
@@ -252,8 +334,7 @@ export default function ProfileContentArea({ activeTab }: ProfileTabProps) {
           >
             <Input
               autoFocus
-              required
-              placeholder="Address line 1"
+              placeholder="Address line 1 (optional)"
               aria-label="Address line 1"
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}

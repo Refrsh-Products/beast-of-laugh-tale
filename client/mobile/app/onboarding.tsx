@@ -1,26 +1,35 @@
 import { Wordmark } from '@/components/auth/Wordmark';
+import { CommunityStep } from '@/components/onboarding/community-step';
+import { ProfileStep, type ProfileValues } from '@/components/onboarding/profile-step';
+import { WelcomeStep } from '@/components/onboarding/welcome-step';
 import { Button } from '@/components/ui/button';
 import { ButtonSpinner } from '@/components/ui/button-spinner';
-import { Input } from '@/components/ui/input';
+import { StepDots } from '@/components/ui/step-dots';
 import { Text } from '@/components/ui/text';
 import { useAuth } from '@/context/AuthContext';
 import { useAccountService } from '@/hooks/useAccountService';
 import { clearGoogleProfile, getGoogleProfile } from '@/lib/googleProfile';
-import type { StoredAccount } from '@freshr/shared';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { COMMUNITY_OFF, type CommunityStatus, type StoredAccount } from '@freshr/shared';
+import { Stack, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  BackHandler,
   KeyboardAvoidingView,
+  Linking,
   ScrollView,
   View,
 } from 'react-native';
 
 /**
- * Hard-gate onboarding form (mirrors the web OnboardingPage). A logged-in user
- * whose profile is incomplete is routed here by the root guard and can't reach
- * the app tabs until they submit. On success we mark `onboarding_completed` and
- * refresh the auth context, which lets the guard move them to the notebooks tab.
+ * Hard-gate onboarding, in three steps: welcome → profile form → WhatsApp
+ * community. Mirrors the web OnboardingPage.
+ *
+ * The profile saves at the end of step 2, not step 3. That ordering is the whole
+ * safety property: once the form is saved the user is onboarded server-side, so
+ * the community ask can never block, fail, or trap anyone. Force-quitting on
+ * step 3 is a complete onboarding — the account screen carries the invite from
+ * then on.
  *
  * The screen also handles the "error" status (a transient /accounts/me/ failure)
  * with a retry, and renders nothing while the status is still loading — the
@@ -29,25 +38,45 @@ import {
 export default function OnboardingScreen() {
   const router = useRouter();
   const accountService = useAccountService();
-  const { onboarding, refreshOnboarding } = useAuth();
+  const { onboarding, refreshOnboarding, markOnboardingComplete } = useAuth();
 
-  const googleProfile = getGoogleProfile();
-  const [firstName, setFirstName] = useState(googleProfile?.first_name ?? '');
-  const [lastName, setLastName] = useState(googleProfile?.last_name ?? '');
-  const [phone, setPhone] = useState('');
-  const [address1, setAddress1] = useState('');
-  const [address2, setAddress2] = useState('');
-  const [city, setCity] = useState('');
-  const [postalCode, setPostalCode] = useState('');
+  // Captured once: getGoogleProfile() re-reads storage on every render and goes
+  // null after clearGoogleProfile(), which would blank the step-3 greeting.
+  const [googleProfile] = useState(() => getGoogleProfile());
 
-  const [showErrors, setShowErrors] = useState(false);
+  const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
+  const [joining, setJoining] = useState(false);
   const [formError, setFormError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [community, setCommunity] = useState<CommunityStatus>(COMMUNITY_OFF);
+  // Step 3 greets by name, which is only guaranteed after step 2.
+  const [firstName, setFirstName] = useState(googleProfile?.first_name ?? '');
+
+  // Held so step 2's submit can await a request that started at mount rather
+  // than firing one and making the user watch it.
+  const communityPromise = useRef<Promise<CommunityStatus> | null>(null);
+
+  // Hooks must stay above the status guards below.
+  useEffect(() => {
+    // No .catch: getCommunity never rejects, it resolves to COMMUNITY_OFF. That
+    // is what makes "the community step can never block onboarding" structural.
+    communityPromise.current = accountService.getCommunity().then((c) => {
+      setCommunity(c);
+      return c;
+    });
+  }, [accountService]);
+
+  // Onboarding is a hard gate, so swallow Android's hardware back. The iOS
+  // swipe is disabled via the Stack.Screen option below.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+    return () => sub.remove();
+  }, []);
 
   // The guard sends 'incomplete' and 'error' users here; while it re-checks
   // ('loading'/'unknown') render nothing rather than flashing the form.
-  if (onboarding === 'loading' || onboarding === 'unknown' || onboarding === 'complete') {
+  if (onboarding === 'loading' || onboarding === 'unknown') {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator size="large" />
@@ -77,37 +106,42 @@ export default function OnboardingScreen() {
     );
   }
 
-  const missing = {
-    firstName: !firstName.trim(),
-    lastName: !lastName.trim(),
-    phone: !phone.trim(),
-    address1: !address1.trim(),
-    city: !city.trim(),
-    postalCode: !postalCode.trim(),
+  // 'complete' only reaches here once we've asserted it ourselves on the way out
+  // of step 3; the guard is already replacing to /notebooks, so render nothing.
+  if (onboarding === 'complete' && step !== 3) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
+  const finish = () => {
+    clearGoogleProfile();
+    // Assert completion locally instead of refreshing: we already know the PATCH
+    // returned 200, and refreshOnboarding can resolve to 'error' on a blip and
+    // strand a fully onboarded user on the retry screen above.
+    markOnboardingComplete();
+    router.replace('/notebooks');
   };
 
-  const onSubmit = async () => {
+  const onProfileSubmit = async (values: ProfileValues) => {
     setFormError('');
-    if (Object.values(missing).some(Boolean)) {
-      setShowErrors(true);
-      setFormError('Please fill in all required fields.');
-      return;
-    }
-    setShowErrors(false);
-    setSubmitting(true);
+    setSaving(true);
+    setFirstName(values.firstName);
 
     const payload = {
-      first_name: firstName.trim(),
-      last_name: lastName.trim(),
-      phone: phone.trim(),
-      address1: address1.trim(),
-      address2: address2.trim() || '',
-      city: city.trim(),
-      postal_code: postalCode.trim(),
+      first_name: values.firstName,
+      last_name: values.lastName,
+      phone: values.phone,
+      university: values.university,
+      year_of_study: values.yearOfStudy,
       profile_picture_url: googleProfile?.profile_picture_url,
       onboarding_completed: true,
     };
 
+    // This try wraps ONLY the save. Widening it would report a post-save bug as
+    // "failed to save your profile" on a profile that did save.
     try {
       try {
         // Normal path: a stub Account row already exists (created at email
@@ -126,135 +160,85 @@ export default function OnboardingScreen() {
           throw err;
         }
       }
-      clearGoogleProfile();
-      // Re-check status so the guard sees 'complete' and routes to the tabs;
-      // replace explicitly so it's immediate rather than waiting on the guard.
-      await refreshOnboarding();
-      router.replace('/notebooks');
     } catch {
       setFormError('Failed to save your profile. Please try again.');
-    } finally {
-      setSubmitting(false);
+      setSaving(false);
+      return; // stay on step 2
     }
+
+    // Past this line the user IS onboarded server-side. Nothing below may keep
+    // them here or surface an error.
+    const live = (await communityPromise.current) ?? COMMUNITY_OFF;
+    setSaving(false);
+    if (live.enabled) setStep(3);
+    else finish();
   };
 
+  const onJoin = async () => {
+    setJoining(true);
+    // Best-effort: the consent record must never gate the exit.
+    try {
+      await accountService.joinCommunity();
+    } catch {
+      // Ignored on purpose — see above.
+    }
+    setJoining(false);
+    // Leave onboarding while still foregrounded, THEN hand off, so returning
+    // from WhatsApp lands on /notebooks rather than back here.
+    finish();
+    // Linking, not expo-web-browser: only the system handler resolves
+    // chat.whatsapp.com as a universal link into the WhatsApp app. An in-app
+    // browser tab would render WhatsApp's web fallback page inside our app.
+    // (Web fires this before its await to keep the popup unblocked; on native
+    // there is no popup blocker, so ordering is free to favour navigation.)
+    Linking.openURL(community.invite_url).catch((err) =>
+      console.warn('Could not open the WhatsApp invite', err)
+    );
+  };
+
+  // Grows to 3 only once the prefetch says the community is live — better a dot
+  // appearing late than telling someone "step 2 of 3" and finishing at 2.
+  const totalSteps = community.enabled ? 3 : 2;
+
   return (
-    <KeyboardAvoidingView
-      className="flex-1 bg-background"
-      behavior="padding">
-      <ScrollView
-        contentContainerClassName="flex-grow px-6 pb-10 pt-24"
-        keyboardShouldPersistTaps="handled">
-        <Wordmark className="mb-12" />
+    <>
+      <Stack.Screen options={{ gestureEnabled: false }} />
+      <KeyboardAvoidingView className="flex-1 bg-background" behavior="padding">
+        <ScrollView
+          contentContainerClassName="flex-grow px-6 pb-10 pt-24"
+          keyboardShouldPersistTaps="handled">
+          <Wordmark className="mb-12" />
 
-        <Text className="mb-2 text-3xl font-bold">One last step</Text>
-        <Text className="mb-8 text-base text-muted-foreground">
-          Tell us a bit about yourself to complete your profile.
-        </Text>
-
-        {formError ? (
-          <Text className="mb-5 text-sm text-destructive">{formError}</Text>
-        ) : null}
-
-        <View className="gap-5">
-          <View className="flex-row gap-3">
-            <View className="flex-1 gap-1.5">
-              <Text className="text-xs font-semibold text-muted-foreground">FIRST NAME *</Text>
-              <Input
-                className="h-14 rounded-xl"
-                placeholder="Jane"
-                value={firstName}
-                onChangeText={setFirstName}
-                aria-invalid={showErrors && missing.firstName}
-                editable={!submitting}
-              />
-            </View>
-            <View className="flex-1 gap-1.5">
-              <Text className="text-xs font-semibold text-muted-foreground">LAST NAME *</Text>
-              <Input
-                className="h-14 rounded-xl"
-                placeholder="Smith"
-                value={lastName}
-                onChangeText={setLastName}
-                aria-invalid={showErrors && missing.lastName}
-                editable={!submitting}
-              />
-            </View>
-          </View>
-
-          <View className="gap-1.5">
-            <Text className="text-xs font-semibold text-muted-foreground">PHONE NUMBER *</Text>
-            <Input
-              className="h-14 rounded-xl"
-              placeholder="+1 (555) 000-0000"
-              keyboardType="phone-pad"
-              value={phone}
-              onChangeText={(t) => setPhone(t.replace(/[^\d+\-\s().]/g, ''))}
-              aria-invalid={showErrors && missing.phone}
-              editable={!submitting}
+          {step === 1 && (
+            <WelcomeStep
+              firstName={googleProfile?.first_name}
+              onContinue={() => setStep(2)}
             />
-          </View>
+          )}
 
-          <View className="gap-1.5">
-            <Text className="text-xs font-semibold text-muted-foreground">ADDRESS LINE 1 *</Text>
-            <Input
-              className="h-14 rounded-xl"
-              placeholder="123 Main St"
-              value={address1}
-              onChangeText={setAddress1}
-              aria-invalid={showErrors && missing.address1}
-              editable={!submitting}
+          {step === 2 && (
+            <ProfileStep
+              initialFirstName={googleProfile?.first_name ?? ''}
+              initialLastName={googleProfile?.last_name ?? ''}
+              saving={saving}
+              error={formError}
+              onSubmit={onProfileSubmit}
             />
-          </View>
+          )}
 
-          <View className="gap-1.5">
-            <Text className="text-xs font-semibold text-muted-foreground">
-              ADDRESS LINE 2 (OPTIONAL)
-            </Text>
-            <Input
-              className="h-14 rounded-xl"
-              placeholder="Apt 4B"
-              value={address2}
-              onChangeText={setAddress2}
-              editable={!submitting}
+          {step === 3 && (
+            <CommunityStep
+              community={community}
+              firstName={firstName}
+              joining={joining}
+              onJoin={onJoin}
+              onSkip={finish}
             />
-          </View>
+          )}
 
-          <View className="flex-row gap-3">
-            <View className="flex-1 gap-1.5">
-              <Text className="text-xs font-semibold text-muted-foreground">CITY *</Text>
-              <Input
-                className="h-14 rounded-xl"
-                placeholder="New York"
-                value={city}
-                onChangeText={setCity}
-                aria-invalid={showErrors && missing.city}
-                editable={!submitting}
-              />
-            </View>
-            <View className="flex-1 gap-1.5">
-              <Text className="text-xs font-semibold text-muted-foreground">POSTAL CODE *</Text>
-              <Input
-                className="h-14 rounded-xl"
-                placeholder="1234"
-                keyboardType="number-pad"
-                value={postalCode}
-                onChangeText={(t) => setPostalCode(t.replace(/\D/g, '').slice(0, 4))}
-                aria-invalid={showErrors && missing.postalCode}
-                editable={!submitting}
-              />
-            </View>
-          </View>
-
-          <Button className="mt-2 h-14 rounded-xl" onPress={onSubmit} disabled={submitting}>
-            {submitting ? (
-              <ButtonSpinner />
-            ) : (
-              <Text className="text-base font-semibold">Go to notebooks →</Text>
-            )}
-          </Button>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          <StepDots total={totalSteps} current={step} className="mt-8" />
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </>
   );
 }

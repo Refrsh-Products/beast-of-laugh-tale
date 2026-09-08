@@ -5,6 +5,7 @@ export type {
   Notebook,
   NotebookFile,
   QuizDifficulty,
+  YearOfStudy,
 } from "./entities";
 export type {
   LoginRequest,

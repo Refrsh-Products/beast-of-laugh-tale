@@ -45,6 +45,17 @@ export interface AccountUsage {
   };
 }
 
+/** Mirrors accounts.models.YearOfStudy — keep the two in step. */
+export type YearOfStudy =
+  | "YEAR_1"
+  | "YEAR_2"
+  | "YEAR_3"
+  | "YEAR_4"
+  | "YEAR_5"
+  | "YEAR_6"
+  | "MASTERS"
+  | "GRADUATED";
+
 export interface StoredAccount {
   id: string;
   first_name: string;
@@ -54,6 +65,10 @@ export interface StoredAccount {
   address2?: string;
   city: string;
   postal_code: string;
+  // Optional because a session cached before these shipped won't carry the
+  // keys. "" is the server's "not answered" value — there is no null.
+  university?: string;
+  year_of_study?: YearOfStudy | "";
   tier_plan: string;
   billing_interval: string | null;
   subscription_status: string;

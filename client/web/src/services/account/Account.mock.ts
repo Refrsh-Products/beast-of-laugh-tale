@@ -4,7 +4,23 @@ import {
   hasCompletedOnboarding,
   getNotebooks,
 } from "../../storage";
-import type { AccountService, OnboardingStatus } from "@freshr/shared";
+import type {
+  AccountService,
+  CommunityStatus,
+  OnboardingStatus,
+} from "@freshr/shared";
+
+// Enabled so the onboarding community step is reachable under VITE_USE_MOCK.
+// Kept in module scope so join/leave persist for the session.
+let mockOptedInAt: string | null = null;
+const mockCommunity = (): CommunityStatus => ({
+  enabled: true,
+  invite_url: "https://chat.whatsapp.com/MockInviteCode",
+  headline: "Join the FRESHR student community",
+  message:
+    "Study tips, feature updates and a direct line to the team. It's a WhatsApp group, and you can leave any time.",
+  opted_in_at: mockOptedInAt,
+});
 
 const AccountServiceMock: AccountService = {
   getAccount: async () => {
@@ -42,6 +58,19 @@ const AccountServiceMock: AccountService = {
       // locked behind its upsell in mock mode and can't be worked on.
       features: { audio_notes: true },
     });
+  },
+
+  getCommunity: () => Promise.resolve(mockCommunity()),
+
+  joinCommunity: () => {
+    // Idempotent, like the server: the first tap wins.
+    mockOptedInAt ??= new Date().toISOString();
+    return Promise.resolve(mockCommunity());
+  },
+
+  leaveCommunity: () => {
+    mockOptedInAt = null;
+    return Promise.resolve(mockCommunity());
   },
 };
 
