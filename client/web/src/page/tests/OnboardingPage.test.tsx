@@ -167,11 +167,11 @@ describe("OnboardingPage", () => {
     expect(navigate).toHaveBeenCalledWith("/dashboard");
   });
 
-  it("continues without recording anything on Maybe later", async () => {
+  it("continues without recording anything on Finish onboarding", async () => {
     const { joinCommunity } = setup();
     await completeProfile();
     await userEvent.click(
-      await screen.findByRole("button", { name: "Maybe later" }),
+      await screen.findByRole("button", { name: "Finish onboarding" }),
     );
 
     expect(joinCommunity).not.toHaveBeenCalled();

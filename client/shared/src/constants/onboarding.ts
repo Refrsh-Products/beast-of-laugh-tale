@@ -105,6 +105,8 @@ export const YEAR_OF_STUDY_OPTIONS: { value: YearOfStudy; label: string }[] = [
   { value: 'YEAR_2', label: '2nd Year' },
   { value: 'YEAR_3', label: '3rd Year' },
   { value: 'YEAR_4', label: '4th Year' },
+  { value: 'YEAR_5', label: '5th Year' },
+  { value: 'YEAR_6', label: '6th Year' },
   { value: 'MASTERS', label: 'Masters/Postgrad' },
   { value: 'GRADUATED', label: 'Graduated' },
 ];

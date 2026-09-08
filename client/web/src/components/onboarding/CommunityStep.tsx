@@ -54,7 +54,7 @@ export default function CommunityStep({
           className="text-muted-foreground w-full"
           onClick={onSkip}
         >
-          Maybe later
+          Finish onboarding
         </Button>
       </div>
 

@@ -32,6 +32,9 @@ class YearOfStudy(models.TextChoices):
     YEAR_2 = 'YEAR_2', '2nd Year'
     YEAR_3 = 'YEAR_3', '3rd Year'
     YEAR_4 = 'YEAR_4', '4th Year'
+    # Medicine, architecture and some engineering programmes run 5-6 years.
+    YEAR_5 = 'YEAR_5', '5th Year'
+    YEAR_6 = 'YEAR_6', '6th Year'
     MASTERS = 'MASTERS', 'Masters/Postgrad'
     GRADUATED = 'GRADUATED', 'Graduated'
 

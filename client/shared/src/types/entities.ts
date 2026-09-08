@@ -45,11 +45,14 @@ export interface AccountUsage {
   };
 }
 
+/** Mirrors accounts.models.YearOfStudy — keep the two in step. */
 export type YearOfStudy =
   | "YEAR_1"
   | "YEAR_2"
   | "YEAR_3"
   | "YEAR_4"
+  | "YEAR_5"
+  | "YEAR_6"
   | "MASTERS"
   | "GRADUATED";
 

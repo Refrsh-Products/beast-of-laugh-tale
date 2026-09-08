@@ -51,7 +51,7 @@ export function CommunityStep({
           )}
         </Button>
         <Button variant="ghost" className="h-14 rounded-xl" onPress={onSkip} disabled={joining}>
-          <Text className="text-base font-semibold text-muted-foreground">Maybe later</Text>
+          <Text className="text-base font-semibold text-muted-foreground">Finish onboarding</Text>
         </Button>
       </View>
 
