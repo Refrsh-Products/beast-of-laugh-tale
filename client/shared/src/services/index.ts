@@ -3,11 +3,12 @@ export * from "./endpoints";
 export { NeedsVerificationError, createAuthService } from "./auth";
 export type { AuthService } from "./auth";
 
-export { createAccountService } from "./account";
+export { createAccountService, COMMUNITY_OFF } from "./account";
 export type {
   AccountService,
   AccountFetchResult,
   AccountPatch,
+  CommunityStatus,
   OnboardingStatus,
 } from "./account";
 

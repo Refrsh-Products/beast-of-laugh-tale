@@ -7,12 +7,17 @@ import { useAccountService } from '@/hooks/useAccountService';
 import { useRouter } from 'expo-router';
 import { Screen } from '@/components/ui/screen';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, View, ScrollView, Image } from 'react-native';
+import { ActivityIndicator, Alert, Linking, View, ScrollView, Image } from 'react-native';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { UpgradeSheet } from '@/components/account/upgradeSheet';
-import type { StoredAccount, AccountUsage } from '@freshr/shared';
+import {
+  COMMUNITY_OFF,
+  type AccountUsage,
+  type CommunityStatus,
+  type StoredAccount,
+} from '@freshr/shared';
 import { Icon } from '@/components/ui/icon';
-import { ChevronLeft, LifeBuoy } from 'lucide-react-native';
+import { ChevronLeft, LifeBuoy, Users } from 'lucide-react-native';
 import { formatBytes } from '@/components/notebook/usageCard';
 
 export default function AccountScreen() {
@@ -26,6 +31,7 @@ export default function AccountScreen() {
   const [usage, setUsage] = useState<AccountUsage | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showUpgradeSheet, setShowUpgradeSheet] = useState(false);
+  const [community, setCommunity] = useState<CommunityStatus>(COMMUNITY_OFF);
 
   useEffect(() => {
     loadData();
@@ -34,17 +40,36 @@ export default function AccountScreen() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [acc, usg] = await Promise.all([
+      // getCommunity never rejects — it resolves to COMMUNITY_OFF — so it's
+      // safe inside the same Promise.all.
+      const [acc, usg, comm] = await Promise.all([
         accountService.getAccount(),
         accountService.getAccountUsage(),
+        accountService.getCommunity(),
       ]);
       setAccount(acc?.account ?? null);
       setUsage(usg);
+      setCommunity(comm);
     } catch (err) {
       console.error('Failed to load account data', err);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const onOpenCommunity = async () => {
+    // Best-effort consent record; opening the invite must never depend on it.
+    try {
+      const next = await accountService.joinCommunity();
+      setCommunity(next);
+    } catch (err) {
+      console.warn('Could not record the community opt-in', err);
+    }
+    // Linking, not expo-web-browser: only the system handler resolves
+    // chat.whatsapp.com as a universal link into the WhatsApp app.
+    Linking.openURL(community.invite_url).catch((err) =>
+      console.warn('Could not open the WhatsApp invite', err)
+    );
   };
 
   const onLogout = () => {
@@ -73,6 +98,19 @@ export default function AccountScreen() {
   function formatMemberSince(dateStr: string): string {
     try {
       return new Date(dateStr).toLocaleDateString('en-US', {
+        month: 'long',
+        year: 'numeric',
+      });
+    } catch {
+      return '—';
+    }
+  }
+
+  /** A specific event, so it needs the day too — unlike "member since". */
+  function formatOptInDate(dateStr: string): string {
+    try {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        day: 'numeric',
         month: 'long',
         year: 'numeric',
       });
@@ -182,6 +220,34 @@ export default function AccountScreen() {
                   onClose={() => setShowUpgradeSheet(false)}
                 />
               </View>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* WhatsApp community — an invite link, never a membership record: we
+            can't verify they joined, so the copy never claims they did. */}
+        {community.enabled && (
+          <Card>
+            <CardHeader>
+              <View className="flex-row items-center gap-2">
+                <Icon as={Users} size={18} className="text-muted-foreground" />
+                <CardTitle>WhatsApp community</CardTitle>
+              </View>
+            </CardHeader>
+            <CardContent className="gap-4">
+              <Text className="text-muted-foreground">
+                {community.opted_in_at
+                  ? `You opened the invite on ${formatOptInDate(community.opted_in_at)}. Not in the group? Open it again.`
+                  : community.message}
+              </Text>
+              <Button
+                variant="outline"
+                className="h-11 flex-row items-center justify-center gap-2 rounded-xl"
+                onPress={onOpenCommunity}>
+                <Text className="text-sm font-semibold">
+                  {community.opted_in_at ? 'Open the invite again' : 'Join on WhatsApp'}
+                </Text>
+              </Button>
             </CardContent>
           </Card>
         )}

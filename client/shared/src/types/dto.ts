@@ -3,6 +3,8 @@
  * Moved out of `web/src/page/dto/`; the old files now re-export from here.
  */
 
+import type { YearOfStudy } from "./entities";
+
 export interface LoginRequest {
   email: string;
   password: string;
@@ -37,10 +39,16 @@ export interface AccountMeResponse {
   city: string;
   postal_code: string;
   phone: string;
+  university: string;
+  year_of_study: YearOfStudy | "";
   tier_plan: string;
   billing_interval: string | null;
   subscription_status: string;
   onboarding_completed: boolean;
+  /** Records that they tapped Join, not that they are in the group. Server-owned
+   *  (read-only on the account endpoints); deliberately absent from
+   *  StoredAccount, which gets spread into every profile PATCH. */
+  whatsapp_community_opt_in_at: string | null;
   created_at: string;
   updated_at: string;
   user: string;

@@ -1,5 +1,5 @@
 import type { ServiceDeps } from "../platform/deps";
-import type { StoredUser, StoredAccount } from "../types/entities";
+import type { StoredUser } from "../types/entities";
 import type {
   LoginRequest,
   LoginResponse,
@@ -7,6 +7,7 @@ import type {
   AccountMeResponse,
   GoogleLoginResponse,
 } from "../types/dto";
+import { toStoredAccount } from "./accountMapping";
 import { AuthServiceApiEndpoints, UserServiceApiEndpoints } from "./endpoints";
 
 export class NeedsVerificationError extends Error {
@@ -84,21 +85,7 @@ export function createAuthService(deps: ServiceDeps): AuthService {
             null,
             { headers: { Authorization: `Bearer ${data.tokens.access}` } },
           );
-          const account: StoredAccount = {
-            id: accountResp.id,
-            first_name: accountResp.first_name,
-            last_name: accountResp.last_name,
-            profile_picture_url: accountResp.profile_picture_url,
-            address1: accountResp.address1,
-            address2: accountResp.address2 ?? "",
-            city: accountResp.city,
-            postal_code: accountResp.postal_code,
-            phone: accountResp.phone,
-            tier_plan: accountResp.tier_plan,
-            billing_interval: accountResp.billing_interval,
-            subscription_status: accountResp.subscription_status,
-          };
-          session.saveAccount(account);
+          session.saveAccount(toStoredAccount(accountResp));
         } catch (err: any) {
           // A 404 here means the user hasn't completed onboarding yet, so no
           // Account profile exists to cache — expected, not an error.
@@ -167,21 +154,7 @@ export function createAuthService(deps: ServiceDeps): AuthService {
             null,
             { headers: { Authorization: `Bearer ${data.tokens.access}` } },
           );
-          const account: StoredAccount = {
-            id: accountResp.id,
-            first_name: accountResp.first_name,
-            last_name: accountResp.last_name,
-            profile_picture_url: accountResp.profile_picture_url,
-            address1: accountResp.address1,
-            address2: accountResp.address2 ?? "",
-            city: accountResp.city,
-            postal_code: accountResp.postal_code,
-            phone: accountResp.phone,
-            tier_plan: accountResp.tier_plan,
-            billing_interval: accountResp.billing_interval,
-            subscription_status: accountResp.subscription_status,
-          };
-          session.saveAccount(account);
+          session.saveAccount(toStoredAccount(accountResp));
         } catch (err: any) {
           // Returning user without a profile (404) just hasn't onboarded yet.
           if (err?.response?.status === 404) {
