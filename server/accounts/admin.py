@@ -8,7 +8,13 @@ from django.utils.html import format_html
 
 from payments.models import Payment, PaymentStatus
 
-from .models import Account, BillingInterval, DailyUsage, TierPlan
+from .models import (
+    Account,
+    BillingInterval,
+    DailyUsage,
+    TierPlan,
+    WhatsAppCommunitySettings,
+)
 from .services.downgrade import downgrade_account_to_free
 from .services.upgrade import upgrade_account_to_pro
 
@@ -23,6 +29,49 @@ class UpgradeAccountsForm(forms.Form):
         widget=forms.Textarea(attrs={'rows': 2}),
         help_text='Optional note saved on the audit Payment row (e.g. ticket #, reason).',
     )
+
+
+@admin.register(WhatsAppCommunitySettings)
+class WhatsAppCommunitySettingsAdmin(admin.ModelAdmin):
+    """
+    The WhatsApp community invite. Singleton, so adding and deleting are both
+    off — there is exactly one row to edit.
+    """
+
+    list_display = ['__str__', 'invite_url', 'updated_at']
+    readonly_fields = ['updated_at']
+    fieldsets = (
+        (None, {
+            'fields': ('enabled',),
+            'description': (
+                'Turn this on to show the community step at the end of onboarding and a '
+                'join card on the account page. Nothing appears until an invite link is '
+                'set below — there is no way to add anyone to a WhatsApp group '
+                'automatically, so users join by opening this link themselves.'
+            ),
+        }),
+        ('Invite link', {
+            'fields': ('invite_url',),
+        }),
+        ('Message shown to users', {
+            'fields': ('headline', 'message'),
+        }),
+        ('System', {
+            'classes': ('collapse',),
+            'fields': ('updated_at',),
+        }),
+    )
+
+    def has_add_permission(self, request):
+        return not WhatsAppCommunitySettings.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        # Make sure the single row exists so the changelist is never empty.
+        WhatsAppCommunitySettings.load()
+        return super().changelist_view(request, extra_context)
 
 
 class DailyUsageInline(admin.TabularInline):
@@ -49,13 +98,16 @@ class AccountAdmin(admin.ModelAdmin):
         'tier_plan',
         'subscription_status',
         'billing_interval',
+        'year_of_study',
         'onboarding_completed',
+        ('whatsapp_community_opt_in_at', admin.EmptyFieldListFilter),
     )
     search_fields = (
         'user__email',
         'first_name',
         'last_name',
         'phone',
+        'university',
         'city',
         'postal_code',
     )
@@ -76,6 +128,7 @@ class AccountAdmin(admin.ModelAdmin):
         'tier_plan',
         'subscription_status',
         'billing_interval',
+        'whatsapp_community_opt_in_at',
     )
     fieldsets = (
         ('Identity Verification', {
@@ -85,6 +138,8 @@ class AccountAdmin(admin.ModelAdmin):
                 'first_name',
                 'last_name',
                 'phone',
+                'university',
+                'year_of_study',
                 'address1',
                 'address2',
                 'city',
@@ -108,6 +163,7 @@ class AccountAdmin(admin.ModelAdmin):
         ('Usage', {
             'fields': (
                 'onboarding_completed',
+                'whatsapp_community_opt_in_at',
                 'presentations_generated',
                 'storage_bytes_used',
             ),
