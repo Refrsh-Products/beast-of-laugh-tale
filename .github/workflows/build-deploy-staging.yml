@@ -9,8 +9,17 @@ permissions:
   packages: write
 
 jobs:
+  # Reuse ci.yml to run all backend tests, frontend tests, and the frontend
+  # production build before creating any Docker images.
+  ci:
+    name: Run tests
+    uses: ./.github/workflows/ci.yml
+
+  # `needs: ci` makes this job wait for CI and prevents it from running when
+  # any test or frontend build check fails.
   build-and-push:
     name: Build & Push Images
+    needs: ci
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.meta-server.outputs.version }}
