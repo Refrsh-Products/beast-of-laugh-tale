@@ -54,7 +54,7 @@ export default function LandingPage() {
 
       <section
         id="hero"
-        className="mx-auto grid max-w-320 items-center gap-14 px-5 pt-14 pb-12 sm:px-9 lg:grid-cols-2 lg:gap-12"
+        className="mx-auto grid max-w-7xl items-center gap-14 px-5 pt-20 pb-12 sm:px-9 lg:grid-cols-2 lg:gap-12"
       >
         <div>
           <h1
@@ -97,7 +97,7 @@ export default function LandingPage() {
 
       <SubjectsStrip />
 
-      <section id="how" className="mx-auto max-w-320 px-5 py-16 sm:px-9">
+      <section id="how" className="mx-auto max-w-7xl px-5 py-16 sm:px-9">
         <div className="flex flex-col gap-7">
           {DECK_SECTIONS.map((section) => (
             <DeckCard

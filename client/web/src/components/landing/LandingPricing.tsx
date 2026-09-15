@@ -22,12 +22,12 @@ import { cn } from "@/lib/utils";
  */
 export default function LandingPricing() {
   return (
-    <section id="pricing" className="mx-auto max-w-320 px-5 py-20 sm:px-9">
+    <section id="pricing" className="mx-auto max-w-7xl px-5 py-20 sm:px-9">
       <div className="mx-auto max-w-2xl text-center">
         <span className="text-brand-secondary-300 text-xs font-semibold tracking-[0.08em] uppercase">
           {PRICING.eyebrow}
         </span>
-        <h2 className="text-brand-tertiary-100 mt-3.5 text-[clamp(1.9rem,4.4vw,3.4rem)] leading-[1.05] font-bold tracking-[-0.025em]">
+        <h2 className="text-brand-tertiary-100 mt-3.5 text-[clamp(1.9rem,4.4vw,3.4rem)] leading-[1.05] font-bold tracking-tight">
           {PRICING.titleBefore}{" "}
           <span className="pe-[0.12em] font-semibold italic">
             {PRICING.titleItalic}
@@ -38,7 +38,7 @@ export default function LandingPricing() {
         </p>
       </div>
 
-      <div className="mt-12 grid gap-4 md:grid-cols-3">
+      <div className="mt-12 grid gap-4 lg:grid-cols-3">
         {PLANS.map((plan) => {
           const isFree = plan.billingInterval === null;
           // PLANS stores labels uppercase because the billing page sets them
@@ -58,7 +58,7 @@ export default function LandingPricing() {
               )}
             >
               {plan.badge && (
-                <span className="bg-brand-secondary-300 text-brand-primary-900 absolute -top-3 left-6 rounded-md px-2.5 py-1 text-[0.65rem] font-bold tracking-[0.1em]">
+                <span className="bg-brand-secondary-300 text-brand-primary-900 absolute -top-3 left-6 rounded-md px-2.5 py-1 text-[0.65rem] font-bold tracking-widest">
                   {plan.badge}
                 </span>
               )}
@@ -82,7 +82,7 @@ export default function LandingPricing() {
                   className={cn(
                     "text-xs",
                     plan.featured
-                      ? "text-brand-paper/70"
+                      ? "text-brand-paper/80"
                       : "text-brand-tertiary-950",
                   )}
                 >
@@ -95,7 +95,7 @@ export default function LandingPricing() {
                   className={cn(
                     "mt-1 text-xs",
                     plan.featured
-                      ? "text-brand-paper/70"
+                      ? "text-brand-paper/80"
                       : "text-brand-tertiary-950",
                   )}
                 >
@@ -123,7 +123,9 @@ export default function LandingPricing() {
               <ul
                 className={cn(
                   "mt-5 mb-7 flex flex-1 flex-col gap-2 border-t pt-5 text-sm",
-                  plan.featured ? "border-brand-paper/20" : "border-brand-ink/12",
+                  plan.featured
+                    ? "border-brand-paper/20"
+                    : "border-brand-ink/12",
                 )}
               >
                 {plan.features.map((f) => (
@@ -155,7 +157,7 @@ export default function LandingPricing() {
         })}
       </div>
 
-      <p className="text-brand-paper/70 mt-7 text-center text-xs">
+      <p className="text-brand-paper/80 mt-7 text-center text-xs">
         {PRICING.footnote}
       </p>
     </section>

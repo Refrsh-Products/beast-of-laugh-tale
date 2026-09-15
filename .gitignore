@@ -259,3 +259,7 @@ expo-env.d.ts
 
 /client/mobile/ios
 /client/mobile/android
+
+# impeccable's local state (config.local.json, critique caches). The copy in
+# client/web/.gitignore never matched, since the directory lives at the root.
+.impeccable/

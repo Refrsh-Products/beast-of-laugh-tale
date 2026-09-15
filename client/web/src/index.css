@@ -503,12 +503,13 @@ html:has(#landing) {
 }
 
 /* The soft cast under the hero card stack, so it reads as sitting on a
-   surface rather than floating in the green. */
+   surface rather than floating in the green. Uses a wide diffuse gradient
+   instead of filter: blur() to avoid per-frame repaint cost on scroll. */
 .landing-peek-shadow {
   background: radial-gradient(
     ellipse at center,
-    color-mix(in srgb, var(--brand-ink) 40%, transparent),
-    transparent 70%
+    color-mix(in srgb, var(--brand-ink) 30%, transparent),
+    color-mix(in srgb, var(--brand-ink) 10%, transparent) 50%,
+    transparent 80%
   );
-  filter: blur(8px);
 }
