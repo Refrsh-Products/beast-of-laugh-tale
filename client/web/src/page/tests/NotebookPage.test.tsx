@@ -214,26 +214,31 @@ describe("NotebookPage sidebar", () => {
   });
 
   it("swaps the contextual panel with the active tool", async () => {
+    // The section title is the label of the panel's collapse toggle (a button
+    // in NotebookSidebar), not a heading — anchored exactly so the nav's "Chat"
+    // tool button can never satisfy the "Chats" panel assertion.
     renderNotebook();
     await screen.findByTestId("chat-column");
-    expect(screen.getByRole("heading", { name: /chats/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /^chats$/i }),
+    ).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Quiz" }));
     expect(
-      await screen.findByRole("heading", { name: /past quizzes/i }),
+      await screen.findByRole("button", { name: /^past quizzes$/i }),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole("heading", { name: /chats/i }),
+      screen.queryByRole("button", { name: /^chats$/i }),
     ).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Slides" }));
     expect(
-      await screen.findByRole("heading", { name: /generated slides/i }),
+      await screen.findByRole("button", { name: /^generated slides$/i }),
     ).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "Audio" }));
     expect(
-      await screen.findByRole("heading", { name: /transcripts/i }),
+      await screen.findByRole("button", { name: /^transcripts$/i }),
     ).toBeInTheDocument();
   });
 

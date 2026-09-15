@@ -7,7 +7,6 @@ import {
 } from "react-router-dom";
 import useAuthService from "../services/auth";
 import useNotebookService from "../services/notebooks";
-import useAccountService from "../services/account";
 import type { Notebook, NotebookFile } from "@freshr/shared";
 
 import ChatColumn from "../components/notebook/ChatColumn";
@@ -29,14 +28,18 @@ import MaterialsPanel, {
   type FileUploadState,
 } from "../components/notebook/sidebar/MaterialsPanel";
 import useAudioTranscripts from "../hooks/audio/useAudioTranscripts";
+import useAudioTranscription from "../hooks/audio/useAudioTranscription";
 import DeleteNotebookModal from "../components/dashboard/DeleteNotebookModal";
 import { getAccount as getCachedAccount } from "../storage";
 import PresentationViewer from "../components/presentation/PresentationViewer";
 import { resolveSlideTheme } from "../components/presentation/presentationThemes";
 import UpgradeModal from "../components/dashboard/UpgradeModal";
+import UploadConfirmModal from "../components/notebook/UploadConfirmModal";
+import FileDropZone from "../components/notebook/FileDropZone";
 import { useToast } from "../hooks/useToast";
 import useChatService from "../services/chat";
 import { track } from "../lib/analytics";
+import NotebookPageSkeleton from "../components/notebook/NotebookPageSkeleton";
 
 import usePresentationSessions from "../hooks/presentation/usePresentationSessions";
 import useChatSessions from "../hooks/chat/useChatSessions";
@@ -51,13 +54,9 @@ export default function NotebookPage() {
   const authService = useAuthService();
   const notebookService = useNotebookService();
   const transcriptionService = useTranscriptionService();
-  const accountService = useAccountService();
   const chatService = useChatService();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [audioFeatureEnabled, setAudioFeatureEnabled] = useState<
-    boolean | null
-  >(null);
 
   const [notebook, setNotebook] = useState<Notebook | null>(null);
   const [files, setFiles] = useState<NotebookFile[]>([]);
@@ -87,6 +86,9 @@ export default function NotebookPage() {
   } | null>(null);
   const [notebookNotFound, setNotebookNotFound] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<FileUploadState[]>([]);
+  const [pendingUploadFiles, setPendingUploadFiles] = useState<File[] | null>(
+    null,
+  );
 
   const notebookId = id ?? "";
   const hasProcessingFiles = files.some(
@@ -155,6 +157,34 @@ export default function NotebookPage() {
     enabled: activeView === "audio",
   });
 
+  const refreshFiles = () => {
+    notebookService
+      .listFiles(notebookId)
+      .then(setFiles)
+      .catch((err) => {
+        // Whatever triggered the refresh already succeeded server-side; a stale
+        // Materials list self-corrects on the next poll or view switch.
+        console.error("Failed to refresh file list:", err);
+      });
+  };
+
+  // Free / downgraded users can still browse their past transcripts and notes,
+  // but the column blocks any mutation (`canMutate=false`) and shows an inline
+  // upgrade CTA where the action buttons would normally be.
+  const showAudioUpgrade = () =>
+    setUpgradeModal({
+      title: "Audio Notes is a Pro feature",
+      description:
+        "Upload lecture recordings, get accurate Bangla + English transcripts, and turn them into structured study notes. Upgrade to Pro to unlock Audio Notes.",
+    });
+
+  const audioTranscription = useAudioTranscription({
+    notebookId,
+    showToast,
+    onFilesChanged: refreshFiles,
+    onPaidOnlyBlocked: showAudioUpgrade,
+  });
+
   // Poll file list every 3s while any file is still being ingested
   useEffect(() => {
     if (!hasProcessingFiles) return;
@@ -166,23 +196,6 @@ export default function NotebookPage() {
     }, 3000);
     return () => clearInterval(interval);
   }, [hasProcessingFiles, notebookId]);
-
-  // Fetch plan-level features so we can show + upsell paid-only items (e.g. Audio Notes).
-  useEffect(() => {
-    let cancelled = false;
-    accountService
-      .getAccountUsage()
-      .then((usage) => {
-        if (!cancelled)
-          setAudioFeatureEnabled(usage.features?.audio_notes ?? false);
-      })
-      .catch(() => {
-        if (!cancelled) setAudioFeatureEnabled(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     async function loadNotebooksAndFiles() {
@@ -317,18 +330,6 @@ export default function NotebookPage() {
     }
   }
 
-  async function handleRenameFile(id: string, newName: string) {
-    try {
-      await notebookService.renameFile(notebookId, id, newName);
-      setFiles((prev) =>
-        prev.map((f) => (f.id === id ? { ...f, name: newName } : f)),
-      );
-      showToast("File renamed", "neutral");
-    } catch (err) {
-      console.error(`[NotebookPage.tsx] Error while renaming file.`);
-    }
-  }
-
   /** Notebook-scoped actions behind the rail's settings menu. */
   async function handleToggleArchive() {
     if (!notebook) return;
@@ -369,17 +370,7 @@ export default function NotebookPage() {
 
   if (!authService.isLoggedIn()) return <Navigate to="/login" replace />;
   if (notebookNotFound) return <Navigate to="/dashboard" replace />;
-  if (!notebook) return null; // need to replace this with a loading skeleton screen
-  /**
-   * Something like so:
-   * Option 1: Show a loading state (best UX)
-      Add an explicit isLoading boolean state, set it true before the fetch and false after. Then replace return null with a spinner or skeleton screen so the user knows something is happening.
-
-      const [isLoading, setIsLoading] = useState(true);
-      // in load():
-      // setIsLoading(false) in finally block
-      if (isLoading) return <LoadingSpinner />;
-   */
+  if (!notebook) return <NotebookPageSkeleton isCompact={isCompact} />;
 
   // Right column — Files on chat, Previous Quizzes on quiz, Previous Slides on presentation
   function renderCenterPanel() {
@@ -404,119 +395,15 @@ export default function NotebookPage() {
           isGenerating={presentationSession.isGeneratingPresentation}
         />
       );
-    if (activeView === "audio") {
-      // Free / downgraded users can still browse their past transcripts and notes,
-      // but the column blocks any mutation (`canMutate=false`) and shows an inline
-      // upgrade CTA where the action buttons would normally be.
-      const showAudioUpgrade = () =>
-        setUpgradeModal({
-          title: "Audio Notes is a Pro feature",
-          description:
-            "Upload lecture recordings, get accurate Bangla + English transcripts, and turn them into structured study notes. Upgrade to Pro to unlock Audio Notes.",
-        });
-      const interceptPaidOnly = <T,>(promise: Promise<T>): Promise<T> =>
-        promise.catch((err) => {
-          const code = (err as any)?.response?.data?.code;
-          if (code === "paid_only_feature") {
-            setAudioFeatureEnabled(false);
-            showAudioUpgrade();
-          }
-          throw err;
-        });
-
-      // Backend transcription + notes generation now run in Celery. Kickoff
-      // endpoints return 202; we poll the detail endpoint until status is
-      // terminal (ready/failed), then resolve the promise the column awaits.
-      const POLL_INTERVAL_MS = 2500;
-      const POLL_TIMEOUT_MS = 10 * 60 * 1000; // 10 min — covers ~2hr lectures
-      async function pollAudioTranscript(
-        transcriptId: string,
-        isDone: (
-          d: Awaited<
-            ReturnType<typeof transcriptionService.getAudioTranscript>
-          >,
-        ) => boolean,
-      ) {
-        const deadline = Date.now() + POLL_TIMEOUT_MS;
-        while (true) {
-          const detail = await transcriptionService.getAudioTranscript(
-            notebookId,
-            transcriptId,
-          );
-          if (isDone(detail)) return detail;
-          if (Date.now() > deadline) {
-            throw new Error(
-              "Still running — check back in History in a few minutes.",
-            );
-          }
-          await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
-        }
-      }
-
+    if (activeView === "audio")
       return (
         <AudioColumn
           notebookId={notebookId}
-          onTranscribeAudio={async (file, title) => {
-            const kickoff = await interceptPaidOnly(
-              transcriptionService.transcribeAudio(notebookId, file, title),
-            );
-            const detail = await pollAudioTranscript(
-              kickoff.transcript_id,
-              (d) =>
-                d.transcription_status === "ready" ||
-                d.transcription_status === "failed",
-            );
-            if (detail.transcription_status === "failed") {
-              throw new Error(
-                detail.transcription_error || "Transcription failed.",
-              );
-            }
-            return {
-              transcript_id: kickoff.transcript_id,
-              transcript: detail.transcript_text,
-            };
-          }}
-          onGenerateNotes={async (transcriptId) => {
-            await interceptPaidOnly(
-              transcriptionService.generateNotesFromTranscript(
-                notebookId,
-                transcriptId,
-              ),
-            );
-            const detail = await pollAudioTranscript(
-              transcriptId,
-              (d) => d.notes_status === "ready" || d.notes_status === "failed",
-            );
-            if (detail.notes_status === "failed") {
-              throw new Error(detail.notes_error || "Notes generation failed.");
-            }
-            showToast("Notes saved to notebook", "success");
-            try {
-              setFiles(await notebookService.listFiles(notebookId));
-            } catch {}
-            return detail.notes_text;
-          }}
-          onUpdateTranscript={(transcriptId, fields) =>
-            interceptPaidOnly(
-              transcriptionService.updateAudioTranscript(
-                notebookId,
-                transcriptId,
-                fields,
-              ),
-            )
-          }
-          onGetTranscript={(transcriptId) =>
-            transcriptionService.getAudioTranscript(notebookId, transcriptId)
-          }
-          onNotesGenerated={() => {
-            notebookService
-              .listFiles(notebookId)
-              .then(setFiles)
-              .catch(() => {});
-          }}
-          // null = plan check still loading; treat as paid-optimistic (the backend
-          // is the source of truth and will 403 if the user actually isn't paid).
-          canMutate={audioFeatureEnabled !== false}
+          onTranscribeAudio={audioTranscription.transcribeAudio}
+          onGenerateNotes={audioTranscription.generateNotes}
+          onUpdateTranscript={audioTranscription.updateTranscript}
+          onGetTranscript={audioTranscription.getTranscript}
+          canMutate={audioTranscription.canMutate}
           onUpgrade={showAudioUpgrade}
           selectedTranscriptId={audioTranscripts.selectedId}
           onTranscriptStarted={(transcriptId, title) => {
@@ -528,7 +415,6 @@ export default function NotebookPage() {
           }
         />
       );
-    }
     if (quizSessions.selectedQuiz)
       return (
         <QuizReviewColumn
@@ -598,18 +484,27 @@ export default function NotebookPage() {
     );
   }
 
+  const contextTitle =
+    activeView === "quiz"
+      ? "Past quizzes"
+      : activeView === "presentation"
+        ? "Generated slides"
+        : activeView === "audio"
+          ? "Transcripts"
+          : "Chats";
+
   function renderSidebar(className?: string) {
     return (
       <NotebookSidebar
         className={className}
+        contextTitle={contextTitle}
         contextPanel={renderContextPanel()}
         materialsPanel={
           <MaterialsPanel
             files={files}
             uploadProgress={uploadProgress}
-            onUpload={handleUpload}
+            onUpload={setPendingUploadFiles}
             onDeleteOne={handleDeleteOneFile}
-            onRename={handleRenameFile}
             disabled={!!notebook?.is_archived}
           />
         }
@@ -632,7 +527,11 @@ export default function NotebookPage() {
   };
 
   return (
-    <div className="bg-background flex h-dvh overflow-hidden">
+    <FileDropZone
+      className="bg-background flex h-dvh overflow-hidden"
+      disabled={!!pendingUploadFiles || !!notebook.is_archived}
+      onFilesDropped={setPendingUploadFiles}
+    >
       {/* Rail and sidebar are fixed columns on desktop and collapse into a
           single drawer below the tablet breakpoint. */}
       {!isCompact && (
@@ -693,6 +592,17 @@ export default function NotebookPage() {
         </MobileDrawer>
       )}
 
+      {pendingUploadFiles && (
+        <UploadConfirmModal
+          files={pendingUploadFiles}
+          onConfirm={(confirmed) => {
+            setPendingUploadFiles(null);
+            handleUpload(confirmed);
+          }}
+          onClose={() => setPendingUploadFiles(null)}
+        />
+      )}
+
       {upgradeModal && (
         <UpgradeModal
           onClose={() => setUpgradeModal(null)}
@@ -731,6 +641,6 @@ export default function NotebookPage() {
           )}
         />
       )}
-    </div>
+    </FileDropZone>
   );
 }

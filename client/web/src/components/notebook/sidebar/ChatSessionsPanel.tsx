@@ -59,7 +59,6 @@ export default function ChatSessionsPanel({
 
   return (
     <SidebarSection
-      title="Chats"
       action={
         <Button
           size="sm"

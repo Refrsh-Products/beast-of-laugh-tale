@@ -26,7 +26,7 @@ export default function TranscriptsPanel({
   disabled?: boolean;
 }) {
   return (
-    <SidebarSection title="Transcripts">
+    <SidebarSection>
       {loading ? (
         <SidebarEmpty>
           <RiLoader4Line

@@ -4,17 +4,18 @@ import { cn } from "@/lib/utils";
 /**
  * Shared chrome for the notebook sidebar's two stacked regions: the contextual
  * panel on top (which swaps with the active tool) and the persistent materials
- * list below it. Keeping the heading, action slot and scroll behaviour here is
- * what makes those regions read as one column rather than four unrelated lists.
+ * list below it. Keeping the action slot and scroll behaviour here is what
+ * makes those regions read as one column rather than four unrelated lists.
+ *
+ * The section title and collapse toggle now live in NotebookSidebar, so this
+ * component only renders the scrollable action + body area.
  */
 export function SidebarSection({
-  title,
   action,
   children,
   className,
   bodyClassName,
 }: {
-  title: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -22,11 +23,6 @@ export function SidebarSection({
 }) {
   return (
     <section className={cn("flex min-h-0 flex-col", className)}>
-      <header className="flex items-center justify-between gap-2 px-4 pt-4 pb-2">
-        <h2 className="text-muted-foreground text-xs font-semibold tracking-widest uppercase">
-          {title}
-        </h2>
-      </header>
       <div
         className={cn(
           "freshr-scroll min-h-0 flex-1 overflow-y-auto px-2 pb-2",

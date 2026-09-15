@@ -16,7 +16,7 @@ export default function PresentationsPanel({
   disabled?: boolean;
 }) {
   return (
-    <SidebarSection title="Generated slides">
+    <SidebarSection>
       {presentations.length === 0 ? (
         <SidebarEmpty>
           No presentations yet. Generate one to get started.

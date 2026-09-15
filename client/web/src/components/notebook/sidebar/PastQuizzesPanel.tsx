@@ -19,7 +19,7 @@ export default function PastQuizzesPanel({
   disabled?: boolean;
 }) {
   return (
-    <SidebarSection title="Past quizzes">
+    <SidebarSection>
       {quizzes.length === 0 ? (
         <SidebarEmpty>No quizzes yet. Generate one to get started.</SidebarEmpty>
       ) : (
