@@ -18,7 +18,7 @@ export default function LandingFooter() {
       id="footer"
       className="border-brand-secondary-300/20 border-t px-5 pt-12 pb-14 sm:px-9"
     >
-      <div className="mx-auto grid max-w-320 gap-9 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
+      <div className="mx-auto grid max-w-7xl gap-9 sm:grid-cols-2 lg:grid-cols-[1.4fr_repeat(3,1fr)]">
         <div>
           <FullLogoMark className="text-brand-tertiary-100 mb-4 h-6 w-auto" />
           <p className="text-brand-paper/80 max-w-64 text-sm leading-relaxed">
@@ -56,11 +56,11 @@ export default function LandingFooter() {
         ))}
       </div>
 
-      <div className="border-brand-paper/12 mx-auto mt-12 flex max-w-320 flex-wrap items-center justify-between gap-3 border-t pt-6 text-xs">
-        <span id="footer-copyright" className="text-brand-paper/70">
+      <div className="border-brand-paper/12 mx-auto mt-12 flex max-w-7xl flex-wrap items-center justify-between gap-3 border-t pt-6 text-xs">
+        <span id="footer-copyright" className="text-brand-paper/80">
           © {year} FRESHR
         </span>
-        <span className="text-brand-paper/70">{FOOTER.madeIn}</span>
+        <span className="text-brand-paper/80">{FOOTER.madeIn}</span>
       </div>
     </footer>
   );
